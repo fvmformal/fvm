@@ -19,11 +19,12 @@ list-tests:
 	pytest --collect-only
 
 test:
-	pytest -v
+	pytest -v --junit-xml="results.xml"
 
 test-verbose:
-	pytest -v -s
+	pytest -v -s --junit-xml="results.xml"
 
 clean:
+	rm -f results.xml
 	rm -rf ./test/__pycache__
 	rm -rf ./src/builder/__pycache__
