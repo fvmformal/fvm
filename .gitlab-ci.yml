@@ -14,4 +14,4 @@ test-all:
     reports:
       junit:
         - results.xml
-~
+
