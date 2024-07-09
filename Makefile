@@ -1,4 +1,4 @@
-.PHONY: all install-deps install test clean
+.PHONY: all install-deps install list-tests test test-verbose clean
 
 all:
 	@echo usage:
