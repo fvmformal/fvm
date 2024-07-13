@@ -1,5 +1,6 @@
 stages:
   - test
+  - examples
 
 test-all:
   stage: test
@@ -15,3 +16,15 @@ test-all:
       junit:
         - results.xml
 
+# TODO : Test also with the newest tools, 2024.2, which we also must dockerize
+# TODO : Add artifacts, when we have a clearer idea of what those would be
+# TODO : Add results.xml, when our framework generates it
+run-examples:
+  stage: examples
+  image: registry.woden.us.es/containers/questa:2021.3_2
+  script:
+    - end | grep LIC
+    - unset LM_LICENSE_FILE
+    - export SALT_LICENSE_SERVER=2101@192.168.20.107
+    - pip3 install -r requirements.txt
+    - make examples
