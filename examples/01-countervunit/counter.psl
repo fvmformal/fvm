@@ -1,0 +1,25 @@
+vunit counter (counter) {
+
+    -- Default clock for PSL assertions
+    default clock is rising_edge(clk);
+
+    -- Assert we do not go over the maximum
+    never_go_over_the_maximum: assert always (Q <= MAX_COUNT);
+
+    -- Assert the counter is always counting up, but only:
+    -- 1) If it's not the first clock cycle
+    -- 2) If it hasn't just been reset
+    -- 3) If last value wasn't MAX_COUNT
+    always_count_up: assert always (not (rst = '1') and (not prev(rst) = '1') and (prev(Q) /= MAX_COUNT)) -> (Q-prev(Q) = 1);
+
+    -- Cover the overflow -> zero case
+    -- What we write here has to be a sequence inside curly braces {}, even if
+    -- we only have one element (for example, { Q = MAX_COUNT }
+    cover_overflow_to_zero: cover {Q = MAX_COUNT ; Q = 0};
+
+    -- Force a reset in the first clock cycle
+    -- Since we don't have an 'always', this assumption only applies to the
+    -- first clock cycle
+    assume_initial_reset: assume rst = '1';
+
+}

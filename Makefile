@@ -25,13 +25,19 @@ test:
 test-verbose:
 	pytest -v -s --junit-xml="results.xml"
 
-examples: 00-counter
+examplelist += 00-counter
+examplelist += 01-countervunit
+
+examples: $(examplelist)
 
 00-counter:
 	python3 -m examples.00-counter.formal
 
+01-countervunit:
+	python3 -m examples.01-countervunit.formal
+
 clean:
-	rm -f results.xml flex.log
+	rm -f results.xml flex*.log
 	rm -rf ./*/__pycache__
 	rm -rf ./*/*/__pycache__
 	rm -rf fvm_out
