@@ -3,6 +3,7 @@ import sys
 import os
 import glob
 import shutil
+import subprocess
 
 # Third party imports
 from loguru import logger
@@ -25,9 +26,6 @@ class fvmframework:
         # Create logger counter
         self.log_counter = logcounter.logcounter()
 
-        # Create logger object
-        logger.info(f'Creating {self}')
-
         # Clean logger format and handlers
         logger.remove()
 
@@ -39,7 +37,11 @@ class fvmframework:
         # Get log messages also in stderr. Only print format
         logger.add(sys.stderr, level=self.loglevel, format=LOGFORMAT)
 
+        # Log the creation of the framework object
+        logger.info(f'Creating {self}')
+
         # Rest of instance variables
+        self.toplevel = ''
         self.vhdl_sources = list()
         self.psl_sources = list()
         self.toolchain = "questa"
@@ -100,6 +102,9 @@ class fvmframework:
             ret = True
         return ret
 
+    def set_toplevel(self, toplevel):
+        self.toplevel = toplevel
+
     def set_loglevel(self, loglevel):
         """Sets the logging level for the build and test framework.
 
@@ -130,7 +135,7 @@ class fvmframework:
         message, False otherwise"""
         ret = False
         msg_counts = self.get_log_counts()
-        print(f'{msg_counts=}')
+        #print(f'{msg_counts=}')
 
         # Use a different format for summary messages
         logger.remove()
@@ -185,9 +190,82 @@ class fvmframework:
             ret = False
         return ret
 
-    def cmd_create_library(self, lib) :
-        if self.toolchain == "questa" :
+    def cmd_create_library(self, lib):
+        if self.toolchain == "questa":
             cmd = toolchains.TOOLS[self.toolchain]["createemptylib"] + ' ' + lib
         return cmd
 
+    def create_f_file(self, filename, sources):
+        with open(filename, "w") as f:
+            for src in sources:
+                print(src, file=f)
 
+    def setup(self):
+        # Create the output directory, but do not throw an error if it already
+        # exists
+        os.makedirs(self.outdir, exist_ok=True)
+
+        if self.toolchain == "questa":
+            # Create .f files
+            self.create_f_file(self.outdir+'/'+"design.f", self.vhdl_sources)
+            self.create_f_file(self.outdir+'/'+"properties.f", self.psl_sources)
+            self.genrun(self.outdir+'/'+"run.do")
+
+    # TODO : we will need arguments for the clocks, top module, we probably need to
+    # detect compile order if vcom doesn't detect it, set the other options such as
+    # timeout... and also throw some errors if any option is not specified. This is
+    # not trivial. Also, in the future we may want to specify verilog files with
+    # vlog, etc...
+    def genrun(self, filename):
+        with open(filename, "w") as f:
+            print('onerror exit', file=f)
+            print('', file=f)
+            #print('source ../scripts/color.tcl')
+            print('', file=f)
+            print('## Compile netlist', file=f)
+            #print('log_info "***** Compiling netlist..."')
+            print('vcom -f fvm_out/design.f', file=f)
+
+            print('', file=f)
+            print('## Add clocks', file=f)
+            #print('log_info "***** Adding clocks..."', file=f)
+            print('netlist clock clk -period 10', file=f)
+            print('', file=f)
+            print('## Run PropCheck', file=f)
+            #print('log_info "***** Running formal compile (compiling formal model)..."', file=f)
+
+            print('formal compile ', end='', file=f)
+            for i in self.psl_sources :
+                print(f'-pslfile {i} ', end='', file=f)
+            print('-include_code_cov ', end='', file=f)
+            print(f'-d {self.toplevel}', file=f)
+
+            #print('log_info "***** Running formal verify (model checking)..."', file=f)
+            print('formal verify -auto_constraint_off -cov_mode -timeout 10m', file=f)
+            print('', file=f)
+            print('# Compute Formal Coverage', file=f)
+            #print('log_info "***** Running formal verify to get coverage..."', file=f)
+            print('formal verify -auto_constraint_off -cov_mode reachability -timeout 10m', file=f)
+            #print('log_info "***** Running formal generate coverage..."', file=f)
+            print('formal generate coverage -cov_mode s', file=f)
+            print('formal generate coverage -cov_mode b', file=f)
+            print('formal generate coverage -cov_mode r', file=f)
+            print('formal generate coverage -cov_mode o', file=f)
+            print('', file=f)
+            print('exit', file=f)
+
+    def run(self):
+        # TODO : run all available/selected steps/tools
+        # TODO : call the run_step() function for each available step
+        logger.error('Sorry, this feature is not available yet')
+
+    def run_step(self, step):
+        # If called with a specific step, run that specific step
+        if step in toolchains.TOOLS[self.toolchain] :
+            tool = toolchains.TOOLS[self.toolchain][step]
+            logger.info(f'Using {tool=} for {step=}')
+            logger.info(f'Running {tool=}')
+            if self.toolchain == "questa":
+                subprocess.run([tool, '-c', '-od', self.outdir, '-do', self.outdir+'/'+"run.do"], check=True)
+        else :
+            logger.error(f'No tool available for {step=} in {self.toolchain=}')

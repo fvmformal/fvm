@@ -1,4 +1,4 @@
-.PHONY: all install-deps install list-tests test test-verbose clean
+.PHONY: all install-deps install list-tests test test-verbose examples clean
 
 all:
 	@echo usage:
@@ -7,6 +7,7 @@ all:
 	@echo   "make list-tests   -> list all the tests"
 	@echo   "make test         -> run the tests"
 	@echo   "make test-verbose -> run the tests with full stdout/stderr output"
+	@echo   "make examples     -> run the examples"
 	@echo   "make clean        -> remove temporary files"
 
 install-deps:
@@ -24,7 +25,13 @@ test:
 test-verbose:
 	pytest -v -s --junit-xml="results.xml"
 
+examples: 00-counter
+
+00-counter:
+	python3 -m examples.00-counter.formal
+
 clean:
-	rm -f results.xml
-	rm -rf ./test/__pycache__
-	rm -rf ./src/builder/__pycache__
+	rm -f results.xml flex.log
+	rm -rf ./*/__pycache__
+	rm -rf ./*/*/__pycache__
+	rm -rf fvm_out
