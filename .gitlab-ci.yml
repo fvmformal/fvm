@@ -23,8 +23,8 @@ run-examples:
   stage: examples
   image: registry.woden.us.es/containers/questa:2021.3_2
   script:
-    - end | grep LIC
+    - env | grep LIC
     - unset LM_LICENSE_FILE
-    - export SALT_LICENSE_SERVER=2101@192.168.20.107
+    - export SALT_LICENSE_SERVER=2101@baldr.us.es
     - pip3 install -r requirements.txt
     - make examples
