@@ -16,12 +16,11 @@ test-all:
       junit:
         - results.xml
 
-# TODO : Test also with the newest tools, 2024.2, which we also must dockerize
 # TODO : Add artifacts, when we have a clearer idea of what those would be
 # TODO : Add results.xml, when our framework generates it
 run-examples:
   stage: examples
-  image: registry.woden.us.es/containers/questa:2021.3_2
+  image: registry.woden.us.es/containers/questa:2024.2
   script:
     - env | grep LIC
     - unset LM_LICENSE_FILE
