@@ -5,9 +5,10 @@
 # Each toolchain may have different tools to solve different problems
 QUESTA_TOOLS = {
         "friendliness"   : "covercheck",
-        "rulechecker"    : "autocheck",
-        "prover"         : "qverify",
-        "simulator"      : "vsim",
+        "rulecheck"      : "autocheck",
+        "prove"          : "qverify",
+        "lint"           : "qverify",
+        "simulate"       : "vsim",
         "createemptylib" : "vlib",
         "compilevhdl"    : "vcom",
         "compileverilog" : "vlog"

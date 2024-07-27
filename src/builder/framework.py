@@ -11,9 +11,11 @@ from loguru import logger
 # Our own imports
 from src.builder import toolchains
 from src.builder import logcounter
+from src.builder import helpers
 
 LOGFORMAT = '<cyan>FVM</cyan> | <green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>'
 LOGFORMAT_SUMMARY = '<cyan>FVM</cyan> | <green>Summary</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>'
+LOGFORMAT_TOOL = '<cyan>FVM</cyan> | <green>Tool</green> | <level>{level: <8}</level> | <level>{message}</level>'
 
 class fvmframework:
 
@@ -38,7 +40,11 @@ class fvmframework:
         logger.add(sys.stderr, level=self.loglevel, format=LOGFORMAT)
 
         # Log the creation of the framework object
-        logger.info(f'Creating {self}')
+        logger.trace(f'Creating {self}')
+
+        # Are we called from inside a script or from stdin?
+        self.scriptname = helpers.getscriptname()
+        logger.info(f'{self.scriptname=}')
 
         # Rest of instance variables
         self.toplevel = ''
@@ -116,6 +122,10 @@ class fvmframework:
         logger.remove()
         self.loglevel = loglevel
         logger.add(sys.stderr, level=self.loglevel, format=LOGFORMAT)
+
+    def set_logformat(self, logformat):
+        logger.remove()
+        logger.add(sys.stderr, level=self.loglevel, format=logformat)
 
     def get_log_counts(self) :
         return self.log_counter.get_counts()
@@ -209,14 +219,16 @@ class fvmframework:
             # Create .f files
             self.create_f_file(self.outdir+'/'+"design.f", self.vhdl_sources)
             self.create_f_file(self.outdir+'/'+"properties.f", self.psl_sources)
-            self.genrun(self.outdir+'/'+"run.do")
+            self.genprovescript(self.outdir+'/'+"prove.do")
+            self.genlintscript(self.outdir+'/'+"lint.do")
 
-    # TODO : we will need arguments for the clocks, top module, we probably need to
-    # detect compile order if vcom doesn't detect it, set the other options such as
-    # timeout... and also throw some errors if any option is not specified. This is
-    # not trivial. Also, in the future we may want to specify verilog files with
-    # vlog, etc...
-    def genrun(self, filename):
+    # TODO : we will need arguments for the clocks, timeout, we probably need
+    # to detect compile order if vcom doesn't detect it, set the other options
+    # such as timeout... and also throw some errors if any option is not
+    # specified. This is not trivial. Also, in the future we may want to
+    # specify verilog files with vlog, etc...
+    # TODO : can we also compile the PSL files using a .f file?
+    def genprovescript(self, filename):
         with open(filename, "w") as f:
             print('onerror exit', file=f)
             print('', file=f)
@@ -254,6 +266,18 @@ class fvmframework:
             print('', file=f)
             print('exit', file=f)
 
+    # TODO : set sensible defaults here and allow for user optionality too
+    # i.e., list methodology, goal, etc
+    def genlintscript(self, filename):
+        with open(filename, "w") as f:
+            print('onerror exit', file=f)
+            print('lint methodology ip -goal release', file=f)
+            print('vlib work', file=f)
+            print('vmap work work', file=f)
+            print('vcom -f fvm_out/design.f', file=f)
+            print(f'lint run -d {self.toplevel}', file=f)
+            print('exit', file=f)
+
     def run(self):
         # TODO : run all available/selected steps/tools
         # TODO : call the run_step() function for each available step
@@ -264,8 +288,63 @@ class fvmframework:
         if step in toolchains.TOOLS[self.toolchain] :
             tool = toolchains.TOOLS[self.toolchain][step]
             logger.info(f'Using {tool=} for {step=}')
-            logger.info(f'Running {tool=}')
+            logger.debug(f'Running {tool=}')
             if self.toolchain == "questa":
-                subprocess.run([tool, '-c', '-od', self.outdir, '-do', self.outdir+'/'+"run.do"], check=True)
+                cmd = [tool, '-c', '-od', self.outdir, '-do', self.outdir+'/'+step+'.do']
+                logger.trace(f'command: {" ".join(cmd)=}')
+                cmd_stdout, cmd_stderr = self.run_cmd(cmd)
+                self.logcheck(cmd_stdout, step, tool)
+                self.logcheck(cmd_stderr, step, tool)
         else :
             logger.error(f'No tool available for {step=} in {self.toolchain=}')
+
+    def run_cmd(self, cmd, verbose = True):
+        self.set_logformat(LOGFORMAT_TOOL)
+
+        process = subprocess.Popen (
+                  cmd,
+                  stdout  = subprocess.PIPE,
+                  stderr  = subprocess.PIPE,
+                  text    = True,
+                  bufsize = 1
+                  )
+
+        # Initialize variables where to store command stdout/stderr
+        stdout_lines = list()
+        stderr_lines = list()
+
+        # Read and print stdout and stderr in real-time
+        with process.stdout as stdout, process.stderr as stderr:
+            for line in iter(stdout.readline, ''):
+                if verbose:
+                    #print(line, end='')    # Print to console if verbose is True
+                    logger.trace(line.rstrip())
+                stdout_lines.append(line)  # Save to list
+
+            for line in iter(stderr.readline, ''):
+                if verbose:
+                    #print(line, end='')    # Print to console if verbose is True
+                    logger.debug(line.rstrip())
+                stderr_lines.append(line)  # Save to list
+
+        # Wait for the process to complete and get the return code
+        retval = process.wait()
+
+        # Join captured output
+        captured_stdout = ''.join(stdout_lines)
+        captured_stderr = ''.join(stderr_lines)
+
+        # Raise an exception if the return code is non-zero
+        if retval != 0:
+            raise subprocess.CalledProcessError(return_code, cmd, output=captured_stdout, stderr=captured_stderr)
+
+        self.set_logformat(LOGFORMAT)
+
+        return captured_stdout, captured_stderr
+
+    def logcheck(self, result, step, tool):
+        for line in result.splitlines() :
+            if 'ERROR' in line:
+                logger.error(f'ERROR detected in {step=}, {tool=}, {line=}')
+            elif 'Fatal' in line:
+                logger.error(f'ERROR detected in {step=}, {tool=}, {line=}')

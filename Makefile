@@ -37,7 +37,7 @@ examples: $(examplelist)
 	python3 -m examples.01-countervunit.formal
 
 clean:
-	rm -f results.xml flex*.log
-	rm -rf ./*/__pycache__
-	rm -rf ./*/*/__pycache__
+	rm -f results.xml flex*.log vish_stacktrace.vstf modelsim.ini
+	rm -rf ./*/__pycache_ ./*/*/__pycache__
+	rm -rf work
 	rm -rf fvm_out
