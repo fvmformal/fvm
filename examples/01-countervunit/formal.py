@@ -6,7 +6,5 @@ fvm.add_psl_source("examples/01-countervunit/counter.psl")
 fvm.list_sources()
 fvm.set_toplevel("counter")
 fvm.setup()
-#fvm.run()
-fvm.run_step("prover")
+fvm.run()
 fvm.check_errors()
-
