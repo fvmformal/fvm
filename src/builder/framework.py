@@ -282,7 +282,8 @@ class fvmframework:
     def run(self):
         # TODO : run all available/selected steps/tools
         # TODO : call the run_step() function for each available step
-        logger.error('Sorry, this feature is not available yet')
+        self.run_step("lint")
+        self.run_step("prove")
 
     def run_step(self, step):
         # If called with a specific step, run that specific step
