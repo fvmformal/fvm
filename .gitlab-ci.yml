@@ -1,5 +1,6 @@
 stages:
   - test
+  - concepts
   - examples
 
 test-all:
@@ -18,11 +19,19 @@ test-all:
 
 # TODO : Add artifacts, when we have a clearer idea of what those would be
 # TODO : Add results.xml, when our framework generates it
+run-concepts:
+  stage: concepts
+  image: registry.woden.us.es/containers/questa:2024.2
+  script:
+    - unset LM_LICENSE_FILE
+    - export SALT_LICENSE_SERVER=2101@baldr.us.es
+    - pip3 install -r requirements.txt
+    - make concepts
+
 run-examples:
   stage: examples
   image: registry.woden.us.es/containers/questa:2024.2
   script:
-    - env | grep LIC
     - unset LM_LICENSE_FILE
     - export SALT_LICENSE_SERVER=2101@baldr.us.es
     - pip3 install -r requirements.txt
