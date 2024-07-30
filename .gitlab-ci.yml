@@ -33,7 +33,7 @@ run-concepts:
     - unset LM_LICENSE_FILE
     - export SALT_LICENSE_SERVER=2101@baldr.us.es
     - pip3 install -r requirements.txt
-    - make concepts
+    - make PYTHON="coverage run" concepts
 
 run-examples:
   stage: examples
@@ -42,4 +42,4 @@ run-examples:
     - unset LM_LICENSE_FILE
     - export SALT_LICENSE_SERVER=2101@baldr.us.es
     - pip3 install -r requirements.txt
-    - make examples
+    - make PYTHON="coverage run" examples

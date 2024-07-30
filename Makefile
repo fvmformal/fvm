@@ -1,6 +1,6 @@
 .PHONY: all install-deps install list-tests test test-verbose examples concepts coverage clean
 
-
+PYTHON ?= python3
 
 all:
 	@echo usage:
@@ -39,16 +39,16 @@ examples: $(examplelist)
 concepts: $(conceptlist)
 
 transactions:
-	python3 -m concepts.transactions.formal
+	$(PYTHON) -m concepts.transactions.formal
 
 00-counter:
-	python3 -m examples.00-counter.formal
+	$(PYTHON) -m examples.00-counter.formal
 
 01-countervunit:
-	python3 -m examples.01-countervunit.formal
+	$(PYTHON) -m examples.01-countervunit.formal
 
 02-linearinterpolator:
-	python3 -m examples.02-linearinterpolator.formal
+	$(PYTHON) -m examples.02-linearinterpolator.formal
 
 pycoverage:
 	coverage report -m
