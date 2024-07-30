@@ -10,9 +10,12 @@ test-all:
     - apt update
     - apt install -y python3 python3-pip
     - pip3 install -r requirements.txt -r dev-requirements.txt
-    - pytest -v --junit-xml="results.xml"
+    - make test
+    - make coverage
   artifacts:
     when: always
+    paths:
+      - htmlcov
     reports:
       junit:
         - results.xml

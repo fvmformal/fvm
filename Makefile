@@ -1,4 +1,6 @@
-.PHONY: all install-deps install list-tests test test-verbose examples clean
+.PHONY: all install-deps install list-tests test test-verbose examples concepts coverage clean
+
+
 
 all:
 	@echo usage:
@@ -7,7 +9,9 @@ all:
 	@echo   "make list-tests   -> list all the tests"
 	@echo   "make test         -> run the tests"
 	@echo   "make test-verbose -> run the tests with full stdout/stderr output"
+	@echo   "make concepts     -> run the concepts"
 	@echo   "make examples     -> run the examples"
+	@echo   "make pycoverage   -> generate code coverage report for the python code"
 	@echo   "make clean        -> remove temporary files"
 
 install-deps:
@@ -20,10 +24,10 @@ list-tests:
 	pytest --collect-only
 
 test:
-	pytest -v --junit-xml="results.xml"
+	coverage run -m pytest -v --junit-xml="results.xml"
 
 test-verbose:
-	pytest -v -s --junit-xml="results.xml"
+	coverage run -m pytest -v -s --junit-xml="results.xml"
 
 examplelist += 00-counter
 examplelist += 01-countervunit
@@ -34,6 +38,9 @@ conceptlist += transactions
 examples: $(examplelist)
 concepts: $(conceptlist)
 
+transactions:
+	python3 -m concepts.transactions.formal
+
 00-counter:
 	python3 -m examples.00-counter.formal
 
@@ -43,11 +50,13 @@ concepts: $(conceptlist)
 02-linearinterpolator:
 	python3 -m examples.02-linearinterpolator.formal
 
-transactions:
-	python3 -m concepts.transactions.formal
+pycoverage:
+	coverage report -m
+	coverage html
 
 clean:
 	rm -f results.xml flex*.log vish_stacktrace.vstf modelsim.ini
 	rm -rf ./*/__pycache__ ./*/*/__pycache__
 	rm -rf work
 	rm -rf fvm_out
+	rm -rf .coverage htmlcov
