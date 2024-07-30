@@ -236,7 +236,7 @@ class fvmframework:
             print('', file=f)
             print('## Compile netlist', file=f)
             #print('log_info "***** Compiling netlist..."')
-            print('vcom -f fvm_out/design.f', file=f)
+            print('vcom -autoorder -f fvm_out/design.f', file=f)
 
             print('', file=f)
             print('## Add clocks', file=f)
@@ -274,7 +274,8 @@ class fvmframework:
             print('lint methodology ip -goal release', file=f)
             print('vlib work', file=f)
             print('vmap work work', file=f)
-            print('vcom -f fvm_out/design.f', file=f)
+            print('vcom -autoorder -f fvm_out/design.f', file=f)
+            print(f'lint methodology standard -goal rmm', file=f)
             print(f'lint run -d {self.toplevel}', file=f)
             print('exit', file=f)
 
