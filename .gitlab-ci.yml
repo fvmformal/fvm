@@ -20,9 +20,10 @@ test-all:
     reports:
       junit:
         - results.xml
-      cobertura:
-        - coverage.xml
-
+      coverage_report:                                                          
+        coverage_format: cobertura                                              
+        path: coverage.xml 
+      
 # TODO : Add artifacts, when we have a clearer idea of what those would be
 # TODO : Add results.xml, when our framework generates it
 run-concepts:
