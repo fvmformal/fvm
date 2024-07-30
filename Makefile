@@ -48,6 +48,6 @@ transactions:
 
 clean:
 	rm -f results.xml flex*.log vish_stacktrace.vstf modelsim.ini
-	rm -rf ./*/__pycache_ ./*/*/__pycache__
+	rm -rf ./*/__pycache__ ./*/*/__pycache__
 	rm -rf work
 	rm -rf fvm_out
