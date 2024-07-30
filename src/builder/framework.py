@@ -345,7 +345,11 @@ class fvmframework:
 
     def logcheck(self, result, step, tool):
         for line in result.splitlines() :
-            if 'ERROR' in line:
+            if 'Errors: 0' in line:
+                pass  # Avoid signalling an error on tool error summaries
+            elif 'ERROR' in line:
+                logger.error(f'ERROR detected in {step=}, {tool=}, {line=}')
+            elif 'Error' in line:
                 logger.error(f'ERROR detected in {step=}, {tool=}, {line=}')
             elif 'Fatal' in line:
                 logger.error(f'ERROR detected in {step=}, {tool=}, {line=}')
