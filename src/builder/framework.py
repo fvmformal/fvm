@@ -4,6 +4,7 @@ import os
 import glob
 import shutil
 import subprocess
+import pathlib
 
 # Third party imports
 from loguru import logger
@@ -58,6 +59,9 @@ class fvmframework:
         logger.info(f'Adding VHDL source: {src}')
         if not os.path.exists(src) :
             logger.error(f'VHDL source not found: {src}')
+        extension = pathlib.Path(src).suffix
+        if extension not in ['.vhd', '.VHD', '.vhdl', '.VHDL'] :
+            logger.warning(f'VHDL source {src=} does not have a typical VHDL extension, instead it has {extension=}')
         self.vhdl_sources.append(src)
         logger.debug(f'{self.vhdl_sources=}')
 
@@ -66,6 +70,9 @@ class fvmframework:
         logger.info(f'Adding PSL source: {src}')
         if not os.path.exists(src) :
             logger.error(f'VHDL source not found: {src}')
+        extension = pathlib.Path(src).suffix
+        if extension not in ['.psl', '.PSL'] :
+            logger.warning(f'PSL source {src=} does not have a typical PSL extension extension, instead it has {extension=}')
         self.psl_sources.append(src)
         logger.debug(f'{self.psl_sources=}')
 
