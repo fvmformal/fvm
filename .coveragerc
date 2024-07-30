@@ -1,0 +1,10 @@
+[run]
+# Only collect coverage from our source directory
+source = src
+#omit =
+#    # Exclude from coverage all code in /usr (third-party libraries)
+#    /usr/*
+#    # Exclude from coverage our test code ()
+#    test/*
+
+
