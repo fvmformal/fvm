@@ -11,7 +11,8 @@ test-all:
     - apt install -y python3 python3-pip
     - pip3 install -r requirements.txt -r dev-requirements.txt
     - make test
-    - make coverage
+    - make pycoverage
+  coverage: /TOTAL.*\s+(\d+\%)/
   artifacts:
     when: always
     paths:
@@ -19,6 +20,8 @@ test-all:
     reports:
       junit:
         - results.xml
+      cobertura:
+        - coverage.xml
 
 # TODO : Add artifacts, when we have a clearer idea of what those would be
 # TODO : Add results.xml, when our framework generates it

@@ -53,6 +53,7 @@ transactions:
 pycoverage:
 	coverage report -m
 	coverage html
+	coverage xml
 
 clean:
 	rm -f results.xml flex*.log vish_stacktrace.vstf modelsim.ini
