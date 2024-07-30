@@ -27,6 +27,7 @@ test-verbose:
 
 examplelist += 00-counter
 examplelist += 01-countervunit
+examplelist += 02-linearinterpolator
 
 examples: $(examplelist)
 
@@ -35,6 +36,9 @@ examples: $(examplelist)
 
 01-countervunit:
 	python3 -m examples.01-countervunit.formal
+
+02-linearinterpolator:
+	python3 -m examples.02-linearinterpolator.formal
 
 clean:
 	rm -f results.xml flex*.log vish_stacktrace.vstf modelsim.ini
