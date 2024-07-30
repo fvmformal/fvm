@@ -128,10 +128,12 @@ class fvmframework:
         # operation of our framework
         logger.remove()
         self.loglevel = loglevel
+        logger.add(self.log_counter, level=0)
         logger.add(sys.stderr, level=self.loglevel, format=LOGFORMAT)
 
     def set_logformat(self, logformat):
         logger.remove()
+        logger.add(self.log_counter, level=0)
         logger.add(sys.stderr, level=self.loglevel, format=logformat)
 
     def get_log_counts(self) :
