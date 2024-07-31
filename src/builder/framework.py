@@ -477,13 +477,18 @@ class fvmframework:
         err_in_log = False
         for line in result.splitlines() :
             err, warn, success = self.linecheck(line)
+            # If we are in verbose mode, still check if there are errors /
+            # warnings / etc. but do not duplicate the messages
             if err :
-                logger.error(f'ERROR detected in {step=}, {tool=}, {line=}')
+                if not self.verbose:
+                    logger.error(f'ERROR detected in {step=}, {tool=}, {line=}')
                 err_in_log = True
             elif warn :
-                logger.warning(f'WARNING detected in {step=}, {tool=}, {line=}')
+                if not self.verbose:
+                    logger.warning(f'WARNING detected in {step=}, {tool=}, {line=}')
             elif success :
-                logger.success(f'SUCCESS detected in {step=}, {tool=}, {line=}')
+                if not self.verbose:
+                    logger.success(f'SUCCESS detected in {step=}, {tool=}, {line=}')
         return err_in_log
 
     def linecheck(self, line):
