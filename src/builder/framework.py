@@ -104,6 +104,7 @@ class fvmframework:
         self.vhdl_sources = list()
         self.psl_sources = list()
         self.toolchain = "questa"
+        self.vhdlstd = "2008"
 
     def add_vhdl_source(self, src):
         """Add a single VHDL source"""
@@ -307,7 +308,7 @@ class fvmframework:
             print('', file=f)
             print('## Compile netlist', file=f)
             #print('log_info "***** Compiling netlist..."')
-            print(f'vcom -autoorder -f {self.outdir}/design.f', file=f)
+            print(f'vcom -{self.vhdlstd} -autoorder -f {self.outdir}/design.f', file=f)
 
             print('', file=f)
             print('## Add clocks', file=f)
@@ -345,7 +346,7 @@ class fvmframework:
             print('lint methodology ip -goal start', file=f)
             print('vlib work', file=f)
             print('vmap work work', file=f)
-            print(f'vcom -autoorder -f {self.outdir}/design.f', file=f)
+            print(f'vcom -{self.vhdlstd} -autoorder -f {self.outdir}/design.f', file=f)
             print(f'lint run -d {self.toplevel}', file=f)
             print('exit', file=f)
 
