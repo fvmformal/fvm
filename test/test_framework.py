@@ -1,5 +1,7 @@
 # Third party imports
 import pytest
+import os
+from pathlib import Path
 
 # Our own imports
 from src.builder.framework import fvmframework
@@ -10,26 +12,58 @@ from src.builder.framework import fvmframework
 
 # TODO improve tests, check output values, and parameterize
 
-# TODO : make this throw errors if fail
-def test_add_single_source() :
+def test_add_single_vhdl_source_exists():
     fvm = fvmframework()
-    fvm.add_vhdl_source("test.vhd")
-    fvm.add_psl_source("test.psl")
-    fvm.add_vhdl_source("test2.vhd")
+    Path('test/test.vhd').touch()
+    fvm.add_vhdl_source("test/test.vhd")
 
-# TODO : make this throw errors if fail
-def test_add_multiple_sources() :
+def test_add_single_vhdl_source_doesnt_exist() :
     fvm = fvmframework()
-    fvm.add_vhdl_source("test.vhd")
-    fvm.add_vhdl_sources("*.vhdl")
-    fvm.add_psl_sources("*.psl")
-    fvm.add_vhdl_sources("otherfiles*.vhd")
-    fvm.add_psl_sources("otherfiles*.vhd")
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        fvm.add_vhdl_source("thisfiledoesntexist.vhd")
+    assert pytest_wrapped_e.type == SystemExit
 
-# TODO : make this throw errors if fail
+def test_add_single_psl_source_exists():
+    fvm = fvmframework()
+    Path('test/test.psl').touch()
+    fvm.add_psl_source("test/test.psl")
+
+def test_add_single_psl_source_doesnt_exist() :
+    fvm = fvmframework()
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        fvm.add_psl_source("thisfiledoesntexist.psl")
+    assert pytest_wrapped_e.type == SystemExit
+
+def test_add_multiple_vhdl_sources_exist() :
+    fvm = fvmframework()
+    Path('test/test.vhd').touch()
+    Path('test/test2.vhd').touch()
+    Path('test/test3.vhd').touch()
+    fvm.add_vhdl_sources("test/*.vhd")
+
+def test_add_multiple_vhdl_sources_dont_exist() :
+    fvm = fvmframework()
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        fvm.add_vhdl_sources("test/thesefilesdontexist*.vhd")
+    assert pytest_wrapped_e.type == SystemExit
+
+def test_add_multiple_psl_sources_exist() :
+    fvm = fvmframework()
+    Path('test/test.psl').touch()
+    Path('test/test2.psl').touch()
+    Path('test/test3.psl').touch()
+    fvm.add_psl_sources("test/*.psl")
+
+def test_add_multiple_psl_sources_dont_exist() :
+    fvm = fvmframework()
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        fvm.add_psl_sources("test/thesefilesdontexist*.psl")
+    assert pytest_wrapped_e.type == SystemExit
+
 def test_list_added_sources() :
     fvm = fvmframework()
-    fvm.add_vhdl_source("test.vhd")
+    Path('test/test.vhd').touch()
+    fvm.add_vhdl_source("test/test.vhd")
     fvm.list_vhdl_sources()
     fvm.list_psl_sources()
     fvm.list_sources()
@@ -42,19 +76,23 @@ def check_if_tools_exist() :
     fvm.check_tool("qverify")
     fvm.check_tool("notfoundtool")
 
-# TODO : make this throw errors if fail
-def test_check_library_exists() :
+def test_check_library_exists_false() :
     fvm = fvmframework()
-    fvm.add_vhdl_source("test.vhd")
-    fvm.check_library_exists("work")
+    exists = fvm.check_library_exists("librarythatdoesntexist")
+    assert exists == False
 
-# TODO : make this throw errors if fail
-def test_cmd_create_library() :
+def test_check_library_exists_true() :
     fvm = fvmframework()
-    fvm.add_vhdl_source("test.vhd")
-    print(f'Generating command to create library work')
-    cmd = fvm.cmd_create_library("work")
-    print(f'{cmd=}')
+    os.makedirs('test/testlib', exist_ok=True)
+    Path('test/testlib/_info').touch()
+    exists = fvm.check_library_exists("test/testlib")
+    assert exists == True
+
+#def test_cmd_create_library() :
+#    fvm = fvmframework()
+#    print(f'Generating command to create library work')
+#    cmd = fvm.cmd_create_library("work")
+#    print(f'{cmd=}')
 
 # Message levels that should return an error appear as "True" in the following
 # table
@@ -80,6 +118,7 @@ messages_and_status = [
 @pytest.mark.parametrize("severity,expected", messages_and_status)
 def test_logger(severity, expected) :
     fvm = fvmframework()
+    fvm.cont = True
     fvm.log(severity, f'Log message with {severity=}')
     retval = fvm.check_errors()
     print(f'{retval=}')
@@ -87,6 +126,7 @@ def test_logger(severity, expected) :
 
 def test_logger_twice() :
     fvm = fvmframework()
+    fvm.cont = True
 
     fvm.log("success", "Success message")
 

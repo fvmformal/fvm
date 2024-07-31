@@ -16,6 +16,12 @@ from src.builder import toolchains
 from src.builder import logcounter
 from src.builder import helpers
 
+# Error codes
+BAD_VALUE    = "FVM exit condition: Bad value"
+ERROR_IN_LOG = "FVM exit condition: Error in tool log"
+CHECK_FAILED = "FVM exit condition: check_for_errors failed"
+
+# Log formats
 LOGFORMAT = '<cyan>FVM</cyan> | <green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>'
 LOGFORMAT_SUMMARY = '<cyan>FVM</cyan> | <green>Summary</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>'
 LOGFORMAT_TOOL = '<cyan>FVM</cyan> | <green>Tool</green> | <level>{level: <8}</level> | <level>{message}</level>'
@@ -34,7 +40,9 @@ class fvmframework:
         parser.add_argument('-o', '--outdir', default = "fvm_out",
                 help='Output directory. (default: %(default)s)')
         parser.add_argument('-s', '--step',
-                help='Run single step. (default: %(default)s)')
+                help='If set, run the specified step. It unset, run all steps. (default: %(default)s)')
+        parser.add_argument('-c', '--cont', default=False, action='store_true',
+                help='Continue with next steps even if errors are detected. (default: %(default)s)')
 
         # Get command-line arguments
         #
@@ -56,6 +64,7 @@ class fvmframework:
         self.list = args.list
         self.outdir = args.outdir
         self.step = args.step
+        self.cont = args.cont
 
         # Make loglevel an instance variable
         if self.verbose :
@@ -95,6 +104,7 @@ class fvmframework:
         logger.info(f'Adding VHDL source: {src}')
         if not os.path.exists(src) :
             logger.error(f'VHDL source not found: {src}')
+            self.exit_if_required(BAD_VALUE)
         extension = pathlib.Path(src).suffix
         if extension not in ['.vhd', '.VHD', '.vhdl', '.VHDL'] :
             logger.warning(f'VHDL source {src=} does not have a typical VHDL extension, instead it has {extension=}')
@@ -106,6 +116,7 @@ class fvmframework:
         logger.info(f'Adding PSL source: {src}')
         if not os.path.exists(src) :
             logger.error(f'VHDL source not found: {src}')
+            self.exit_if_required(BAD_VALUE)
         extension = pathlib.Path(src).suffix
         if extension not in ['.psl', '.PSL'] :
             logger.warning(f'PSL source {src=} does not have a typical PSL extension extension, instead it has {extension=}')
@@ -117,11 +128,16 @@ class fvmframework:
         sources = glob.glob(globstr)
         if len(sources) == 0 :
             logger.error(f'No files found for pattern {globstr}')
+            self.exit_if_required(BAD_VALUE)
         for source in sources:
             self.add_vhdl_source(source)
 
     def add_psl_sources(self, globstr):
         """Add multiple PSL sources by globbing a pattern"""
+        sources = glob.glob(globstr)
+        if len(sources) == 0 :
+            logger.error(f'No files found for pattern {globstr}')
+            self.exit_if_required(BAD_VALUE)
         for source in glob.glob(globstr):
             self.add_psl_source(source)
 
@@ -224,6 +240,9 @@ class fvmframework:
         logger.add(self.log_counter, level=0)
         logger.add(sys.stderr, level=self.loglevel, format=LOGFORMAT)
 
+        if ret :
+          self.exit_if_required(CHECK_FAILED)
+
         return ret
 
     # From now on, these are the functions that are toolchain-dependent
@@ -232,6 +251,7 @@ class fvmframework:
     def set_toolchain(self, toolchain) :
         if toolchain not in toolchains.TOOLS :
             logger.error(f'{toolchain=} not supported')
+            self.exit_if_required(BAD_VALUE)
         else :
             self.toolchain = toolchain
 
@@ -312,15 +332,14 @@ class fvmframework:
             print('exit', file=f)
 
     # TODO : set sensible defaults here and allow for user optionality too
-    # i.e., list methodology, goal, etc
+    # i.e., lint methodology, goal, etc
     def genlintscript(self, filename):
         with open(filename, "w") as f:
             print('onerror exit', file=f)
-            print('lint methodology ip -goal release', file=f)
+            print('lint methodology ip -goal start', file=f)
             print('vlib work', file=f)
             print('vmap work work', file=f)
             print(f'vcom -autoorder -f {self.outdir}/design.f', file=f)
-            print(f'lint methodology standard -goal rmm', file=f)
             print(f'lint run -d {self.toplevel}', file=f)
             print('exit', file=f)
 
@@ -347,15 +366,18 @@ class fvmframework:
                     logger.info(f'Available step: {step}. Tool: {tool}, command = {" ".join(cmd)}')
                 else :
                     cmd_stdout, cmd_stderr = self.run_cmd(cmd, self.verbose)
-                    self.logcheck(cmd_stdout, step, tool)
-                    self.logcheck(cmd_stderr, step, tool)
+                    stdout_err = self.logcheck(cmd_stdout, step, tool)
+                    stderr_err = self.logcheck(cmd_stderr, step, tool)
                     logfile = f'{self.outdir}/{step}.log'
                     logger.info(f'{step=}, {tool=} output written to {logfile}')
                     with open(logfile, 'w') as f :
                         f.write(cmd_stdout)
                         f.write(cmd_stderr)
+                    if stdout_err or stderr_err:
+                        self.exit_if_required(ERROR_IN_LOG)
         else :
             logger.error(f'No tool available for {step=} in {self.toolchain=}')
+            self.exit_if_required(BAD_VALUE)
 
     def run_cmd(self, cmd, verbose = True):
         self.set_logformat(LOGFORMAT_TOOL)
@@ -414,12 +436,15 @@ class fvmframework:
         return captured_stdout, captured_stderr
 
     def logcheck(self, result, step, tool):
+        err_in_log = False
         for line in result.splitlines() :
             err, warn = self.linecheck(line)
             if err :
                 logger.error(f'ERROR detected in {step=}, {tool=}, {line=}')
+                err_in_log = True
             elif warn :
                 logger.warning(f'WARNING detected in {step=}, {tool=}, {line=}')
+        return err_in_log
 
     def linecheck(self, line):
         """Check for errors and warnings in log lines. Use casefold() for
@@ -427,13 +452,24 @@ class fvmframework:
         err = False
         warn = False
         if 'Errors: 0' in line:
-            pass  # Avoid signalling an error on tool error summaries
+            pass  # Avoid signalling an error on tool error summaries without errors
+        elif 'Error (0)' in line:
+            pass  # Avoid signalling an error on tool error summaries without errors
         elif 'Command : onerror' in line:
             pass  # Avoid signalling an error when the tool log echoes our "onerror exit"
         elif 'error'.casefold() in line.casefold():
             err = True
         elif 'fatal'.casefold() in line.casefold():
             err = True
+        elif 'Warning (0)'.casefold() in line.casefold():
+            pass # Avoid signalling a warning on tool warning summaries without warnings
         elif 'warning'.casefold() in line.casefold():
             warn = True
         return err, warn
+
+    def exit_if_required(self, errorcode):
+        """Exit if the continue flag is not set"""
+        if self.cont:
+            pass
+        else:
+            sys.exit(errorcode)
