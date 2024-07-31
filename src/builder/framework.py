@@ -43,6 +43,10 @@ class fvmframework:
                 help='If set, run the specified step. It unset, run all steps. (default: %(default)s)')
         parser.add_argument('-c', '--cont', default=False, action='store_true',
                 help='Continue with next steps even if errors are detected. (default: %(default)s)')
+        parser.add_argument('-g', '--gui', default=False, action='store_true',
+                help='Show tool results with GUI after tool execution. (default: %(default)s)')
+        parser.add_argument('-n', '--guinorun', default=False, action='store_true',
+                help='Show already existing tool results with GUI, without running the tools again. (default: %(default)s)')
 
         # Get command-line arguments
         #
@@ -65,6 +69,8 @@ class fvmframework:
         self.outdir = args.outdir
         self.step = args.step
         self.cont = args.cont
+        self.gui = args.gui
+        self.guinorun = args.guinorun
 
         # Make loglevel an instance variable
         if self.verbose :
@@ -353,7 +359,12 @@ class fvmframework:
         else:
             self.run_step(self.step)
 
+    # TODO : we have some duplicated code in the way we run commands, becase
+    # the code sort of repeats for the GUI invocations. We must see how we can
+    # deduplicate this so this function does not get unwieldy
     def run_step(self, step):
+        """Run a specific step of the methodology"""
+        open_gui = False
         # If called with a specific step, run that specific step
         if step in toolchains.TOOLS[self.toolchain] :
             tool = toolchains.TOOLS[self.toolchain][step]
@@ -364,6 +375,8 @@ class fvmframework:
                 logger.trace(f'command: {" ".join(cmd)=}')
                 if self.list == True :
                     logger.info(f'Available step: {step}. Tool: {tool}, command = {" ".join(cmd)}')
+                elif self.guinorun == True :
+                    logger.info(f'{self.guinorun=}, will not run {step=} with {tool=}')
                 else :
                     cmd_stdout, cmd_stderr = self.run_cmd(cmd, self.verbose)
                     stdout_err = self.logcheck(cmd_stdout, step, tool)
@@ -375,6 +388,26 @@ class fvmframework:
                         f.write(cmd_stderr)
                     if stdout_err or stderr_err:
                         self.exit_if_required(ERROR_IN_LOG)
+                    if self.gui :
+                        open_gui = True
+                if self.guinorun and self.list == False :
+                    open_gui = True
+                if open_gui:
+                    logger.info(f'{step=}, {tool=}, opening results with GUI')
+                    if step == "lint":
+                        cmd = [tool, f'{self.outdir}'+'/'+'lint.db']
+                        self.run_cmd(cmd, self.verbose)
+                        # TODO : maybe check for errors also in the GUI?
+                        # TODO : maybe run the GUI processes without blocking
+                        # the rest of the steps? For that we would probably
+                        # need to pass nother option to run_cmd
+                    elif step == "prove":
+                        cmd = [tool, f'{self.outdir}'+'/'+'propcheck.db']
+                        self.run_cmd(cmd, self.verbose)
+                        # TODO : maybe check for errors also in the GUI?
+                        # TODO : maybe run the GUI processes without blocking
+                        # the rest of the steps? For that we would probably
+                        # need to pass nother option to run_cmd
         else :
             logger.error(f'No tool available for {step=} in {self.toolchain=}')
             self.exit_if_required(BAD_VALUE)
