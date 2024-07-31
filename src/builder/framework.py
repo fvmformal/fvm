@@ -33,6 +33,8 @@ class fvmframework:
                 help='Only list available methodology steps, but do not execute them. (default: %(default)s)')
         parser.add_argument('-o', '--outdir', default = "fvm_out",
                 help='Output directory. (default: %(default)s)')
+        parser.add_argument('-s', '--step',
+                help='Run single step. (default: %(default)s)')
 
         # Get command-line arguments
         #
@@ -53,6 +55,7 @@ class fvmframework:
         self.verbose = args.verbose
         self.list = args.list
         self.outdir = args.outdir
+        self.step = args.step
 
         # Make loglevel an instance variable
         if self.verbose :
@@ -322,10 +325,14 @@ class fvmframework:
             print('exit', file=f)
 
     def run(self):
-        # TODO : run all available/selected steps/tools
-        # TODO : call the run_step() function for each available step
-        self.run_step("lint")
-        self.run_step("prove")
+        # Run all available/selected steps/tools
+        # Call the run_step() function for each available step
+        # If a 'step' argument is specified, just run that specific step
+        if self.step is None:
+            self.run_step("lint")
+            self.run_step("prove")
+        else:
+            self.run_step(self.step)
 
     def run_step(self, step):
         # If called with a specific step, run that specific step
