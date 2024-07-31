@@ -37,23 +37,19 @@ test-verbose:
 examplelist += 00-counter
 examplelist += 01-countervunit
 examplelist += 02-linearinterpolator
+examplelist += 05-uart_tx
 
 conceptlist += transactions
 
 examples: $(examplelist)
 concepts: $(conceptlist)
 
-transactions:
-	$(PYTHON) -m concepts.transactions.formal
+# Generic rules to run examples and concepts
+%: examples/%
+	$(PYTHON) -m examples.$@.formal
 
-00-counter:
-	$(PYTHON) -m examples.00-counter.formal
-
-01-countervunit:
-	$(PYTHON) -m examples.01-countervunit.formal
-
-02-linearinterpolator:
-	$(PYTHON) -m examples.02-linearinterpolator.formal
+%: concepts/%
+	$(PYTHON) -m concepts.$@.formal
 
 pycoverage:
 	coverage report -m
