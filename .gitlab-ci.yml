@@ -14,8 +14,8 @@ lint_python:
     - make lint | tee pylint.log
     - RATING=$(grep -oP 'Your code has been rated at \K[\d.]+' pylint.log)
     - PERCENTAGE=$(echo "$RATING * 10" | bc)
-    - printf "lint score: %.2f %%\n" "$PERCENTAGE"
-  coverage: /lint score: ([\d]+\.[\d]+)/
+    - printf "lint score is %.2f %%\n" "$PERCENTAGE"
+  coverage: /lint score is ([\d]+\.[\d]+)/
   allow_failure: true
 
 test-all:
