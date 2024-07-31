@@ -1,8 +1,8 @@
 vunit minicalc (minicalc(minicalc_arch)) {
 
-  --default clock is rising_edge(clk);
+  default clock is rising_edge(clk);
 
-  --assume_initial_reset: assume rst = '1';
+  assume_initial_reset: assume rst = '1';
 
   -- Declare symbolic constants
   signal S_OP_A : signed(N-1 downto 0);
@@ -29,30 +29,38 @@ vunit minicalc (minicalc(minicalc_arch)) {
     res_valid = '1'
   };
 
-  -- Calculate the expected result
+  -- Get values for the input sequence
+  S_OP_A <= op_a;
+  S_OP_B <= op_b;
+  S_OP <= op;
+
+  -- Get values for the output sequence
   -- TODO : do this in a different way that the synthesizable VHDL, for example
   -- using integers and converting the result to signed
   predict_result: process(S_OP_A, S_OP_B, S_OP)
   begin
-    case S_OP is
-      when sum =>
-        S_RES <= S_OP_A + S_OP_B;
-      when sub =>
-        S_RES <= S_OP_A - S_OP_B;
-      when mul =>
-        S_RES <= S_OP_A * S_OP_B;
-    end case;
+    if rising_edge(clk) then
+      case S_OP is
+        when sum =>
+          S_RES <= S_OP_A + S_OP_B;
+        when sub =>
+          S_RES <= S_OP_A - S_OP_B;
+        when mul =>
+          S_RES <= S_OP_A * S_OP_B;
+      end case;
+    end if;
   end process;
 
   -- Now let's define the expected relation between these two sequences:
   -- For each valid input sequence we want to have a valid output sequence with
   -- the correct result
-  assert always (inputseq -> outputseq);
+  assert always ((inputseq |=> outputseq) abort rst);
 
   -- Cover all three operations
   cover {OP = sum : op_valid = '1'};
   cover {OP = sub : op_valid = '1'};
   cover {OP = mul : op_valid = '1'};
   -- can we do cover {inputseq: OP = sum}; ?
+  cover {inputseq : S_OP = sum};
 
 }

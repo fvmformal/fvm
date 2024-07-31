@@ -67,3 +67,9 @@ clean:
 	rm -rf ./*/__pycache__ ./*/*/__pycache__
 	rm -rf work fvm_out
 	rm -rf .coverage coverage.xml htmlcov
+	rm -f pylint.log pylint.txt
+	rm -rf .qverify .visualizer qcache propcheck.db
+	rm -f visualizer.log qverify_ui.log qverify_ui_cmds.tcl sysinfo.log
+	rm -rf test/testlib
+	rm -f test/test.vhd test/test2.vhd test/test3.vhd
+	rm -f test/test.psl test/test2.psl test/test3.psl
