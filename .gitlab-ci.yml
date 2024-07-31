@@ -11,8 +11,11 @@ lint_python:
     - apt update
     - apt install -y python3 python3-pip
     - pip3 install -r requirements.txt -r dev-requirements.txt
-    - make lint
-  coverage: /Your code has been rated at ([\d\.]+\/[\d\.]+)/
+    - make lint | tee pylint.log
+    - RATING=$(grep -oP 'Your code has been rated at \K[\d.]+' pylint.log)
+    - PERCENTAGE=$(echo "$RATING * 10" | bc)
+    - printf "lint score: %.2f %%\n" "$PERCENTAGE"
+  coverage: /lint score: ([\d]+\.[\d]+)/
   allow_failure: true
 
 test-all:
