@@ -9,7 +9,7 @@ lint_python:
   image: debian:11
   script:
     - apt update
-    - apt install -y python3 python3-pip
+    - apt install -y python3 python3-pip bc
     - pip3 install -r requirements.txt -r dev-requirements.txt
     - make lint | tee pylint.log
     - RATING=$(grep -oP 'Your code has been rated at \K[\d.]+' pylint.log)
