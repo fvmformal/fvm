@@ -23,7 +23,7 @@ install:
 	@echo Sorry, $@ is not implemented yet
 
 lint:
-	pylint --output-format=colorized test/*.py src/*/*.py || pylint-exit $?
+	pylint --output-format=colorized test/*.py src/*/*.py || pylint-exit $$?
 
 list-tests:
 	pytest --collect-only
