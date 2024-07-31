@@ -1,6 +1,7 @@
 # Python standard library imports
 import sys
 import os
+import re
 import glob
 import shutil
 import subprocess
@@ -34,8 +35,21 @@ class fvmframework:
                 help='Output directory. (default: %(default)s)')
 
         # Get command-line arguments
-        args = parser.parse_args()
-        logger.info(f'{args=}')
+        #
+        # Since pytest also has command-line arguments, we may have a conflict
+        # here, so get different arguments depending on whether the called
+        # program is pytest or not
+        #
+        # If we are called by pytest, pass an empty list to argparse, because
+        # the arguments received by pytest will not be recognized by our code
+        # and thus all tests would fail. If we are not called by pytest, pass
+        # the rest of sys.argv to argparse
+        if re.search('pytest', sys.argv[0]):
+            args = parser.parse_args([])
+        else:
+            args = parser.parse_args(sys.argv[1:])
+
+        logger.trace(f'{args=}')
         self.verbose = args.verbose
         self.list = args.list
         self.outdir = args.outdir

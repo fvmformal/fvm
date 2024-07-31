@@ -79,14 +79,14 @@ messages_and_status = [
 # return True if it has seen error and/or critical messages)
 @pytest.mark.parametrize("severity,expected", messages_and_status)
 def test_logger(severity, expected) :
-    fvm = fvmframework(loglevel="TRACE")
+    fvm = fvmframework()
     fvm.log(severity, f'Log message with {severity=}')
     retval = fvm.check_errors()
     print(f'{retval=}')
     assert retval == expected
 
 def test_logger_twice() :
-    fvm = fvmframework(loglevel="TRACE")
+    fvm = fvmframework()
 
     fvm.log("success", "Success message")
 

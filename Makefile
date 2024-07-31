@@ -12,6 +12,7 @@ all:
 	@echo   "make concepts     -> run the concepts"
 	@echo   "make examples     -> run the examples"
 	@echo   "make pycoverage   -> generate code coverage report for the python code"
+	@echo   "make testall      -> run the tests, concepts and examples"
 	@echo   "make clean        -> remove temporary files"
 
 install-deps:
@@ -54,6 +55,8 @@ pycoverage:
 	coverage report -m
 	coverage html
 	coverage xml
+
+testall: test concepts examples
 
 clean:
 	rm -f results.xml flex*.log vish_stacktrace.vstf modelsim.ini
