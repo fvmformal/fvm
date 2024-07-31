@@ -1,4 +1,4 @@
-.PHONY: all install-deps install list-tests test test-verbose examples concepts coverage clean
+.PHONY: all install-deps install lint list-tests test test-verbose examples concepts coverage clean
 
 PYTHON ?= python3
 
@@ -6,6 +6,7 @@ all:
 	@echo usage:
 	@echo   "make install-deps -> install dependencies"
 	@echo   "make install      -> install the FVM"
+	@echo   "make lint         -> pass pylint over the python code"
 	@echo   "make list-tests   -> list all the tests"
 	@echo   "make test         -> run the tests"
 	@echo   "make test-verbose -> run the tests with full stdout/stderr output"
@@ -20,6 +21,9 @@ install-deps:
 
 install:
 	@echo Sorry, $@ is not implemented yet
+
+lint:
+	pylint --output-format=colorized test/*.py src/*/*.py
 
 list-tests:
 	pytest --collect-only
