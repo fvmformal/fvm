@@ -60,7 +60,10 @@ vunit minicalc (minicalc(minicalc_arch)) {
   cover {OP = sum : op_valid = '1'};
   cover {OP = sub : op_valid = '1'};
   cover {OP = mul : op_valid = '1'};
-  -- can we do cover {inputseq: OP = sum}; ?
+
+  -- It may be easier to cover inputseq with the specific operation
   cover {inputseq : S_OP = sum};
+  cover {inputseq : S_OP = sub};
+  cover {inputseq : S_OP = mul};
 
 }

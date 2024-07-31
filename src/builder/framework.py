@@ -432,11 +432,13 @@ class fvmframework:
             for line in iter(stdout.readline, ''):
                 # If verbose, print to console
                 if verbose:
-                    err, warn = self.linecheck(line)
+                    err, warn, success = self.linecheck(line)
                     if err:
                         logger.error(line.rstrip())
                     elif warn:
                         logger.warning(line.rstrip())
+                    elif success:
+                        logger.success(line.rstrip())
                     else:
                         logger.trace(line.rstrip())
                 stdout_lines.append(line)  # Save to list
@@ -444,11 +446,13 @@ class fvmframework:
             for line in iter(stderr.readline, ''):
                 # If verbose, print to console
                 if verbose:
-                    err, warn = self.linecheck(line)
+                    err, warn, success = self.linecheck(line)
                     if err:
                         logger.error(line.rstrip())
                     elif warn:
                         logger.warning(line.rstrip())
+                    elif success:
+                        logger.success(line.rstrip())
                     else:
                         logger.trace(line.rstrip())
                 stderr_lines.append(line)  # Save to list
@@ -471,12 +475,14 @@ class fvmframework:
     def logcheck(self, result, step, tool):
         err_in_log = False
         for line in result.splitlines() :
-            err, warn = self.linecheck(line)
+            err, warn, success = self.linecheck(line)
             if err :
                 logger.error(f'ERROR detected in {step=}, {tool=}, {line=}')
                 err_in_log = True
             elif warn :
                 logger.warning(f'WARNING detected in {step=}, {tool=}, {line=}')
+            elif success :
+                logger.success(f'SUCCESS detected in {step=}, {tool=}, {line=}')
         return err_in_log
 
     def linecheck(self, line):
@@ -484,6 +490,7 @@ class fvmframework:
         robust case-insensitive comparison"""
         err = False
         warn = False
+        success = False
         if 'Errors: 0' in line:
             pass  # Avoid signalling an error on tool error summaries without errors
         elif 'Error (0)' in line:
@@ -498,7 +505,17 @@ class fvmframework:
             pass # Avoid signalling a warning on tool warning summaries without warnings
         elif 'warning'.casefold() in line.casefold():
             warn = True
-        return err, warn
+        elif 'Cover Type' in line:
+            pass # Avoid signalling a warning on the header of the summary table
+        elif 'Fired' in line:
+            err = True
+        elif 'Proven' in line:
+            success = True
+        elif 'Inconclusive' in line:
+            warn = True
+        elif 'Covered' in line:
+            success = True
+        return err, warn, success
 
     def exit_if_required(self, errorcode):
         """Exit if the continue flag is not set"""
