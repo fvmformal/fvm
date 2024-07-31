@@ -2,6 +2,7 @@ stages:
   - test
   - concepts
   - examples
+  - coverage
 
 test-all:
   stage: test
@@ -11,19 +12,14 @@ test-all:
     - apt install -y python3 python3-pip
     - pip3 install -r requirements.txt -r dev-requirements.txt
     - make test
-    - make pycoverage
-  coverage: /TOTAL.*\s+(\d+\%)/
   artifacts:
     when: always
     paths:
-      - htmlcov
+      - .coverage
     reports:
       junit:
         - results.xml
-      coverage_report:                                                          
-        coverage_format: cobertura                                              
-        path: coverage.xml 
-      
+
 # TODO : Add artifacts, when we have a clearer idea of what those would be
 # TODO : Add results.xml, when our framework generates it
 run-concepts:
@@ -32,8 +28,12 @@ run-concepts:
   script:
     - unset LM_LICENSE_FILE
     - export SALT_LICENSE_SERVER=2101@baldr.us.es
-    - pip3 install -r requirements.txt
+    - pip3 install -r requirements.txt -r dev-requirements.txt
     - make PYTHON="coverage run" concepts
+  artifacts:
+    when: always
+    paths:
+      - .coverage
 
 run-examples:
   stage: examples
@@ -41,5 +41,27 @@ run-examples:
   script:
     - unset LM_LICENSE_FILE
     - export SALT_LICENSE_SERVER=2101@baldr.us.es
-    - pip3 install -r requirements.txt
+    - pip3 install -r requirements.txt -r dev-requirements.txt
     - make PYTHON="coverage run" examples
+  artifacts:
+    when: always
+    paths:
+      - .coverage
+
+pycoverage:
+  stage: coverage
+  image: debian:11
+  script:
+    - apt update
+    - apt install -y python3 python3-pip
+    - pip3 install -r requirements.txt -r dev-requirements.txt
+    - make pycoverage
+  coverage: /TOTAL.*\s+(\d+\%)/
+  artifacts:
+    when: always
+    paths:
+      - htmlcov
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
