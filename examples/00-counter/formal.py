@@ -1,6 +1,6 @@
 from src.builder.framework import fvmframework
 
-fvm = fvmframework(loglevel="TRACE")
+fvm = fvmframework()
 fvm.add_vhdl_source("examples/00-counter/counter.vhd")
 fvm.list_sources()
 fvm.set_toplevel("counter")

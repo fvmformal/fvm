@@ -7,6 +7,7 @@ import subprocess
 import pathlib
 
 # Third party imports
+import argparse
 from loguru import logger
 
 # Our own imports
@@ -20,11 +21,30 @@ LOGFORMAT_TOOL = '<cyan>FVM</cyan> | <green>Tool</green> | <level>{level: <8}</l
 
 class fvmframework:
 
-    def __init__(self, loglevel="INFO", outdir="fvm_out"):
+    def __init__(self):
         """Class constructor"""
 
+        # Configure the argument parser
+        parser = argparse.ArgumentParser(description='Run the formal tools')
+        parser.add_argument('-v', '--verbose', default=False, action='store_true',
+                help='Show full tool outputs. (default: %(default)s)')
+        parser.add_argument('-l', '--list', default=False, action='store_true',
+                help='Only list available methodology steps, but do not execute them. (default: %(default)s)')
+        parser.add_argument('-o', '--outdir', default = "fvm_out",
+                help='Output directory. (default: %(default)s)')
+
+        # Get command-line arguments
+        args = parser.parse_args()
+        logger.info(f'{args=}')
+        self.verbose = args.verbose
+        self.list = args.list
+        self.outdir = args.outdir
+
         # Make loglevel an instance variable
-        self.loglevel = loglevel
+        if self.verbose :
+            self.loglevel = "TRACE"
+        else :
+            self.loglevel = "INFO"
 
         # Create logger counter
         self.log_counter = logcounter.logcounter()
@@ -52,7 +72,6 @@ class fvmframework:
         self.vhdl_sources = list()
         self.psl_sources = list()
         self.toolchain = "questa"
-        self.outdir = outdir
 
     def add_vhdl_source(self, src):
         """Add a single VHDL source"""
@@ -245,7 +264,7 @@ class fvmframework:
             print('', file=f)
             print('## Compile netlist', file=f)
             #print('log_info "***** Compiling netlist..."')
-            print('vcom -autoorder -f fvm_out/design.f', file=f)
+            print(f'vcom -autoorder -f {self.outdir}/design.f', file=f)
 
             print('', file=f)
             print('## Add clocks', file=f)
@@ -283,7 +302,7 @@ class fvmframework:
             print('lint methodology ip -goal release', file=f)
             print('vlib work', file=f)
             print('vmap work work', file=f)
-            print('vcom -autoorder -f fvm_out/design.f', file=f)
+            print(f'vcom -autoorder -f {self.outdir}/design.f', file=f)
             print(f'lint methodology standard -goal rmm', file=f)
             print(f'lint run -d {self.toplevel}', file=f)
             print('exit', file=f)
@@ -298,14 +317,22 @@ class fvmframework:
         # If called with a specific step, run that specific step
         if step in toolchains.TOOLS[self.toolchain] :
             tool = toolchains.TOOLS[self.toolchain][step]
-            logger.info(f'Using {tool=} for {step=}')
+            logger.info(f'{step=}, running {tool=}')
             logger.debug(f'Running {tool=}')
             if self.toolchain == "questa":
                 cmd = [tool, '-c', '-od', self.outdir, '-do', self.outdir+'/'+step+'.do']
                 logger.trace(f'command: {" ".join(cmd)=}')
-                cmd_stdout, cmd_stderr = self.run_cmd(cmd)
-                self.logcheck(cmd_stdout, step, tool)
-                self.logcheck(cmd_stderr, step, tool)
+                if self.list == True :
+                    logger.info(f'Available step: {step}. Tool: {tool}, command = {" ".join(cmd)}')
+                else :
+                    cmd_stdout, cmd_stderr = self.run_cmd(cmd, self.verbose)
+                    self.logcheck(cmd_stdout, step, tool)
+                    self.logcheck(cmd_stderr, step, tool)
+                    logfile = f'{self.outdir}/{step}.log'
+                    logger.info(f'{step=}, {tool=} output written to {logfile}')
+                    with open(logfile, 'w') as f :
+                        f.write(cmd_stdout)
+                        f.write(cmd_stderr)
         else :
             logger.error(f'No tool available for {step=} in {self.toolchain=}')
 
@@ -324,18 +351,30 @@ class fvmframework:
         stdout_lines = list()
         stderr_lines = list()
 
-        # Read and print stdout and stderr in real-time
+        # If verbose, read and print stdout and stderr in real-time
         with process.stdout as stdout, process.stderr as stderr:
             for line in iter(stdout.readline, ''):
+                # If verbose, print to console
                 if verbose:
-                    #print(line, end='')    # Print to console if verbose is True
-                    logger.trace(line.rstrip())
+                    err, warn = self.linecheck(line)
+                    if err:
+                        logger.error(line.rstrip())
+                    elif warn:
+                        logger.warning(line.rstrip())
+                    else:
+                        logger.trace(line.rstrip())
                 stdout_lines.append(line)  # Save to list
 
             for line in iter(stderr.readline, ''):
+                # If verbose, print to console
                 if verbose:
-                    #print(line, end='')    # Print to console if verbose is True
-                    logger.debug(line.rstrip())
+                    err, warn = self.linecheck(line)
+                    if err:
+                        logger.error(line.rstrip())
+                    elif warn:
+                        logger.warning(line.rstrip())
+                    else:
+                        logger.trace(line.rstrip())
                 stderr_lines.append(line)  # Save to list
 
         # Wait for the process to complete and get the return code
@@ -355,11 +394,25 @@ class fvmframework:
 
     def logcheck(self, result, step, tool):
         for line in result.splitlines() :
-            if 'Errors: 0' in line:
-                pass  # Avoid signalling an error on tool error summaries
-            elif 'ERROR' in line:
+            err, warn = self.linecheck(line)
+            if err :
                 logger.error(f'ERROR detected in {step=}, {tool=}, {line=}')
-            elif 'Error' in line:
-                logger.error(f'ERROR detected in {step=}, {tool=}, {line=}')
-            elif 'Fatal' in line:
-                logger.error(f'ERROR detected in {step=}, {tool=}, {line=}')
+            elif warn :
+                logger.warning(f'WARNING detected in {step=}, {tool=}, {line=}')
+
+    def linecheck(self, line):
+        """Check for errors and warnings in log lines. Use casefold() for
+        robust case-insensitive comparison"""
+        err = False
+        warn = False
+        if 'Errors: 0' in line:
+            pass  # Avoid signalling an error on tool error summaries
+        elif 'Command : onerror' in line:
+            pass  # Avoid signalling an error when the tool log echoes our "onerror exit"
+        elif 'error'.casefold() in line.casefold():
+            err = True
+        elif 'fatal'.casefold() in line.casefold():
+            err = True
+        elif 'warning'.casefold() in line.casefold():
+            warn = True
+        return err, warn
