@@ -8,7 +8,7 @@ vunit uart_tx (uart_tx(Behavioral)) {
 
   -- Assume we won't be having any resets while we are transmitting
   assume_no_reset_during_tx:
-    assume always rd_en -> {true; (not rst)[*(11*BITDURATION)]};
+    assume always rd_en -> {true; (not rst)[*(11*BIT_DURATION)]};
 
 
   -- Assert the UART never reads from an empty FIFO
@@ -38,12 +38,12 @@ vunit uart_tx (uart_tx(Behavioral)) {
   constant STOPBIT : std_logic := '1';
 
   sequence transmission is {
-    TX=STARTBIT[*BITDURATION];
-    TX=databits(0)[*BITDURATION]; TX=databits(1)[*BITDURATION];
-    TX=databits(2)[*BITDURATION]; TX=databits(3)[*BITDURATION];
-    TX=databits(4)[*BITDURATION]; TX=databits(5)[*BITDURATION];
-    TX=databits(6)[*BITDURATION]; TX=databits(7)[*BITDURATION];
-    TX=paritybit[*BITDURATION]; TX=STOPBIT[*BITDURATION]
+    TX=STARTBIT[*BIT_DURATION];
+    TX=databits(0)[*BIT_DURATION]; TX=databits(1)[*BIT_DURATION];
+    TX=databits(2)[*BIT_DURATION]; TX=databits(3)[*BIT_DURATION];
+    TX=databits(4)[*BIT_DURATION]; TX=databits(5)[*BIT_DURATION];
+    TX=databits(6)[*BIT_DURATION]; TX=databits(7)[*BIT_DURATION];
+    TX=paritybit[*BIT_DURATION]; TX=STOPBIT[*BIT_DURATION]
   };
 
   -- Now we need to predict the values of databits and paritybit

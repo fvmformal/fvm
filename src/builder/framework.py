@@ -351,6 +351,10 @@ class fvmframework:
             print('exit', file=f)
 
     def run(self):
+        """Run all available/selected methodology steps"""
+        # Create all necessary scripts
+        self.setup()
+
         # Run all available/selected steps/tools
         # Call the run_step() function for each available step
         # If a 'step' argument is specified, just run that specific step
@@ -359,6 +363,10 @@ class fvmframework:
             self.run_step("prove")
         else:
             self.run_step(self.step)
+
+        err = self.check_errors()
+        if err :
+          self.exit_if_required(CHECK_FAILED)
 
     # TODO : we have some duplicated code in the way we run commands, becase
     # the code sort of repeats for the GUI invocations. We must see how we can
