@@ -475,7 +475,7 @@ class fvmframework:
 
         # Raise an exception if the return code is non-zero
         if retval != 0:
-            raise subprocess.CalledProcessError(return_code, cmd, output=captured_stdout, stderr=captured_stderr)
+            raise subprocess.CalledProcessError(retval, cmd, output=captured_stdout, stderr=captured_stderr)
 
         self.set_logformat(LOGFORMAT)
 
@@ -525,8 +525,12 @@ class fvmframework:
             err = True
         elif 'Proven' in line:
             success = True
+        elif 'Vacuous' in line:
+            warn = True
         elif 'Inconclusive' in line:
             warn = True
+        elif 'Uncoverable' in line:
+            err = True
         elif 'Covered' in line:
             success = True
         return err, warn, success
