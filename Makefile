@@ -60,7 +60,7 @@ testall: test concepts examples
 
 clean:
 	rm -f results.xml flex*.log vish_stacktrace.vstf modelsim.ini
-	rm -rf ./*/__pycache__ ./*/*/__pycache__
+	rm -rf ./*/__pycache__ ./*/*/__pycache__ .pytest_cache
 	rm -rf work fvm_out
 	rm -rf .coverage coverage.xml htmlcov
 	rm -f pylint.log pylint.txt
