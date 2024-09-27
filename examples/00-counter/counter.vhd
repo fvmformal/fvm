@@ -3,7 +3,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 entity counter is
-    generic ( MAX_COUNT : integer := 100 );
+    generic ( MAX_COUNT : integer := 200 );
     port ( clk: in  std_logic;
            rst: in  std_logic;
            Q:   out unsigned(7 downto 0)

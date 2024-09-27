@@ -19,8 +19,8 @@ entity interpolator is
 
 architecture interpolator_arch of interpolator is
 
-    signal i, p_i    : signed (4 downto 0);  -- Current interpolation stage
-    signal estim_aux : complex15;            -- Result of the interpolation, before discarding the LSB
+    signal i, n_i    : unsigned (3 downto 0);  -- Current interpolation stage
+    signal estim_aux : complex15;              -- Result of the interpolation, before discarding the LSB
 
     -- Two signals needed for the firewall assertions
     signal firewall_inferior, firewall_superior : complex10;
@@ -30,9 +30,9 @@ begin
     sinc: process(rst, clk)
     begin
         if rst = '1' then
-            i <= to_signed(12,i'length);  -- set i to 12
+            i <= to_unsigned(12,i'length);  -- set i to 12
         elsif rising_edge(clk) then
-            i <= p_i;
+            i <= n_i;
         end if;
     end process;
 
@@ -43,21 +43,21 @@ begin
     -- afterwards go again to i = 12
     comb: process(inferior, superior, valid, i)
     begin
-        if (i < 0) or (i > 11) then  -- Anything that is not between 0 and 11: idle
+        if i > 11 then  -- Anything that is not between 0 and 11: idle
             estim_valid <= '0';
             if valid = '1' then
-                p_i <= to_signed(0, p_i'length);
+                n_i <= to_unsigned(0, n_i'length);
             else
-                p_i <= to_signed(12,p_i'length);
+                n_i <= to_unsigned(12,n_i'length);
             end if;
         else                         -- Between 0 and 11: interpolate
-            p_i <= i + 1;
+            n_i <= i + 1;
             estim_valid <= '1';
         end if;
     end process;
 
-    estim_aux.re <= inferior.re*(12-i) + superior.re*i;
-    estim_aux.im <= inferior.im*(12-i) + superior.im*i;
+    estim_aux.re <= inferior.re*(12-signed(resize(i, i'length+1))) + superior.re*signed(resize(i, i'length+1));
+    estim_aux.im <= inferior.im*(12-signed(resize(i, i'length+1))) + superior.im*signed(resize(i, i'length+1));
 
     -- Discard the most significant bit since it doesn't contain any
     -- information (it is redundant with bit 13), and keep the 10 most
