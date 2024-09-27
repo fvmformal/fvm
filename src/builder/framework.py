@@ -477,6 +477,9 @@ class fvmframework:
         stdout_lines = list()
         stderr_lines = list()
 
+        if not verbose:
+            print('Running: ', end='', flush=True)
+
         # If verbose, read and print stdout and stderr in real-time
         with process.stdout as stdout, process.stderr as stderr:
             for line in iter(stdout.readline, ''):
@@ -491,6 +494,9 @@ class fvmframework:
                         logger.success(line.rstrip())
                     else:
                         logger.trace(line.rstrip())
+                # If not verbose, print dots
+                else:
+                    print('.', end='', flush=True)
                 stdout_lines.append(line)  # Save to list
 
             for line in iter(stderr.readline, ''):
@@ -505,10 +511,17 @@ class fvmframework:
                         logger.success(line.rstrip())
                     else:
                         logger.trace(line.rstrip())
+                # If not verbose, print dots
+                else:
+                    print('.', end='', flush=True)
                 stderr_lines.append(line)  # Save to list
 
         # Wait for the process to complete and get the return code
         retval = process.wait()
+
+        # If not verbose, print the final carriage return for the dots
+        if not verbose:
+            print(' Finished', flush=True)
 
         # Join captured output
         captured_stdout = ''.join(stdout_lines)
