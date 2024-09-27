@@ -24,7 +24,10 @@ CHECK_FAILED = "FVM exit condition: check_for_errors failed"
 # Log formats
 LOGFORMAT = '<cyan>FVM</cyan> | <green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>'
 LOGFORMAT_SUMMARY = '<cyan>FVM</cyan> | <green>Summary</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>'
-LOGFORMAT_TOOL = '<cyan>FVM</cyan> | <green>Tool</green> | <level>{level: <8}</level> | <level>{message}</level>'
+#LOGFORMAT_TOOL = '<cyan>FVM</cyan> | <green>Tool</green> | <level>{level: <8}</level> | <level>{message}</level>'
+
+def getlogformattool(step, tool):
+    return '<cyan>FVM</cyan> | ' + f'<green>{step=}</green> | <green>{tool=}</green> | ' + '<level>{level: <8}</level> | <level>{message}</level>'
 
 class fvmframework:
 
@@ -111,6 +114,7 @@ class fvmframework:
             if args.step not in toolchains.TOOLS[self.toolchain]:
                 logger.error(f'step {args.step} not available in {self.toolchain}.  Available steps are: {list(toolchains.TOOLS[self.toolchain].keys())}')
                 self.exit_if_required(BAD_VALUE)
+
     def add_vhdl_source(self, src):
         """Add a single VHDL source"""
         logger.info(f'Adding VHDL source: {src}')
@@ -417,22 +421,23 @@ class fvmframework:
         open_gui = False
         # If called with a specific step, run that specific step
         if step in toolchains.TOOLS[self.toolchain] :
-            tool = toolchains.TOOLS[self.toolchain][step]
-            logger.info(f'{step=}, running {tool=}')
-            logger.debug(f'Running {tool=}')
+            tool = toolchains.TOOLS[self.toolchain][step][0]
+            wrapper = toolchains.TOOLS[self.toolchain][step][1]
+            logger.info(f'{step=}, running {tool=} with {wrapper=}')
+            logger.debug(f'Running {tool=} with {wrapper=}')
             if self.toolchain == "questa":
-                cmd = [tool, '-c', '-od', self.outdir, '-do', self.outdir+'/'+step+'.do']
-                logger.trace(f'command: {" ".join(cmd)=}')
+                cmd = [wrapper, '-c', '-od', self.outdir, '-do', self.outdir+'/'+step+'.do']
                 if self.list == True :
                     logger.info(f'Available step: {step}. Tool: {tool}, command = {" ".join(cmd)}')
                 elif self.guinorun == True :
                     logger.info(f'{self.guinorun=}, will not run {step=} with {tool=}')
                 else :
-                    cmd_stdout, cmd_stderr = self.run_cmd(cmd, self.verbose)
+                    logger.trace(f'command: {" ".join(cmd)=}')
+                    cmd_stdout, cmd_stderr = self.run_cmd(cmd, step, tool, self.verbose)
                     stdout_err = self.logcheck(cmd_stdout, step, tool)
                     stderr_err = self.logcheck(cmd_stderr, step, tool)
                     logfile = f'{self.outdir}/{step}.log'
-                    logger.info(f'{step=}, {tool=} output written to {logfile}')
+                    logger.info(f'{step=}, {tool=}, finished, output written to {logfile}')
                     with open(logfile, 'w') as f :
                         f.write(cmd_stdout)
                         f.write(cmd_stderr)
@@ -442,28 +447,23 @@ class fvmframework:
                         open_gui = True
                 if self.guinorun and self.list == False :
                     open_gui = True
+                # TODO : maybe check for errors also in the GUI?
+                # TODO : maybe run the GUI processes without blocking
+                # the rest of the steps? For that we would probably
+                # need to pass another option to run_cmd
+                # TODO : code here can be deduplicated by having the database
+                # names (.db) in a dictionary -> just open {tool}.db
                 if open_gui:
                     logger.info(f'{step=}, {tool=}, opening results with GUI')
-                    if step == "lint":
-                        cmd = [tool, f'{self.outdir}'+'/'+'lint.db']
-                        self.run_cmd(cmd, self.verbose)
-                        # TODO : maybe check for errors also in the GUI?
-                        # TODO : maybe run the GUI processes without blocking
-                        # the rest of the steps? For that we would probably
-                        # need to pass nother option to run_cmd
-                    elif step == "prove":
-                        cmd = [tool, f'{self.outdir}'+'/'+'propcheck.db']
-                        self.run_cmd(cmd, self.verbose)
-                        # TODO : maybe check for errors also in the GUI?
-                        # TODO : maybe run the GUI processes without blocking
-                        # the rest of the steps? For that we would probably
-                        # need to pass nother option to run_cmd
+                    cmd = [wrapper, f'{self.outdir}'+'/'+f'{tool}.db']
+                    logger.trace(f'command: {" ".join(cmd)=}')
+                    self.run_cmd(cmd, step, tool, self.verbose)
         else :
             logger.error(f'No tool available for {step=} in {self.toolchain=}')
             self.exit_if_required(BAD_VALUE)
 
-    def run_cmd(self, cmd, verbose = True):
-        self.set_logformat(LOGFORMAT_TOOL)
+    def run_cmd(self, cmd, step, tool, verbose = True):
+        self.set_logformat(getlogformattool(step, tool))
 
         process = subprocess.Popen (
                   cmd,
