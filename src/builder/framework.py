@@ -106,6 +106,11 @@ class fvmframework:
         self.toolchain = "questa"
         self.vhdlstd = "2008"
 
+        # Exit if args.step is unrecognized
+        if args.step is not None:
+            if args.step not in toolchains.TOOLS[self.toolchain]:
+                logger.error(f'step {args.step} not available in {self.toolchain}.  Available steps are: {list(toolchains.TOOLS[self.toolchain].keys())}')
+                self.exit_if_required(BAD_VALUE)
     def add_vhdl_source(self, src):
         """Add a single VHDL source"""
         logger.info(f'Adding VHDL source: {src}')
