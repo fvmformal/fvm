@@ -16,7 +16,7 @@ end uart_tx;
 
 architecture Behavioral of uart_tx is
 
-  type tipoestado is (reposo, sampledata, testdata, b_start, B_0, B_1, B_2, B_3, B_4, B_5, B_6, B_7, B_paridad, B_stop, b_stop2);
+  type tipoestado is (reposo, sampledata, b_start, B_0, B_1, B_2, B_3, B_4, B_5, B_6, B_7, B_paridad, B_stop);
   signal estado, p_estado: tipoestado;
 
   signal cont, p_cont: integer range 0 to BIT_DURATION-1;
@@ -53,10 +53,7 @@ begin
         end if;
       when sampledata=>
         TX<='1';
-        p_datai<=data; --muestrear dato a la entrada
-        p_estado<=b_start;
-      when testdata=>
-        TX<='1';
+        p_datai<=data;
         p_estado<=b_start;
         p_cont<= 0;
       when b_start=>
@@ -134,14 +131,7 @@ begin
         p_cont<=cont+1;
         if(cont=BIT_DURATION-1)then
           p_cont<=0;
-          p_estado<= reposo; --b_stop2 if you want two stop bits
-        end if;
-      when b_stop2=>
-        TX<='1';
-        p_cont<=cont+1;
-        if(cont=BIT_DURATION-1)then
-          p_cont<=0;
-          p_estado<=reposo;
+          p_estado<= reposo;
         end if;
     end case;
   end process;
