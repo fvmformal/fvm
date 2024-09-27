@@ -296,8 +296,10 @@ class fvmframework:
             # Create .f files
             self.create_f_file(self.outdir+'/'+"design.f", self.vhdl_sources)
             self.create_f_file(self.outdir+'/'+"properties.f", self.psl_sources)
-            self.genprovescript(self.outdir+'/'+"prove.do")
             self.genlintscript(self.outdir+'/'+"lint.do")
+            self.genrulecheckscript(self.outdir+'/'+"rulecheck.do")
+            self.genreachabilityscript(self.outdir+'/'+"reachability.do")
+            self.genprovescript(self.outdir+'/'+"prove.do")
 
     # TODO : we will need arguments for the clocks, timeout, we probably need
     # to detect compile order if vcom doesn't detect it, set the other options
@@ -353,12 +355,39 @@ class fvmframework:
     def genlintscript(self, filename):
         with open(filename, "w") as f:
             print('onerror exit', file=f)
-            print('lint methodology ip -goal start', file=f)
             print('vlib work', file=f)
             print('vmap work work', file=f)
+            print('lint methodology ip -goal start', file=f)
             print(f'vcom -{self.vhdlstd} -autoorder -f {self.outdir}/design.f', file=f)
             print(f'lint run -d {self.toplevel}', file=f)
             print('exit', file=f)
+
+    # TODO : set sensible defaults here and allow for user optionality too
+    def genrulecheckscript(self, filename):
+        with open(filename, "w") as f:
+            print('onerror exit', file=f)
+            print('vlib work', file=f)
+            print('vmap work work', file=f)
+            print(f'autocheck compile -d {self.toplevel}', file=f)
+            print(f'autocheck verify', file=f)
+            print('exit', file=f)
+
+    # TODO : set sensible defaults here and allow for user optionality too,
+    # such as allowing the user to specify the covercheck directives
+    # TODO : if a .ucdb file is specified as argument, run the post-simulation
+    # analysis instead of the pre-simulation analysis (see
+    # https://git.woden.us.es/eda/fvm/-/issues/37#note_4252)
+    def genreachabilityscript(self, filename):
+        with open(filename, "w") as f:
+            print('onerror exit', file=f)
+            print(f'covercheck compile -d {self.toplevel}', file=f)
+            # if .ucdb file is specified:
+            #    print('covercheck load ucdb {ucdb_file}', file=f)
+            #    print(f'covercheck verify -covered_items', file=f)
+            print(f'covercheck verify', file=f)
+            print('exit', file=f)
+
+
 
     def run(self):
         """Run all available/selected methodology steps"""
@@ -370,6 +399,8 @@ class fvmframework:
         # If a 'step' argument is specified, just run that specific step
         if self.step is None:
             self.run_step("lint")
+            self.run_step("rulecheck")
+            self.run_step("reachability")
             self.run_step("prove")
         else:
             self.run_step(self.step)
