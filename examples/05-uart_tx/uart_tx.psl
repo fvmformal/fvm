@@ -7,8 +7,16 @@ vunit uart_tx (uart_tx(Behavioral)) {
   assume_initial_reset: assume rst = '1';
 
   -- Assume we won't be having any resets while we are transmitting
-  assume_no_reset_during_tx:
-    assume always rd_en -> {true; (not rst)[*(11*BIT_DURATION)]};
+  -- We shouldn't need this is we use 'abort rst' in the properties, and
+  -- actually if we uncomment the following assertion we are overconstraining
+  -- the design. How do we know? Becase we get errors on the reachability
+  -- coverage. Actually we are just missing the reset transitions for the FSM,
+  -- which are typically excluded from simulation coverage, but nevertheless 
+  -- this is a good example
+  -- (the description in the 'training' version of this code is slightly
+  -- different and better worded)
+  --assume_no_reset_during_tx:
+  --  assume always rd_en -> {true; (not rst)[*(11*BIT_DURATION)]};
 
 
   -- Assert the UART never reads from an empty FIFO

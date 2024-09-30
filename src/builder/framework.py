@@ -338,19 +338,20 @@ class fvmframework:
             #print('log_info "***** Running formal verify (model checking)..."', file=f)
             print('formal verify -auto_constraint_off -cov_mode -timeout 10m', file=f)
             print('', file=f)
-            print('# Compute Formal Coverage', file=f)
+            print('## Compute Formal Coverage', file=f)
             #print('log_info "***** Running formal verify to get coverage..."', file=f)
             # TODO : Coverage collection temporarily disabled since we get some
             # errors in example 05-uart_tx which we need to solve (we must add
             # some kind of exclusion for reset state transitions). The next
             # line is the one that raises the errors of type:
             # "Uncoverable FSM: FSM 'estado', Transition sampledata -> reposo"
-            print('#formal verify -auto_constraint_off -cov_mode reachability -timeout 10m', file=f)
+            print('formal verify -auto_constraint_off -cov_mode reachability -timeout 10m', file=f)
             #print('log_info "***** Running formal generate coverage..."', file=f)
-            print('#formal generate coverage -cov_mode s', file=f)
-            print('#formal generate coverage -cov_mode b', file=f)
-            print('#formal generate coverage -cov_mode r', file=f)
-            print('#formal generate coverage -cov_mode o', file=f)
+            print('formal generate coverage -cov_mode o', file=f)
+            print('formal generate coverage -cov_mode s', file=f)
+            print('formal generate coverage -cov_mode r', file=f)
+            print('formal generate coverage -cov_mode b', file=f)
+            print('formal generate report', file=f)
             print('', file=f)
             print('exit', file=f)
 
