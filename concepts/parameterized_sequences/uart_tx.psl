@@ -1,0 +1,63 @@
+-- Compare this file with examples/05-formal/uart_tx.psl : by parameterizing
+-- the transmision sequence, we don't have to write all that HDL code that
+-- is trying to predict the evolution of the circuit. This is great news,
+-- because parameterizing sequences is more powerful, less error prone, and we
+-- less code to write
+
+vunit uart_tx(uart_tx(Behavioral)) {
+
+  -- Default clock for PSL assertions
+  default clock is rising_edge(clk);
+
+  -- Assume a reset on the first clock cycle
+  assume_initial_reset: assume rst = '1';
+
+  -- Assert the UART never reads from an empty FIFO
+  never_read_from_empty_fifo:
+    assert never (rd_en and empty);
+
+   -- Transmission sequence, which is like a transaction
+   -- Contains: empty clock cycle, start bit ('0'), 8 data bits, parity bit, stop bit ('1')
+  sequence transmission (
+    hdltype std_logic_vector(7 downto 0) txdata
+  ) is {
+    true;
+    TX = '0'[*BIT_DURATION];
+    TX = txdata(0)[*BIT_DURATION];
+    TX = txdata(1)[*BIT_DURATION];
+    TX = txdata(2)[*BIT_DURATION];
+    TX = txdata(3)[*BIT_DURATION];
+    TX = txdata(4)[*BIT_DURATION];
+    TX = txdata(5)[*BIT_DURATION];
+    TX = txdata(6)[*BIT_DURATION];
+    TX = txdata(7)[*BIT_DURATION];
+    TX = (txdata(0) xor txdata(1) xor txdata(2) xor txdata(3) xor txdata(4) xor txdata(5) xor txdata(6) xor txdata(7))[*BIT_DURATION];
+    TX = '1'[*BIT_DURATION]
+  };
+
+  -- If we have a rd_en, we expect a transmission, unless we receive a reset
+  correct_tx_after_rd_en:
+    assert always (({rd_en} |=> {transmission(datai)}) abort rst);
+
+  -- Cover a number of transmissions
+  cover_one_transmission:
+    cover transmission(datai);
+
+  cover_two_transmisions_two_cycles_between_them:
+    cover {transmission(datai); true[*2]; transmission(datai)};
+
+  cover_two_transmisions_any_cycles_between_them:
+    cover {transmission(datai); true[*]; transmission(datai)};
+
+  -- We can define sequences reusing other sequences, which is helpful to
+  -- construct more complex sequences
+  sequence transmission_and_rest is {
+    transmission(datai); true[*2]; true[*]
+  };
+
+  -- Change the number below to the number of transmissions you want to see in
+  -- your cover trace
+  cover_more_than_two_transmissions:
+    cover {transmission_and_rest[*3]};
+
+}

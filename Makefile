@@ -40,6 +40,7 @@ examplelist += 02-linearinterpolator
 examplelist += 05-uart_tx
 
 conceptlist += transactions
+conceptlist += parameterized_sequences
 
 examples: $(examplelist)
 concepts: $(conceptlist)
