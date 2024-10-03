@@ -1,0 +1,50 @@
+-- Compare this file with examples/05-uart_tx/uart_tx.psl : by parameterizing
+-- the transmision sequence, we don't have to write all that HDL code that
+-- is trying to predict the evolution of the circuit. This is great news,
+-- because parameterizing sequences is more powerful, less error prone, and
+-- less code to write
+
+vunit uart_tx(uart_tx(Behavioral)) {
+  inherit uart_tx_sequence;
+  inherit uart_tx_sequence2;
+
+  -- Default clock for PSL assertions
+  default clock is rising_edge(clk);
+
+  -- Assume a reset on the first clock cycle
+  assume_initial_reset: assume rst = '1';
+
+  -- Assert the UART never reads from an empty FIFO
+  never_read_from_empty_fifo:
+    assert never (rd_en and empty);
+
+  -- If we have a rd_en, we expect a transmission, unless we receive a reset
+  correct_tx_after_rd_en:
+    assert always (({rd_en} |=> {transmission(datai)}) abort rst);
+
+  -- Cover a number of transmissions
+  cover_one_transmission:
+    cover transmission(datai);
+
+  cover_two_transmisions_two_cycles_between_them:
+    cover {transmission(datai); true[*2]; transmission(datai)};
+
+  cover_two_transmisions_any_cycles_between_them:
+    cover {transmission(datai); true[*]; transmission(datai)};
+
+  -- Cover the other transmission
+  cover_one_transmission2:
+    cover transmission2(datai);
+
+  -- We can define sequences reusing other sequences, which is helpful to
+  -- construct more complex sequences
+  sequence transmission_and_rest is {
+    transmission(datai); true[*2]; true[*]
+  };
+
+  -- Change the number below to the number of transmissions you want to see in
+  -- your cover trace
+  cover_more_than_two_transmissions:
+    cover {transmission_and_rest[*3]};
+
+}
