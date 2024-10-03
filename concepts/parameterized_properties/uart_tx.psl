@@ -25,7 +25,7 @@ vunit uart_tx(uart_tx(Behavioral)) {
   -- Then we create the assertion just by asserting the previously defined
   -- property parameterized with the datai that enters the circuit
   correct_tx_after_rd_en_parameterized_property:
-    assert correct_tx_after_rd_en2(datai);
+    assert correct_tx_after_rd_en_property(datai);
 
   -- Cover a number of transmissions
   cover_one_transmission:
