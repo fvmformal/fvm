@@ -42,6 +42,7 @@ examplelist += 05-uart_tx
 conceptlist += transactions
 conceptlist += parameterized_sequences
 conceptlist += inheriting_vunits
+conceptlist += inheriting_multiple_vunits
 
 examples: $(examplelist)
 concepts: $(conceptlist)
