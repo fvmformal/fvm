@@ -38,7 +38,6 @@ examplelist += 00-counter
 examplelist += 01-countervunit
 examplelist += 02-linearinterpolator
 examplelist += 05-uart_tx
-examplelist += 06-uart_rx
 
 conceptlist += transactions_deprecated
 conceptlist += parameterized_sequences
