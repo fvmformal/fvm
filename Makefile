@@ -43,6 +43,7 @@ conceptlist += transactions
 conceptlist += parameterized_sequences
 conceptlist += inheriting_vunits
 conceptlist += inheriting_multiple_vunits
+conceptlist += parameterized_properties
 
 examples: $(examplelist)
 concepts: $(conceptlist)

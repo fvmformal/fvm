@@ -1,0 +1,51 @@
+vunit uart_tx(uart_tx(Behavioral)) {
+  inherit uart_tx_sequence;
+
+  -- Default clock for PSL assertions
+  default clock is rising_edge(clk);
+
+  -- Assume a reset on the first clock cycle
+  assume_initial_reset: assume rst = '1';
+
+  -- Assert the UART never reads from an empty FIFO
+  never_read_from_empty_fifo:
+    assert never (rd_en and empty);
+
+  -- If we have a rd_en, we expect a transmission, unless we receive a reset
+  correct_tx_after_rd_en:
+    assert always (({rd_en} |=> {transmission(datai)}) abort rst);
+
+  -- Compare this with the previous property: here we define the property with
+  -- ``property`` keyword, and it has a parameter called txdata
+  property correct_tx_after_rd_en_property (
+    hdltype std_logic_vector(7 downto 0) txdata
+  ) is
+    always (({rd_en} |=> {transmission(txdata)}) abort rst);
+
+  -- Then we create the assertion just by asserting the previously defined
+  -- property parameterized with the datai that enters the circuit
+  correct_tx_after_rd_en_parameterized_property:
+    assert correct_tx_after_rd_en2(datai);
+
+  -- Cover a number of transmissions
+  cover_one_transmission:
+    cover transmission(datai);
+
+  cover_two_transmisions_two_cycles_between_them:
+    cover {transmission(datai); true[*2]; transmission(datai)};
+
+  cover_two_transmisions_any_cycles_between_them:
+    cover {transmission(datai); true[*]; transmission(datai)};
+
+  -- We can define sequences reusing other sequences, which is helpful to
+  -- construct more complex sequences
+  sequence transmission_and_rest is {
+    transmission(datai); true[*2]; true[*]
+  };
+
+  -- Change the number below to the number of transmissions you want to see in
+  -- your cover trace
+  cover_more_than_two_transmissions:
+    cover {transmission_and_rest[*3]};
+
+}
