@@ -1,0 +1,22 @@
+vunit uart_tx_sequences {
+
+  -- Transmission sequence, which is like a transaction
+   -- Contains: empty clock cycle, start bit ('0'), 8 data bits, parity bit, stop bit ('1')
+  sequence transmission (
+    hdltype std_logic_vector(7 downto 0) txdata
+  ) is {
+    true;
+    TX = '0' [*BIT_DURATION];
+    TX = txdata(0) [*BIT_DURATION];
+    TX = txdata(1) [*BIT_DURATION];
+    TX = txdata(2) [*BIT_DURATION];
+    TX = txdata(3) [*BIT_DURATION];
+    TX = txdata(4) [*BIT_DURATION];
+    TX = txdata(5) [*BIT_DURATION];
+    TX = txdata(6) [*BIT_DURATION];
+    TX = txdata(7) [*BIT_DURATION];
+    TX = (txdata(0) xor txdata(1) xor txdata(2) xor txdata(3) xor txdata(4) xor txdata(5) xor txdata(6) xor txdata(7)) [*BIT_DURATION];
+    TX = '1' [*BIT_DURATION]
+  };
+
+}
