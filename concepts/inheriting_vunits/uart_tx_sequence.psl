@@ -1,4 +1,4 @@
-vunit uart_tx_sequences {
+vunit uart_tx_sequence {
 
   -- Transmission sequence, which is like a transaction
    -- Contains: empty clock cycle, start bit ('0'), 8 data bits, parity bit, stop bit ('1')

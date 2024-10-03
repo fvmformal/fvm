@@ -5,7 +5,7 @@
 -- less code to write
 
 vunit uart_tx(uart_tx(Behavioral)) {
-  inherit uart_tx_sequences;
+  inherit uart_tx_sequence;
 
   -- Default clock for PSL assertions
   default clock is rising_edge(clk);
