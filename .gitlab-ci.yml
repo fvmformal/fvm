@@ -72,15 +72,15 @@ run-steps-independently:
     - unset LM_LICENSE_FILE
     - export SALT_LICENSE_SERVER=2101@baldr.us.es
     - pip3 install -r requirements.txt -r dev-requirements.txt
-    - coverage run -n examples.01-countervunit.formal -s lint
+    - coverage run -m examples.01-countervunit.formal -s lint
     - make clean
-    - coverage run -n examples.01-countervunit.formal -s rulecheck
+    - coverage run -m examples.01-countervunit.formal -s rulecheck
     - make clean
-    - coverage run -n examples.01-countervunit.formal -s reachability
+    - coverage run -m examples.01-countervunit.formal -s reachability
     - make clean
-    - coverage run -n examples.01-countervunit.formal -s resets
+    - coverage run -m examples.01-countervunit.formal -s resets
     - make clean
-    - coverage run -n examples.01-countervunit.formal -s prove
+    - coverage run -m examples.01-countervunit.formal -s prove
     - make clean
 #  artifacts:
 #    when: always
