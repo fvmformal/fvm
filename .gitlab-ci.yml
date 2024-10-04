@@ -62,6 +62,10 @@ run-examples:
     paths:
       - .coverage
 
+# Test for #126
+# TODO : This test should be done a bit differently, so we don't have to update
+# it manually, for example it may get the available steps from the framework
+# and then run each of them alternated with a 'make clean' inside a for loop
 # TODO : Not sure how having this in parallel with run-examples will affect
 # python coverage, since both write on .coverage, so I'll remove the .coverage
 # artifact from this job
@@ -78,8 +82,8 @@ run-steps-independently:
     - make clean
     - coverage run -m examples.01-countervunit.formal -s reachability
     - make clean
-#    - coverage run -m examples.01-countervunit.formal -s resets
-#    - make clean
+    - coverage run -m examples.01-countervunit.formal -s resets
+    - make clean
 #    - coverage run -m examples.01-countervunit.formal -s clocks
 #    - make clean
     - coverage run -m examples.01-countervunit.formal -s prove

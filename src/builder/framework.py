@@ -303,6 +303,8 @@ class fvmframework:
             self.genlintscript(self.outdir+'/'+"lint.do")
             self.genrulecheckscript(self.outdir+'/'+"rulecheck.do")
             self.genreachabilityscript(self.outdir+'/'+"reachability.do")
+            self.genresetscript(self.outdir+'/'+"resets.do")
+            #self.genclockscript(self.outdir+'/'+"clocks.do")
             self.genprovescript(self.outdir+'/'+"prove.do")
 
     def gencompilescript(self, filename):
@@ -320,6 +322,26 @@ class fvmframework:
             print('vmap work work', file=f)
             print(f'vcom -{self.vhdlstd} -autoorder -f {self.outdir}/design.f', file=f)
             print('', file=f)
+
+    def genresetscript(self, filename):
+        # We first write the header to compile the netlist  and then append
+        # (mode "a") the tool-specific instructions
+        self.gencompilescript(filename)
+        with open(filename, "a") as f:
+            # TODO : let the user specify clock names, polarities, sync/async,
+            # clock domains and reset domains
+            #print('netlist reset rst -active_high -async', file=f)
+            #print('netlist port domain rst -clock clk', file=f)
+            #print('netlist port domain data -clock clk', file=f)
+            #print('netlist port domain empty -clock clk', file=f)
+            #print('netlist port resetdomain data -reset rst', file=f)
+            #print('netlist port resetdomain empty -reset rst', file=f)
+            #print('netlist clock clk', file=f)
+
+            print(f'rdc run -d {self.toplevel}', file=f)
+            print('rdc generate report -resetcheck reset_report.rpt;', file=f)
+            print('rdc generate tree -reset reset_tree.rpt;', file=f)
+            print('exit', file=f)
 
     # TODO : we will need arguments for the clocks, timeout, we probably need
     # to detect compile order if vcom doesn't detect it, set the other options
@@ -410,6 +432,7 @@ class fvmframework:
             self.run_step("lint")
             self.run_step("rulecheck")
             self.run_step("reachability")
+            self.run_step("resets")
             self.run_step("prove")
         else:
             self.run_step(self.step)
