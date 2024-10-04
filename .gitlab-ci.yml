@@ -62,6 +62,32 @@ run-examples:
     paths:
       - .coverage
 
+# TODO : Not sure how having this in parallel with run-examples will affect
+# python coverage, since both write on .coverage, so I'll remove the .coverage
+# artifact from this job
+run-steps-independently:
+  stage: examples
+  image: registry.woden.us.es/containers/questa:2024.2
+  script:
+    - unset LM_LICENSE_FILE
+    - export SALT_LICENSE_SERVER=2101@baldr.us.es
+    - pip3 install -r requirements.txt -r dev-requirements.txt
+    - coverage run -n examples.01-countervunit.formal -s lint
+    - make clean
+    - coverage run -n examples.01-countervunit.formal -s rulecheck
+    - make clean
+    - coverage run -n examples.01-countervunit.formal -s reachability
+    - make clean
+    - coverage run -n examples.01-countervunit.formal -s resets
+    - make clean
+    - coverage run -n examples.01-countervunit.formal -s prove
+    - make clean
+#  artifacts:
+#    when: always
+#    paths:
+#      - .coverage
+
+
 pycoverage:
   stage: coverage
   image: debian:11
