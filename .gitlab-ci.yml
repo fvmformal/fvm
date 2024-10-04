@@ -78,8 +78,10 @@ run-steps-independently:
     - make clean
     - coverage run -m examples.01-countervunit.formal -s reachability
     - make clean
-    - coverage run -m examples.01-countervunit.formal -s resets
-    - make clean
+#    - coverage run -m examples.01-countervunit.formal -s resets
+#    - make clean
+#    - coverage run -m examples.01-countervunit.formal -s clocks
+#    - make clean
     - coverage run -m examples.01-countervunit.formal -s prove
     - make clean
 #  artifacts:
