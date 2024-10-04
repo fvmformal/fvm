@@ -305,6 +305,22 @@ class fvmframework:
             self.genreachabilityscript(self.outdir+'/'+"reachability.do")
             self.genprovescript(self.outdir+'/'+"prove.do")
 
+    def gencompilescript(self, filename):
+        # TODO : we must also compile the Verilog sources, if they exist
+        # TODO : we must check for the case of only-verilog designs (no VHDL files)
+        # TODO : we must check for the case of only-VHDL designs (no verilog files)
+        """ This is used as header for the other scripts, since we need to have
+        a compiled netlist in order to do anything"""
+        with open(filename, "w") as f:
+            print('onerror exit', file=f)
+            print('if {[file exists work]} {',file=f)
+            print('    vdel -all', file=f)
+            print('}', file=f)
+            print('vlib work', file=f)
+            print('vmap work work', file=f)
+            print(f'vcom -{self.vhdlstd} -autoorder -f {self.outdir}/design.f', file=f)
+            print('', file=f)
+
     # TODO : we will need arguments for the clocks, timeout, we probably need
     # to detect compile order if vcom doesn't detect it, set the other options
     # such as timeout... and also throw some errors if any option is not
@@ -312,15 +328,8 @@ class fvmframework:
     # specify verilog files with vlog, etc...
     # TODO : can we also compile the PSL files using a .f file?
     def genprovescript(self, filename):
-        with open(filename, "w") as f:
-            print('onerror exit', file=f)
-            print('', file=f)
-            #print('source ../scripts/color.tcl')
-            print('', file=f)
-            print('## Compile netlist', file=f)
-            #print('log_info "***** Compiling netlist..."')
-            print(f'vcom -{self.vhdlstd} -autoorder -f {self.outdir}/design.f', file=f)
-
+        self.gencompilescript(filename)
+        with open(filename, "a") as f:
             print('', file=f)
             print('## Add clocks', file=f)
             #print('log_info "***** Adding clocks..."', file=f)
@@ -358,21 +367,16 @@ class fvmframework:
     # TODO : set sensible defaults here and allow for user optionality too
     # i.e., lint methodology, goal, etc
     def genlintscript(self, filename):
-        with open(filename, "w") as f:
-            print('onerror exit', file=f)
-            print('vlib work', file=f)
-            print('vmap work work', file=f)
+        self.gencompilescript(filename)
+        with open(filename, "a") as f:
             print('lint methodology ip -goal start', file=f)
-            print(f'vcom -{self.vhdlstd} -autoorder -f {self.outdir}/design.f', file=f)
             print(f'lint run -d {self.toplevel}', file=f)
             print('exit', file=f)
 
     # TODO : set sensible defaults here and allow for user optionality too
     def genrulecheckscript(self, filename):
-        with open(filename, "w") as f:
-            print('onerror exit', file=f)
-            print('vlib work', file=f)
-            print('vmap work work', file=f)
+        self.gencompilescript(filename)
+        with open(filename, "a") as f:
             print(f'autocheck compile -d {self.toplevel}', file=f)
             print(f'autocheck verify', file=f)
             print('exit', file=f)
@@ -383,8 +387,8 @@ class fvmframework:
     # analysis instead of the pre-simulation analysis (see
     # https://git.woden.us.es/eda/fvm/-/issues/37#note_4252)
     def genreachabilityscript(self, filename):
-        with open(filename, "w") as f:
-            print('onerror exit', file=f)
+        self.gencompilescript(filename)
+        with open(filename, "a") as f:
             print(f'covercheck compile -d {self.toplevel}', file=f)
             # if .ucdb file is specified:
             #    print('covercheck load ucdb {ucdb_file}', file=f)
