@@ -57,8 +57,10 @@ class fvmframework:
                 help='Only list available methodology steps, but do not execute them. (default: %(default)s)')
         parser.add_argument('-o', '--outdir', default = "fvm_out",
                 help='Output directory. (default: %(default)s)')
+        parser.add_argument('-d', '--design',
+                help='If set, run the specified design. If unset, run all designs. (default: %(default)s)')
         parser.add_argument('-s', '--step',
-                help='If set, run the specified step. It unset, run all steps. (default: %(default)s)')
+                help='If set, run the specified step. If unset, run all steps. (default: %(default)s)')
         parser.add_argument('-c', '--cont', default=False, action='store_true',
                 help='Continue with next steps even if errors are detected. (default: %(default)s)')
         parser.add_argument('-g', '--gui', default=False, action='store_true',
@@ -85,6 +87,7 @@ class fvmframework:
         self.verbose = args.verbose
         self.list = args.list
         self.outdir = args.outdir
+        self.design = args.design
         self.step = args.step
         self.cont = args.cont
         self.gui = args.gui
@@ -217,6 +220,13 @@ class fvmframework:
                 sys.exit(BAD_VALUE)
             else:
                 self.toplevel = toplevel
+
+        # If a design was specified, just run that design
+        if self.design is not None:
+            if self.design in self.toplevel:
+                self.toplevel = [self.design]
+            else:
+                logger.error(f'Specified {args.design=} not in {self.toplevel=}, did you add it with set_toplevel()?')
 
         # Initialize a dict structure for the results
         self.results = {}
