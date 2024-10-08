@@ -1,0 +1,14 @@
+vunit dualcounter (dualcounter(Behavioral)) {
+
+  -- Default clock
+  default clock is rising_edge (clk);
+
+  -- Assume a reset on the first clock cycle
+  assume_initial_reset: assume rst = '1';
+
+  -- Output equalmsb should always be '1'
+  output_equalmsb_must_be_one: assert always equalmsb = '1';
+
+  -- The value of both counters must be equal
+  --counters_equal : assert always count0 = count1;
+}

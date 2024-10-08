@@ -37,6 +37,7 @@ test-verbose:
 examplelist += 00-counter
 examplelist += 01-countervunit
 examplelist += 02-linearinterpolator
+examplelist += 04-dualcounter
 examplelist += 05-uart_tx
 
 conceptlist += transactions_deprecated
@@ -44,6 +45,7 @@ conceptlist += parameterized_sequences
 conceptlist += inheriting_vunits
 conceptlist += inheriting_multiple_vunits
 conceptlist += parameterized_properties
+conceptlist += multiple_designs
 
 examples: $(examplelist)
 concepts: $(conceptlist)

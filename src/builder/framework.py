@@ -10,6 +10,8 @@ import pathlib
 # Third party imports
 import argparse
 from loguru import logger
+from rich.console import Console
+from rich.text import Text
 
 # Our own imports
 from src.builder import toolchains
@@ -26,8 +28,21 @@ LOGFORMAT = '<cyan>FVM</cyan> | <green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | 
 LOGFORMAT_SUMMARY = '<cyan>FVM</cyan> | <green>Summary</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>'
 #LOGFORMAT_TOOL = '<cyan>FVM</cyan> | <green>Tool</green> | <level>{level: <8}</level> | <level>{message}</level>'
 
-def getlogformattool(step, tool):
-    return '<cyan>FVM</cyan> | ' + f'<green>{step=}</green> | <green>{tool=}</green> | ' + '<level>{level: <8}</level> | <level>{message}</level>'
+def getlogformattool(design, step, tool):
+    return f'<cyan>{design}.{step}</cyan> | <green>{tool=}</green> | ' + '<level>{level: <8}</level> | <level>{message}</level>'
+
+# Steps, in order of execution, of the methodology
+FVM_STEPS = [
+    'lint',
+    'rulecheck',
+    'reachability',
+    'resets',
+    'clocks',
+    'prove'
+    ]
+
+# Create a rich console object
+console = Console()
 
 class fvmframework:
 
@@ -103,7 +118,8 @@ class fvmframework:
         logger.info(f'{self.scriptname=}')
 
         # Rest of instance variables
-        self.toplevel = ''
+        self.toplevel = list()
+        self.current_toplevel = ''
         self.vhdl_sources = list()
         self.psl_sources = list()
         self.toolchain = "questa"
@@ -112,7 +128,7 @@ class fvmframework:
         # Exit if args.step is unrecognized
         if args.step is not None:
             if args.step not in toolchains.TOOLS[self.toolchain]:
-                logger.error(f'step {args.step} not available in {self.toolchain}.  Available steps are: {list(toolchains.TOOLS[self.toolchain].keys())}')
+                logger.error(f'step {args.step} not available in {self.toolchain}. Available steps are: {list(toolchains.TOOLS[self.toolchain].keys())}')
                 self.exit_if_required(BAD_VALUE)
 
     def add_vhdl_source(self, src):
@@ -184,7 +200,31 @@ class fvmframework:
         return ret
 
     def set_toplevel(self, toplevel):
-        self.toplevel = toplevel
+        """Sets the name of the toplevel module. Multiple toplevels to analyze
+        can be specified as a list. If a single toplevel is specified, this
+        function converts it to a single-element list"""
+
+        # TODO : check for duplicates inside the list!
+
+
+        if isinstance(toplevel, str):
+            self.toplevel = [toplevel]
+        elif isinstance(toplevel, list):
+            # Check for duplicates and throw an error if a toplevel is
+            # specified more than once
+            if len(toplevel) != len(set(toplevel)):
+                logger.error(f'Duplicates exist in {toplevel=}')
+                sys.exit(BAD_VALUE)
+            else:
+                self.toplevel = toplevel
+
+        # Initialize a dict structure for the results
+        self.results = {}
+        for design in self.toplevel:
+            self.results[design] = {}
+            for step in FVM_STEPS:
+                self.results[design][step] = {}
+
 
     def set_loglevel(self, loglevel):
         """Sets the logging level for the build and test framework.
@@ -291,43 +331,47 @@ class fvmframework:
             for src in sources:
                 print(src, file=f)
 
-    def setup(self):
-        # Create the output directory, but do not throw an error if it already
+    def setup(self, design):
+
+        # Create the output directories, but do not throw an error if it already
         # exists
         os.makedirs(self.outdir, exist_ok=True)
+        self.current_toplevel = design
+        path = self.outdir+'/'+self.current_toplevel
+        os.makedirs(path, exist_ok=True)
 
         if self.toolchain == "questa":
             # Create .f files
-            self.create_f_file(self.outdir+'/'+"design.f", self.vhdl_sources)
-            self.create_f_file(self.outdir+'/'+"properties.f", self.psl_sources)
-            self.genlintscript(self.outdir+'/'+"lint.do")
-            self.genrulecheckscript(self.outdir+'/'+"rulecheck.do")
-            self.genreachabilityscript(self.outdir+'/'+"reachability.do")
-            self.genresetscript(self.outdir+'/'+"resets.do")
-            #self.genclockscript(self.outdir+'/'+"clocks.do")
-            self.genprovescript(self.outdir+'/'+"prove.do")
+            self.create_f_file(f'{path}/design.f', self.vhdl_sources)
+            self.create_f_file(f'{path}/properties.f', self.psl_sources)
+            self.genlintscript("lint.do", path)
+            self.genrulecheckscript("rulecheck.do", path)
+            self.genreachabilityscript("reachability.do", path)
+            self.genresetscript("resets.do", path)
+            #self.genclockscript("clocks.do", path)
+            self.genprovescript("prove.do", path)
 
-    def gencompilescript(self, filename):
+    def gencompilescript(self, filename, path):
         # TODO : we must also compile the Verilog sources, if they exist
         # TODO : we must check for the case of only-verilog designs (no VHDL files)
         # TODO : we must check for the case of only-VHDL designs (no verilog files)
         """ This is used as header for the other scripts, since we need to have
         a compiled netlist in order to do anything"""
-        with open(filename, "w") as f:
+        with open(path+'/'+filename, "w") as f:
             print('onerror exit', file=f)
             print('if {[file exists work]} {',file=f)
             print('    vdel -all', file=f)
             print('}', file=f)
             print('vlib work', file=f)
             print('vmap work work', file=f)
-            print(f'vcom -{self.vhdlstd} -autoorder -f {self.outdir}/design.f', file=f)
+            print(f'vcom -{self.vhdlstd} -autoorder -f {path}/design.f', file=f)
             print('', file=f)
 
-    def genresetscript(self, filename):
+    def genresetscript(self, filename, path):
         # We first write the header to compile the netlist  and then append
         # (mode "a") the tool-specific instructions
-        self.gencompilescript(filename)
-        with open(filename, "a") as f:
+        self.gencompilescript(filename, path)
+        with open(path+'/'+filename, "a") as f:
             # TODO : let the user specify clock names, polarities, sync/async,
             # clock domains and reset domains
             #print('netlist reset rst -active_high -async', file=f)
@@ -338,7 +382,7 @@ class fvmframework:
             #print('netlist port resetdomain empty -reset rst', file=f)
             #print('netlist clock clk', file=f)
 
-            print(f'rdc run -d {self.toplevel}', file=f)
+            print(f'rdc run -d {self.current_toplevel}', file=f)
             print('rdc generate report -resetcheck reset_report.rpt;', file=f)
             print('rdc generate tree -reset reset_tree.rpt;', file=f)
             print('exit', file=f)
@@ -349,9 +393,9 @@ class fvmframework:
     # specified. This is not trivial. Also, in the future we may want to
     # specify verilog files with vlog, etc...
     # TODO : can we also compile the PSL files using a .f file?
-    def genprovescript(self, filename):
-        self.gencompilescript(filename)
-        with open(filename, "a") as f:
+    def genprovescript(self, filename, path):
+        self.gencompilescript(filename, path)
+        with open(path+'/'+filename, "a") as f:
             print('', file=f)
             print('## Add clocks', file=f)
             #print('log_info "***** Adding clocks..."', file=f)
@@ -364,7 +408,7 @@ class fvmframework:
             for i in self.psl_sources :
                 print(f'-pslfile {i} ', end='', file=f)
             print('-include_code_cov ', end='', file=f)
-            print(f'-d {self.toplevel}', file=f)
+            print(f'-d {self.current_toplevel}', file=f)
 
             #print('log_info "***** Running formal verify (model checking)..."', file=f)
             print('formal verify -auto_constraint_off -cov_mode -timeout 10m', file=f)
@@ -388,18 +432,18 @@ class fvmframework:
 
     # TODO : set sensible defaults here and allow for user optionality too
     # i.e., lint methodology, goal, etc
-    def genlintscript(self, filename):
-        self.gencompilescript(filename)
-        with open(filename, "a") as f:
+    def genlintscript(self, filename, path):
+        self.gencompilescript(filename, path)
+        with open(path+'/'+filename, "a") as f:
             print('lint methodology ip -goal start', file=f)
-            print(f'lint run -d {self.toplevel}', file=f)
+            print(f'lint run -d {self.current_toplevel}', file=f)
             print('exit', file=f)
 
     # TODO : set sensible defaults here and allow for user optionality too
-    def genrulecheckscript(self, filename):
-        self.gencompilescript(filename)
-        with open(filename, "a") as f:
-            print(f'autocheck compile -d {self.toplevel}', file=f)
+    def genrulecheckscript(self, filename, path):
+        self.gencompilescript(filename, path)
+        with open(path+'/'+filename, "a") as f:
+            print(f'autocheck compile -d {self.current_toplevel}', file=f)
             print(f'autocheck verify', file=f)
             print('exit', file=f)
 
@@ -408,44 +452,58 @@ class fvmframework:
     # TODO : if a .ucdb file is specified as argument, run the post-simulation
     # analysis instead of the pre-simulation analysis (see
     # https://git.woden.us.es/eda/fvm/-/issues/37#note_4252)
-    def genreachabilityscript(self, filename):
-        self.gencompilescript(filename)
-        with open(filename, "a") as f:
-            print(f'covercheck compile -d {self.toplevel}', file=f)
+    def genreachabilityscript(self, filename, path):
+        self.gencompilescript(filename, path)
+        with open(path+'/'+filename, "a") as f:
+            print(f'covercheck compile -d {self.current_toplevel}', file=f)
             # if .ucdb file is specified:
             #    print('covercheck load ucdb {ucdb_file}', file=f)
             #    print(f'covercheck verify -covered_items', file=f)
             print(f'covercheck verify', file=f)
             print('exit', file=f)
 
-
-
     def run(self):
+        print(f'{self.toplevel=}')
+        for design in self.toplevel:
+            print(f'Running {design=}')
+            self.run_design(design)
+
+        self.pretty_summary()
+        err = self.check_errors()
+        if err :
+          self.exit_if_required(CHECK_FAILED)
+
+    def run_design(self, design):
         """Run all available/selected methodology steps"""
         # Create all necessary scripts
-        self.setup()
+        self.setup(design)
 
         # Run all available/selected steps/tools
         # Call the run_step() function for each available step
         # If a 'step' argument is specified, just run that specific step
         if self.step is None:
-            self.run_step("lint")
-            self.run_step("rulecheck")
-            self.run_step("reachability")
-            self.run_step("resets")
-            self.run_step("prove")
-        else:
-            self.run_step(self.step)
+            for step in FVM_STEPS:
+                if step in toolchains.TOOLS[self.toolchain]:
+                    self.run_step(design, step)
+                else:
+                    logger.info(f'{step=} not available in {self.toolchain=}, skipping')
+                    self.results[step]['status'] = 'skip'
 
-        err = self.check_errors()
-        if err :
-          self.exit_if_required(CHECK_FAILED)
+#            self.run_step(design, "lint")
+#            self.run_step(design, "rulecheck")
+#            self.run_step(design, "reachability")
+#            self.run_step(design, "resets")
+#            self.run_step(design, "prove")
+        else:
+            self.run_step(design, self.step)
+
 
     # TODO : we have some duplicated code in the way we run commands, becase
     # the code sort of repeats for the GUI invocations. We must see how we can
     # deduplicate this so this function does not get unwieldy
-    def run_step(self, step):
+    def run_step(self, design, step):
         """Run a specific step of the methodology"""
+        path = self.outdir+'/'+self.current_toplevel
         open_gui = False
         # If called with a specific step, run that specific step
         if step in toolchains.TOOLS[self.toolchain] :
@@ -454,23 +512,29 @@ class fvmframework:
             logger.info(f'{step=}, running {tool=} with {wrapper=}')
             logger.debug(f'Running {tool=} with {wrapper=}')
             if self.toolchain == "questa":
-                cmd = [wrapper, '-c', '-od', self.outdir, '-do', self.outdir+'/'+step+'.do']
+                cmd = [wrapper, '-c', '-od', path, '-do', f'{path}/{step}.do']
                 if self.list == True :
                     logger.info(f'Available step: {step}. Tool: {tool}, command = {" ".join(cmd)}')
                 elif self.guinorun == True :
                     logger.info(f'{self.guinorun=}, will not run {step=} with {tool=}')
                 else :
                     logger.trace(f'command: {" ".join(cmd)=}')
-                    cmd_stdout, cmd_stderr = self.run_cmd(cmd, step, tool, self.verbose)
+                    cmd_stdout, cmd_stderr = self.run_cmd(cmd, design, step, tool, self.verbose)
                     stdout_err = self.logcheck(cmd_stdout, step, tool)
                     stderr_err = self.logcheck(cmd_stderr, step, tool)
-                    logfile = f'{self.outdir}/{step}.log'
+                    logfile = f'{path}/{step}.log'
                     logger.info(f'{step=}, {tool=}, finished, output written to {logfile}')
                     with open(logfile, 'w') as f :
                         f.write(cmd_stdout)
                         f.write(cmd_stderr)
+                    # TODO : we disabled this error, we should propagate the
+                    # error outside
+                    #if stdout_err or stderr_err:
+                    #    self.exit_if_required(ERROR_IN_LOG)
                     if stdout_err or stderr_err:
-                        self.exit_if_required(ERROR_IN_LOG)
+                        self.results[design][step]['status'] = 'fail'
+                    else:
+                        self.results[design][step]['status'] = 'pass'
                     if self.gui :
                         open_gui = True
                 if self.guinorun and self.list == False :
@@ -483,15 +547,20 @@ class fvmframework:
                 # names (.db) in a dictionary -> just open {tool}.db
                 if open_gui:
                     logger.info(f'{step=}, {tool=}, opening results with GUI')
-                    cmd = [wrapper, f'{self.outdir}'+'/'+f'{tool}.db']
+                    cmd = [wrapper, f'{path}/{tool}.db']
                     logger.trace(f'command: {" ".join(cmd)=}')
-                    self.run_cmd(cmd, step, tool, self.verbose)
+                    self.run_cmd(cmd, design, step, tool, self.verbose)
         else :
             logger.error(f'No tool available for {step=} in {self.toolchain=}')
             self.exit_if_required(BAD_VALUE)
 
-    def run_cmd(self, cmd, step, tool, verbose = True):
-        self.set_logformat(getlogformattool(step, tool))
+        # TODO : return output values
+        # pass / fail / skipped / disabled, and also warnings, errors,
+        # successes, and for prove the number of asserts, proven, fired,
+        # inconclusives, cover, covered, uncoverable... etc
+
+    def run_cmd(self, cmd, design, step, tool, verbose = True):
+        self.set_logformat(getlogformattool(design, step, tool))
 
         process = subprocess.Popen (
                   cmd,
@@ -616,6 +685,37 @@ class fvmframework:
         elif 'Covered' in line:
             success = True
         return err, warn, success
+
+    def pretty_summary(self):
+        """Prints the final summary"""
+        # TODO : use rich or a similar python package to format a table
+        # TODO : print the status for each design.step
+        # TODO : color the status
+        # TODO : print also number of warnings and errors, and all relevant
+        # information from propchech (number of
+        # assume/assert/fired/proven/cover/covered/uncoverable/etc. For this,
+        # we may need to post-process the prove step log
+        # TODO : print elapsed time
+        print("==== Summary ====================================")
+        for design in self.toplevel:
+            for step in FVM_STEPS:
+                # Only print pass/fail/skip, the rest of steps where not
+                # selected by the user so there is no need to be redundant
+                if 'status' in self.results[design][step]:
+                    status = self.results[design][step]['status']
+                    text = Text()
+                    if status == 'pass':
+                        style = 'bold green'
+                    elif status == 'fail':
+                        style = 'bold red'
+                    elif status == 'skip':
+                        syle = 'bold yellow'
+                    text.append(status, style=style)
+                    text.append(f' {design}.{step}')
+                    #text.append(f' result={self.results[design][step]}', style='white')
+                    console.print(text)
+                    #print(f'{status} {design}.{step}, result={self.results[design][step]}')
+        print("=================================================")
 
     def exit_if_required(self, errorcode):
         """Exit if the continue flag is not set"""
