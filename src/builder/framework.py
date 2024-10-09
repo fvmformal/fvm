@@ -241,7 +241,8 @@ class fvmframework:
     # TODO : we could make this function accept also a list, but not sure if it
     # is worth it since the user could just call it inside a loop
     def skip(self, step, design='*'):
-        """Allow to skip specific steps and/or designs"""
+        """Allow to skip specific steps and/or designs. Accepts the wilcards
+        '*' and '*'"""
         self.skip_list.append(f'{design}.{step}')
 
     def set_loglevel(self, loglevel):
