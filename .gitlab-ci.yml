@@ -20,7 +20,7 @@ lint_python:
   coverage: /lint score is ([\d]+\.[\d]+)/
   allow_failure: true
 
-test-all:
+test_all:
   stage: lint_and_test
   image: debian:11
   script:
@@ -40,7 +40,8 @@ test-all:
 
 # TODO : Add artifacts, when we have a clearer idea of what those would be
 # TODO : Add results.xml, when our framework generates it
-run-concepts:
+# TODO : Maybe this job doesn't need dev-requirements.txt?
+run_concepts: &run_concepts
   stage: concepts
   image: registry.woden.us.es/containers/questa:2024.2
   parallel:
@@ -55,20 +56,17 @@ run-concepts:
   artifacts:
     when: always
     paths:
-      - .coverage
+      - .coverage_$DESIGN
 
-run-examples:
+run_examples:
+  <<: *run_concepts
   stage: examples
-  image: registry.woden.us.es/containers/questa:2024.2
-  script:
-    - unset LM_LICENSE_FILE
-    - export SALT_LICENSE_SERVER=2101@baldr.us.es
-    - pip3 install -r requirements.txt -r dev-requirements.txt
-    - make PYTHON="coverage run" examples
+    matrix:
+      - DESIGN: [00-counter, 01-countervunit, 02-linearinterpolator, 04-dualcounter, 05-uart_tx]
   artifacts:
     when: always
     paths:
-      - .coverage
+      - .coverage_$DESIGN
 
 # Test for #126
 # TODO : This test should be done a bit differently, so we don't have to update
@@ -77,7 +75,7 @@ run-examples:
 # TODO : Not sure how having this in parallel with run-examples will affect
 # python coverage, since both write on .coverage, so I'll remove the .coverage
 # artifact from this job
-run-steps-independently:
+run_steps_independently:
   stage: examples
   image: registry.woden.us.es/containers/questa:2024.2
   script:
@@ -102,6 +100,7 @@ run-steps-independently:
 #      - .coverage
 
 
+# TODO : merge coverage files from previous stages
 pycoverage:
   stage: coverage
   image: debian:11

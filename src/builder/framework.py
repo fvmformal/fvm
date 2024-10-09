@@ -41,7 +41,9 @@ FVM_STEPS = [
     ]
 
 # Create a rich console object
-console = Console()
+# TODO: force_terminal should enable color inside gitlab CI, but may break
+# non-color terminals?
+console = Console(force_terminal=True)
 
 class fvmframework:
 
