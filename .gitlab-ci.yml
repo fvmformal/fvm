@@ -61,6 +61,7 @@ run_concepts: &run_concepts
 run_examples:
   <<: *run_concepts
   stage: examples
+  parallel:
     matrix:
       - DESIGN: [00-counter, 01-countervunit, 02-linearinterpolator, 04-dualcounter, 05-uart_tx]
   artifacts:
