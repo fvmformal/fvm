@@ -4,6 +4,8 @@ stages:
   - examples
   - coverage
 
+
+
 lint_python:
   stage: lint_and_test
   image: debian:11
@@ -34,16 +36,22 @@ test-all:
       junit:
         - results.xml
 
+
+
 # TODO : Add artifacts, when we have a clearer idea of what those would be
 # TODO : Add results.xml, when our framework generates it
 run-concepts:
   stage: concepts
   image: registry.woden.us.es/containers/questa:2024.2
+  parallel:
+    matrix:
+      - DESIGN: [transactions_deprecated, parameterized_sequences, inheriting_vunits, inheriting_multiple_vunits, parameterized_properties, multiple_designs]
   script:
     - unset LM_LICENSE_FILE
     - export SALT_LICENSE_SERVER=2101@baldr.us.es
     - pip3 install -r requirements.txt -r dev-requirements.txt
-    - make PYTHON="coverage run" concepts
+    - make PYTHON="coverage run" $DESIGN
+    - mv .coverage .coverage_$DESIGN
   artifacts:
     when: always
     paths:
