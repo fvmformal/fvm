@@ -6,6 +6,7 @@ import glob
 import shutil
 import subprocess
 import pathlib
+import fnmatch
 
 # Third party imports
 import argparse
@@ -126,6 +127,7 @@ class fvmframework:
         self.current_toplevel = ''
         self.vhdl_sources = list()
         self.psl_sources = list()
+        self.skip_list = list()
         self.toolchain = "questa"
         self.vhdlstd = "2008"
 
@@ -236,6 +238,11 @@ class fvmframework:
             for step in FVM_STEPS:
                 self.results[design][step] = {}
 
+    # TODO : we could make this function accept also a list, but not sure if it
+    # is worth it since the user could just call it inside a loop
+    def skip(self, step, design='*'):
+        """Allow to skip specific steps and/or designs"""
+        self.skip_list.append(f'{design}.{step}')
 
     def set_loglevel(self, loglevel):
         """Sets the logging level for the build and test framework.
@@ -494,19 +501,23 @@ class fvmframework:
         # If a 'step' argument is specified, just run that specific step
         if self.step is None:
             for step in FVM_STEPS:
-                if step in toolchains.TOOLS[self.toolchain]:
+                if self.is_skipped(design, step):
+                    logger.info(f'{step=} of {design=} skipped by skip() function, will not run')
+                    self.results[design][step]['status'] = 'skip'
+                elif step in toolchains.TOOLS[self.toolchain]:
                     self.run_step(design, step)
                 else:
                     logger.info(f'{step=} not available in {self.toolchain=}, skipping')
-                    self.results[step]['status'] = 'skip'
-
-#            self.run_step(design, "lint")
-#            self.run_step(design, "rulecheck")
-#            self.run_step(design, "reachability")
-#            self.run_step(design, "resets")
-#            self.run_step(design, "prove")
+                    self.results[design][step]['status'] = 'skip'
         else:
             self.run_step(design, self.step)
+
+    def is_skipped(self, design, step):
+        """Returns True if design.step must not be run, otherwise returns False"""
+        for skip_str in self.skip_list:
+            if fnmatch.fnmatch(f'{design}.{step}', skip_str):
+                return True
+        return False
 
 
     # TODO : we have some duplicated code in the way we run commands, becase
@@ -720,7 +731,7 @@ class fvmframework:
                     elif status == 'fail':
                         style = 'bold red'
                     elif status == 'skip':
-                        syle = 'bold yellow'
+                        style = 'bold yellow'
                     text.append(status, style=style)
                     text.append(f' {design}.{step}')
                     #text.append(f' result={self.results[design][step]}', style='white')

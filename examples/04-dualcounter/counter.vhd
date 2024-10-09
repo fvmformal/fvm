@@ -7,7 +7,7 @@ entity counter is
     generic ( MAX_COUNT : integer := 100 );
     port ( clk: in  std_logic;
            rst: in  std_logic;
-           Q:   out unsigned(integer(ceil(log2(real(MAX_COUNT)))) downto 0)
+           Q:   out unsigned(integer(ceil(log2(real(MAX_COUNT))))-1 downto 0)
          );
 end counter;
 

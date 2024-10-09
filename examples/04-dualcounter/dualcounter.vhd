@@ -14,8 +14,8 @@ end dualcounter;
 
 architecture Behavioral of dualcounter is
 
-  signal count0 : unsigned(integer(ceil(log2(real(MAX_COUNT)))) downto 0);
-  signal count1 : unsigned(integer(ceil(log2(real(MAX_COUNT)))) downto 0);
+  signal count0 : unsigned(integer(ceil(log2(real(MAX_COUNT))))-1 downto 0);
+  signal count1 : unsigned(integer(ceil(log2(real(MAX_COUNT))))-1 downto 0);
 
   -- Necesito declararlo para poderlo usar, pero el hecho de declararlo no
   -- significa que lo esté usando ni me obliga a usarlo
@@ -23,7 +23,7 @@ architecture Behavioral of dualcounter is
     generic ( MAX_COUNT : integer := 100 );
     port ( clk: in  std_logic;
            rst: in  std_logic;
-           Q:   out unsigned(integer(ceil(log2(real(MAX_COUNT)))) downto 0)
+           Q:   out unsigned(integer(ceil(log2(real(MAX_COUNT))))-1 downto 0)
          );
   end component;
 
