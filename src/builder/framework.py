@@ -128,6 +128,7 @@ class fvmframework:
         self.vhdl_sources = list()
         self.psl_sources = list()
         self.skip_list = list()
+        self.disabled_coverage = list()
         self.toolchain = "questa"
         self.vhdlstd = "2008"
 
@@ -244,6 +245,14 @@ class fvmframework:
         """Allow to skip specific steps and/or designs. Accepts the wilcards
         '*' and '*'"""
         self.skip_list.append(f'{design}.{step}')
+
+    def disable_coverage(self, covtype, design='*'):
+        """Allow disabling specific coverage collection types. Allowed values
+        for covtype are 'observability', 'reachability',
+        'bounded_reachability', and 'signoff'"""
+        allowed_covtypes = ['observability', 'signoff', 'reachability', 'bounded_reachability']
+        assert covtype in allowed_covtypes, f'Specified {covtype=} not in {allowed_covtypes=}'
+        self.disabled_coverage.append(f'{design}.prove.{covtype}')
 
     def set_loglevel(self, loglevel):
         """Sets the logging level for the build and test framework.
@@ -434,17 +443,26 @@ class fvmframework:
             print('', file=f)
             print('## Compute Formal Coverage', file=f)
             #print('log_info "***** Running formal verify to get coverage..."', file=f)
-            # TODO : Coverage collection temporarily disabled since we get some
-            # errors in example 05-uart_tx which we need to solve (we must add
-            # some kind of exclusion for reset state transitions). The next
-            # line is the one that raises the errors of type:
-            # "Uncoverable FSM: FSM 'estado', Transition sampledata -> reposo"
-            print('formal verify -auto_constraint_off -cov_mode reachability -timeout 10m', file=f)
+            # TODO : maybe we should run coverage collection in separate
+            # scripts so we can better capture if there have been any errors,
+            # and also to annotate if they have been skipped
             #print('log_info "***** Running formal generate coverage..."', file=f)
-            print('formal generate coverage -cov_mode o', file=f)
-            print('formal generate coverage -cov_mode s', file=f)
-            print('formal generate coverage -cov_mode r', file=f)
-            print('formal generate coverage -cov_mode b', file=f)
+            if not self.is_disabled('observability'):
+                print('formal generate coverage -cov_mode o', file=f)
+            if not self.is_disabled('signoff'):
+                print('formal verify -auto_constraint_off -cov_mode signoff -timeout 10m', file=f)
+                print('formal generate coverage -cov_mode s', file=f)
+            if not self.is_disabled('reachability'):
+                print('formal verify -auto_constraint_off -cov_mode reachability -timeout 10m', file=f)
+                print('formal generate coverage -cov_mode r', file=f)
+            # TODO : bounded reachability requires at least an inconclusive
+            # assertion.
+            # TODO : it is clear then we need to run coverage in another
+            # script, so we may add or not the bounded reachability coverage
+            # collection
+            #if not self.is_disabled('bounded_reachability'):
+            #    print('formal verify -auto_constraint_off -cov_mode bounded_reachability -timeout 10m', file=f)
+            #    print('formal generate coverage -cov_mode b', file=f)
             print('formal generate report', file=f)
             print('', file=f)
             print('exit', file=f)
@@ -520,6 +538,12 @@ class fvmframework:
                 return True
         return False
 
+    def is_disabled(self, covtype):
+        """Returns True if design.prove.covtype must not be collected, otherwise returns False"""
+        for disable_str in self.disabled_coverage:
+            if fnmatch.fnmatch(f'{self.current_toplevel}.prove.{covtype}', disable_str):
+                return True
+        return False
 
     # TODO : we have some duplicated code in the way we run commands, becase
     # the code sort of repeats for the GUI invocations. We must see how we can
