@@ -24,7 +24,6 @@ lint_python:
     - PERCENTAGE=$(echo "$RATING * 10" | bc)
     - printf "lint score is %.2f %%\n" "$PERCENTAGE"
   coverage: /lint score is ([\d]+\.[\d]+)/
-  allow_failure: true
 
 test_all:
   stage: lint_and_test
