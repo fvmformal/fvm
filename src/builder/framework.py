@@ -743,9 +743,8 @@ class fvmframework:
         # assume/assert/fired/proven/cover/covered/uncoverable/etc. For this,
         # we may need to post-process the prove step log
         # TODO : print elapsed time
-        text = Text()
-        text.append("==== Summary ====================================")
-        console.print(text)
+        text_header = Text("==== Summary ====================================")
+        console.print(text_header)
         for design in self.toplevel:
             for step in FVM_STEPS:
                 # Only print pass/fail/skip, the rest of steps where not
@@ -758,13 +757,14 @@ class fvmframework:
                         style = 'bold red'
                     elif status == 'skip':
                         style = 'bold yellow'
+                    text = Text()
                     text.append(status, style=style)
                     text.append(f' {design}.{step}')
                     #text.append(f' result={self.results[design][step]}', style='white')
                     console.print(text)
                     #print(f'{status} {design}.{step}, result={self.results[design][step]}')
-        text.append("=================================================")
-        console.print(text)
+        text_footer = Text("=================================================")
+        console.print(text_footer)
 
     def exit_if_required(self, errorcode):
         """Exit if the continue flag is not set"""
