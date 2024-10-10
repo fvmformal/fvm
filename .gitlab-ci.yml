@@ -4,7 +4,12 @@ stages:
   - examples
   - coverage
 
-
+count_todos_in_code:
+  stage: lint_and_test
+  image: debian:11
+  script:
+    - grep -r TODO * | grep -v grep | wc -l
+  coverage: /([\d]+)/
 
 lint_python:
   stage: lint_and_test
