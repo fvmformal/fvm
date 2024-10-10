@@ -58,6 +58,7 @@ concepts: $(conceptlist)
 	$(PYTHON) -m concepts.$@.formal
 
 pycoverage:
+	coverage combine
 	coverage report -m
 	coverage html
 	coverage xml
