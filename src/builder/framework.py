@@ -580,8 +580,8 @@ class fvmframework:
                 else :
                     logger.trace(f'command: {" ".join(cmd)=}')
                     cmd_stdout, cmd_stderr = self.run_cmd(cmd, design, step, tool, self.verbose)
-                    stdout_err = self.logcheck(cmd_stdout, step, tool)
-                    stderr_err = self.logcheck(cmd_stderr, step, tool)
+                    stdout_err = self.logcheck(cmd_stdout, design, step, tool)
+                    stderr_err = self.logcheck(cmd_stderr, design, step, tool)
                     logfile = f'{path}/{step}.log'
                     logger.info(f'{step=}, {tool=}, finished, output written to {logfile}')
                     with open(logfile, 'w') as f :
@@ -692,8 +692,9 @@ class fvmframework:
 
         return captured_stdout, captured_stderr
 
-    def logcheck(self, result, step, tool):
+    def logcheck(self, result, design, step, tool):
         err_in_log = False
+        self.set_logformat(getlogformattool(design, step, tool))
         for line in result.splitlines() :
             err, warn, success = self.linecheck(line)
             # If we are in verbose mode, still check if there are errors /
@@ -708,6 +709,7 @@ class fvmframework:
             elif success :
                 if not self.verbose:
                     logger.success(f'SUCCESS detected in {step=}, {tool=}, {line=}')
+        self.set_logformat(LOGFORMAT)
         return err_in_log
 
     def linecheck(self, line):
