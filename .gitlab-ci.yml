@@ -14,7 +14,7 @@ count_todos_in_code:
     - COUNT=$(grep -r TODO * | grep -v grep | wc -l)
     - echo "Count=$COUNT"
     - mkdir -p badges
-    - anybadge --value=$COUNT --file=badges/todo TODOs
+    - anybadge --value=$COUNT --file=badges/todo --label=TODOs
   coverage: /Count=([\d]+)/
   artifacts:
     paths:
