@@ -38,6 +38,7 @@ FVM_STEPS = [
     'rulecheck',
     'reachability',
     'resets',
+    'clocks',
     'prove'
     ]
 
@@ -376,7 +377,7 @@ class fvmframework:
             self.genrulecheckscript("rulecheck.do", path)
             self.genreachabilityscript("reachability.do", path)
             self.genresetscript("resets.do", path)
-            #self.genclockscript("clocks.do", path)
+            self.genclockscript("clocks.do", path)
             self.genprovescript("prove.do", path)
 
     def gencompilescript(self, filename, path):
@@ -415,6 +416,18 @@ class fvmframework:
             print('rdc generate tree -reset reset_tree.rpt;', file=f)
             print('exit', file=f)
 
+    def genclockscript(self, filename, path):
+        # We first write the header to compile the netlist  and then append
+        # (mode "a") the tool-specific instructions
+        self.gencompilescript(filename, path)
+        with open(path+'/'+filename, "a") as f:
+            # TODO : let the user specify clock names, clock domains and reset domains
+            # TODO : also look at reconvergence, and other warnings detected
+            #print('netlist clock clk -period 50', file=f)
+
+            print(f'cdc run -d {self.current_toplevel}', file=f)
+            #print('cdc report -clockcheck clock_report.rpt;', file=f)
+            print('exit', file=f)
     # TODO : we will need arguments for the clocks, timeout, we probably need
     # to detect compile order if vcom doesn't detect it, set the other options
     # such as timeout... and also throw some errors if any option is not
