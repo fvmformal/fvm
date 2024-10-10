@@ -49,7 +49,7 @@ test_all:
 # TODO : Add results.xml, when our framework generates it
 run_concepts: &run_concepts
   stage: concepts
-  image: registry.woden.us.es/containers/questa:2024.2
+  image: registry.woden.us.es/containers/questa:2024.3
   parallel:
     matrix:
       - DESIGN: [transactions_deprecated, parameterized_sequences, inheriting_vunits, inheriting_multiple_vunits, parameterized_properties, multiple_designs]
@@ -80,7 +80,7 @@ run_examples:
 # TODO : this could be implemented more cleanly using parallel:matrix
 run_steps_independently:
   stage: examples
-  image: registry.woden.us.es/containers/questa:2024.2
+  image: registry.woden.us.es/containers/questa:2024.3
   script:
     - unset LM_LICENSE_FILE
     - export SALT_LICENSE_SERVER=2101@baldr.us.es
