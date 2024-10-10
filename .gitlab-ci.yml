@@ -28,10 +28,11 @@ test_all:
     - apt install -y python3 python3-pip
     - pip3 install -r requirements.txt -r dev-requirements.txt
     - make test
+    - mv .coverage .coverage.pytest
   artifacts:
     when: always
     paths:
-      - .coverage
+      - .coverage.pytest
     reports:
       junit:
         - results.xml
@@ -40,7 +41,6 @@ test_all:
 
 # TODO : Add artifacts, when we have a clearer idea of what those would be
 # TODO : Add results.xml, when our framework generates it
-# TODO : Maybe this job doesn't need dev-requirements.txt?
 run_concepts: &run_concepts
   stage: concepts
   image: registry.woden.us.es/containers/questa:2024.2
@@ -51,12 +51,11 @@ run_concepts: &run_concepts
     - unset LM_LICENSE_FILE
     - export SALT_LICENSE_SERVER=2101@baldr.us.es
     - pip3 install -r requirements.txt -r dev-requirements.txt
-    - make PYTHON="coverage run" $DESIGN
-    - mv .coverage .coverage_$DESIGN
+    - make PYTHON="coverage run --data-file=.coverage.$DESIGN" $DESIGN
   artifacts:
     when: always
     paths:
-      - .coverage_$DESIGN
+      - .coverage.$DESIGN
 
 run_examples:
   <<: *run_concepts
@@ -64,10 +63,6 @@ run_examples:
   parallel:
     matrix:
       - DESIGN: [00-counter, 01-countervunit, 02-linearinterpolator, 04-dualcounter, 05-uart_tx]
-  artifacts:
-    when: always
-    paths:
-      - .coverage_$DESIGN
 
 # Test for #126
 # TODO : This test should be done a bit differently, so we don't have to update
@@ -76,6 +71,7 @@ run_examples:
 # TODO : Not sure how having this in parallel with run-examples will affect
 # python coverage, since both write on .coverage, so I'll remove the .coverage
 # artifact from this job
+# TODO : this could be implemented more cleanly using parallel:matrix
 run_steps_independently:
   stage: examples
   image: registry.woden.us.es/containers/questa:2024.2
@@ -83,22 +79,22 @@ run_steps_independently:
     - unset LM_LICENSE_FILE
     - export SALT_LICENSE_SERVER=2101@baldr.us.es
     - pip3 install -r requirements.txt -r dev-requirements.txt
-    - coverage run -m examples.01-countervunit.formal -s lint
+    - coverage run --data-file=.coverage.$DESIGN.lint -m examples.01-countervunit.formal -s lint
     - make clean
-    - coverage run -m examples.01-countervunit.formal -s rulecheck
+    - coverage run --data-file=.coverage.$DESIGN.rulecheck --m examples.01-countervunit.formal -s rulecheck
     - make clean
-    - coverage run -m examples.01-countervunit.formal -s reachability
+    - coverage run --data-file=.coverage.$DESIGN.reachability --m examples.01-countervunit.formal -s reachability
     - make clean
-    - coverage run -m examples.01-countervunit.formal -s resets
+    - coverage run --data-file=.coverage.$DESIGN.resets --m examples.01-countervunit.formal -s resets
     - make clean
 #    - coverage run -m examples.01-countervunit.formal -s clocks
 #    - make clean
-    - coverage run -m examples.01-countervunit.formal -s prove
+    - coverage run --data-file=.coverage.$DESIGN.prove --m examples.01-countervunit.formal -s prove
     - make clean
-#  artifacts:
-#    when: always
-#    paths:
-#      - .coverage
+  artifacts:
+    when: always
+    paths:
+      - .coverage.*
 
 
 # TODO : merge coverage files from previous stages
