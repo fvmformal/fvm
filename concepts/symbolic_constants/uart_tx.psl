@@ -15,7 +15,10 @@ vunit uart_tx(uart_tx(Behavioral)) {
   correct_tx_after_rd_en:
     assert always (({rd_en} |=> {transmission(datai)}) abort rst);
 
-  -- Symbolic constant: Force the solver to always use the same value for datai
+  -- Symbolic constant: Force the solver to make datai constant in time, but it can
+  -- choose any value it wants. This works because the solver may chose any
+  -- for datai at clock cycle zero, and then this assumption forces datai to
+  -- remain constant for the rest of time
   datai_symbolic_constant:
     assume always (datai = prev(datai));
 
