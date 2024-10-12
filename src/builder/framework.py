@@ -476,6 +476,7 @@ class fvmframework:
             #if not self.is_disabled('bounded_reachability'):
             #    print('formal verify -auto_constraint_off -cov_mode bounded_reachability -timeout 10m', file=f)
             #    print('formal generate coverage -cov_mode b', file=f)
+            print('formal generate testbenches', file=f)
             print('formal generate report', file=f)
             print('', file=f)
             print('exit', file=f)
