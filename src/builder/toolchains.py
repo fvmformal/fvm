@@ -13,6 +13,7 @@ QUESTA_TOOLS = {
         "reachability"   : ["covercheck", "qverify"],
         "friendliness"   : ["covercheck", "qverify"],
         "resets"         : ["RDC",        "qverify"],
+        "clocks"         : ["CDC",        "qverify"],
         "prove"          : ["propcheck",  "qverify"]
 #        "simulate"       : ["vsim", "vsim"],
 #        "createemptylib" : ["vlib", "vlib"],
