@@ -155,7 +155,7 @@ class fvmframework:
         """Add a single PSL source"""
         logger.info(f'Adding PSL source: {src}')
         if not os.path.exists(src) :
-            logger.error(f'VHDL source not found: {src}')
+            logger.error(f'PSL source not found: {src}')
             self.exit_if_required(BAD_VALUE)
         extension = pathlib.Path(src).suffix
         if extension not in ['.psl', '.PSL'] :
