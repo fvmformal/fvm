@@ -47,6 +47,7 @@ conceptlist += inheriting_multiple_vunits
 conceptlist += parameterized_properties
 conceptlist += multiple_designs
 conceptlist += symbolic_constants
+conceptlist += user_defined_hdltypes
 
 examples: $(examplelist)
 concepts: $(conceptlist)
