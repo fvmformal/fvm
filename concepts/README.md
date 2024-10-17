@@ -22,3 +22,10 @@ project, during the definition of the methodology
 - ``parameterized_properties``: an example of how to define a property that
   receives parameters using the keyword ``property``, and how to use it in
   verification directives like ``assert``
+- ``multiple_designs``: this is an example of passing a list of toplevels to
+  the FVM framework, which tells it to run all the tests on each of the designs
+  specified in the list
+- ``user_defined_hdltypes``: specify a user-defined ``hdltype`` in a PSL
+  ``sequence``
+- ``user_defined_hdltypes_in_package``: the same as ``user_defined_hdltypes``,
+  but the specific user-defined datatype has been defined in a VHDL package

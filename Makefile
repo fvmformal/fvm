@@ -48,6 +48,7 @@ conceptlist += parameterized_properties
 conceptlist += multiple_designs
 conceptlist += symbolic_constants
 conceptlist += user_defined_hdltypes
+conceptlist += user_defined_hdltypes_in_package
 
 examples: $(examplelist)
 concepts: $(conceptlist)

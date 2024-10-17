@@ -1,0 +1,37 @@
+vunit colors (colors(behavioral)) {
+
+    -- Default clock for PSL assertions
+    default clock is rising_edge(clk);
+
+    -- Make sure the output vector is one-hot
+    colorvect_is_onehot:
+      assert always onehot(colorvect);
+
+    -- Define a sequence that uses a custom hdltype
+    sequence transition (
+      hdltype color_t color1;
+      hdltype color_t color2
+    ) is {
+      color = color1; color = color2
+    };
+
+    -- Assure we see specific transitions
+    cover_violet_to_red:
+      cover {transition(violet, red)};
+
+    cover_yellow_to_green:
+      cover transition(yellow, green);
+
+    -- Assert we don't see some illegal transitions
+    -- (of course there are more transitions that would be illegal)
+    never_blue_to_yellow:
+      assert never transition(blue, yellow);
+
+    never_indigo_to_orange:
+      assert never transition(indigo, orange);
+
+    -- Since red is the reset state, we can always go to it if we assert the
+    -- reset input, so if we don't add the "abort rst" the assertion will fire
+    never_yellow_to_red:
+      assert (never transition(yellow, red)) abort rst;
+}
