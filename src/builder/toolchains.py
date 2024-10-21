@@ -9,6 +9,7 @@
 QUESTA_TOOLS = {
         # step           : ["tool",       "wrapper"],
         "lint"           : ["lint",       "qverify"],
+        "friendliness"   : ["autocheck",  "qverify"],
         "rulecheck"      : ["autocheck",  "qverify"],
         "reachability"   : ["covercheck", "qverify"],
         "friendliness"   : ["covercheck", "qverify"],
