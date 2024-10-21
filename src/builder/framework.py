@@ -538,12 +538,16 @@ class fvmframework:
                     logger.info(f'{step=} of {design=} skipped by skip() function, will not run')
                     self.results[design][step]['status'] = 'skip'
                 elif step in toolchains.TOOLS[self.toolchain]:
-                    self.run_step(design, step)
+                    err = self.run_step(design, step)
+                    if err:
+                        self.exit_if_required(ERROR_IN_LOG)
                 else:
                     logger.info(f'{step=} not available in {self.toolchain=}, skipping')
                     self.results[design][step]['status'] = 'skip'
         else:
-            self.run_step(design, self.step)
+            err = self.run_step(design, self.step)
+            if err:
+                self.exit_if_required(ERROR_IN_LOG)
 
     def is_skipped(self, design, step):
         """Returns True if design.step must not be run, otherwise returns False"""
@@ -564,6 +568,7 @@ class fvmframework:
     # deduplicate this so this function does not get unwieldy
     def run_step(self, design, step):
         """Run a specific step of the methodology"""
+        err = False
         path = self.outdir+'/'+self.current_toplevel
         open_gui = False
         # If called with a specific step, run that specific step
@@ -588,10 +593,11 @@ class fvmframework:
                     with open(logfile, 'w') as f :
                         f.write(cmd_stdout)
                         f.write(cmd_stderr)
-                    # TODO : we disabled this error, we should propagate the
-                    # error outside
-                    #if stdout_err or stderr_err:
-                    #    self.exit_if_required(ERROR_IN_LOG)
+                    # We cannot exit here immediately because then we wouldn't
+                    # be able to open the GUI if there is any error, but we can
+                    # record the error and propagate it outside the function
+                    if stdout_err or stderr_err:
+                        err = True
                     if stdout_err or stderr_err:
                         self.results[design][step]['status'] = 'fail'
                     else:
@@ -611,6 +617,7 @@ class fvmframework:
                     cmd = [wrapper, f'{path}/{tool}.db']
                     logger.trace(f'command: {" ".join(cmd)=}')
                     self.run_cmd(cmd, design, step, tool, self.verbose)
+
         else :
             logger.error(f'No tool available for {step=} in {self.toolchain=}')
             self.exit_if_required(BAD_VALUE)
@@ -619,6 +626,9 @@ class fvmframework:
         # pass / fail / skipped / disabled, and also warnings, errors,
         # successes, and for prove the number of asserts, proven, fired,
         # inconclusives, cover, covered, uncoverable... etc
+
+        return err
+
 
     def run_cmd(self, cmd, design, step, tool, verbose = True):
         self.set_logformat(getlogformattool(design, step, tool))
@@ -755,7 +765,7 @@ class fvmframework:
         # TODO : print the status for each design.step
         # TODO : color the status
         # TODO : print also number of warnings and errors, and all relevant
-        # information from propchech (number of
+        # information from PropCheck (number of
         # assume/assert/fired/proven/cover/covered/uncoverable/etc. For this,
         # we may need to post-process the prove step log
         # TODO : print elapsed time
@@ -787,4 +797,5 @@ class fvmframework:
         if self.cont:
             pass
         else:
+            self.pretty_summary()
             sys.exit(errorcode)
