@@ -94,7 +94,7 @@ run_steps_independently:
     - pip3 install -r requirements.txt -r dev-requirements.txt
     - coverage run --data-file=.coverage.$DESIGN.lint -m examples.01-countervunit.formal -s lint
     - make clean
-    - coverage run --data-file=.coverage.$DESIGN.rulecheck --m examples.01-countervunit.formal -s rulecheck
+    - coverage run --data-file=.coverage.$DESIGN.rulecheck --m examples.01-countervunit.formal -s friendliness
     - make clean
     - coverage run --data-file=.coverage.$DESIGN.reachability --m examples.01-countervunit.formal -s reachability
     - make clean
