@@ -5,6 +5,13 @@ package colors_common is
 
   type color_t is (red, orange, yellow, green, blue, indigo, violet);
 
+  type color_record is
+    record
+      a : color_t;
+      b : color_t;
+      c : color_t;
+    end record;
+
   function onehot(constant vect : std_ulogic_vector(6 downto 0)) return boolean;
 
 end package;

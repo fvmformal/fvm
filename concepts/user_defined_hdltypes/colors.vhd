@@ -1,6 +1,5 @@
 library IEEE;
 use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
 
 entity colors is
     generic ( MAX_COUNT : integer := 128 );
@@ -14,6 +13,13 @@ architecture behavioral of colors is
 
     type color_t is (red, orange, yellow, green, blue, indigo, violet);
     signal color, n_color: color_t;
+
+    type color_record is
+      record
+        a : color_t;
+        b : color_t;
+        c : color_t;
+      end record;
 
     -- Helper function to check if a color vector is onehot
     -- We aren't using it here, but somehow formal compile throws errors if we

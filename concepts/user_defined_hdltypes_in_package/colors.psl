@@ -15,12 +15,22 @@ vunit colors (colors(behavioral)) {
       color = color1; color = color2
     };
 
-    -- Assure we see specific transitions
+    -- Define a sequence that uses a custom hdltype of type record
+    sequence two_transitions (
+      hdltype color_record colors
+    ) is {
+      color = colors.a; color = colors.b; color = colors.c
+    };
+
+    -- Ensure we see specific transitions
     cover_violet_to_red:
       cover {transition(violet, red)};
 
     cover_yellow_to_green:
       cover transition(yellow, green);
+
+    cover_red_orange_yellow:
+      cover two_transitions((a => red, b => orange, c => yellow));
 
     -- Assert we don't see some illegal transitions
     -- (of course there are more transitions that would be illegal)
