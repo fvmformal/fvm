@@ -18,6 +18,7 @@ from rich.text import Text
 from src.builder import toolchains
 from src.builder import logcounter
 from src.builder import helpers
+from src.builder.parse_design_rpt import *
 
 # Error codes
 BAD_VALUE    = "FVM exit condition: Bad value"
@@ -514,9 +515,9 @@ class fvmframework:
             print('exit', file=f)
 
     def run(self):
-        print(f'{self.toplevel=}')
+        logger.info(f'Designs: {self.toplevel}')
         for design in self.toplevel:
-            print(f'Running {design=}')
+            logger.info(f'Running {design=}')
             self.run_design(design)
 
         self.pretty_summary()
@@ -541,6 +542,7 @@ class fvmframework:
                     err = self.run_step(design, step)
                     if err:
                         self.exit_if_required(ERROR_IN_LOG)
+                    self.run_post_step(design, step)
                 else:
                     logger.info(f'{step=} not available in {self.toolchain=}, skipping')
                     self.results[design][step]['status'] = 'skip'
@@ -548,6 +550,7 @@ class fvmframework:
             err = self.run_step(design, self.step)
             if err:
                 self.exit_if_required(ERROR_IN_LOG)
+            self.run_post_step(design, self.step)
 
     def is_skipped(self, design, step):
         """Returns True if design.step must not be run, otherwise returns False"""
@@ -703,6 +706,17 @@ class fvmframework:
 
         return captured_stdout, captured_stderr
 
+    def run_post_step(self, design, step):
+        """Run post processing for a specific step of the methodology"""
+        # Currently we only do post-processing after the friendliness step
+        logger.trace('run_post_step, {design=}, {step=})')
+        path = self.outdir+'/'+self.current_toplevel
+        if step == 'friendliness':
+            rpt = path+'/autocheck_design.rpt'
+            data = data_from_design_summary(rpt)
+            self.results[design][step]['data'] = data
+            self.results[design][step]['score'] = friendliness_score(data)
+
     def logcheck(self, result, design, step, tool):
         err_in_log = False
         self.set_logformat(getlogformattool(design, step, tool))
@@ -786,6 +800,10 @@ class fvmframework:
                     text = Text()
                     text.append(status, style=style)
                     text.append(f' {design}.{step}')
+                    if step == 'friendliness':
+                        score = self.results[design][step]["score"]
+                        score_str = f'\t(score: {score:.2f}%)'
+                        text.append(score_str)
                     #text.append(f' result={self.results[design][step]}', style='white')
                     console.print(text)
                     #print(f'{status} {design}.{step}, result={self.results[design][step]}')

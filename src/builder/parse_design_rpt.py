@@ -1,4 +1,6 @@
 import re
+import math
+
 from rich.console import Console
 from rich.table import Table
 
@@ -58,3 +60,33 @@ def data_from_design_summary(filename):
     data = update_storage_structures(data)
     return data
 
+def difficulty_score(data):
+    """Computes an overall formal difficulty score according to a weighted
+    operation of the number of elements in the design. Currently the operation
+    is just a sum but it could be an exponential function in the future"""
+    SCORE_WEIGHTS = {
+            'Clocks'             : 30,
+            'Resets'             : 15,
+            'Control Point Bits' : 5,
+            'State Bits'         : 4,
+            'Counters'           : 10,
+            'FSMs'               : 10,
+            'RAMs'               : 50
+            }
+    difficulty = 0
+    for row in data:
+        for term in SCORE_WEIGHTS:
+            if term in row[1]:
+                #print(f'found:{row=}')
+                difficulty += row[2]*SCORE_WEIGHTS[term]
+    return difficulty
+
+def difficulty_to_friendliness(difficulty):
+    """Converts difficulty score to a friendliness percentage"""
+    DECAY = 0.0001 # Makes the exponential decay slower
+    percentage = 100 / (math.log(DECAY*difficulty+1) + 1)
+    return percentage
+
+def friendliness_score(data):
+    """Computes the friendliness score"""
+    return difficulty_to_friendliness(difficulty_score(data))
