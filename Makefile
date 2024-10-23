@@ -49,6 +49,7 @@ conceptlist += multiple_designs
 conceptlist += symbolic_constants
 conceptlist += user_defined_hdltypes
 conceptlist += user_defined_hdltypes_in_package
+conceptlist += user_defined_hdltypes_in_external_package
 
 examples: $(examplelist)
 concepts: $(conceptlist)

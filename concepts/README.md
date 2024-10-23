@@ -25,7 +25,10 @@ project, during the definition of the methodology
 - [``multiple_designs``](multiple_designs): this is an example of passing a list of toplevels to
   the FVM framework, which tells it to run all the tests on each of the designs
   specified in the list
-- [``user_defined_hdltypes``](user_defined_hdltypes): specify a user-defined ``hdltype`` in a PSL
+- [``user_defined_hdltypes``](user_defined_hdltypes): specify a couple of user-defined ``hdltype`` in a PSL
   ``sequence``
 - [``user_defined_hdltypes_in_package``](user_defined_hdltypes_in_package): the same as ``user_defined_hdltypes``,
-  but the specific user-defined datatype has been defined in a VHDL package
+  but the specific user-defined datatypes have been defined in a VHDL package
+- [``user_defined_hdltypes_in_external_package``](user_defined_hdltypes_in_external_package): the same as ``user_defined_hdltypes``,
+  but one of the user-defined datatypes has been defined in a VHDL package that
+  is loaded from the PSL vunit and not from inside the VHDL entity
