@@ -1,0 +1,264 @@
+# Set to True to print debug messages
+DEBUG = True
+
+# Set to True to print the result of traversing the dictionary
+TRAVERSE = False
+
+# To use the JSON encoder and decoder
+import json
+
+# Since JSON is a subset of YAML, use pyyaml since it accepts missing quotes
+import yaml
+
+# To use sys.exit and be able to print to sys.stderr
+import sys
+
+# Use yamllint to detect common YAML errors, such as key in dict defined more
+# than once
+import yamllint
+from yamllint import config
+
+# To easily get command-line arguments
+import argparse
+
+# Allow to render wavedrom signals from inside python
+import wavedrom
+
+# Allow to obtain basename of input files
+from pathlib import Path
+#import os
+
+# Very cool debug function
+# Documentation here: https://pypi.org/project/varname/
+#from varname.helpers import debug
+
+# Allow to compare data type to Dict
+#from typing import Dict
+
+# Import our own constant definitions
+#from definitions import *
+
+# Import our own functions to traverse the dictionary
+from src.drom2psl.traverse import traverse
+
+# Import our own functions to interpret the dictionary
+from src.drom2psl.interpret import *
+
+# Import our own logging functions
+from src.drom2psl.logging import *
+
+# To allow pretty cool debug prints than can be disabled after development
+# Explanation at: https://towardsdatascience.com/do-not-use-print-for-debugging-in-python-anymore-6767b6f1866d
+from icecream import ic
+
+def generator(FILES):
+  # Disable icecream if we are not debugging
+  if DEBUG == False:
+      ic.disable
+
+
+  # Set custom prefix for icecream
+  ic.configureOutput(prefix='Debug | ')
+
+#  ic("Test icecream")
+#  print("Test print")
+#  info("Test info")
+#  warning("Test warning")
+#  error("Test error")
+
+
+  #ic(args)
+  ic(FILES)
+
+  # Open the input files
+  for FILE in FILES :
+    f = open(FILE)
+
+    # Pass the input file through the linter
+    #conf = config.YamlLintConfig('extends: default')
+    #for p in yamllint.linter.run(f, conf):
+    #    print(p.desc, p.line, p.rule)
+
+    #gen = linter.run(f, conf)
+    #debug(type(gen))
+    #debug(gen)
+
+
+
+    # Extract the dictionary from the file. This should detect any JSON syntax
+    # errors
+    # We'll use the YAML parser instead of the JSON parser since the JSON
+    # parser is very strict with the double quotes (expects all keys to be
+    # inside double quotes), but the wavedrom format doesn't require those
+    # double quotes
+
+    ic("Extracting dictionary interpreting it as YAML")
+
+    # Load YAML and output JSON, to fix typical json format errors, so we can
+    # accept mosty-correct json. We do this because the online wavedom website also
+    # does it, even the examples are not correct (they do not put the keys in
+    # quotes, which is valid YAML but invalid JSON, and in example step7_head_foot
+    # they don't put a space after the colons, which is invalid YAML but I believe
+    # it is correct JSON. Loading YAML and outputting JSON seems to correct the
+    # issues.
+
+    #dict = yaml.load(f, Loader=yaml.SafeLoader)
+    #debug(type(dict))
+    #debug(dict)
+    #string = json.dumps(dict, indent=4)
+    #debug(type(string))
+    #debug(string)
+    #fixed_dict = json.loads(string)
+    #debug(type(fixed_dict))
+    #debug(fixed_dict)
+
+    try:
+      ok = True
+      dict = yaml.load(f, Loader=yaml.SafeLoader)
+    except yaml.YAMLError:
+      ok = False
+
+    if not ok:
+      error("Invalid YAML syntax in file"+str(FILE))
+    if ok:
+      ic(dict)
+
+    if ok:
+      if dict is None:
+        error("Input JSON file is empty!")
+        empty_json = True
+      else:
+        empty_json = False
+
+    #debug("Extracting dictionary interpreting it as JSON")
+    #dict = json.load(f)
+    #debug(type(dict))
+    #debug(dict)
+
+    # Since wavedrompy reads a string and not a dict, let's read the file again,
+    # this time into a string
+
+    if ok:
+      ic("Rendering input file -> string -> wavedrompy")
+      with open(FILE, "r") as f:
+        string = f.read()
+
+    # Close the input file
+    f.close()
+
+    #ic(type(string))
+    #ic(string)
+
+    # Let's process the dict now
+    # We probably should do this recursively
+
+    #detect_groups()
+    if ok:
+      ic("Traversing dictionary")
+
+    if TRAVERSE:
+        print("DEBUG: Interpreting dict")
+        traverse("  ", dict)
+
+    # Process dictionary
+    if ok:
+      ic("Getting the signal list")
+      signal, ok = get_signal(dict)
+
+    #if error == False and DEBUG :
+    #    ic("Listing signal elements")
+    #    list_elements("ListElements:", signal)
+
+    if ok:
+      ic("Flattening signal")
+      flattened_signal, ok = flatten("", signal, None)
+
+
+    if ok:
+      ic(flattened_signal)
+      ic("Detected", len(flattened_signal), "wavelanes")
+
+    if ok:
+        ic("Checking wavelanes in flattened signal")
+        for wavelane in flattened_signal:
+            ok = check_wavelane(wavelane)
+        if not ok:
+            error("At least a wavelane error")
+
+    if ok:
+        ic("Checking all non-empty wavelanes' waves have the same length")
+        lengths = []
+        for wavelane in flattened_signal :
+            if len(wavelane) != 0 :
+                #ic(wavelane.get(WAVE))
+                #ic(type(wavelane.get(WAVE)))
+                #ic(len(wavelane.get(WAVE)))
+                lengths.append(len(wavelane.get(WAVE)))
+        ic("Wavelane lengths", lengths)
+        #ic(set(lengths))
+        #ic(len(set(lengths)))
+        if len(set(lengths)) != 1 :
+            error("Not all wavelanes' wave fields have the same length!")
+            for wavelane in flattened_signal :
+                error("  wavelane "+str(wavelane.get(NAME))+" has a wave with length "+str(len(wavelane.get(WAVE)))+" (wave is "+str(wavelane.get(WAVE))+" )")
+        else:
+            ic("detected", lengths[0], "clock cycles")
+
+    if ok:
+        ic("Counting wavelanes")
+        allwavelanes = 0
+        nonemptywavelanes = 0
+        for wavelane in flattened_signal:
+            allwavelanes += 1
+            if len(wavelane) != 0 :
+                nonemptywavelanes += 1
+        ic("detected", allwavelanes, "wavelanes")
+        ic("from which", nonemptywavelanes, "are non-empty")
+
+    ic("Was the execution correct?")
+    ic(ok)
+
+    # Render the json using wavedrompy. This way we should receive an error if
+    # there are any wavedrom-specific errors in an otherwise correct JSON
+    if ok:
+        if (not empty_json) and DEBUG:
+          ic("Rendering the JSON into an .svg")
+          render = wavedrom.render(string)
+          ic(render)
+          svgfilename = Path(FILE).stem + '.svg'
+          ic(svgfilename)
+          if DEBUG:
+              render.saveas(svgfilename)
+
+    #    for i in range(len(value)):
+    #        print("i:", i, "value[i]:", value[i])
+    #        print("type(value[i]):", type(value[i]))
+
+    # Return different values to the shell, depending on the type of error
+    if not ok:
+      retval = 1
+    elif empty_json:
+      retval = 2
+    else:
+      retval = 0
+
+    if retval != 0 :
+      error("At least one error!")
+    else:
+      info("No errors detected!")
+
+  return(retval)
+
+
+if __name__ == "__main__":
+    # Configure the argument parser
+    parser = argparse.ArgumentParser(description='Generate PSL sequence from .json wavedrom descriptions.')
+    parser.add_argument('inputfiles', nargs='+', help='.json input file(s) (must be wavedrom compatible)')
+    parser.add_argument('--out', default='out', help='Output directory for generated files')
+
+    # Get arguments from command-line
+    args = parser.parse_args()
+    FILES = args.inputfiles
+
+    retval = generator(FILES)
+    sys.exit(retval)
