@@ -1,0 +1,2 @@
+{ signal: [{ name: "Alfa", wave: "01.zx=ud.23.456789" }],
+  signal: [{ name: "Beta", wave: "010122334455667788" }] }
