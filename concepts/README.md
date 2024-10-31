@@ -32,3 +32,10 @@ project, during the definition of the methodology
 - [``user_defined_hdltypes_in_external_package``](user_defined_hdltypes_in_external_package): the same as ``user_defined_hdltypes``,
   but one of the user-defined datatypes has been defined in a VHDL package that
   is loaded from the PSL vunit and not from inside the VHDL entity
+- [``assert_to_assume``](assert_to_assume): an example of how we can define
+  properties for a submodule and afterwards assume that they hold when proving
+  properties for the top-level. We just change a ``.psl`` file that has
+  properties of the form ``assert named_property`` for a file that has ``assume
+  named_property``. This example doesn't improve the proof times for the
+  top-level module, but at least is a working example on how to try this
+  approach

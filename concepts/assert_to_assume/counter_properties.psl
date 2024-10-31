@@ -1,0 +1,8 @@
+vunit counter_properties(counter) {
+
+    property upper_bound is always (Q <= MAX_COUNT);
+
+    property counting_up is always (not (rst = '1') and (not prev(rst) = '1') and (prev(Q) /= MAX_COUNT)) -> (Q-prev(Q) = 1);
+
+}
+

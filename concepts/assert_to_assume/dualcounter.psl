@@ -1,0 +1,37 @@
+vunit dualcounter (dualcounter(Behavioral)) {
+
+  -- Default clock
+  default clock is rising_edge (clk);
+
+  -- Assume a reset on the first clock cycle
+  assume_initial_reset: assume rst = '1';
+
+  -- Output equalmsb should always be '1'
+  output_equalmsb_must_be_one: assert always equalmsb = '1';
+
+  -- The value of both counters must be equal
+  --counters_equal : assert always count0 = count1;
+
+  -- Cover the counters overflowing
+  --
+  -- Without parameterizing, we need to write the same sequence twice
+  cover_counter0_overflow:
+    cover {count0 = MAX_COUNT; count0 = 0};
+
+  cover_counter1_overflow:
+    cover {count1 = MAX_COUNT; count1 = 0};
+
+  -- We could instead parameterize a sequence:
+  sequence overflow (
+    hdltype unsigned count
+  ) is {
+    count = MAX_COUNT; count = 0
+  };
+
+  cover_counter0_overflow_param:
+    cover {overflow(count0)};
+
+  cover_counter1_overflow_param:
+    cover {overflow(count1)};
+
+}
