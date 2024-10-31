@@ -1,3 +1,13 @@
+# For the framework
 loguru
 argparse
 rich
+
+# For drom2psl
+# We could remove the last two if we use loguru instead of termcolor and
+# icecream
+pyyaml
+yamllint
+wavedrom
+termcolor
+icecream
