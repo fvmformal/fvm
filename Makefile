@@ -50,6 +50,7 @@ conceptlist += symbolic_constants
 conceptlist += user_defined_hdltypes
 conceptlist += user_defined_hdltypes_in_package
 conceptlist += user_defined_hdltypes_in_external_package
+conceptlist += assert_to_assume
 
 examples: $(examplelist)
 concepts: $(conceptlist)
