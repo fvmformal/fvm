@@ -1,4 +1,5 @@
-coverage
-pytest
-pylint
-pylint-exit
+# Development requirements
+coverage      # To calculate python code coverage
+pytest        # For unit testing
+pylint        # To detect linting errors in the python code
+pylint-exit   # To handle pylint exit codes

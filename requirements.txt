@@ -1,13 +1,13 @@
 # For the framework
-loguru
-argparse
-rich
+loguru      # To have a logger
+argparse    # To parse input arguments
+rich        # For really pretty printing
 
 # For drom2psl
 # We could remove the last two if we use loguru instead of termcolor and
 # icecream
-pyyaml
-yamllint
-wavedrom
-termcolor
-icecream
+pyyaml      # To parse YAML (YAML is a superset of JSON)
+yamllint    # To lint YAML, detecting common errors
+wavedrom    # To render wavedrom signals from inside python
+termcolor   # To color terminal output
+icecream    # Provides nice debugging functions
