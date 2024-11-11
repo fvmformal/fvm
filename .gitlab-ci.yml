@@ -59,7 +59,7 @@ run_concepts: &run_concepts
   image: registry.woden.us.es/containers/questa:2024.3
   parallel:
     matrix:
-      - DESIGN: [transactions_deprecated, parameterized_sequences, inheriting_vunits, inheriting_multiple_vunits, parameterized_properties, multiple_designs, symbolic_constants]
+      - DESIGN: [transactions_deprecated, parameterized_sequences, inheriting_vunits, inheriting_multiple_vunits, parameterized_properties, multiple_designs, symbolic_constants, user_defined_hdltypes user_defined_hdltypes_in_package user_defined_hdltypes_in_external_package assert_to_assume]
   script:
     - unset LM_LICENSE_FILE
     - export SALT_LICENSE_SERVER=2101@baldr.us.es

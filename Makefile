@@ -55,6 +55,12 @@ conceptlist += assert_to_assume
 examples: $(examplelist)
 concepts: $(conceptlist)
 
+list-examples:
+	@echo $(examplelist)
+
+list-concepts:
+	@echo $(conceptlist)
+
 # Generic rules to run examples and concepts
 %: examples/%
 	$(PYTHON) -m examples.$@.formal

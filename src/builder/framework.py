@@ -152,6 +152,11 @@ class fvmframework:
         self.vhdl_sources.append(src)
         logger.debug(f'{self.vhdl_sources=}')
 
+    def clear_vhdl_sources(self):
+        """Removes all VHDL sources from the project"""
+        logger.info(f'Removing all VHDL sources')
+        self.vhdl_sources = []
+
     def add_psl_source(self, src):
         """Add a single PSL source"""
         logger.info(f'Adding PSL source: {src}')
@@ -163,6 +168,11 @@ class fvmframework:
             logger.warning(f'PSL source {src=} does not have a typical PSL extension extension, instead it has {extension=}')
         self.psl_sources.append(src)
         logger.debug(f'{self.psl_sources=}')
+
+    def clear_psl_sources(self):
+        """Removes all PSL sources from the project"""
+        logger.info(f'Removing all PSL sources')
+        self.psl_sources = []
 
     def add_vhdl_sources(self, globstr):
         """Add multiple VHDL sources by globbing a pattern"""
