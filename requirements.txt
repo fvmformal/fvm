@@ -2,6 +2,8 @@
 loguru      # To have a logger
 argparse    # To parse input arguments
 rich        # For really pretty printing
+junit-xml   # To generate JUnit-XML reports
+humanreadable # To print times in human-readable format
 
 # For drom2psl
 # We could remove the last two if we use loguru instead of termcolor and

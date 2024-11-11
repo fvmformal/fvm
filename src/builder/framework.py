@@ -4,6 +4,7 @@ import os
 import re
 import glob
 import shutil
+import time
 import subprocess
 import pathlib
 import fnmatch
@@ -531,6 +532,7 @@ class fvmframework:
             self.run_design(design)
 
         self.pretty_summary()
+        self.generate_reports()
         err = self.check_errors()
         if err :
           self.exit_if_required(CHECK_FAILED)
@@ -646,6 +648,7 @@ class fvmframework:
     def run_cmd(self, cmd, design, step, tool, verbose = True):
         self.set_logformat(getlogformattool(design, step, tool))
 
+        start_time = time.perf_counter()
         process = subprocess.Popen (
                   cmd,
                   stdout  = subprocess.PIPE,
@@ -699,6 +702,11 @@ class fvmframework:
 
         # Wait for the process to complete and get the return code
         retval = process.wait()
+
+        # After the process has finished, calculate elapsed time
+        end_time = time.perf_counter()
+        elapsed_time = end_time - start_time
+        self.results[design][step]['elapsed_time'] = elapsed_time
 
         # If not verbose, print the final carriage return for the dots
         if not verbose:
@@ -793,32 +801,94 @@ class fvmframework:
         # assume/assert/fired/proven/cover/covered/uncoverable/etc. For this,
         # we may need to post-process the prove step log
         # TODO : print elapsed time
-        text_header = Text("==== Summary ====================================")
-        console.print(text_header)
+
+        # Calculate maximum length of {design}.{step} so we can pad later
+        maxlen = 0
         for design in self.toplevel:
             for step in FVM_STEPS:
+                curlen = len(f'{design}.{step}')
+                if curlen > maxlen:
+                    maxlen = curlen
+
+        # Accumulators for total values
+        total_time = 0
+        total_pass = 0
+        total_fail = 0
+        total_skip = 0
+        total_cont = 0
+        total_stat = 0
+
+        text_header = Text("==== Summary ==============================================")
+        console.print(text_header)
+
+        for design in self.toplevel:
+            for step in FVM_STEPS:
+                total_cont += 1
                 # Only print pass/fail/skip, the rest of steps where not
                 # selected by the user so there is no need to be redundant
                 if 'status' in self.results[design][step]:
+                    total_stat += 1
                     status = self.results[design][step]['status']
                     if status == 'pass':
                         style = 'bold green'
+                        total_pass += 1
                     elif status == 'fail':
                         style = 'bold red'
+                        total_fail += 1
                     elif status == 'skip':
                         style = 'bold yellow'
+                        total_skip += 1
                     text = Text()
                     text.append(status, style=style)
-                    text.append(f' {design}.{step}')
+                    text.append(' ')
+                    design_step = f'{design}.{step}'
+                    text.append(f'{design_step:<{maxlen}}')
                     if step == 'friendliness':
                         score = self.results[design][step]["score"]
-                        score_str = f'\t(score: {score:.2f}%)'
-                        text.append(score_str)
+                        score_str = f' (score: {score:.2f}%)'
+                    else:
+                        score_str =  '                '
+                    text.append(score_str)
+                    if "elapsed_time" in self.results[design][step]:
+                        time = self.results[design][step]["elapsed_time"]
+                        total_time += time
+                        time_str = f' ({helpers.readable_time(time)})'
+                        text.append(time_str)
                     #text.append(f' result={self.results[design][step]}', style='white')
                     console.print(text)
                     #print(f'{status} {design}.{step}, result={self.results[design][step]}')
-        text_footer = Text("=================================================")
+        text_footer = Text("===========================================================")
         console.print(text_footer)
+        text = Text()
+        text.append('pass', style='bold green')
+        text.append(f' {total_pass} of {total_cont}')
+        console.print(text)
+        if total_fail != 0:
+            text = Text()
+            text.append('fail', style='bold red')
+            text.append(f' {total_fail} of {total_cont}')
+            console.print(text)
+        if total_skip != 0:
+            text = Text()
+            text.append('skip', style='bold yellow')
+            text.append(f' {total_skip} of {total_cont}')
+            console.print(text)
+        if total_stat != total_cont:
+            text = Text()
+            text.append('omit', style='bold white')
+            text.append(f' {total_cont - total_stat} of {total_cont} (not executed due to early exit)')
+            console.print(text)
+        console.print(text_footer)
+        text = Text()
+        text.append(f'Total time  : {helpers.readable_time(total_time)}\n')
+        text.append(f'Elapsed time: (not yet implemented)')
+        console.print(text)
+        console.print(text_footer)
+
+    def generate_reports(self):
+        from junit_xml import TestSuite, TestCase
+        pass
+
 
     def exit_if_required(self, errorcode):
         """Exit if the continue flag is not set"""
@@ -826,4 +896,5 @@ class fvmframework:
             pass
         else:
             self.pretty_summary()
+            self.generate_reports()
             sys.exit(errorcode)
