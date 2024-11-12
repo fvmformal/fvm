@@ -1,5 +1,5 @@
 # Development requirements
-coverage      # To calculate python code coverage
-pytest        # For unit testing
-pylint        # To detect linting errors in the python code
-pylint-exit   # To handle pylint exit codes
+coverage      # To calculate python code coverage            (Apache License)
+pytest        # For unit testing                             (MIT license)
+pylint        # To detect linting errors in the python code  (GPLv2)
+pylint-exit   # To handle pylint exit codes                  (MIT license)
