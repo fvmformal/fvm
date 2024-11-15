@@ -1,13 +1,22 @@
 .PHONY: all install lint list-tests test test-verbose concepts examples pycoverage venv clean realclean
 
-# If packages are installed at system level, VENV can be undefined and system
-# python, pip3, pylint, pytest, etc, will be executed instead of the
-# executables inside the venv
+# Everything runs inside a python venv, since it is the recommended way of
+# managing python dependencies.
+# The default VENV_DIR can be changed by passing a different value to Makefile,
+# for example: make VENV_DIR=my_venv examples
+# If VENV_DIR is unset, no venv will be used: make VENV_DIR= examples
 VENV_DIR ?= .venv
-VENV ?= . $(VENV_DIR)/bin/activate &&
+VENV_ACTIVATE ?= . $(VENV_DIR)/bin/activate &&
 PYTHON ?= python3
 
+# If VENV_DIR is unset, set REQS_DIR to . so the files "reqs_installed" and
+# "dev-reqs_installed" can be created
+REQS_DIR := $(if $(VENV_DIR), $(VENV_DIR), .)
+
 all:
+	@echo VENV_DIR is $(VENV_DIR)
+	@echo REQS_DIR is $(REQS_DIR)
+	@echo VENV_ACTIVATE is "$(VENV_ACTIVATE)"
 	@echo usage:
 	@echo   "make venv         -> create python virtual environment"
 	@echo   "make reqs         -> install dependencies"
@@ -26,17 +35,17 @@ all:
 
 # reqs and dev-reqs depend on a file we create inside the venv, so we can avoid
 # calling "pip3 install ..." if the requirements have already been installed
-reqs: $(VENV_DIR)/reqs_installed
+reqs: $(REQS_DIR)/reqs_installed
 
-dev-reqs: $(VENV_DIR)/dev-reqs_installed
+dev-reqs: $(REQS_DIR)/dev-reqs_installed
 
-$(VENV_DIR)/reqs_installed: .venv
-	$(VENV) pip3 install -r requirements.txt -q
-	touch $(VENV_DIR)/reqs_installed
+$(REQS_DIR)/reqs_installed: .venv
+	$(VENV_ACTIVATE) pip3 install -r requirements.txt -q
+	touch $(REQS_DIR)/reqs_installed
 
-$(VENV_DIR)/dev-reqs_installed: .venv
-	$(VENV) pip3 install -r dev-requirements.txt -q
-	touch $(VENV_DIR)/dev-reqs_installed
+$(REQS_DIR)/dev-reqs_installed: .venv
+	$(VENV_ACTIVATE) pip3 install -r dev-requirements.txt -q
+	touch $(REQS_DIR)/dev-reqs_installed
 
 # Install the FVM
 install:
@@ -44,19 +53,19 @@ install:
 
 # Lint the python code
 lint: dev-reqs
-	$(VENV) pylint --output-format=colorized test/*.py src/*/*.py || pylint-exit $$?
+	$(VENV_ACTIVATE) pylint --output-format=colorized test/*.py src/*/*.py || pylint-exit $$?
 
 # List the tests
 list-tests: reqs dev-reqs
-	$(VENV) pytest --collect-only
+	$(VENV_ACTIVATE) pytest --collect-only
 
 # Run the tests
 test: reqs dev-reqs
-	$(VENV) coverage run -m pytest -v --junit-xml="results.xml"
+	$(VENV_ACTIVATE) coverage run -m pytest -v --junit-xml="results.xml"
 
 # Run the tests in verbose mode
 test-verbose: reqs dev-reqs
-	$(VENV) coverage run -m pytest -v -s --junit-xml="results.xml"
+	$(VENV_ACTIVATE) coverage run -m pytest -v -s --junit-xml="results.xml"
 
 # List with all the examples
 examplelist += 00-counter
@@ -92,28 +101,28 @@ list-concepts:
 
 # Generic rules to run examples and concepts
 %: examples/% reqs
-	$(VENV) $(PYTHON) -m examples.$@.formal
+	$(VENV_ACTIVATE) $(PYTHON) -m examples.$@.formal
 
 %: concepts/% reqs
-	$(VENV) $(PYTHON) -m concepts.$@.formal
+	$(VENV_ACTIVATE) $(PYTHON) -m concepts.$@.formal
 
 # Calculate python code coverage
 pycoverage: dev-reqs
-	$(VENV) coverage combine
-	$(VENV) coverage report -m
-	$(VENV) coverage html
-	$(VENV) coverage xml
+	$(VENV_ACTIVATE) coverage combine
+	$(VENV_ACTIVATE) coverage report -m
+	$(VENV_ACTIVATE) coverage html
+	$(VENV_ACTIVATE) coverage xml
 
 # Run everything
 testall: test concepts examples
 
 # Create python venv if it doesn't exist
-venv: .venv
+venv: $(VENV_DIR)
 
 # When creating the venv, we use the system's python (we can't use the venv's
 # python because it doesn't exist yet)
-.venv:
-	python3 -m venv .venv
+$(VENV_DIR):
+	python3 -m venv $(VENV_DIR)
 
 # Remove generated files
 clean:
