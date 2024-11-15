@@ -13,10 +13,10 @@ PYTHON ?= python3
 # "dev-reqs_installed" can be created
 REQS_DIR := $(if $(VENV_DIR), $(VENV_DIR), .)
 
+# If VENV_DIR is unset, unset also VENV_ACTIVATE
+VENV_ACTIVATE := $(if $(VENV_DIR), $(VENV_ACTIVATE), )
+
 all:
-	@echo VENV_DIR is $(VENV_DIR)
-	@echo REQS_DIR is $(REQS_DIR)
-	@echo VENV_ACTIVATE is "$(VENV_ACTIVATE)"
 	@echo usage:
 	@echo   "make venv         -> create python virtual environment"
 	@echo   "make reqs         -> install dependencies"
