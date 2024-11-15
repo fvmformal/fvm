@@ -9,7 +9,7 @@ count_todos_in_code:
   image: debian:11
   script:
     - apt update
-    - apt install -y python3 python3-pip
+    - apt install -y python3 python3-pip python3-venv
     - pip3 install anybadge
     - COUNT=$(grep -r TODO * | grep -v grep | wc -l)
     - echo "Count=$COUNT"
@@ -25,7 +25,7 @@ lint_python:
   image: debian:11
   script:
     - apt update
-    - apt install -y python3 python3-pip bc
+    - apt install -y python3 python3-pip python3-venv bc
     - pip3 install -r requirements.txt -r dev-requirements.txt
     - make lint | tee pylint.log
     - RATING=$(grep -oP 'Your code has been rated at \K[\d.]+' pylint.log)
@@ -38,7 +38,7 @@ test_all:
   image: debian:11
   script:
     - apt update
-    - apt install -y python3 python3-pip
+    - apt install -y python3 python3-pip python3-venv
     - pip3 install -r requirements.txt -r dev-requirements.txt
     - make test
     - mv .coverage .coverage.pytest
@@ -121,7 +121,7 @@ pycoverage:
   image: debian:11
   script:
     - apt update
-    - apt install -y python3 python3-pip
+    - apt install -y python3 python3-pip python3-venv
     - pip3 install -r requirements.txt -r dev-requirements.txt
     - make pycoverage
   coverage: /TOTAL.*\s+(\d+\%)/
