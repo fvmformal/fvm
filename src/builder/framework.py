@@ -139,6 +139,9 @@ class fvmframework:
         self.clocks = list()
         self.reset_domains = list()
         self.clock_domains = list()
+        self.blackboxes = list()
+        self.blackbox_instances = list()
+        self.cutpoints = list()
 
         # Specific tool defaults for each toolchain
         if self.toolchain == "questa":
@@ -419,6 +422,23 @@ class fvmframework:
         logger.trace(f'adding clock: {clock}')
         self.clocks.append(clock)
 
+    def blackbox(self, entity):
+        """Blackboxes all instances of an entity/module"""
+        logger.trace(f'blackboxing entity: {entity}')
+        self.blackboxes.append(entity)
+
+    def blackbox_instance(self, instance):
+        """Blackboxes a specific instance of an entity/module"""
+        logger.trace(f'blackboxing instance: {instance}')
+        self.blackbox_instances.append(instance)
+
+    def cutpoint(self, signal, module=None, resetval=None, condition=None,
+                 driver=None, wildcards_dont_match_hierarchy_separators=False):
+        """Sets a specifig signal as a cutpoint"""
+        cutpoint = {key: value for key, value in locals().items() if key != 'self'}
+        logger.trace(f'adding cutpoint: {cutpoint}')
+        self.cutpoints.append(cutpoint)
+
     def setup(self, design):
         """Create the output directory and the scripts for a design, but do not
         run anything"""
@@ -509,26 +529,25 @@ class fvmframework:
                 print(f'{string}', file=f)
 
             for domain in self.reset_domains:
-                string = f'netlist port resetdomain'
                 for signal in domain["port_list"]:
-                    string += f' {signal}'
-                string += f' -reset {domain["name"]}'
-                if domain["asynchronous"] is True:
-                    string += f' -async'
-                if domain["synchronous"] is True:
-                    string += f' -sync'
-                if domain["active_high"] is True:
-                    string += f' -active_high'
-                if domain["active_low"] is True:
-                    string += f' -active_low'
-                if domain["is_set"] is True:
-                    string += f' -set'
-                if domain["no_reset"] is True:
-                    string += f' -no_reset'
-                if domain["ignore"] is True:
-                    string += ' -ignore}'
-                string += ' -add'
-                print(f'{string}', file=f)
+                    string = f'netlist port resetdomain {signal}'
+                    string += f' -reset {domain["name"]}'
+                    if domain["asynchronous"] is True:
+                        string += f' -async'
+                    if domain["synchronous"] is True:
+                        string += f' -sync'
+                    if domain["active_high"] is True:
+                        string += f' -active_high'
+                    if domain["active_low"] is True:
+                        string += f' -active_low'
+                    if domain["is_set"] is True:
+                        string += f' -set'
+                    if domain["no_reset"] is True:
+                        string += f' -no_reset'
+                    if domain["ignore"] is True:
+                        string += ' -ignore}'
+                    string += ' -add'
+                    print(f'{string}', file=f)
 
             for domain in self.clock_domains:
                 string = f'netlist port domain'
@@ -635,11 +654,8 @@ class fvmframework:
     def genprovescript(self, filename, path):
         """Generate script to run PropCheck"""
         self.gencompilescript(filename, path)
+        self.genclockresetsconfigscript(filename, path)
         with open(path+'/'+filename, "a") as f:
-            print('', file=f)
-            print('## Add clocks', file=f)
-            #print('log_info "***** Adding clocks..."', file=f)
-            print('netlist clock clk -period 10', file=f)
             print('', file=f)
             print('## Run PropCheck', file=f)
             #print('log_info "***** Running formal compile (compiling formal model)..."', file=f)
@@ -680,7 +696,6 @@ class fvmframework:
             print('formal generate report', file=f)
             print('', file=f)
             print('exit', file=f)
-
 
     def run(self, skip_setup=False):
         """Run everything"""
