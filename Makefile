@@ -86,6 +86,7 @@ conceptlist += user_defined_hdltypes
 conceptlist += user_defined_hdltypes_in_package
 conceptlist += user_defined_hdltypes_in_external_package
 conceptlist += assert_to_assume
+conceptlist += defining_clocks_and_resets
 
 # examples target runs all the examples
 # concept target runs all the concepts

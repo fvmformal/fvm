@@ -423,49 +423,39 @@ class fvmframework:
             print(f'vcom {self.get_tool_flags("vcom")} -{self.vhdlstd} -autoorder -f {path}/design.f', file=f)
             print('', file=f)
 
-    def genresetscript(self, filename, path):
-        # We first write the header to compile the netlist  and then append
-        # (mode "a") the tool-specific instructions
-        self.gencompilescript(filename, path)
+    def genclockresetsconfigscript(self, filename, path):
         with open(path+'/'+filename, "a") as f:
             # TODO : let the user specify clock names, polarities, sync/async,
             # clock domains and reset domains
-            # TODO : maybe this should go in gencompilescript
             # Clock trees can be both active high and low when some logic is
             # reset when the reset is high and other logic is reset when it is
             # low.
             # Also, reset signals can drive trees of both synchronous and
             # asynchronous resets
             for reset in self.resets:
-                string = f'netlist reset {reset["pattern"]}'
+                string = f'netlist reset {reset["name"]}'
                 if reset["module"] is not None:
                     string += f' -module {reset["module"]}'
                 if reset["group"] is not None:
                     string += f' -group {reset["group"]}'
                 if reset["active_low"] is True:
-                    string += ' -active_low}'
+                    string += ' -active_low'
                 if reset["active_high"] is True:
-                    string += ' -active_high}'
-                if reset["async"] is True:
-                    string += ' -async}'
-                if reset["sync"] is True:
-                    string += ' -sync}'
+                    string += ' -active_high'
+                if reset["asynchronous"] is True:
+                    string += ' -async'
+                if reset["synchronous"] is True:
+                    string += ' -sync'
                 if reset["external"] is True:
-                    string += ' -virtual}'
+                    string += ' -virtual'
                 if reset["remove"] is True:
-                    string += ' -remove}'
+                    string += ' -remove'
                 if reset["ignore"] is True:
-                    string += ' -ignore}'
+                    string += ' -ignore'
                 print(f'{string}', file=f)
-            #print('netlist reset rst -active_high -async', file=f)
-            #print('netlist port domain rst -clock clk', file=f)
-            #print('netlist port domain data -clock clk', file=f)
-            #print('netlist port domain empty -clock clk', file=f)
-            #print('netlist port resetdomain data -reset rst', file=f)
-            #print('netlist port resetdomain empty -reset rst', file=f)
-            #print('netlist clock clk', file=f)
+
             for clock in self.clocks:
-                string = f'netlist clock {clock["pattern"]}'
+                string = f'netlist clock {clock["name"]}'
                 if clock["module"] is not None:
                     string += f' -module {clock["module"]}'
                 if clock["group"] is not None:
@@ -475,15 +465,16 @@ class fvmframework:
                 if clock["waveform"] is not None:
                     string += f' -waveform {clock["waveform"]}'
                 if reset["external"] is True:
-                    string += ' -virtual}'
+                    string += ' -virtual'
                 if clock["remove"] is True:
-                    string += ' -remove}'
+                    string += ' -remove'
                 if clock["ignore"] is True:
-                    string += ' -ignore}'
+                    string += ' -ignore'
+                print(f'{string}', file=f)
 
             for domain in self.reset_domains:
                 string = f'netlist port resetdomain'
-                for signal in domain["signals"]:
+                for signal in domain["port_list"]:
                     string += f' {signal}'
                 string += f' -reset {domain["name"]}'
                 if domain["asynchronous"] is True:
@@ -501,10 +492,11 @@ class fvmframework:
                 if domain["ignore"] is True:
                     string += ' -ignore}'
                 string += ' -add'
+                print(f'{string}', file=f)
 
             for domain in self.clock_domains:
                 string = f'netlist port domain'
-                for signal in domain["signals"]:
+                for signal in domain["port_list"]:
                     string += f' {signal}'
                 string += f' -clock {domain["name"]} -add'
                 if domain["asynchronous"] is True:
@@ -512,17 +504,32 @@ class fvmframework:
                 if domain["synchronous"] is True:
                     string += ' -sync'
                 if domain["ignore"] is True:
-                    string += ' -ignore}'
+                    string += ' -ignore'
                 if domain["posedge"] is True:
-                    string += ' -posedge}'
+                    string += ' -posedge'
                 if domain["negedge"] is True:
-                    string += ' -negedge}'
+                    string += ' -negedge'
                 if domain["module"] is not None:
                     string += f' -module {domain["module"]}'
                 if domain["inout_clock_in"] is not None:
                     string += f' -inout_clock_in {domain["inout_clock_in"]}'
                 if domain["inout_clock_out"] is not None:
                     string += f' -inout_clock_out {domain["inout_clock_out"]}'
+                print(f'{string}', file=f)
+            #print('netlist reset rst -active_high -async', file=f)
+            #print('netlist port domain rst -clock clk', file=f)
+            #print('netlist port domain data -clock clk', file=f)
+            #print('netlist port domain empty -clock clk', file=f)
+            #print('netlist port resetdomain data -reset rst', file=f)
+            #print('netlist port resetdomain empty -reset rst', file=f)
+            #print('netlist clock clk', file=f)
+
+    def genresetscript(self, filename, path):
+        # We first write the header to compile the netlist  and then append
+        # (mode "a") the tool-specific instructions
+        self.gencompilescript(filename, path)
+        self.genclockresetsconfigscript(filename, path)
+        with open(path+'/'+filename, "a") as f:
             print(f'rdc run -d {self.current_toplevel} {self.get_tool_flags("rdc run")}', file=f)
             print(f'rdc generate report reset_report.rpt {self.get_tool_flags("rdc generate report")};', file=f)
             print('rdc generate tree -reset reset_tree.rpt;', file=f)
@@ -545,10 +552,10 @@ class fvmframework:
         logger.trace(f'adding reset domain: {domain}')
         self.reset_domains.append(domain)
 
-    def add_reset(self, pattern, module=None, group=None, active_low=None,
+    def add_reset(self, name, module=None, group=None, active_low=None,
                   active_high=None, asynchronous=None, synchronous=None,
                   external=None, ignore=None, remove=None):
-        """Adds a reset to the design. 'pattern' can be a signal/port name or a
+        """Adds a reset to the design. 'name' can be a signal/port name or a
         pattern, such as rst*."""
         # Copy all arguments to a dict, excepting self
         reset = {key: value for key, value in locals().items() if key != 'self'}
@@ -557,22 +564,26 @@ class fvmframework:
 
     def add_clock(self, name, module=None, group=None, period=None,
                   waveform=None, external=None, ignore=False, remove=False):
-        """Adds a clock to the design. 'pattern' can be a signal/port name or a
+        """Adds a clock to the design. 'name' can be a signal/port name or a
         pattern, such as clk*."""
         clock = {key: value for key, value in locals().items() if key != 'self'}
         logger.trace(f'adding clock: {clock}')
-        self.clocks.append(reset)
+        self.clocks.append(clock)
 
     def genclockscript(self, filename, path):
         """Generate script to run Clock Domain Crossing"""
         # We first write the header to compile the netlist  and then append
         # (mode "a") the tool-specific instructions
         self.gencompilescript(filename, path)
+        self.genclockresetsconfigscript(filename, path)
         with open(path+'/'+filename, "a") as f:
             # TODO : let the user specify clock names, clock domains and reset domains
             # TODO : also look at reconvergence, and other warnings detected
             #print('netlist clock clk -period 50', file=f)
 
+            # Enable reconvergence to remove warning [hdl-271]
+            # TODO : add option to disable reconvergence?
+            print(f'cdc reconvergence on', file=f)
             print(f'cdc run -d {self.current_toplevel} {self.get_tool_flags("cdc run")}', file=f)
             print(f'cdc generate report clock_report.rpt {self.get_tool_flags("cdc generate report")}', file=f)
             print('cdc generate tree -clock clock_tree.rpt;', file=f)
