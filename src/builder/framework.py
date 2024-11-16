@@ -381,7 +381,8 @@ class fvmframework:
                 print(src, file=f)
 
     def setup(self, design):
-
+        """Create the output directory and the scripts for a design, but do not
+        run anything"""
         # Create the output directories, but do not throw an error if it already
         # exists
         os.makedirs(self.outdir, exist_ok=True)
@@ -390,7 +391,7 @@ class fvmframework:
         os.makedirs(path, exist_ok=True)
 
         if self.toolchain == "questa":
-            # Create .f files
+            # Create .f files and .do files
             self.create_f_file(f'{path}/design.f', self.vhdl_sources)
             self.create_f_file(f'{path}/properties.f', self.psl_sources)
             self.genlintscript("lint.do", path)
@@ -401,9 +402,11 @@ class fvmframework:
             self.genprovescript("prove.do", path)
 
     def gencompilescript(self, filename, path):
+        """Generate script to compile design sources"""
         # TODO : we must also compile the Verilog sources, if they exist
         # TODO : we must check for the case of only-verilog designs (no VHDL files)
         # TODO : we must check for the case of only-VHDL designs (no verilog files)
+        # TODO : support libraries other than work (see #154)
         """ This is used as header for the other scripts, since we need to have
         a compiled netlist in order to do anything"""
         with open(path+'/'+filename, "w") as f:
@@ -437,6 +440,7 @@ class fvmframework:
             print('exit', file=f)
 
     def genclockscript(self, filename, path):
+        """Generate script to run Clock Domain Crossing"""
         # We first write the header to compile the netlist  and then append
         # (mode "a") the tool-specific instructions
         self.gencompilescript(filename, path)
@@ -456,6 +460,7 @@ class fvmframework:
     # specify verilog files with vlog, etc...
     # TODO : can we also compile the PSL files using a .f file?
     def genprovescript(self, filename, path):
+        """Generate script to run PropCheck"""
         self.gencompilescript(filename, path)
         with open(path+'/'+filename, "a") as f:
             print('', file=f)
@@ -506,6 +511,7 @@ class fvmframework:
     # TODO : set sensible defaults here and allow for user optionality too
     # i.e., lint methodology, goal, etc
     def genlintscript(self, filename, path):
+        """Generate script to run Lint"""
         self.gencompilescript(filename, path)
         with open(path+'/'+filename, "a") as f:
             print(f'lint methodology {self.get_tool_flags("lint methodology")}', file=f)
@@ -514,6 +520,8 @@ class fvmframework:
 
     # TODO : set sensible defaults here and allow for user optionality too
     def genfriendlinessscript(self, filename, path):
+        """Generate script to run AutoCheck, which also generates a report we
+        analyze to determine the design's formal-friendliness"""
         self.gencompilescript(filename, path)
         with open(path+'/'+filename, "a") as f:
             print(f'autocheck compile {self.get_tool_flags("autocheck compile")} -d {self.current_toplevel}', file=f)
@@ -526,6 +534,7 @@ class fvmframework:
     # analysis instead of the pre-simulation analysis (see
     # https://git.woden.us.es/eda/fvm/-/issues/37#note_4252)
     def genreachabilityscript(self, filename, path):
+        """Generate a script to run CoverCheck"""
         self.gencompilescript(filename, path)
         with open(path+'/'+filename, "a") as f:
             print(f'covercheck compile {self.get_tool_flags("covercheck compile")} -d {self.current_toplevel}', file=f)
@@ -536,6 +545,7 @@ class fvmframework:
             print('exit', file=f)
 
     def run(self, skip_setup=False):
+        """Run everything"""
         logger.info(f'Designs: {self.toplevel}')
         for design in self.toplevel:
             logger.info(f'Running {design=}')
@@ -548,7 +558,7 @@ class fvmframework:
           self.exit_if_required(CHECK_FAILED)
 
     def run_design(self, design, skip_setup=False):
-        """Run all available/selected methodology steps"""
+        """Run all available/selected methodology steps for a design"""
         # Create all necessary scripts
         if not skip_setup:
             self.setup(design)
@@ -657,6 +667,7 @@ class fvmframework:
 
 
     def run_cmd(self, cmd, design, step, tool, verbose = True):
+        """Run a specific command"""
         self.set_logformat(getlogformattool(design, step, tool))
         logger.info(f'command: {" ".join(cmd)}')
 
@@ -748,6 +759,7 @@ class fvmframework:
             self.results[design][step]['score'] = friendliness_score(data)
 
     def logcheck(self, result, design, step, tool):
+        """Check log for errors"""
         err_in_log = False
         self.set_logformat(getlogformattool(design, step, tool))
         for line in result.splitlines() :
@@ -767,6 +779,10 @@ class fvmframework:
         self.set_logformat(LOGFORMAT)
         return err_in_log
 
+    # TODO: this must be independized from the toolchain and possibly from the
+    # methodology step/tool. We should have a list of pass/clear (strings that
+    # look like errors/warnings but are not, such as error summaries), error
+    # and warning strings, and look for those in that order
     def linecheck(self, line):
         """Check for errors and warnings in log lines. Use casefold() for
         robust case-insensitive comparison"""
@@ -911,13 +927,16 @@ class fvmframework:
         console.print(text)
         console.print(text_footer)
 
+    # TODO: actually write this
     def generate_reports(self):
+        """Generates output reports"""
         from junit_xml import TestSuite, TestCase
         pass
 
 
     def exit_if_required(self, errorcode):
-        """Exit if the continue flag is not set"""
+        """Exits with a specific error code if the continue flag (cont) is not
+        set"""
         if self.cont:
             pass
         else:
