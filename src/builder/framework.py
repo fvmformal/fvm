@@ -535,11 +535,11 @@ class fvmframework:
             print(f'covercheck {self.get_tool_flags("covercheck verify")} verify', file=f)
             print('exit', file=f)
 
-    def run(self):
+    def run(self, skip_setup=False):
         logger.info(f'Designs: {self.toplevel}')
         for design in self.toplevel:
             logger.info(f'Running {design=}')
-            self.run_design(design)
+            self.run_design(design, skip_setup)
 
         self.pretty_summary()
         self.generate_reports()
@@ -547,10 +547,11 @@ class fvmframework:
         if err :
           self.exit_if_required(CHECK_FAILED)
 
-    def run_design(self, design):
+    def run_design(self, design, skip_setup=False):
         """Run all available/selected methodology steps"""
         # Create all necessary scripts
-        self.setup(design)
+        if not skip_setup:
+            self.setup(design)
 
         # Run all available/selected steps/tools
         # Call the run_step() function for each available step
@@ -657,6 +658,7 @@ class fvmframework:
 
     def run_cmd(self, cmd, design, step, tool, verbose = True):
         self.set_logformat(getlogformattool(design, step, tool))
+        logger.info(f'command: {" ".join(cmd)}')
 
         start_time = time.perf_counter()
         process = subprocess.Popen (
