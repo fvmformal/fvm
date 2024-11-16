@@ -134,6 +134,14 @@ class fvmframework:
         self.disabled_coverage = list()
         self.toolchain = "questa"
         self.vhdlstd = "2008"
+        self.tool_flags = dict()
+
+        # Specific tool defaults for each toolchain
+        if self.toolchain == "questa":
+            self.tool_flags["lint methodology"] = "ip -goal start"
+            self.tool_flags["rdc generate report"] = "-resetcheck"
+            self.tool_flags["cdc generate report"] = "-clockcheck"
+            self.tool_flags["formal verify"] = "-auto_constraint_off -cov_mode"
 
         # Exit if args.step is unrecognized
         if args.step is not None:
@@ -403,9 +411,9 @@ class fvmframework:
             print('if {[file exists work]} {',file=f)
             print('    vdel -all', file=f)
             print('}', file=f)
-            print('vlib work', file=f)
-            print('vmap work work', file=f)
-            print(f'vcom -{self.vhdlstd} -autoorder -f {path}/design.f', file=f)
+            print(f'vlib {self.get_tool_flags("vlib")} work', file=f)
+            print(f'vmap {self.get_tool_flags("vmap")} work work', file=f)
+            print(f'vcom {self.get_tool_flags("vcom")} -{self.vhdlstd} -autoorder -f {path}/design.f', file=f)
             print('', file=f)
 
     def genresetscript(self, filename, path):
@@ -423,8 +431,8 @@ class fvmframework:
             #print('netlist port resetdomain empty -reset rst', file=f)
             #print('netlist clock clk', file=f)
 
-            print(f'rdc run -d {self.current_toplevel}', file=f)
-            print('rdc generate report -resetcheck reset_report.rpt;', file=f)
+            print(f'rdc run -d {self.current_toplevel} {self.get_tool_flags("rdc run")}', file=f)
+            print(f'rdc generate report reset_report.rpt {self.get_tool_flags("rdc generate report")};', file=f)
             print('rdc generate tree -reset reset_tree.rpt;', file=f)
             print('exit', file=f)
 
@@ -437,8 +445,9 @@ class fvmframework:
             # TODO : also look at reconvergence, and other warnings detected
             #print('netlist clock clk -period 50', file=f)
 
-            print(f'cdc run -d {self.current_toplevel}', file=f)
-            #print('cdc report -clockcheck clock_report.rpt;', file=f)
+            print(f'cdc run -d {self.current_toplevel} {self.get_tool_flags("cdc run")}', file=f)
+            print(f'cdc generate report clock_report.rpt {self.get_tool_flags("cdc generate report")}', file=f)
+            print('cdc generate tree -clock clock_tree.rpt;', file=f)
             print('exit', file=f)
     # TODO : we will need arguments for the clocks, timeout, we probably need
     # to detect compile order if vcom doesn't detect it, set the other options
@@ -458,13 +467,14 @@ class fvmframework:
             #print('log_info "***** Running formal compile (compiling formal model)..."', file=f)
 
             print('formal compile ', end='', file=f)
+            print(f'-d {self.current_toplevel} ', end='', file=f)
             for i in self.psl_sources :
                 print(f'-pslfile {i} ', end='', file=f)
             print('-include_code_cov ', end='', file=f)
-            print(f'-d {self.current_toplevel}', file=f)
+            print(f'{self.get_tool_flags("formal compile")}', end='', file=f)
 
             #print('log_info "***** Running formal verify (model checking)..."', file=f)
-            print('formal verify -auto_constraint_off -cov_mode -timeout 10m', file=f)
+            print(f'formal verify {self.get_tool_flags("formal verify")}', file=f)
             print('', file=f)
             print('## Compute Formal Coverage', file=f)
             #print('log_info "***** Running formal verify to get coverage..."', file=f)
@@ -488,7 +498,7 @@ class fvmframework:
             #if not self.is_disabled('bounded_reachability'):
             #    print('formal verify -auto_constraint_off -cov_mode bounded_reachability -timeout 10m', file=f)
             #    print('formal generate coverage -cov_mode b', file=f)
-            print('formal generate testbenches', file=f)
+            print(f'formal generate testbenches {self.get_tool_flags("formal generate testbenches")}', file=f)
             print('formal generate report', file=f)
             print('', file=f)
             print('exit', file=f)
@@ -498,16 +508,16 @@ class fvmframework:
     def genlintscript(self, filename, path):
         self.gencompilescript(filename, path)
         with open(path+'/'+filename, "a") as f:
-            print('lint methodology ip -goal start', file=f)
-            print(f'lint run -d {self.current_toplevel}', file=f)
+            print(f'lint methodology {self.get_tool_flags("lint methodology")}', file=f)
+            print(f'lint run -d {self.current_toplevel} {self.get_tool_flags("lint run")}', file=f)
             print('exit', file=f)
 
     # TODO : set sensible defaults here and allow for user optionality too
     def genfriendlinessscript(self, filename, path):
         self.gencompilescript(filename, path)
         with open(path+'/'+filename, "a") as f:
-            print(f'autocheck compile -d {self.current_toplevel}', file=f)
-            print(f'autocheck verify', file=f)
+            print(f'autocheck compile {self.get_tool_flags("autocheck compile")} -d {self.current_toplevel}', file=f)
+            print(f'autocheck verify {self.get_tool_flags("autocheck verify")}', file=f)
             print('exit', file=f)
 
     # TODO : set sensible defaults here and allow for user optionality too,
@@ -518,11 +528,11 @@ class fvmframework:
     def genreachabilityscript(self, filename, path):
         self.gencompilescript(filename, path)
         with open(path+'/'+filename, "a") as f:
-            print(f'covercheck compile -d {self.current_toplevel}', file=f)
+            print(f'covercheck compile {self.get_tool_flags("covercheck compile")} -d {self.current_toplevel}', file=f)
             # if .ucdb file is specified:
             #    print('covercheck load ucdb {ucdb_file}', file=f)
             #    print(f'covercheck verify -covered_items', file=f)
-            print(f'covercheck verify', file=f)
+            print(f'covercheck {self.get_tool_flags("covercheck verify")} verify', file=f)
             print('exit', file=f)
 
     def run(self):
@@ -790,6 +800,20 @@ class fvmframework:
         elif 'Covered' in line:
             success = True
         return err, warn, success
+
+    def set_tool_flags(self, tool, flags):
+        """Set user-defined flags for a specific tool"""
+        self.tool_flags[tool] = flags
+
+    def get_tool_flags(self, tool):
+        """Get user-defined flags for a specific tool. If flags are not set,
+        returns an empty string, so the script generators can just call this
+        function and expect it to always return a value of string type"""
+        if tool in self.tool_flags:
+            flags = self.tool_flags[tool]
+        else:
+            flags = ""
+        return flags
 
     def pretty_summary(self):
         """Prints the final summary"""
