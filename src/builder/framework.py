@@ -681,6 +681,26 @@ class fvmframework:
             print('-include_code_cov ', end='', file=f)
             print(f'{self.get_tool_flags("formal compile")}', file=f)
 
+            for blackbox in self.blackboxes:
+                print(f'netlist blackbox {blackbox}', file=f)
+
+            for blackbox_instance in self.blackbox_instances:
+                print(f'netlist blackbox_instance {blackbox_instance}', file=f)
+
+            for cutpoint in self.cutpoints:
+                string = f'netlist cutpoint {cutpoint["signal"]}'
+                if cutpoint["module"] is not None:
+                    string += f' -module {cutpoint["module"]}'
+                if cutpoint["resetval"] is True:
+                    string += ' -reset_value'
+                if cutpoint["condition"] is not None:
+                    string += f'-cond {cutpoint["condition"]}'
+                if cutpoint["drive"] is not None:
+                    string += f'-cond {cutpoint["driver"]}'
+                if cutpoint["wildcards_dont_match_hierarchy"] is True:
+                    string += '-match_local_scope'
+                print(string, file=f)
+
             #print('log_info "***** Running formal verify (model checking)..."', file=f)
             print(f'formal verify {self.get_tool_flags("formal verify")}', file=f)
             print('', file=f)
