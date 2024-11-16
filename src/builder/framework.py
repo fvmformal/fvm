@@ -478,8 +478,7 @@ class fvmframework:
             print(f'vcom {self.get_tool_flags("vcom")} -{self.vhdlstd} -autoorder -f {path}/design.f', file=f)
             print('', file=f)
 
-    # TODO: the name of this function is awful
-    def genclockresetsconfigscript(self, filename, path):
+    def gen_reset_config(self, filename, path):
         with open(path+'/'+filename, "a") as f:
             # TODO : let the user specify clock names, polarities, sync/async,
             # clock domains and reset domains
@@ -510,24 +509,8 @@ class fvmframework:
                     string += ' -ignore'
                 print(f'{string}', file=f)
 
-            for clock in self.clocks:
-                string = f'netlist clock {clock["name"]}'
-                if clock["module"] is not None:
-                    string += f' -module {clock["module"]}'
-                if clock["group"] is not None:
-                    string += f' -group {clock["group"]} -add'
-                if clock["period"] is not None:
-                    string += f' -period {clock["period"]}'
-                if clock["waveform"] is not None:
-                    string += f' -waveform {clock["waveform"]}'
-                if reset["external"] is True:
-                    string += ' -virtual'
-                if clock["remove"] is True:
-                    string += ' -remove'
-                if clock["ignore"] is True:
-                    string += ' -ignore'
-                print(f'{string}', file=f)
-
+    def gen_reset_domain_config(self, filename, path):
+        with open(path+'/'+filename, "a") as f:
             for domain in self.reset_domains:
                 for signal in domain["port_list"]:
                     string = f'netlist port resetdomain {signal}'
@@ -549,6 +532,28 @@ class fvmframework:
                     string += ' -add'
                     print(f'{string}', file=f)
 
+    def gen_clock_config(self, filename, path):
+        with open(path+'/'+filename, "a") as f:
+            for clock in self.clocks:
+                string = f'netlist clock {clock["name"]}'
+                if clock["module"] is not None:
+                    string += f' -module {clock["module"]}'
+                if clock["group"] is not None:
+                    string += f' -group {clock["group"]} -add'
+                if clock["period"] is not None:
+                    string += f' -period {clock["period"]}'
+                if clock["waveform"] is not None:
+                    string += f' -waveform {clock["waveform"]}'
+                if clock["external"] is True:
+                    string += ' -virtual'
+                if clock["remove"] is True:
+                    string += ' -remove'
+                if clock["ignore"] is True:
+                    string += ' -ignore'
+                print(f'{string}', file=f)
+
+    def gen_clock_domain_config(self, filename, path):
+        with open(path+'/'+filename, "a") as f:
             for domain in self.clock_domains:
                 string = f'netlist port domain'
                 for signal in domain["port_list"]:
@@ -619,7 +624,10 @@ class fvmframework:
         # We first write the header to compile the netlist  and then append
         # (mode "a") the tool-specific instructions
         self.gencompilescript(filename, path)
-        self.genclockresetsconfigscript(filename, path)
+        self.gen_clock_config(filename, path)
+        self.gen_clock_domain_config(filename, path)
+        self.gen_reset_config(filename, path)
+        self.gen_reset_domain_config(filename, path)
         with open(path+'/'+filename, "a") as f:
             print(f'rdc run -d {self.current_toplevel} {self.get_tool_flags("rdc run")}', file=f)
             print(f'rdc generate report reset_report.rpt {self.get_tool_flags("rdc generate report")};', file=f)
@@ -631,7 +639,10 @@ class fvmframework:
         # We first write the header to compile the netlist  and then append
         # (mode "a") the tool-specific instructions
         self.gencompilescript(filename, path)
-        self.genclockresetsconfigscript(filename, path)
+        self.gen_clock_config(filename, path)
+        self.gen_clock_domain_config(filename, path)
+        self.gen_reset_config(filename, path)
+        self.gen_reset_domain_config(filename, path)
         with open(path+'/'+filename, "a") as f:
             # TODO : let the user specify clock names, clock domains and reset domains
             # TODO : also look at reconvergence, and other warnings detected
@@ -654,7 +665,10 @@ class fvmframework:
     def genprovescript(self, filename, path):
         """Generate script to run PropCheck"""
         self.gencompilescript(filename, path)
-        self.genclockresetsconfigscript(filename, path)
+        # Only add the clocks since we don't want to add any extra constraint
+        # Also, adding the clock domain make propcheck throw errors because
+        # output ports in the clock domain cannot be constrained
+        self.gen_clock_config(filename, path)
         with open(path+'/'+filename, "a") as f:
             print('', file=f)
             print('## Run PropCheck', file=f)
