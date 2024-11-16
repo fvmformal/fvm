@@ -507,7 +507,7 @@ class fvmframework:
                     string += ' -remove'
                 if reset["ignore"] is True:
                     string += ' -ignore'
-                print(f'{string}', file=f)
+                print(string, file=f)
 
     def gen_reset_domain_config(self, filename, path):
         with open(path+'/'+filename, "a") as f:
@@ -530,7 +530,7 @@ class fvmframework:
                     if domain["ignore"] is True:
                         string += ' -ignore}'
                     string += ' -add'
-                    print(f'{string}', file=f)
+                    print(string, file=f)
 
     def gen_clock_config(self, filename, path):
         with open(path+'/'+filename, "a") as f:
@@ -550,7 +550,7 @@ class fvmframework:
                     string += ' -remove'
                 if clock["ignore"] is True:
                     string += ' -ignore'
-                print(f'{string}', file=f)
+                print(string, file=f)
 
     def gen_clock_domain_config(self, filename, path):
         with open(path+'/'+filename, "a") as f:
@@ -575,7 +575,7 @@ class fvmframework:
                     string += f' -inout_clock_in {domain["inout_clock_in"]}'
                 if domain["inout_clock_out"] is not None:
                     string += f' -inout_clock_out {domain["inout_clock_out"]}'
-                print(f'{string}', file=f)
+                print(string, file=f)
             #print('netlist reset rst -active_high -async', file=f)
             #print('netlist port domain rst -clock clk', file=f)
             #print('netlist port domain data -clock clk', file=f)
