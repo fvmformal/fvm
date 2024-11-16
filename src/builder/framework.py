@@ -384,6 +384,41 @@ class fvmframework:
             for src in sources:
                 print(src, file=f)
 
+    # TODO : check that port_list must be an actual list()
+    def add_clock_domain(self, name, port_list, asynchronous=None,
+                         synchronous=None, ignore=None, posedge=None,
+                         negedge=None, module=None, inout_clock_in=None,
+                         inout_clock_out=None):
+        domain = {key: value for key, value in locals().items() if key != 'self'}
+        logger.trace(f'adding clock domain: {domain}')
+        self.clock_domains.append(domain)
+
+    # TODO : check that port_list must be an actual list()
+    def add_reset_domain(self, name, port_list, asynchronous=None,
+                         synchronous=None, active_high=None, active_low=None,
+                         is_set=None, no_reset=None, module=None, ignore=None):
+        domain = {key: value for key, value in locals().items() if key != 'self'}
+        logger.trace(f'adding reset domain: {domain}')
+        self.reset_domains.append(domain)
+
+    def add_reset(self, name, module=None, group=None, active_low=None,
+                  active_high=None, asynchronous=None, synchronous=None,
+                  external=None, ignore=None, remove=None):
+        """Adds a reset to the design. 'name' can be a signal/port name or a
+        pattern, such as rst*."""
+        # Copy all arguments to a dict, excepting self
+        reset = {key: value for key, value in locals().items() if key != 'self'}
+        logger.trace(f'adding reset: {reset}')
+        self.resets.append(reset)
+
+    def add_clock(self, name, module=None, group=None, period=None,
+                  waveform=None, external=None, ignore=False, remove=False):
+        """Adds a clock to the design. 'name' can be a signal/port name or a
+        pattern, such as clk*."""
+        clock = {key: value for key, value in locals().items() if key != 'self'}
+        logger.trace(f'adding clock: {clock}')
+        self.clocks.append(clock)
+
     def setup(self, design):
         """Create the output directory and the scripts for a design, but do not
         run anything"""
@@ -423,6 +458,7 @@ class fvmframework:
             print(f'vcom {self.get_tool_flags("vcom")} -{self.vhdlstd} -autoorder -f {path}/design.f', file=f)
             print('', file=f)
 
+    # TODO: the name of this function is awful
     def genclockresetsconfigscript(self, filename, path):
         with open(path+'/'+filename, "a") as f:
             # TODO : let the user specify clock names, polarities, sync/async,
@@ -524,6 +560,42 @@ class fvmframework:
             #print('netlist port resetdomain empty -reset rst', file=f)
             #print('netlist clock clk', file=f)
 
+    # TODO : set sensible defaults here and allow for user optionality too
+    # i.e., lint methodology, goal, etc
+    def genlintscript(self, filename, path):
+        """Generate script to run Lint"""
+        self.gencompilescript(filename, path)
+        with open(path+'/'+filename, "a") as f:
+            print(f'lint methodology {self.get_tool_flags("lint methodology")}', file=f)
+            print(f'lint run -d {self.current_toplevel} {self.get_tool_flags("lint run")}', file=f)
+            print('exit', file=f)
+
+    # TODO : set sensible defaults here and allow for user optionality too
+    def genfriendlinessscript(self, filename, path):
+        """Generate script to run AutoCheck, which also generates a report we
+        analyze to determine the design's formal-friendliness"""
+        self.gencompilescript(filename, path)
+        with open(path+'/'+filename, "a") as f:
+            print(f'autocheck compile {self.get_tool_flags("autocheck compile")} -d {self.current_toplevel}', file=f)
+            print(f'autocheck verify {self.get_tool_flags("autocheck verify")}', file=f)
+            print('exit', file=f)
+
+    # TODO : set sensible defaults here and allow for user optionality too,
+    # such as allowing the user to specify the covercheck directives
+    # TODO : if a .ucdb file is specified as argument, run the post-simulation
+    # analysis instead of the pre-simulation analysis (see
+    # https://git.woden.us.es/eda/fvm/-/issues/37#note_4252)
+    def genreachabilityscript(self, filename, path):
+        """Generate a script to run CoverCheck"""
+        self.gencompilescript(filename, path)
+        with open(path+'/'+filename, "a") as f:
+            print(f'covercheck compile {self.get_tool_flags("covercheck compile")} -d {self.current_toplevel}', file=f)
+            # if .ucdb file is specified:
+            #    print('covercheck load ucdb {ucdb_file}', file=f)
+            #    print(f'covercheck verify -covered_items', file=f)
+            print(f'covercheck {self.get_tool_flags("covercheck verify")} verify', file=f)
+            print('exit', file=f)
+
     def genresetscript(self, filename, path):
         # We first write the header to compile the netlist  and then append
         # (mode "a") the tool-specific instructions
@@ -534,41 +606,6 @@ class fvmframework:
             print(f'rdc generate report reset_report.rpt {self.get_tool_flags("rdc generate report")};', file=f)
             print('rdc generate tree -reset reset_tree.rpt;', file=f)
             print('exit', file=f)
-
-    # TODO : check that port_list must be an actual list()
-    def add_clock_domain(self, name, port_list, asynchronous=None,
-                         synchronous=None, ignore=None, posedge=None,
-                         negedge=None, module=None, inout_clock_in=None,
-                         inout_clock_out=None):
-        domain = {key: value for key, value in locals().items() if key != 'self'}
-        logger.trace(f'adding clock domain: {domain}')
-        self.clock_domains.append(domain)
-
-    # TODO : check that port_list must be an actual list()
-    def add_reset_domain(self, name, port_list, asynchronous=None,
-                         synchronous=None, active_high=None, active_low=None,
-                         is_set=None, no_reset=None, module=None, ignore=None):
-        domain = {key: value for key, value in locals().items() if key != 'self'}
-        logger.trace(f'adding reset domain: {domain}')
-        self.reset_domains.append(domain)
-
-    def add_reset(self, name, module=None, group=None, active_low=None,
-                  active_high=None, asynchronous=None, synchronous=None,
-                  external=None, ignore=None, remove=None):
-        """Adds a reset to the design. 'name' can be a signal/port name or a
-        pattern, such as rst*."""
-        # Copy all arguments to a dict, excepting self
-        reset = {key: value for key, value in locals().items() if key != 'self'}
-        logger.trace(f'adding reset: {reset}')
-        self.resets.append(reset)
-
-    def add_clock(self, name, module=None, group=None, period=None,
-                  waveform=None, external=None, ignore=False, remove=False):
-        """Adds a clock to the design. 'name' can be a signal/port name or a
-        pattern, such as clk*."""
-        clock = {key: value for key, value in locals().items() if key != 'self'}
-        logger.trace(f'adding clock: {clock}')
-        self.clocks.append(clock)
 
     def genclockscript(self, filename, path):
         """Generate script to run Clock Domain Crossing"""
@@ -644,41 +681,6 @@ class fvmframework:
             print('', file=f)
             print('exit', file=f)
 
-    # TODO : set sensible defaults here and allow for user optionality too
-    # i.e., lint methodology, goal, etc
-    def genlintscript(self, filename, path):
-        """Generate script to run Lint"""
-        self.gencompilescript(filename, path)
-        with open(path+'/'+filename, "a") as f:
-            print(f'lint methodology {self.get_tool_flags("lint methodology")}', file=f)
-            print(f'lint run -d {self.current_toplevel} {self.get_tool_flags("lint run")}', file=f)
-            print('exit', file=f)
-
-    # TODO : set sensible defaults here and allow for user optionality too
-    def genfriendlinessscript(self, filename, path):
-        """Generate script to run AutoCheck, which also generates a report we
-        analyze to determine the design's formal-friendliness"""
-        self.gencompilescript(filename, path)
-        with open(path+'/'+filename, "a") as f:
-            print(f'autocheck compile {self.get_tool_flags("autocheck compile")} -d {self.current_toplevel}', file=f)
-            print(f'autocheck verify {self.get_tool_flags("autocheck verify")}', file=f)
-            print('exit', file=f)
-
-    # TODO : set sensible defaults here and allow for user optionality too,
-    # such as allowing the user to specify the covercheck directives
-    # TODO : if a .ucdb file is specified as argument, run the post-simulation
-    # analysis instead of the pre-simulation analysis (see
-    # https://git.woden.us.es/eda/fvm/-/issues/37#note_4252)
-    def genreachabilityscript(self, filename, path):
-        """Generate a script to run CoverCheck"""
-        self.gencompilescript(filename, path)
-        with open(path+'/'+filename, "a") as f:
-            print(f'covercheck compile {self.get_tool_flags("covercheck compile")} -d {self.current_toplevel}', file=f)
-            # if .ucdb file is specified:
-            #    print('covercheck load ucdb {ucdb_file}', file=f)
-            #    print(f'covercheck verify -covered_items', file=f)
-            print(f'covercheck {self.get_tool_flags("covercheck verify")} verify', file=f)
-            print('exit', file=f)
 
     def run(self, skip_setup=False):
         """Run everything"""
