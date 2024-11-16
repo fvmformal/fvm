@@ -471,7 +471,7 @@ class fvmframework:
             for i in self.psl_sources :
                 print(f'-pslfile {i} ', end='', file=f)
             print('-include_code_cov ', end='', file=f)
-            print(f'{self.get_tool_flags("formal compile")}', end='', file=f)
+            print(f'{self.get_tool_flags("formal compile")}', file=f)
 
             #print('log_info "***** Running formal verify (model checking)..."', file=f)
             print(f'formal verify {self.get_tool_flags("formal verify")}', file=f)
