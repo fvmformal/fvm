@@ -88,6 +88,7 @@ conceptlist += user_defined_hdltypes_in_external_package
 conceptlist += assert_to_assume
 conceptlist += defining_clocks_and_resets
 conceptlist += hooks
+conceptlist += design_configurations
 
 # examples target runs all the examples
 # concept target runs all the concepts

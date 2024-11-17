@@ -146,6 +146,8 @@ class fvmframework:
         self.cutpoints = list()
         self.pre_hooks = dict()
         self.post_hooks = dict()
+        self.designs = list()
+        self.design_configs = dict()
 
         # Specific tool defaults for each toolchain
         if self.toolchain == "questa":
@@ -243,9 +245,6 @@ class fvmframework:
         can be specified as a list. If a single toplevel is specified, this
         function converts it to a single-element list"""
 
-        # TODO : check for duplicates inside the list!
-
-
         if isinstance(toplevel, str):
             self.toplevel = [toplevel]
         elif isinstance(toplevel, list):
@@ -264,14 +263,51 @@ class fvmframework:
             else:
                 logger.error(f'Specified {args.design=} not in {self.toplevel=}, did you add it with set_toplevel()?')
 
+        # Initialize the design configurations list
+        for design in self.toplevel:
+            self.design_configs[design] = list()
+
+    def init_results(self):
+        # TODO: this must be initialized per design configuration, but to do
+        # that we must do it somewhere else
         # Initialize a dict structure for the results
         self.results = {}
         for design in self.toplevel:
+            if design in self.design_configs:
+                for config in self.design_configs[design]:
+                    self.designs.append(f'{design}.{config["name"]}')
+            else:
+                self.designs.append(f'{design}')
+
+        for design in self.designs:
             self.results[design] = {}
             for step in FVM_STEPS:
                 self.results[design][step] = {}
                 if step == "prove":
                     self.results[design]['prove.simcover'] = {}
+
+    # TODO: check that design belongs to self.toplevel, throw an error if it
+    # doesn't
+    def add_config(self, design, name, generics):
+        """Adds a design configuration. The design configuration has a name and
+        values for its generics, and applies to a specific design. If at least
+        one design configuration exists, the default configuration is not
+        used"""
+        if design not in self.toplevel:
+            logger.error(f'Specified {design=} not in {self.toplevel=}')
+        config = dict()
+        config["name"] = name
+        config["generics"] = generics
+        self.design_configs[design].append(config)
+        logger.info(self.design_configs)
+
+    def generics_to_args(self, generics):
+        """Converts a dict with generic:value pairs to the argument we have to
+        pass to the tools"""
+        string = ''
+        for i in generics:
+            string += f'-g {i}={generics[i]}'
+        return string
 
     # TODO : we could make this function accept also a list, but not sure if it
     # is worth it since the user could just call it inside a loop
@@ -459,14 +495,24 @@ class fvmframework:
         logger.trace(f'adding cutpoint: {cutpoint}')
         self.cutpoints.append(cutpoint)
 
-    def setup(self, design):
+    def setup(self, design, config):
         """Create the output directory and the scripts for a design, but do not
         run anything"""
         # Create the output directories, but do not throw an error if it already
         # exists
         os.makedirs(self.outdir, exist_ok=True)
         self.current_toplevel = design
-        path = self.outdir+'/'+self.current_toplevel
+
+        if config is not None:
+            extra_path = f'.{config["name"]}'
+            self.generic_args = self.generics_to_args(config["generics"])
+        else:
+            extra_path = ''
+            self.generic_args = ''
+
+        path = f'{self.outdir}/{self.current_toplevel}'+extra_path
+        self.current_path = path
+
         os.makedirs(path, exist_ok=True)
 
         if self.toolchain == "questa":
@@ -611,7 +657,7 @@ class fvmframework:
         self.gencompilescript(filename, path)
         with open(path+'/'+filename, "a") as f:
             print(f'lint methodology {self.get_tool_flags("lint methodology")}', file=f)
-            print(f'lint run -d {self.current_toplevel} {self.get_tool_flags("lint run")}', file=f)
+            print(f'lint run -d {self.current_toplevel} {self.get_tool_flags("lint run")} {self.generic_args}', file=f)
             print('exit', file=f)
 
     # TODO : set sensible defaults here and allow for user optionality too
@@ -620,7 +666,7 @@ class fvmframework:
         analyze to determine the design's formal-friendliness"""
         self.gencompilescript(filename, path)
         with open(path+'/'+filename, "a") as f:
-            print(f'autocheck compile {self.get_tool_flags("autocheck compile")} -d {self.current_toplevel}', file=f)
+            print(f'autocheck compile {self.get_tool_flags("autocheck compile")} -d {self.current_toplevel} {self.generic_args}', file=f)
             print(f'autocheck verify {self.get_tool_flags("autocheck verify")}', file=f)
             print('exit', file=f)
 
@@ -633,7 +679,7 @@ class fvmframework:
         """Generate a script to run CoverCheck"""
         self.gencompilescript(filename, path)
         with open(path+'/'+filename, "a") as f:
-            print(f'covercheck compile {self.get_tool_flags("covercheck compile")} -d {self.current_toplevel}', file=f)
+            print(f'covercheck compile {self.get_tool_flags("covercheck compile")} -d {self.current_toplevel} {self.generic_args}', file=f)
             # if .ucdb file is specified:
             #    print('covercheck load ucdb {ucdb_file}', file=f)
             #    print(f'covercheck verify -covered_items', file=f)
@@ -649,7 +695,7 @@ class fvmframework:
         self.gen_reset_config(filename, path)
         self.gen_reset_domain_config(filename, path)
         with open(path+'/'+filename, "a") as f:
-            print(f'rdc run -d {self.current_toplevel} {self.get_tool_flags("rdc run")}', file=f)
+            print(f'rdc run -d {self.current_toplevel} {self.get_tool_flags("rdc run")} {self.generic_args}', file=f)
             print(f'rdc generate report reset_report.rpt {self.get_tool_flags("rdc generate report")};', file=f)
             print('rdc generate tree -reset reset_tree.rpt;', file=f)
             print('exit', file=f)
@@ -671,7 +717,7 @@ class fvmframework:
             # Enable reconvergence to remove warning [hdl-271]
             # TODO : add option to disable reconvergence?
             print(f'cdc reconvergence on', file=f)
-            print(f'cdc run -d {self.current_toplevel} {self.get_tool_flags("cdc run")}', file=f)
+            print(f'cdc run -d {self.current_toplevel} {self.get_tool_flags("cdc run")} {self.generic_args}', file=f)
             print(f'cdc generate report clock_report.rpt {self.get_tool_flags("cdc generate report")}', file=f)
             print('cdc generate tree -clock clock_tree.rpt;', file=f)
             print('exit', file=f)
@@ -695,7 +741,7 @@ class fvmframework:
             #print('log_info "***** Running formal compile (compiling formal model)..."', file=f)
 
             print('formal compile ', end='', file=f)
-            print(f'-d {self.current_toplevel} ', end='', file=f)
+            print(f'-d {self.current_toplevel} {self.generic_args} ', end='', file=f)
             for i in self.psl_sources :
                 print(f'-pslfile {i} ', end='', file=f)
             print('-include_code_cov ', end='', file=f)
@@ -753,6 +799,11 @@ class fvmframework:
 
     def run(self, skip_setup=False):
         """Run everything"""
+        self.init_results()
+
+        # TODO: correctly manage self.list here (self.list is True if -l or
+        # --list was provided as a command-line argument)
+
         logger.info(f'Designs: {self.toplevel}')
         for design in self.toplevel:
             logger.info(f'Running {design=}')
@@ -766,9 +817,25 @@ class fvmframework:
 
     def run_design(self, design, skip_setup=False):
         """Run all available/selected methodology steps for a design"""
+        # If configurations exist, run them all
+        logger.info(f'{self.design_configs}')
+        if design in self.design_configs:
+            for config in self.design_configs[design]:
+                self.run_configuration(design, config, skip_setup)
+        else:
+            self.run_configuration(design, None, skip_setup)
+
+    def run_configuration(self, design, config=None, skip_setup=False):
+        """Run all available/selected methodology steps for a design
+        configuration"""
         # Create all necessary scripts
         if not skip_setup:
-            self.setup(design)
+            self.setup(design, config)
+
+        if config is not None:
+            design = f'{design}.{config["name"]}'
+        else:
+            design = design
 
         # Run all available/selected steps/tools
         # Call the run_step() function for each available step
@@ -818,7 +885,7 @@ class fvmframework:
     def run_step(self, design, step):
         """Run a specific step of the methodology"""
         err = False
-        path = self.outdir+'/'+self.current_toplevel
+        path = self.current_path
         open_gui = False
         # If called with a specific step, run that specific step
         if step in toolchains.TOOLS[self.toolchain] :
@@ -1002,7 +1069,7 @@ class fvmframework:
         # Currently we only do post-processing after the friendliness and prove
         # steps
         logger.trace('run_post_step, {design=}, {step=})')
-        path = self.outdir+'/'+self.current_toplevel
+        path = self.current_path
         if step == 'friendliness':
             rpt = path+'/autocheck_design.rpt'
             data = data_from_design_summary(rpt)
@@ -1156,7 +1223,7 @@ class fvmframework:
 
         # Calculate maximum length of {design}.{step} so we can pad later
         maxlen = 0
-        for design in self.toplevel:
+        for design in self.designs:
             for step in FVM_STEPS:
                 curlen = len(f'{design}.{step}')
                 if curlen > maxlen:
@@ -1173,7 +1240,7 @@ class fvmframework:
         text_header = Text("==== Summary ==============================================")
         console.print(text_header)
 
-        for design in self.toplevel:
+        for design in self.designs:
             for step in FVM_STEPS:
                 total_cont += 1
                 # Only print pass/fail/skip, the rest of steps where not
