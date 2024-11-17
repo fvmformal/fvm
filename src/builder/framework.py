@@ -877,7 +877,7 @@ class fvmframework:
         return err
 
 
-    def run_cmd(self, cmd, design, step, tool, verbose = True):
+    def run_cmd(self, cmd, design, step, tool, verbose = True, cwd=None):
         """Run a specific command"""
         self.set_logformat(getlogformattool(design, step, tool))
         logger.info(f'command: {" ".join(cmd)}')
@@ -885,6 +885,7 @@ class fvmframework:
         start_time = time.perf_counter()
         process = subprocess.Popen (
                   cmd,
+                  cwd     = cwd,
                   stdout  = subprocess.PIPE,
                   stderr  = subprocess.PIPE,
                   text    = True,
@@ -973,10 +974,10 @@ class fvmframework:
         hooks take priority before globally specified hooks"""
         if design in hooks:
             if step in hooks[design]:
-                run_hook(self.hooks[design][step])
+                self.run_hook(hooks[design][step], step, design)
         elif '*' in hooks:
             if step in hooks['*']:
-                run_hook(hooks['*'][step])
+                self.run_hook(hooks['*'][step], step, design)
 
     # TODO: not sure if we need to let the user pass arguments, I don't think
     # it will be necessary for now
