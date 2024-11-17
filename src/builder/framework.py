@@ -434,16 +434,22 @@ class fvmframework:
         logger.trace(f'adding clock: {clock}')
         self.clocks.append(clock)
 
+    # TODO : consider what happens when we have multiple toplevels, maybe we
+    # should have the arguments (self, design/toplevel, entity)
     def blackbox(self, entity):
         """Blackboxes all instances of an entity/module"""
         logger.trace(f'blackboxing entity: {entity}')
         self.blackboxes.append(entity)
 
+    # TODO : consider what happens when we have multiple toplevels, maybe we
+    # should have the arguments (self, design/toplevel, instance)
     def blackbox_instance(self, instance):
         """Blackboxes a specific instance of an entity/module"""
         logger.trace(f'blackboxing instance: {instance}')
         self.blackbox_instances.append(instance)
 
+    # TODO : consider what happens when we have multiple toplevels, maybe we
+    # should have the arguments (self, design/toplevel, ...and the rest)
     def cutpoint(self, signal, module=None, resetval=None, condition=None,
                  driver=None, wildcards_dont_match_hierarchy_separators=False):
         """Sets a specifig signal as a cutpoint"""
