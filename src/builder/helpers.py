@@ -8,7 +8,7 @@ def getscriptname():
 
 def readable_time(seconds):
     if seconds <= 1:
-        ret = "{:.2f}".format(seconds)
+        ret = "{:.2f}".format(seconds)+' seconds'
     else:
         ret = precisedelta(seconds)
     return ret
