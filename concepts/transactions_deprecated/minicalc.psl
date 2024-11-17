@@ -54,12 +54,13 @@ vunit minicalc (minicalc(minicalc_arch)) {
   -- Now let's define the expected relation between these two sequences:
   -- For each valid input sequence we want to have a valid output sequence with
   -- the correct result
-  assert always ((inputseq |=> outputseq) abort rst);
+  valid_output_always_follows_valid_input:
+    assert always ((inputseq |=> outputseq) abort rst);
 
   -- Cover all three operations
-  cover {OP = sum : op_valid = '1'};
-  cover {OP = sub : op_valid = '1'};
-  cover {OP = mul : op_valid = '1'};
+  cover_sum: cover {OP = sum : op_valid = '1'};
+  cover_sub: cover {OP = sub : op_valid = '1'};
+  cover_mul: cover {OP = mul : op_valid = '1'};
 
   -- It may be easier to cover inputseq with the specific operation
   cover {inputseq : S_OP = sum};
