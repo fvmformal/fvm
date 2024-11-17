@@ -286,15 +286,6 @@ class fvmframework:
         assert covtype in allowed_covtypes, f'Specified {covtype=} not in {allowed_covtypes=}'
         self.disabled_coverage.append(f'{design}.prove.{covtype}')
 
-    # TODO: not sure if we need to let the user pass arguments, I don't think
-    # it will be necessary for now
-    def run_hook(hook):
-        """Run a user-specified hook"""
-        if callable(hook):
-            return hook()
-        else:
-            logger.error(f'{hook=} is not callable, only functions or other callable objects can be passed as hooks')
-
     def set_pre_hook(self, hook, step, design='*'):
         self.pre_hooks[design] = dict()
         self.pre_hooks[design][step] = hook
@@ -980,6 +971,15 @@ class fvmframework:
         elif '*' in hooks:
             if step in hooks['*']:
                 run_hook(hooks['*'][step])
+
+    # TODO: not sure if we need to let the user pass arguments, I don't think
+    # it will be necessary for now
+    def run_hook(self, hook, step, design):
+        """Run a user-specified hook"""
+        if callable(hook):
+            return hook(step, design)
+        else:
+            logger.error(f'{hook=} is not callable, only functions or other callable objects can be passed as hooks')
 
     def run_post_step(self, design, step):
         """Run post processing for a specific step of the methodology"""
