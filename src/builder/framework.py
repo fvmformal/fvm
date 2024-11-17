@@ -270,6 +270,8 @@ class fvmframework:
             self.results[design] = {}
             for step in FVM_STEPS:
                 self.results[design][step] = {}
+                if step == "prove":
+                    self.results[design]['prove.simcover'] = {}
 
     # TODO : we could make this function accept also a list, but not sure if it
     # is worth it since the user could just call it inside a loop
@@ -880,7 +882,11 @@ class fvmframework:
     def run_cmd(self, cmd, design, step, tool, verbose = True, cwd=None):
         """Run a specific command"""
         self.set_logformat(getlogformattool(design, step, tool))
-        logger.info(f'command: {" ".join(cmd)}')
+        if cwd is not None:
+            cwd_for_debug = cwd
+        else:
+            cwd_for_debug = self.outdir
+        logger.info(f'command: {" ".join(cmd)}, working directory: {cwd_for_debug}')
 
         start_time = time.perf_counter()
         process = subprocess.Popen (
@@ -1021,29 +1027,30 @@ class fvmframework:
                 # Run the replay script
                 path = pathlib.Path(file).parent
                 cmd = ['./replay.scr']
-                cmd_stdout, cmd_stderr = self.run_cmd(cmd, design, step, 'vsim (simcover)', self.verbose, path)
+                cmd_stdout, cmd_stderr = self.run_cmd(cmd, design, f'{step}.simcover', 'vsim', self.verbose, path)
                 # TODO : maybe check for errors here?
-                #stdout_err = self.logcheck(cmd_stdout, design, step, tool)
-                #stderr_err = self.logcheck(cmd_stderr, design, step, tool)
+                #stdout_err = self.logcheck(cmd_stdout, design, f'{step}.simcover', tool)
+                #stderr_err = self.logcheck(cmd_stderr, design, f'{step}.simcover', tool)
                 ucdb_files.append(f'{path}/sim.ucdb')
             # Merge all simulation code coverage
             path = None
             cmd = ['vcover', 'merge', '-out', f'{self.outdir}/{design}/simcover.ucdb']
             cmd = cmd + ucdb_files
             logger.info(f'{cmd=}, {path=}')
-            cmd_stdout, cmd_stderr = self.run_cmd(cmd, design, step, 'vcover merge', self.verbose, path)
+            cmd_stdout, cmd_stderr = self.run_cmd(cmd, design, f'{step}.simcover', 'vcover merge', self.verbose, path)
             # TODO : maybe check for errors here?
-            #stdout_err = self.logcheck(cmd_stdout, design, step, tool)
-            #stderr_err = self.logcheck(cmd_stderr, design, step, tool)
+            #stdout_err = self.logcheck(cmd_stdout, design, f'{step}.simcover', tool)
+            #stderr_err = self.logcheck(cmd_stderr, design, f'{step}.simcover', tool)
             # Generate an html report
             path = f'{self.outdir}/{design}'
             cmd = ['vcover', 'report', '-html', '-annotate', '-details',
                    '-testdetails', '-codeAll', '-multibitverbose', '-out',
                    'simcover', 'simcover.ucdb']
-            cmd_stdout, cmd_stderr = self.run_cmd(cmd, design, step, 'vcover report', self.verbose, path)
+            cmd_stdout, cmd_stderr = self.run_cmd(cmd, design, f'{step}.simcover', 'vcover report', self.verbose, path)
             # TODO : maybe check for errors here?
-            #stdout_err = self.logcheck(cmd_stdout, design, step, tool)
-            #stderr_err = self.logcheck(cmd_stderr, design, step, tool)
+            #stdout_err = self.logcheck(cmd_stdout, design, f'{step}.simcover', tool)
+            #stderr_err = self.logcheck(cmd_stderr, design, f'{step}.simcover', tool)
+            # TODO : maybe create also a text report, as #141 suggests?
 
 
     def insert_line_before_target(self, file, target_line, line_to_insert):
