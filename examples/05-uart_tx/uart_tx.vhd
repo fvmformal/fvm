@@ -58,80 +58,91 @@ begin
         p_cont<= 0;
       when b_start=>
         TX<='0';
-        p_cont<=cont+1;
         if(cont=BIT_DURATION-1)then
           p_cont<= 0;
           p_estado<=b_0;
+        else
+          p_cont<=cont+1;
         end if;
       when b_0=>
         TX<=datai(0);
-        p_cont<=cont+1;
         if(cont=BIT_DURATION-1)then
           p_cont<= 0;
           p_estado<=b_1;
+        else
+          p_cont<=cont+1;
         end if;
       when b_1=>
         TX<=datai(1);
-        p_cont<=cont+1;
         if(cont=BIT_DURATION-1)then
           p_cont<= 0;
           p_estado<=b_2;
+        else
+          p_cont<=cont+1;
         end if;
       when b_2=>
         TX<=datai(2);
-        p_cont<=cont+1;
         if(cont=BIT_DURATION-1)then
           p_cont<= 0;
           p_estado<=b_3;
+        else
+          p_cont<=cont+1;
         end if;
       when b_3=>
         TX<=datai(3);
-        p_cont<=cont+1;
         if(cont=BIT_DURATION-1)then
           p_cont<= 0;
           p_estado<=b_4;
+        else
+          p_cont<=cont+1;
         end if;
       when b_4=>
         TX<=datai(4);
-        p_cont<=cont+1;
         if(cont=BIT_DURATION-1)then
           p_cont<= 0;
           p_estado<=b_5;
+        else
+          p_cont<=cont+1;
         end if;
       when b_5=>
         TX<=datai(5);
-        p_cont<=cont+1;
         if(cont=BIT_DURATION-1)then
           p_cont<= 0;
           p_estado<=b_6;
+        else
+          p_cont<=cont+1;
         end if;
       when b_6=>
         TX<=datai(6);
-        p_cont<=cont+1;
         if(cont=BIT_DURATION-1)then
           p_cont<=0;
           p_estado<=b_7;
+        else
+          p_cont<=cont+1;
         end if;
       when b_7=>
         TX<=datai(7);
-        p_cont<=cont+1;
         if(cont=BIT_DURATION-1)then
           p_cont<=0;
           p_estado<=b_paridad;
+        else
+          p_cont<=cont+1;
         end if;
       when b_paridad=>
         TX<=datai(0) xor datai(1) xor datai(2) xor datai(3) xor datai(4) xor datai(5) xor datai(6) xor datai(7);
-        p_cont<=cont+1;
         if(cont=BIT_DURATION-1)then
           p_cont<=0;
           p_estado<=b_stop;
+        else
+          p_cont<=cont+1;
         end if;
       when b_stop=>
         TX<='1';
-        p_cont<=cont+1;
         if(cont=BIT_DURATION-1)then
           p_cont<=0;
           p_estado<= reposo;
+        else
+          p_cont<=cont+1;
         end if;
     end case;
   end process;
