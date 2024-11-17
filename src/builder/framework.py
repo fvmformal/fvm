@@ -988,9 +988,13 @@ class fvmframework:
         else:
             logger.error(f'{hook=} is not callable, only functions or other callable objects can be passed as hooks')
 
+    # TODO : sometimes we use design, sometime we use self.current_toplevel. I
+    # think maybe we don't need self.current_toplevel and can use design
+    # everywhere, or at least inside this function
     def run_post_step(self, design, step):
         """Run post processing for a specific step of the methodology"""
-        # Currently we only do post-processing after the friendliness step
+        # Currently we only do post-processing after the friendliness and prove
+        # steps
         logger.trace('run_post_step, {design=}, {step=})')
         path = self.outdir+'/'+self.current_toplevel
         if step == 'friendliness':
@@ -998,6 +1002,62 @@ class fvmframework:
             data = data_from_design_summary(rpt)
             self.results[design][step]['data'] = data
             self.results[design][step]['score'] = friendliness_score(data)
+        # TODO: consider how we are going to present this simcover post_step:
+        # is it a step? a post_step?
+        if step == 'prove':
+            replay_files = glob.glob(self.outdir+'/'+design+'/qsim_tb/*/replay.vsim.do')
+            logger.trace(f'{replay_files=}')
+            ucdb_files = list()
+            for file in replay_files:
+                # Modify the replay.vsim.do so:
+                #   - It specifies a unique test name so we don't get errors when
+                #      merging the UCDBs, and
+                #   - It saves a UCDB file
+                self.insert_line_before_target(file, "quit -f;", f'coverage attribute -name TESTNAME -value {pathlib.Path(file).parent.name}')
+                self.insert_line_before_target(file, "quit -f;", "coverage save sim.ucdb")
+                # TODO: Maybe we need to modify the replay.scr so it exports
+                # more types of code coverage, we will know that when we try
+                # bigger circuits
+                # Run the replay script
+                path = pathlib.Path(file).parent
+                cmd = ['./replay.scr']
+                cmd_stdout, cmd_stderr = self.run_cmd(cmd, design, step, 'vsim (simcover)', self.verbose, path)
+                # TODO : maybe check for errors here?
+                #stdout_err = self.logcheck(cmd_stdout, design, step, tool)
+                #stderr_err = self.logcheck(cmd_stderr, design, step, tool)
+                ucdb_files.append(f'{path}/sim.ucdb')
+            # Merge all simulation code coverage
+            path = None
+            cmd = ['vcover', 'merge', '-out', f'{self.outdir}/{design}/simcover.ucdb']
+            cmd = cmd + ucdb_files
+            logger.info(f'{cmd=}, {path=}')
+            cmd_stdout, cmd_stderr = self.run_cmd(cmd, design, step, 'vcover merge', self.verbose, path)
+            # TODO : maybe check for errors here?
+            #stdout_err = self.logcheck(cmd_stdout, design, step, tool)
+            #stderr_err = self.logcheck(cmd_stderr, design, step, tool)
+            # Generate an html report
+            path = f'{self.outdir}/{design}'
+            cmd = ['vcover', 'report', '-html', '-annotate', '-details',
+                   '-testdetails', '-codeAll', '-multibitverbose', '-out',
+                   'simcover', 'simcover.ucdb']
+            cmd_stdout, cmd_stderr = self.run_cmd(cmd, design, step, 'vcover report', self.verbose, path)
+            # TODO : maybe check for errors here?
+            #stdout_err = self.logcheck(cmd_stdout, design, step, tool)
+            #stderr_err = self.logcheck(cmd_stderr, design, step, tool)
+
+
+    def insert_line_before_target(self, file, target_line, line_to_insert):
+        with open(file, 'r') as f:
+            lines = f.readlines()
+
+        new_lines = []
+        for line in lines:
+            if line.strip() == target_line:
+                new_lines.append(line_to_insert + '\n')
+            new_lines.append(line)
+
+        with open(file, 'w') as f:
+            f.writelines(new_lines)
 
     def logcheck(self, result, design, step, tool):
         """Check log for errors"""
@@ -1036,6 +1096,8 @@ class fvmframework:
             pass  # Avoid signalling an error on tool error summaries without errors
         elif 'Command : onerror' in line:
             pass  # Avoid signalling an error when the tool log echoes our "onerror exit"
+        elif 'Note: (vsim-12126) Error and warning message counts have been restored' in line:
+            pass  # Avoid signalling an error on this note from vsim
         elif 'error'.casefold() in line.casefold():
             err = True
         elif 'fatal'.casefold() in line.casefold():
