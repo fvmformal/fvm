@@ -263,10 +263,6 @@ class fvmframework:
             else:
                 logger.error(f'Specified {args.design=} not in {self.toplevel=}, did you add it with set_toplevel()?')
 
-        # Initialize the design configurations list
-        for design in self.toplevel:
-            self.design_configs[design] = list()
-
     def init_results(self):
         # TODO: this must be initialized per design configuration, but to do
         # that we must do it somewhere else
@@ -286,20 +282,27 @@ class fvmframework:
                 if step == "prove":
                     self.results[design]['prove.simcover'] = {}
 
-    # TODO: check that design belongs to self.toplevel, throw an error if it
-    # doesn't
     def add_config(self, design, name, generics):
         """Adds a design configuration. The design configuration has a name and
         values for its generics, and applies to a specific design. If at least
         one design configuration exists, the default configuration is not
         used"""
+
+        # Check that the configuration is for a valid design
         if design not in self.toplevel:
             logger.error(f'Specified {design=} not in {self.toplevel=}')
+
+        # Initialize the design configurations list if it doesn't exist
+        if design not in self.design_configs:
+            self.design_configs[design] = list()
+
+        # Create the configuration as a dict() and append it to the design
+        # configurations list
         config = dict()
         config["name"] = name
         config["generics"] = generics
         self.design_configs[design].append(config)
-        logger.info(self.design_configs)
+        logger.trace(f'Added configuration {self.design_configs} to {design=}')
 
     def generics_to_args(self, generics):
         """Converts a dict with generic:value pairs to the argument we have to
@@ -818,11 +821,13 @@ class fvmframework:
     def run_design(self, design, skip_setup=False):
         """Run all available/selected methodology steps for a design"""
         # If configurations exist, run them all
-        logger.info(f'{self.design_configs}')
+        logger.info(f'Running {design=} with configs: {self.design_configs}')
         if design in self.design_configs:
+            logger.trace(f'{design=} has configs: {self.design_configs}')
             for config in self.design_configs[design]:
                 self.run_configuration(design, config, skip_setup)
         else:
+            logger.trace(f'{design=} has no configs, running default config')
             self.run_configuration(design, None, skip_setup)
 
     def run_configuration(self, design, config=None, skip_setup=False):
