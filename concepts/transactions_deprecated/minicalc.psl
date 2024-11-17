@@ -42,9 +42,9 @@ vunit minicalc (minicalc(minicalc_arch)) {
     if rising_edge(clk) then
       case S_OP is
         when sum =>
-          S_RES <= S_OP_A + S_OP_B;
+          S_RES <= to_signed(to_integer(S_OP_A) + to_integer(S_OP_B), S_RES'length);
         when sub =>
-          S_RES <= S_OP_A - S_OP_B;
+          S_RES <= to_signed(to_integer(S_OP_A) - to_integer(S_OP_B), S_RES'length);
         when mul =>
           S_RES <= S_OP_A * S_OP_B;
       end case;

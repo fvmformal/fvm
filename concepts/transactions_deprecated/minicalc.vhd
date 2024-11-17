@@ -33,9 +33,9 @@ begin
   begin
     case op is
       when sum =>
-        n_res <= op_a + op_b;
+        n_res <= resize(resize(op_a, op_a'length+1) + resize(op_b, op_b'length+1), n_res'length);
       when sub =>
-        n_res <= op_a - op_b;
+        n_res <= resize(resize(op_a, op_a'length+1) - resize(op_b, op_b'length+1), n_res'length);
       when mul =>
         n_res <= op_a * op_b;
     end case;
