@@ -126,6 +126,8 @@ class fvmframework:
         logger.info(f'{self.scriptname=}')
 
         # Rest of instance variables
+        # TODO : this is getting a bit big, we could consider restructuring
+        # this, maybe defining a structure per toplevel
         self.toplevel = list()
         self.current_toplevel = ''
         self.vhdl_sources = list()
@@ -142,6 +144,8 @@ class fvmframework:
         self.blackboxes = list()
         self.blackbox_instances = list()
         self.cutpoints = list()
+        self.pre_hooks = dict()
+        self.post_hooks = dict()
 
         # Specific tool defaults for each toolchain
         if self.toolchain == "questa":
@@ -281,6 +285,23 @@ class fvmframework:
         allowed_covtypes = ['observability', 'signoff', 'reachability', 'bounded_reachability']
         assert covtype in allowed_covtypes, f'Specified {covtype=} not in {allowed_covtypes=}'
         self.disabled_coverage.append(f'{design}.prove.{covtype}')
+
+    # TODO: not sure if we need to let the user pass arguments, I don't think
+    # it will be necessary for now
+    def run_hook(hook):
+        """Run a user-specified hook"""
+        if callable(hook):
+            return hook()
+        else:
+            logger.error(f'{hook=} is not callable, only functions or other callable objects can be passed as hooks')
+
+    def set_pre_hook(self, hook, step, design='*'):
+        self.pre_hooks[design] = dict()
+        self.pre_hooks[design][step] = hook
+
+    def set_post_hook(self, hook, step, design='*'):
+        self.post_hooks[design] = dict()
+        self.post_hooks[design][step] = hook
 
     def set_loglevel(self, loglevel):
         """Sets the logging level for the build and test framework.
@@ -753,24 +774,30 @@ class fvmframework:
         # Run all available/selected steps/tools
         # Call the run_step() function for each available step
         # If a 'step' argument is specified, just run that specific step
+        # TODO : the run code is duplicated below, we could think of some way
+        # of deduplicating it
         if self.step is None:
             for step in FVM_STEPS:
                 if self.is_skipped(design, step):
                     logger.info(f'{step=} of {design=} skipped by skip() function, will not run')
                     self.results[design][step]['status'] = 'skip'
                 elif step in toolchains.TOOLS[self.toolchain]:
+                    self.run_pre_hook(design, step)
                     err = self.run_step(design, step)
                     if err:
                         self.exit_if_required(ERROR_IN_LOG)
                     self.run_post_step(design, step)
+                    self.run_post_hook(design, step)
                 else:
                     logger.info(f'{step=} not available in {self.toolchain=}, skipping')
                     self.results[design][step]['status'] = 'skip'
         else:
+            self.run_pre_hook(design, self.step)
             err = self.run_step(design, self.step)
             if err:
                 self.exit_if_required(ERROR_IN_LOG)
             self.run_post_step(design, self.step)
+            self.run_post_hook(design, self.step)
 
     def is_skipped(self, design, step):
         """Returns True if design.step must not be run, otherwise returns False"""
@@ -933,6 +960,26 @@ class fvmframework:
         self.set_logformat(LOGFORMAT)
 
         return captured_stdout, captured_stderr
+
+    def run_pre_hook(self, design, step):
+        """Run the pre_hook if it exists. Only one hook is run: specific design
+        hooks take priority before globally specified hooks"""
+        self.run_hook_if_defined(self.pre_hooks, design, step)
+
+    def run_post_hook(self, design, step):
+        """Run the post_hook if it exists. Only one hook is run: specific
+        design hooks take priority before globally specified hooks"""
+        self.run_hook_if_defined(self.post_hooks, design, step)
+
+    def run_hook_if_defined(self, hooks, design, step):
+        """Run a hook if it exists. Only one hook is run: specific design
+        hooks take priority before globally specified hooks"""
+        if design in hooks:
+            if step in hooks[design]:
+                run_hook(self.hooks[design][step])
+        elif '*' in hooks:
+            if step in hooks['*']:
+                run_hook(hooks['*'][step])
 
     def run_post_step(self, design, step):
         """Run post processing for a specific step of the methodology"""
