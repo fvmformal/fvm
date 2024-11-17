@@ -10,11 +10,9 @@ QUESTA_TOOLS = {
         # step           : ["tool",       "wrapper"],
         "lint"           : ["lint",       "qverify"],
         "friendliness"   : ["autocheck",  "qverify"],
-        "rulecheck"      : ["autocheck",  "qverify"],
         "reachability"   : ["covercheck", "qverify"],
-        "friendliness"   : ["covercheck", "qverify"],
-        "resets"         : ["RDC",        "qverify"],
-        "clocks"         : ["CDC",        "qverify"],
+        "resets"         : ["rdc",        "qverify"],
+        "clocks"         : ["cdc",        "qverify"],
         "prove"          : ["propcheck",  "qverify"]
 #        "simulate"       : ["vsim", "vsim"],
 #        "createemptylib" : ["vlib", "vlib"],
