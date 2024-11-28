@@ -1,5 +1,5 @@
 # Import our own constant definitions
-from src.drom2psl.definitions import *
+from fvm.drom2psl.definitions import *
 
 # Allow to compare data type to Dict
 from typing import Dict

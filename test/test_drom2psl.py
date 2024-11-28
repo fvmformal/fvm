@@ -1,6 +1,6 @@
 import pytest
 
-from src.drom2psl.generator import generator
+from fvm.drom2psl.generator import generator
 
 # Return values are:
 #   False when no errors detected (return 0),

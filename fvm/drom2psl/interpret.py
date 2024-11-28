@@ -13,13 +13,13 @@ from icecream import ic
 from typing import Dict
 
 # Import our own constant definitions
-from src.drom2psl.definitions import *
+from fvm.drom2psl.definitions import *
 
 # Allow printing to sys.stderr
 import sys
 
 # Import our own logging functions
-from src.drom2psl.logging import *
+from fvm.drom2psl.logging import *
 
 """
 Get signal field from dict

@@ -16,10 +16,10 @@ from rich.console import Console
 from rich.text import Text
 
 # Our own imports
-from src.builder import toolchains
-from src.builder import logcounter
-from src.builder import helpers
-from src.builder.parse_design_rpt import *
+from fvm import toolchains
+from fvm import logcounter
+from fvm import helpers
+from fvm.parse_design_rpt import *
 
 # Error codes
 BAD_VALUE    = "FVM exit condition: Bad value"
@@ -810,13 +810,28 @@ class fvmframework:
         logger.info(f'Designs: {self.toplevel}')
         for design in self.toplevel:
             logger.info(f'Running {design=}')
-            self.run_design(design, skip_setup)
+            if self.list:
+                self.list_design(design)
+            else:
+                self.run_design(design, skip_setup)
 
         self.pretty_summary()
         self.generate_reports()
         err = self.check_errors()
         if err :
           self.exit_if_required(CHECK_FAILED)
+
+    def list_design(self, design, skip_setup=False):
+        """List all available/selected methodology steps for a design"""
+        # If configurations exist, list them all
+        logger.info(f'Listing {design=} with configs: {self.design_configs}')
+        if design in self.design_configs:
+            logger.trace(f'{design=} has configs: {self.design_configs}')
+            for config in self.design_configs[design]:
+                self.list_configuration(design, config)
+        else:
+            logger.trace(f'{design=} has no configs, running default config')
+            self.list_configuration(design, None)
 
     def run_design(self, design, skip_setup=False):
         """Run all available/selected methodology steps for a design"""
@@ -829,6 +844,37 @@ class fvmframework:
         else:
             logger.trace(f'{design=} has no configs, running default config')
             self.run_configuration(design, None, skip_setup)
+
+    def list_configuration(self, design, config=None):
+        """List all available/selected methodology steps for a design
+        configuration"""
+
+        if config is not None:
+            design = f'{design}.{config["name"]}'
+        else:
+            design = design
+
+        # List all available/selected steps/tools
+        # Call the list_step() function for each available step
+        # If a 'step' argument is specified, just list that specific step
+        # TODO : the list code is duplicated below, we could think of some way
+        # of deduplicating it
+        if self.step is None:
+            for step in FVM_STEPS:
+                if self.is_skipped(design, step):
+                    logger.trace(f'{step=} of {design=} skipped by skip() function, will not list')
+                    self.results[design][step]['status'] = 'skip'
+                elif step in toolchains.TOOLS[self.toolchain]:
+                    self.list_step(design, step)
+                else:
+                    logger.trace(f'{step=} not available in {self.toolchain=}, skipping')
+                    self.results[design][step]['status'] = 'skip'
+        else:
+            self.list_step(design, self.step)
+
+    def list_step(self, design, step):
+        logger.trace(f'{design}.{step}')
+        self.results[design][step]['status'] = 'skip'
 
     def run_configuration(self, design, config=None, skip_setup=False):
         """Run all available/selected methodology steps for a design
@@ -1267,12 +1313,14 @@ class fvmframework:
                     text.append(' ')
                     design_step = f'{design}.{step}'
                     text.append(f'{design_step:<{maxlen}}')
+
+                    score_str =  '                '
                     if step == 'friendliness':
-                        score = self.results[design][step]["score"]
-                        score_str = f' (score: {score:.2f}%)'
-                    else:
-                        score_str =  '                '
+                        if "score" in self.results[design][step]:
+                            score = self.results[design][step]["score"]
+                            score_str = f' (score: {score:.2f}%)'
                     text.append(score_str)
+
                     if "elapsed_time" in self.results[design][step]:
                         time = self.results[design][step]["elapsed_time"]
                         total_time += time

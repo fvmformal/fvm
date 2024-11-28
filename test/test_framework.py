@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 
 # Our own imports
-from src.builder.framework import fvmframework
+from fvm import fvmframework
 
 # Common pre-test actions for all tests
 #fvm = fvmframework(loglevel="TRACE")

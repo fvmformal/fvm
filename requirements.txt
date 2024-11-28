@@ -1,6 +1,6 @@
 # For the framework
 loguru      # To have a logger                         (MIT license)
-argparse    # To parse input arguments                 (Python Software Foundation License)
+#argparse    # To parse input arguments                 (Python Software Foundation License)
 rich        # For really pretty printing               (MIT license)
 junit-xml   # To generate JUnit-XML reports            (MIT license)
 humanize    # To print times in human-readable format  (MIT license)

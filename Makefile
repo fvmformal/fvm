@@ -39,6 +39,10 @@ reqs: $(REQS_DIR)/reqs_installed
 
 dev-reqs: $(REQS_DIR)/dev-reqs_installed
 
+install: $(REQS_DIR)/fvm-installed
+
+fvm: $(REQS_DIR)/fvm-installed
+
 $(REQS_DIR)/reqs_installed: .venv
 	$(VENV_ACTIVATE) pip3 install -r requirements.txt -q
 	touch $(REQS_DIR)/reqs_installed
@@ -48,11 +52,11 @@ $(REQS_DIR)/dev-reqs_installed: .venv
 	touch $(REQS_DIR)/dev-reqs_installed
 
 # Install the FVM
-install:
-	@echo Sorry, $@ is not implemented yet
+$(REQS_DIR)/fvm-installed: .venv
+	$(VENV_ACTIVATE) pip3 install -e .
 
 # Lint the python code
-lint: dev-reqs
+lint: reqs
 	$(VENV_ACTIVATE) pylint --output-format=colorized test/*.py src/*/*.py || pylint-exit $$?
 
 # List the tests
@@ -60,11 +64,11 @@ list-tests: reqs dev-reqs
 	$(VENV_ACTIVATE) pytest --collect-only
 
 # Run the tests
-test: reqs dev-reqs
+test: fvm dev-reqs
 	$(VENV_ACTIVATE) coverage run -m pytest -v --junit-xml="results.xml"
 
 # Run the tests in verbose mode
-test-verbose: reqs dev-reqs
+test-verbose: fvm dev-reqs
 	$(VENV_ACTIVATE) coverage run -m pytest -v -s --junit-xml="results.xml"
 
 # List with all the examples
@@ -89,6 +93,7 @@ conceptlist += assert_to_assume
 conceptlist += defining_clocks_and_resets
 conceptlist += hooks
 conceptlist += design_configurations
+#conceptlist += design_configurations_2
 
 # examples target runs all the examples
 # concept target runs all the concepts
@@ -103,10 +108,10 @@ list-concepts:
 	@echo $(conceptlist)
 
 # Generic rules to run examples and concepts
-%: examples/% reqs
+%: examples/% fvm
 	$(VENV_ACTIVATE) $(PYTHON) -m examples.$@.formal
 
-%: concepts/% reqs
+%: concepts/% fvm
 	$(VENV_ACTIVATE) $(PYTHON) -m concepts.$@.formal
 
 # Calculate python code coverage
