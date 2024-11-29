@@ -1412,9 +1412,9 @@ class fvmframework:
                                               )
 
                 if status == 'omit':
-                    testcase.add_skip_info(message = 'Not executed due to early exit',
-                                            output = None #'output string'
-                                            )
+                    testcase.add_skipped_info(message = 'Not executed due to early exit',
+                                              output = None #'output string'
+                                              )
 
                 testcases.append(testcase)
 
