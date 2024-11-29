@@ -1407,9 +1407,9 @@ class fvmframework:
                                               )
 
                 if status == 'skip':
-                    testcase.add_skip_info(message = 'Test skipped by user',
-                                            output = None #'output string'
-                                            )
+                    testcase.add_skipped_info(message = 'Test skipped by user',
+                                              output = None #'output string'
+                                              )
 
                 if status == 'omit':
                     testcase.add_skip_info(message = 'Not executed due to early exit',
@@ -1421,12 +1421,18 @@ class fvmframework:
             testsuite = TestSuite(design, testcases)
             testsuites.append(testsuite)
 
-        # Apparently TestSuite.to_file is deprecated and will be removed in
-        # junit-xml version 2.0.0. The recommended function to use instead is
-        # to_xml_report_file, but it is not available in version 1.9, which we
-        # are using now.
+        # If the output directory doesn't exist, it is because there was an
+        # error in fvmframework.setup(). But we will generate the directory and
+        # the report nevertheless, because CI tools may depend on the report
+        # being there.
+        os.makedirs(self.outdir, exist_ok=True)
+        # TODO: make the report path/name configurable by the user
         reportfile = f'{self.outdir}/results.xml'
         with open(reportfile, 'w') as f:
+            # Apparently TestSuite.to_file is deprecated and will be removed in
+            # junit-xml version 2.0.0. The recommended function to use instead
+            # is to_xml_report_file, but it is not available in version 1.9,
+            # which we are using now
             TestSuite.to_file(f, testsuites, prettyprint=True)
         pass
 
