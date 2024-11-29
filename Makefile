@@ -30,6 +30,7 @@ all:
 	@echo   "make examples     -> run the examples"
 	@echo   "make pycoverage   -> generate code coverage report for the python code"
 	@echo   "make testall      -> run the tests, concepts and examples"
+	@echo   "make todo         -> count TODOs in code and generate badge for gitlab"
 	@echo   "make clean        -> remove temporary files"
 	@echo   "make realclean    -> remove temporary files and python venv"
 
@@ -59,9 +60,9 @@ $(REQS_DIR)/install-reqs_installed: venv
 
 # Install the FVM. For now we use python poetry to install it instead of just
 # pip, since we don't have yet a setup.py
+# In the future, we will be able to just do: "pip3 install -e ."
 $(REQS_DIR)/fvm_installed: venv install-reqs
 	$(VENV_ACTIVATE) poetry install
-	#$(VENV_ACTIVATE) pip3 install -e .
 
 # Lint the python code
 lint: dev-reqs
@@ -144,6 +145,17 @@ venv: $(VENV_DIR)
 $(VENV_DIR):
 	python3 -m venv $(VENV_DIR)
 
+# Count TODOs in code
+# Since each line in the recipe is run in a separate shell, to define a
+# variable and be able to read its value later we need to use GNU Make's $eval
+TODOs := $(shell grep -r TODO * | grep -v grep | wc -l)
+todo: venv
+	$(VENV_ACTIVATE) pip3 install anybadge
+	mkdir -p badges
+	rm -f badges/todo.svg
+	@echo "TODOs=$(TODOs)"
+	@$(VENV_ACTIVATE) anybadge --value=$(TODOs) --label=TODOs --file=badges/todo.svg 1=green 10=yellow 20=orange 30=tomato 999=red
+
 # Remove generated files
 clean:
 	rm -f results.xml flex*.log vish_stacktrace.vstf modelsim.ini
@@ -154,6 +166,7 @@ clean:
 	rm -f pylint.log pylint.txt
 	rm -rf .qverify .visualizer qcache propcheck.db
 	rm -f visualizer.log qverify_ui.log qverify_ui_cmds.tcl sysinfo.log
+	rm -rf badges
 	rm -rf test/testlib
 	rm -f test/test/test.vhd test/test/test2.vhd test/test/test3.vhd
 	rm -f test/test/test.psl test/test/test2.psl test/test/test3.psl
