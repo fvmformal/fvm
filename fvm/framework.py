@@ -1358,9 +1358,76 @@ class fvmframework:
         console.print(text_footer)
 
     # TODO: actually write this
+    # TODO: move this to a different file
+    # TODO: separate functionality in at least two functions, maybe three:
+    #       - generate_xml_report
+    #       - generate_text_report
+    #       - generate_html_report
     def generate_reports(self):
         """Generates output reports"""
+        # TODO : move this import to the top of the new file (for example,
+        # reports.py)
         from junit_xml import TestSuite, TestCase
+        # For all designs:
+        #   Define a TestSuite per design
+        #   For all steps:
+        #     Define a TestCase per step
+        testsuites = list()
+        for design in self.designs:
+            testcases = list()
+            for step in FVM_STEPS:
+                if 'status' in self.results[design][step]:
+                    status = self.results[design][step]['status']
+                else:
+                    status = 'omit'
+
+                if 'elapsed_time' in self.results[design][step]:
+                    elapsed_time = self.results[design][step]["elapsed_time"]
+                else:
+                    elapsed_time = None
+
+                testcase = TestCase(name = f'{design}.{step}',
+                                    classname = design,
+                                    elapsed_sec = elapsed_time,
+                                    stdout = 'stdout goes here',
+                                    stderr = 'stderr goes here',
+                                    timestamp = None,
+                                    status = 'custom status string goes here',
+                                    category = 'category goes here',
+                                    file = 'file goes here',
+                                    line = 'line goes here',
+                                    log = f'{self.outdir}/{design}/{step}.log',
+                                    url = 'url goes here'
+                                    )
+
+                if status == 'fail':
+                    testcase.add_failure_info(message = 'error message',
+                                              output = 'output string',
+                                              failure_type = 'error type'
+                                              )
+
+                if status == 'skip':
+                    testcase.add_skip_info(message = 'Test skipped by user',
+                                            output = None #'output string'
+                                            )
+
+                if status == 'omit':
+                    testcase.add_skip_info(message = 'Not executed due to early exit',
+                                            output = None #'output string'
+                                            )
+
+                testcases.append(testcase)
+
+            testsuite = TestSuite(design, testcases)
+            testsuites.append(testsuite)
+
+        # Apparently TestSuite.to_file is deprecated and will be removed in
+        # junit-xml version 2.0.0. The recommended function to use instead is
+        # to_xml_report_file, but it is not available in version 1.9, which we
+        # are using now.
+        reportfile = f'{self.outdir}/results.xml'
+        with open(reportfile, 'w') as f:
+            TestSuite.to_file(f, testsuites, prettyprint=True)
         pass
 
 

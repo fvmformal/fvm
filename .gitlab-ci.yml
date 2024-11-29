@@ -64,10 +64,14 @@ run_concepts: &run_concepts
     - export SALT_LICENSE_SERVER=2101@baldr.us.es
     - yum install -y python39
     - make PYTHON="coverage run --data-file=.coverage.$DESIGN" $DESIGN
+    - mv fvm_out/results.xml fvm_out/$DESIGN_results.xml
   artifacts:
     when: always
     paths:
       - .coverage.$DESIGN
+    reports:
+      junit:
+        - fvm_out/$DESIGN_results.xml
 
 run_examples:
   <<: *run_concepts
