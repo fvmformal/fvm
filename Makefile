@@ -39,25 +39,33 @@ reqs: $(REQS_DIR)/reqs_installed
 
 dev-reqs: $(REQS_DIR)/dev-reqs_installed
 
-install: $(REQS_DIR)/fvm-installed
+install-reqs: $(REQS_DIR)/install-reqs_installed
 
-fvm: $(REQS_DIR)/fvm-installed
+install: $(REQS_DIR)/fvm_installed
+
+fvm: install
 
 $(REQS_DIR)/reqs_installed: .venv
 	$(VENV_ACTIVATE) pip3 install -r requirements.txt -q
-	touch $(REQS_DIR)/reqs_installed
+	touch $@
 
 $(REQS_DIR)/dev-reqs_installed: .venv
 	$(VENV_ACTIVATE) pip3 install -r dev-requirements.txt -q
-	touch $(REQS_DIR)/dev-reqs_installed
+	touch $@
 
-# Install the FVM
-$(REQS_DIR)/fvm-installed: .venv
-	$(VENV_ACTIVATE) pip3 install -e .
+$(REQS_DIR)/install-reqs_installed: .venv
+	$(VENV_ACTIVATE) pip3 install poetry
+	touch $@
+
+# Install the FVM. For now we use python poetry to install it instead of just
+# pip
+$(REQS_DIR)/fvm_installed: .venv
+	$(VENV_ACTIVATE) poetry install
+	#$(VENV_ACTIVATE) pip3 install -e .
 
 # Lint the python code
-lint: reqs
-	$(VENV_ACTIVATE) pylint --output-format=colorized test/*.py src/*/*.py || pylint-exit $$?
+lint: dev-reqs
+	$(VENV_ACTIVATE) pylint --output-format=colorized test/*.py fvm/*.py fvm/*/*.py || pylint-exit $$?
 
 # List the tests
 list-tests: reqs dev-reqs
@@ -129,8 +137,11 @@ venv: $(VENV_DIR)
 
 # When creating the venv, we use the system's python (we can't use the venv's
 # python because it doesn't exist yet)
+# For now, we need python poetry to do our local install so let's install it
+# will pip when creating the venv
 $(VENV_DIR):
 	python3 -m venv $(VENV_DIR)
+	$(VENV_ACTIVATE) pip3 install poetry
 
 # Remove generated files
 clean:
