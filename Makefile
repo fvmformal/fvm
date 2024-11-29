@@ -49,8 +49,10 @@ fvm: install
 
 # Instead of $(VENV_ACTIVATE) pip3 install -r requirements.txt -q,
 #   we are managing our dependencies with python poetry
+# We must specify --no-root to poetry install: if we don't, it will install the
+# fvm too, and we want to do that separately
 $(REQS_DIR)/reqs_installed: venv install-reqs
-	$(VENV_ACTIVATE) poetry install
+	$(VENV_ACTIVATE) poetry install --no-root
 	touch $@
 
 # Instead of $(VENV_ACTIVATE) pip3 install -r dev-requirements.txt -q,
@@ -69,6 +71,7 @@ $(REQS_DIR)/install-reqs_installed: venv
 # In this target, poetry install is called when making 'reqs', so we don't need
 # to call it again
 $(REQS_DIR)/fvm_installed: venv install-reqs reqs
+	poetry install
 	touch $@
 
 # Lint the python code
@@ -173,9 +176,11 @@ clean:
 	rm -rf .qverify .visualizer qcache propcheck.db
 	rm -f visualizer.log qverify_ui.log qverify_ui_cmds.tcl sysinfo.log
 	rm -rf badges
+	rm -rf pylint
 	rm -rf test/testlib
-	rm -f test/test/test.vhd test/test/test2.vhd test/test/test3.vhd
-	rm -f test/test/test.psl test/test/test2.psl test/test/test3.psl
+	rm -f test/test.vhd test/test2.vhd test/test3.vhd
+	rm -f test/test.psl test/test2.psl test/test3.psl
+	rm -rf dist
 
 # Remove venv and generated files
 realclean: clean
