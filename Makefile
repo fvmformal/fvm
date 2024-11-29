@@ -45,21 +45,21 @@ install: $(REQS_DIR)/fvm_installed
 
 fvm: install
 
-$(REQS_DIR)/reqs_installed: .venv
+$(REQS_DIR)/reqs_installed: venv
 	$(VENV_ACTIVATE) pip3 install -r requirements.txt -q
 	touch $@
 
-$(REQS_DIR)/dev-reqs_installed: .venv
+$(REQS_DIR)/dev-reqs_installed: venv
 	$(VENV_ACTIVATE) pip3 install -r dev-requirements.txt -q
 	touch $@
 
-$(REQS_DIR)/install-reqs_installed: .venv
+$(REQS_DIR)/install-reqs_installed: venv
 	$(VENV_ACTIVATE) pip3 install poetry
 	touch $@
 
 # Install the FVM. For now we use python poetry to install it instead of just
-# pip
-$(REQS_DIR)/fvm_installed: .venv
+# pip, since we don't have yet a setup.py
+$(REQS_DIR)/fvm_installed: venv install-reqs
 	$(VENV_ACTIVATE) poetry install
 	#$(VENV_ACTIVATE) pip3 install -e .
 
@@ -139,9 +139,10 @@ venv: $(VENV_DIR)
 # python because it doesn't exist yet)
 # For now, we need python poetry to do our local install so let's install it
 # will pip when creating the venv
+# We also make a local install of FVM. For now we use python poetry to install
+# it instead of just pip, since we need a setup.py to install it with pip
 $(VENV_DIR):
 	python3 -m venv $(VENV_DIR)
-	$(VENV_ACTIVATE) pip3 install poetry
 
 # Remove generated files
 clean:
