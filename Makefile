@@ -35,7 +35,8 @@ all:
 	@echo   "make realclean    -> remove temporary files and python venv"
 
 # reqs and dev-reqs depend on a file we create inside the venv, so we can avoid
-# calling "pip3 install ..." if the requirements have already been installed
+# calling "pip3 install ..." or "poetry install..." if the requirements have
+# already been installed
 reqs: $(REQS_DIR)/reqs_installed
 
 dev-reqs: $(REQS_DIR)/dev-reqs_installed
@@ -46,12 +47,16 @@ install: $(REQS_DIR)/fvm_installed
 
 fvm: install
 
-$(REQS_DIR)/reqs_installed: venv
-	$(VENV_ACTIVATE) pip3 install -r requirements.txt -q
+# Instead of $(VENV_ACTIVATE) pip3 install -r requirements.txt -q,
+#   we are managing our dependencies with python poetry
+$(REQS_DIR)/reqs_installed: venv install-reqs
+	$(VENV_ACTIVATE) poetry install
 	touch $@
 
-$(REQS_DIR)/dev-reqs_installed: venv
-	$(VENV_ACTIVATE) pip3 install -r dev-requirements.txt -q
+# Instead of $(VENV_ACTIVATE) pip3 install -r dev-requirements.txt -q,
+#   we are managing our dependencies with python poetry
+$(REQS_DIR)/dev-reqs_installed: venv install-reqs
+	$(VENV_ACTIVATE) poetry install --with dev
 	touch $@
 
 $(REQS_DIR)/install-reqs_installed: venv
@@ -60,9 +65,11 @@ $(REQS_DIR)/install-reqs_installed: venv
 
 # Install the FVM. For now we use python poetry to install it instead of just
 # pip, since we don't have yet a setup.py
-# In the future, we will be able to just do: "pip3 install -e ."
-$(REQS_DIR)/fvm_installed: venv install-reqs
-	$(VENV_ACTIVATE) poetry install
+# In the future, we will be able to just do: "pip3 install -e ." without
+# needing to first call "poetry install" to install the dependencies
+# In this target, poetry install is called when making 'reqs'
+$(REQS_DIR)/fvm_installed: venv install-reqs reqs
+	$(VENV_ACTIVATE) pip3 -e .
 
 # Lint the python code
 lint: dev-reqs
@@ -138,10 +145,6 @@ venv: $(VENV_DIR)
 
 # When creating the venv, we use the system's python (we can't use the venv's
 # python because it doesn't exist yet)
-# For now, we need python poetry to do our local install so let's install it
-# will pip when creating the venv
-# We also make a local install of FVM. For now we use python poetry to install
-# it instead of just pip, since we need a setup.py to install it with pip
 $(VENV_DIR):
 	python3 -m venv $(VENV_DIR)
 
