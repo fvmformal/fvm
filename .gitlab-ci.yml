@@ -6,7 +6,7 @@ stages:
 
 count_todos_in_code:
   stage: lint_and_test
-  image: debian:11
+  image: debian:12
   script:
     - apt update
     - apt install -y python3 python3-pip python3-venv
@@ -22,11 +22,10 @@ count_todos_in_code:
 
 lint_python:
   stage: lint_and_test
-  image: debian:11
+  image: debian:12
   script:
     - apt update
     - apt install -y python3 python3-pip python3-venv bc
-    - pip3 install -r requirements.txt -r dev-requirements.txt
     - make lint | tee pylint.log
     - RATING=$(grep -oP 'Your code has been rated at \K[\d.]+' pylint.log)
     - PERCENTAGE=$(echo "$RATING * 10" | bc)
@@ -35,11 +34,10 @@ lint_python:
 
 test_all:
   stage: lint_and_test
-  image: debian:11
+  image: debian:12
   script:
     - apt update
     - apt install -y python3 python3-pip python3-venv
-    - pip3 install -r requirements.txt -r dev-requirements.txt
     - make test
     - mv .coverage .coverage.pytest
   artifacts:
@@ -52,7 +50,7 @@ test_all:
 
 #generate_matrixes:
 #  stage: lint_and_test
-#  image: debian:11
+#  image: debian:12
 #  script:
 #    - export CONCEPTS=$(make list-concepts | tr '\n' ',')
 #    - export EXAMPLES=$(make list-concepts | tr '\n' ',')
@@ -68,7 +66,6 @@ run_concepts: &run_concepts
   script:
     - unset LM_LICENSE_FILE
     - export SALT_LICENSE_SERVER=2101@baldr.us.es
-    - pip3 install -r requirements.txt -r dev-requirements.txt
     - make PYTHON="coverage run --data-file=.coverage.$DESIGN" $DESIGN
   artifacts:
     when: always
@@ -96,7 +93,6 @@ run_steps_independently:
   script:
     - unset LM_LICENSE_FILE
     - export SALT_LICENSE_SERVER=2101@baldr.us.es
-    - pip3 install -r requirements.txt -r dev-requirements.txt
     - coverage run --data-file=.coverage.$DESIGN.lint -m examples.01-countervunit.formal -s lint
     - make clean
     - coverage run --data-file=.coverage.$DESIGN.rulecheck --m examples.01-countervunit.formal -s friendliness
@@ -118,11 +114,10 @@ run_steps_independently:
 # TODO : merge coverage files from previous stages
 pycoverage:
   stage: coverage
-  image: debian:11
+  image: debian:12
   script:
     - apt update
     - apt install -y python3 python3-pip python3-venv
-    - pip3 install -r requirements.txt -r dev-requirements.txt
     - make pycoverage
   coverage: /TOTAL.*\s+(\d+\%)/
   artifacts:
