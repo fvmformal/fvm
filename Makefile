@@ -63,13 +63,12 @@ $(REQS_DIR)/install-reqs_installed: venv
 	$(VENV_ACTIVATE) pip3 install poetry
 	touch $@
 
-# Install the FVM. For now we use python poetry to install it instead of just
-# pip, since we don't have yet a setup.py
-# In the future, we will be able to just do: "pip3 install -e ." without
-# needing to first call "poetry install" to install the dependencies
-# In this target, poetry install is called when making 'reqs'
+# Install the FVM. For now we use python poetry to install it (poetry install)
+# instead of just pip, since we don't have yet a setup.py
+# It is also good for development to manage our dependencies with poetry
+# In this target, poetry install is called when making 'reqs', so we don't need
+# to call it again
 $(REQS_DIR)/fvm_installed: venv install-reqs reqs
-	$(VENV_ACTIVATE) pip3 install -e .
 	touch $@
 
 # Lint the python code
@@ -146,8 +145,11 @@ venv: $(VENV_DIR)
 
 # When creating the venv, we use the system's python (we can't use the venv's
 # python because it doesn't exist yet)
+# Some linux distros don't automatically add pip inside new venvs (Rocky Linux
+# 8, I'm looking at you), so let's also tell python that we want to have pip
 $(VENV_DIR):
 	python3 -m venv $(VENV_DIR)
+	$(VENV_ACTIVATE) python3 -m ensurepip --upgrade
 
 # Count TODOs in code
 # Since each line in the recipe is run in a separate shell, to define a
