@@ -1,0 +1,133 @@
+vunit uart_tx (uart_tx(Behavioral)) {
+
+  -- Default clock
+  default clock is rising_edge (clk);
+
+  -- Assume a reset on the first clock cycle
+  assume_initial_reset: assume rst = '1';
+
+  -- Assume we won't be having any resets while we are transmitting
+  -- This is inferior to using 'abort rst' in our properties, and since it is
+  -- superfluous when we are using 'abort rst', it overconstrains our design,
+  -- making the reset transitions of the FSM (whatever -> reposo) unreachable.
+  -- Of course those transitions are not relevant, but overconstraining the
+  -- design will throw errors during generation of reachability coverage using
+  -- propcheck, since it will notice that the assumptions are not letting it 
+  -- reach all the design elements
+  assume_no_reset_during_tx:
+    assume always rd_en -> {true; (not rst)[*(11*BIT_DURATION)]};
+
+
+  -- Assert the UART never reads from an empty FIFO
+  never_read_from_empty_fifo:
+    assert never (rd_en and empty);
+
+  -- Assume external FIFOs are always empty when in rst (so the uart_tx logic
+  -- doesn't assert rd_en while in rst). This is the kind of assumption we MUST
+  -- verify, either formally (preferred) or in simulation, when integrating
+  -- with the FIFO module
+  assume_fifo_empty_in_reset:
+    assume always rst -> empty;
+
+  -- Also assume the FIFO cannot change our input data if it didn't receive a
+  -- rd_en in the previous cycle.
+  -- Which is the same as saying that, if rd_en didn't change in the previous
+  -- cycle, data cannot change in this cycle
+  --assume_data_constant_until_rd_en:
+  --  assume always prev(rd_en) -> (data = prev(data));
+
+  -- Let's define here the sequence of a correct UART transmission
+  -- We have start bit, 8 data bytes, even parity bit, stop bit
+  constant STARTBIT : std_logic := '0';
+  signal databits, n_databits : std_logic_vector(7 downto 0);
+  signal paritybit : std_logic;
+  signal rd_en_r : std_logic;
+  constant STOPBIT : std_logic := '1';
+
+  sequence transmission is {
+    TX=STARTBIT[*BIT_DURATION];
+    TX=databits(0)[*BIT_DURATION]; TX=databits(1)[*BIT_DURATION];
+    TX=databits(2)[*BIT_DURATION]; TX=databits(3)[*BIT_DURATION];
+    TX=databits(4)[*BIT_DURATION]; TX=databits(5)[*BIT_DURATION];
+    TX=databits(6)[*BIT_DURATION]; TX=databits(7)[*BIT_DURATION];
+    TX=paritybit[*BIT_DURATION]; TX=STOPBIT[*BIT_DURATION]
+  };
+
+  -- Now we need to predict the values of databits and paritybit
+  -- We must capture the value of the data input one clock cycle after rd_en is
+  -- asserted
+  -- TODO : I cannot use prev() inside a process or concurrent statements, but
+  -- I have to see if there is a more PSL way of predicting expected outputs
+  predict_databits: process(databits, rd_en, data)
+  begin
+      n_databits <= databits;
+      if rd_en_r = '1' then
+          n_databits <= data;
+      end if;
+  end process;
+
+  sync_formal: process(rst, clk)
+  begin
+      if rising_edge(clk) then
+          databits <= n_databits;
+          rd_en_r <= rd_en;
+      end if;
+  end process;
+
+  -- Let's calculate the expected parity in a different way than the RTL
+  paritybit <= not (databits(7) xnor databits(6) xnor databits(5) xnor
+      databits(4) xnor databits(3) xnor databits(2) xnor databits(1) xnor
+      databits(0));
+
+  -- And now let's assert that, each time rd_en is asserted, we will eventually
+  -- have a correct transmission (this is actually a transaction), unless
+  -- someone asserts the reset input
+  -- The not rd_en cycle is added kind of as a wait cycle, since transmission
+  -- takes two cycles to begin after rd_en is asserted. We could have used
+  -- 'true' instead of 'not rd_en', too
+  -- TODO : we could assert that rd_en cannot activate while the transmission
+  -- sequence is running, but in my opinion it isn't actually necessary
+  --   Aaah the beauty of formal. It IS necessary because the formal engine is
+  --   asserting reset during the transmissions when generating the cover
+  --   traces
+  -- TODO : assume the design will not be reset while transmitting
+  correct_tx_after_rd_en:
+    assert always (({rd_en} |=> {not rd_en; transmission}) abort rst);
+
+  -- Cover one correct transmission
+  cover_one_transmission:
+    cover transmission;
+    --cover {rd_en; not rd_en; transmission};
+
+  -- Cover two transmissions
+  -- Note that this design needs at least two clock cycles between
+  -- transmissions (for the states 'reposo' (idle) and 'sampledata'), so the
+  -- sequence {transmission; transmission} is uncoverable, while
+  -- {transmission; true[2]; transmission} can be covered
+
+  -- Uncoverable
+  --cover_two_transmisions_no_cycles_between_them:
+  --  cover {transmission; transmission};
+
+  -- Uncoverable
+  --cover_two_transmisions_one_cycle_between_them:
+  --  cover {transmission; true; transmission};
+
+  cover_two_transmisions_two_cycles_between_them:
+    cover {transmission; true[*2]; transmission};
+
+  cover_two_transmisions_any_cycles_between_them:
+    cover {transmission; true[*]; transmission};
+
+  -- We can define sequences reusing other sequences, which is helpful to
+  -- construct more complex sequences
+  sequence transmission_and_rest is {
+    transmission; true[*2]; true[*]
+  };
+
+  -- Change the number below to the number of transmissions you want to see in
+  -- your cover trace
+  cover_more_than_two_transmissions:
+    cover {transmission_and_rest[*3]};
+
+}

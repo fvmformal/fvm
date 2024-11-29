@@ -62,7 +62,7 @@ run_concepts: &run_concepts
   script:
     - unset LM_LICENSE_FILE
     - export SALT_LICENSE_SERVER=2101@baldr.us.es
-    - yum install python39
+    - yum install -y python39
     - make PYTHON="coverage run --data-file=.coverage.$DESIGN" $DESIGN
   artifacts:
     when: always
@@ -90,7 +90,7 @@ run_steps_independently:
   script:
     - unset LM_LICENSE_FILE
     - export SALT_LICENSE_SERVER=2101@baldr.us.es
-    - yum install python39
+    - yum install -y python39
     - make PYTHON="coverage run --data-file=.coverage.$DESIGN" $DESIGN
     - coverage run --data-file=.coverage.$DESIGN.lint -m examples.01-countervunit.formal -s lint
     - make clean
