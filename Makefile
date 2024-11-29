@@ -71,7 +71,7 @@ $(REQS_DIR)/install-reqs_installed: venv
 # In this target, poetry install is called when making 'reqs', so we don't need
 # to call it again
 $(REQS_DIR)/fvm_installed: venv install-reqs reqs
-	poetry install
+	$(VENV_ACTIVATE) poetry install
 	touch $@
 
 # Lint the python code
@@ -96,6 +96,7 @@ examplelist += 01-countervunit
 examplelist += 02-linearinterpolator
 examplelist += 04-dualcounter
 examplelist += 05-uart_tx
+examplelist += 06-uart_rx
 
 # List with all the concepts
 conceptlist += transactions_deprecated
