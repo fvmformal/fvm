@@ -70,6 +70,7 @@ $(REQS_DIR)/install-reqs_installed: venv
 # In this target, poetry install is called when making 'reqs'
 $(REQS_DIR)/fvm_installed: venv install-reqs reqs
 	$(VENV_ACTIVATE) pip3 install -e .
+	touch $@
 
 # Lint the python code
 lint: dev-reqs
