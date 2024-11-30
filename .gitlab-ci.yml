@@ -62,14 +62,16 @@ run_concepts: &run_concepts
   script:
     - unset LM_LICENSE_FILE
     - export SALT_LICENSE_SERVER=2101@baldr.us.es
-    - yum install -y python39
+    - yum install -y python39 java-1.8.0-openjdk
     - make PYTHON="coverage run --data-file=.coverage.$DESIGN" $DESIGN
-    - mv fvm_out/results.xml fvm_out/$DESIGN_results.xml
+    - mv fvm_out/dashboard fvm_out/dasboard.$DESIGN
+      #- mv fvm_out/results.xml fvm_out/$DESIGN_results.xml
   artifacts:
     when: always
     paths:
       - .coverage.$DESIGN
       - fvm_out/*.xml
+      - fvm_out/dashboard.DESIGN
     reports:
       junit:
         - fvm_out/*.xml
@@ -92,7 +94,7 @@ run_steps_independently:
   script:
     - unset LM_LICENSE_FILE
     - export SALT_LICENSE_SERVER=2101@baldr.us.es
-    - yum install -y python39
+    - yum install -y python39 java-1.8.0-openjdk
     - make PYTHON="coverage run --data-file=.coverage.$DESIGN" $DESIGN
     - source .venv/bin/activate && coverage run --data-file=.coverage.$DESIGN.lint -m examples.01-countervunit.formal -s lint
     - make clean
