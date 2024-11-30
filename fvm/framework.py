@@ -98,6 +98,7 @@ class fvmframework:
         self.verbose = args.verbose
         self.list = args.list
         self.outdir = args.outdir
+        self.reportdir = f'{self.outdir}/fvm_reports'
         self.design = args.design
         self.step = args.step
         self.cont = args.cont
@@ -1517,14 +1518,18 @@ class fvmframework:
         # commiting it to a file
         xml_string = xml_string.replace("<testsuites", f'<testsuites name="{self.scriptname}"')
 
+        # TODO : we should use os.path.join or pathlib instead of concatenating
+        # directory separators (our approach is not cross platform). Apparently
+        # pathlib is recommended for new projects instead of os.path, and both
+        # approaches are cross-platform
         reportfile = self.scriptname.replace('/','_')
         if reportfile.startswith('_'):
             reportfile = reportfile[1:]
         reportfile, extension = os.path.splitext(reportfile)
-        reportfile = f'{self.outdir}/' + reportfile
+        reportfile = f'{self.reportdir}/{reportfile}'
         reportfile = reportfile + '.xml'
 
-        os.makedirs(self.outdir, exist_ok=True)
+        os.makedirs(self.reportdir, exist_ok=True)
         with open(reportfile, 'w') as f:
             f.write(xml_string)
 
@@ -1536,7 +1541,7 @@ class fvmframework:
             # to pass a fully qualified (absolute) path, and it also states
             # that shutil.which() returns unqualified paths
             allure_exec = os.path.abspath(shutil.which('allure'))
-            cmd = [allure_exec, 'generate', self.outdir, '--clean', '-o', f'{self.outdir}/dashboard']
+            cmd = [allure_exec, 'generate', self.reportdir, '--clean', '-o', f'{self.outdir}/fvm_dashboard']
             process = subprocess.Popen (cmd,
                                         stdout  = subprocess.PIPE,
                                         stderr  = subprocess.PIPE,

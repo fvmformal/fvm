@@ -158,11 +158,11 @@ $(VENV_DIR)/venv_created:
 # We already do this in the python code, but sometimes something fails and
 # still we want to generate reports, so let's have a manual option here
 report:
-	$(VENV_ACTIVATE) allure generate fvm_out --clean -o fvm_out/dashboard
+	$(VENV_ACTIVATE) allure generate fvm_out/fvm_reports --clean -o fvm_out/fvm_dashboard
 
 # TODO : probably we should do this in the python code
 show:
-	$(VENV_ACTIVATE) allure open fvm_out/dashboard
+	$(VENV_ACTIVATE) allure open fvm_out/fvm_dashboard
 
 # Count TODOs in code
 # Since each line in the recipe is run in a separate shell, to define a
