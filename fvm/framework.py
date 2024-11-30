@@ -1139,7 +1139,11 @@ class fvmframework:
             self.results[design][step]['score'] = friendliness_score(data)
         # TODO: consider how we are going to present this simcover post_step:
         # is it a step? a post_step?
-        if step == 'prove':
+        # TODO: this needs a refactor but unfortunately I don't have the time
+        # for that now :(
+        if step == 'prove' and self.is_skipped(design, 'prove.simcover'):
+            self.results[design]['prove.simcover']['status'] = 'skip'
+        if step == 'prove' and not self.is_skipped(design, 'prove.simcover'):
             # TODO: encapsulate this in a separate function call
             # TODO: check errors in every call instead of summing everything
             # and just checking at the end (hopefully without copying the code
