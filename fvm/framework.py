@@ -1367,7 +1367,7 @@ class fvmframework:
         """Generates output reports"""
         # TODO : move this import to the top of the new file (for example,
         # reports.py)
-        from junit_xml import TestSuite, TestCase
+        from junit_xml import TestSuite, TestCase, to_xml_report_file
         # For all designs:
         #   Define a TestSuite per design
         #   For all steps:
@@ -1429,11 +1429,7 @@ class fvmframework:
         # TODO: make the report path/name configurable by the user
         reportfile = f'{self.outdir}/results.xml'
         with open(reportfile, 'w') as f:
-            # Apparently TestSuite.to_file is deprecated and will be removed in
-            # junit-xml version 2.0.0. The recommended function to use instead
-            # is to_xml_report_file, but it is not available in version 1.9,
-            # which we are using now
-            TestSuite.to_file(f, testsuites, prettyprint=True)
+            to_xml_report_file(f, testsuites, prettyprint=True)
         pass
 
 
