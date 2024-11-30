@@ -155,7 +155,7 @@ $(VENV_DIR)/venv_created:
 # Since each line in the recipe is run in a separate shell, to define a
 # variable and be able to read its value later we need to use GNU Make's $eval
 TODOs := $(shell grep -r TODO * | grep -v grep | wc -l)
-todo: $(VENV_DIR)
+todo: $(VENV_DIR)/venv_created
 	$(VENV_ACTIVATE) pip3 install anybadge
 	mkdir -p badges
 	rm -f badges/todo.svg
