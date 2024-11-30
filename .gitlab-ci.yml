@@ -65,16 +65,16 @@ run_concepts: &run_concepts
     - export SALT_LICENSE_SERVER=2101@baldr.us.es
     - yum install -y python39 java-1.8.0-openjdk
     - make PYTHON="coverage run --data-file=.coverage.$DESIGN" $DESIGN
-    - mv fvm_out/fvm_dashboard fvm_out/fvm_dashboard.$DESIGN
+    - mv fvm_out/fvm_report fvm_out/fvm_report.$DESIGN
   artifacts:
     when: always
     paths:
       - .coverage.$DESIGN
-      - fvm_out/fvm_reports/*.xml
-      - fvm_out/fvm_dashboard.$DESIGN
+      - fvm_out/fvm_results/*.xml
+      - fvm_out/fvm_report.$DESIGN
     reports:
       junit:
-        - fvm_out/fvm_reports/*.xml
+        - fvm_out/fvm_results/*.xml
 
 run_examples:
   <<: *run_concepts
@@ -126,7 +126,7 @@ full_dashboard:
   artifacts:
     when: always
     paths:
-      - fvm_out/fvm_dashboard
+      - fvm_out/fvm_report
 
 # TODO : merge coverage files from previous stages
 pycoverage:

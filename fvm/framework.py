@@ -98,7 +98,8 @@ class fvmframework:
         self.verbose = args.verbose
         self.list = args.list
         self.outdir = args.outdir
-        self.reportdir = f'{self.outdir}/fvm_reports'
+        self.resultsdir = f'{self.outdir}/fvm_results'  # For the .xml results
+        self.reportdir = f'{self.outdir}/fvm_report'  # For the Allure dashboard
         self.design = args.design
         self.step = args.step
         self.cont = args.cont
@@ -1412,11 +1413,10 @@ class fvmframework:
         console.print(text)
         console.print(text_footer)
 
-    # TODO: actually write this
     # TODO: move this to a different file
     # TODO: separate functionality in at least two functions, maybe three:
     #       - generate_xml_report
-    #       - generate_text_report
+    #       - generate_text_report (not sure we really need a text report)
     #       - generate_html_report
     def generate_reports(self):
         """Generates output reports"""
@@ -1522,15 +1522,42 @@ class fvmframework:
         # directory separators (our approach is not cross platform). Apparently
         # pathlib is recommended for new projects instead of os.path, and both
         # approaches are cross-platform
-        reportfile = self.scriptname.replace('/','_')
-        if reportfile.startswith('_'):
-            reportfile = reportfile[1:]
-        reportfile, extension = os.path.splitext(reportfile)
-        reportfile = f'{self.reportdir}/{reportfile}'
-        reportfile = reportfile + '.xml'
+        xmlfile = self.scriptname.replace('/','_')
+        if xmlfile.startswith('_'):
+            xmlfile = xmlfile[1:]
+        xmlfile, extension = os.path.splitext(xmlfile)
+        xmlfile = f'{self.resultsdir}/{xmlfile}'
+        xmlfile = xmlfile + '.xml'
 
-        os.makedirs(self.reportdir, exist_ok=True)
-        with open(reportfile, 'w') as f:
+        # If the results directory exist, try to enable Allure history
+        # For this, we are going to:
+        #   1. Move the already-existing results directory out of the way. We
+        #   will create a new name for it using a timestamp
+        #   TODO : we should create the timestamp when we create the directory,
+        #   not when we move it
+        #   2. Create a new results directory
+        #   3. If a reportdir exits, copy its history to the new results
+        #   directory
+        #   4. Remove the reportdir
+        #   5. Generate the XML results in the new results directory
+        # This should make the history available so the next call to "allure
+        # generate" can find it
+
+        import shutil
+        if os.path.isdir(self.resultsdir):
+            timestamp = datetime.now().isoformat()
+            logger.info(f'Results directory already exists, moving it from {self.resultsdir} to {self.resultsdir}_{timestamp}')
+            shutil.move(self.resultsdir, f'{self.resultsdir}_{timestamp}')
+            os.makedirs(self.resultsdir, exist_ok=True)
+            historydir = f'{self.reportdir}/history'
+            if os.path.isdir(historydir):
+                logger.info(f'Report history directory already exists, moving it from {historydir} to {self.resultsdir}/history')
+                shutil.move(historydir, f'{self.resultsdir}/history')
+                logger.info(f'Removing old report directory at {self.resultsdir}')
+                shutil.rmtree(self.reportdir)
+
+        os.makedirs(self.resultsdir, exist_ok=True)
+        with open(xmlfile, 'w') as f:
             f.write(xml_string)
 
         # TODO : move this to generate_html_reports function
@@ -1541,7 +1568,8 @@ class fvmframework:
             # to pass a fully qualified (absolute) path, and it also states
             # that shutil.which() returns unqualified paths
             allure_exec = os.path.abspath(shutil.which('allure'))
-            cmd = [allure_exec, 'generate', self.reportdir, '--clean', '-o', f'{self.outdir}/fvm_dashboard']
+            cmd = [allure_exec, 'generate', self.resultsdir, '-o', self.reportdir]
+            logger.info(f'Generating dashboard with {cmd=}')
             process = subprocess.Popen (cmd,
                                         stdout  = subprocess.PIPE,
                                         stderr  = subprocess.PIPE,
