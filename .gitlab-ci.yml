@@ -3,6 +3,7 @@ stages:
   - concepts
   - examples
   - coverage
+  - doc
 
 count_todos_in_code:
   stage: lint_and_test
@@ -112,6 +113,18 @@ run_steps_independently:
     paths:
       - .coverage.*
 
+
+full_dashboard:
+  stage: doc
+  image: debian:12
+  script:
+    - apt update
+    - apt install -y python3 python3-pip python3-venv
+    - make report
+  artifacts:
+    when: always
+    paths:
+      - fvm_out/fvm_dashboard
 
 # TODO : merge coverage files from previous stages
 pycoverage:
