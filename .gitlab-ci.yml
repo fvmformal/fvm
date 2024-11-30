@@ -4,6 +4,7 @@ stages:
   - examples
   - coverage
   - doc
+  - history
 
 count_todos_in_code:
   stage: lint_and_test
@@ -64,6 +65,12 @@ run_concepts: &run_concepts
     - unset LM_LICENSE_FILE
     - export SALT_LICENSE_SERVER=2101@baldr.us.es
     - yum install -y python39 java-1.8.0-openjdk
+    - echo '{"name":"GitLab CI with runner ${CI_RUNNER_ID}","type":"gitlab","reportName":"Allure Report (without history for now)",' > executor.json
+    - echo "\"reportUrl\":\"${CI_PAGES_URL}/${CI_COMMIT_REF_NAME}/${CI_JOB_ID}/\"," >> executor.json
+    - echo "\"buildUrl\":\"${CI_PIPELINE_URL}\"," >> executor.json
+    - echo "\"buildName\":\"GitLab Job Run ${CI_JOB_ID}\",\"buildOrder\":\"${CI_JOB_ID}\"}" >> executor.json
+    - mkdir -p fvm_out/fvm_results
+    - mv executor.json fvm_out/fvm_results
     - make PYTHON="coverage run --data-file=.coverage.$DESIGN" $DESIGN
     - mv fvm_out/fvm_report fvm_out/fvm_report.$DESIGN
   artifacts:
@@ -115,7 +122,6 @@ run_steps_independently:
     paths:
       - .coverage.*
 
-
 full_dashboard:
   stage: doc
   image: debian:12
@@ -127,6 +133,20 @@ full_dashboard:
     when: always
     paths:
       - fvm_out/fvm_report
+
+# The history is much smaller than the full dashboard, so we can afford to save
+# it with a long expiry date
+save_history:
+  stage: history
+  image: debian:12
+  script:
+    - mv fvm_out/fvm_report/history history
+  artifacts:
+    when: always
+    paths:
+      - history
+    expire_in: 1 month
+
 
 # TODO : merge coverage files from previous stages
 pycoverage:
