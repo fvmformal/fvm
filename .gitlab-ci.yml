@@ -71,7 +71,7 @@ run_concepts: &run_concepts
     paths:
       - .coverage.$DESIGN
       - fvm_out/*.xml
-      - fvm_out/dashboard.DESIGN
+      - fvm_out/dashboard.$DESIGN
     reports:
       junit:
         - fvm_out/*.xml
