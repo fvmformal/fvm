@@ -1,4 +1,4 @@
-.PHONY: all install lint list-tests test test-verbose concepts examples pycoverage venv clean realclean
+.PHONY: all install fvm lint list-tests test test-verbose concepts examples pycoverage venv clean realclean
 
 # Everything runs inside a python venv, since it is the recommended way of
 # managing python dependencies.
@@ -41,8 +41,6 @@ reqs: $(REQS_DIR)/reqs_installed
 
 dev-reqs: $(REQS_DIR)/dev-reqs_installed
 
-install-reqs: $(REQS_DIR)/install-reqs_installed
-
 install: $(REQS_DIR)/fvm_installed
 
 fvm: install
@@ -51,26 +49,20 @@ fvm: install
 #   we are managing our dependencies with python poetry
 # We must specify --no-root to poetry install: if we don't, it will install the
 # fvm too, and we want to do that separately
-$(REQS_DIR)/reqs_installed: venv install-reqs
+$(REQS_DIR)/reqs_installed: $(VENV_DIR)/venv_created
 	$(VENV_ACTIVATE) poetry install --no-root
 	touch $@
 
 # Instead of $(VENV_ACTIVATE) pip3 install -r dev-requirements.txt -q,
 #   we are managing our dependencies with python poetry
-$(REQS_DIR)/dev-reqs_installed: venv install-reqs
+$(REQS_DIR)/dev-reqs_installed: $(VENV_DIR)/venv_created
 	$(VENV_ACTIVATE) poetry install --with dev
-	touch $@
-
-$(REQS_DIR)/install-reqs_installed: venv
-	$(VENV_ACTIVATE) pip3 install poetry
 	touch $@
 
 # Install the FVM. For now we use python poetry to install it (poetry install)
 # instead of just pip, since we don't have yet a setup.py
 # It is also good for development to manage our dependencies with poetry
-# In this target, poetry install is called when making 'reqs', so we don't need
-# to call it again
-$(REQS_DIR)/fvm_installed: venv install-reqs reqs
+$(REQS_DIR)/fvm_installed: $(VENV_DIR)/venv_created
 	$(VENV_ACTIVATE) poetry install
 	touch $@
 
@@ -145,21 +137,25 @@ pycoverage: dev-reqs
 testall: test concepts examples
 
 # Create python venv if it doesn't exist
-venv: $(VENV_DIR)
+venv : $(VENV)
+
+$(VENV): $(VENV_DIR)/venv_created
 
 # When creating the venv, we use the system's python (we can't use the venv's
 # python because it doesn't exist yet)
 # Some linux distros don't automatically add pip inside new venvs (Rocky Linux
 # 8, I'm looking at you), so let's also tell python that we want to have pip
-$(VENV_DIR):
+$(VENV_DIR)/venv_created:
 	python3 -m venv $(VENV_DIR)
 	$(VENV_ACTIVATE) python3 -m ensurepip --upgrade
+	$(VENV_ACTIVATE) pip3 install poetry
+	touch $@
 
 # Count TODOs in code
 # Since each line in the recipe is run in a separate shell, to define a
 # variable and be able to read its value later we need to use GNU Make's $eval
 TODOs := $(shell grep -r TODO * | grep -v grep | wc -l)
-todo: venv
+todo: $(VENV_DIR)
 	$(VENV_ACTIVATE) pip3 install anybadge
 	mkdir -p badges
 	rm -f badges/todo.svg
