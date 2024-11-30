@@ -30,6 +30,7 @@ all:
 	@echo   "make examples     -> run the examples"
 	@echo   "make pycoverage   -> generate code coverage report for the python code"
 	@echo   "make testall      -> run the tests, concepts and examples"
+	@echo   "make report       -> create a dashboard with reports after execution"
 	@echo   "make show         -> open dashboard"
 	@echo   "make todo         -> count TODOs in code and generate badge for gitlab"
 	@echo   "make clean        -> remove temporary files"
@@ -153,6 +154,11 @@ $(VENV_DIR)/venv_created:
 	$(VENV_ACTIVATE) python3 -m ensurepip --upgrade
 	$(VENV_ACTIVATE) pip3 install poetry
 	touch $@
+
+# We already do this in the python code, but sometimes something fails and
+# still we want to generate reports, so let's have a manual option here
+report:
+	$(VENV_ACTIVATE) allure generate fvm_out --clean -o fvm_out/dashboard
 
 # TODO : probably we should do this in the python code
 show:
