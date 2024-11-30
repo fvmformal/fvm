@@ -30,6 +30,7 @@ all:
 	@echo   "make examples     -> run the examples"
 	@echo   "make pycoverage   -> generate code coverage report for the python code"
 	@echo   "make testall      -> run the tests, concepts and examples"
+	@echo   "make show         -> open dashboard"
 	@echo   "make todo         -> count TODOs in code and generate badge for gitlab"
 	@echo   "make clean        -> remove temporary files"
 	@echo   "make realclean    -> remove temporary files and python venv"
@@ -51,6 +52,8 @@ fvm: install
 # fvm too, and we want to do that separately
 $(REQS_DIR)/reqs_installed: $(VENV_DIR)/venv_created
 	$(VENV_ACTIVATE) poetry install --no-root
+	$(VENV_ACTIVATE) python3 install_allure.py $(VENV_DIR)
+	echo "export PATH=\$$PATH:$(realpath $(VENV_DIR))/allure/bin" >> $(VENV_DIR)/bin/activate
 	touch $@
 
 # Instead of $(VENV_ACTIVATE) pip3 install -r dev-requirements.txt -q,
@@ -62,7 +65,7 @@ $(REQS_DIR)/dev-reqs_installed: $(VENV_DIR)/venv_created
 # Install the FVM. For now we use python poetry to install it (poetry install)
 # instead of just pip, since we don't have yet a setup.py
 # It is also good for development to manage our dependencies with poetry
-$(REQS_DIR)/fvm_installed: $(VENV_DIR)/venv_created
+$(REQS_DIR)/fvm_installed: $(VENV_DIR)/venv_created reqs
 	$(VENV_ACTIVATE) poetry install
 	touch $@
 
@@ -121,10 +124,10 @@ list-concepts:
 
 # Generic rules to run examples and concepts
 %: examples/% fvm
-	$(VENV_ACTIVATE) $(PYTHON) -m examples.$@.formal
+	$(VENV_ACTIVATE) $(PYTHON) examples/$@/formal.py
 
 %: concepts/% fvm
-	$(VENV_ACTIVATE) $(PYTHON) -m concepts.$@.formal
+	$(VENV_ACTIVATE) $(PYTHON) concepts/$@/formal.py
 
 # Calculate python code coverage
 pycoverage: dev-reqs
@@ -137,19 +140,23 @@ pycoverage: dev-reqs
 testall: test concepts examples
 
 # Create python venv if it doesn't exist
-venv : $(VENV)
-
-$(VENV): $(VENV_DIR)/venv_created
+venv: $(VENV_DIR)/venv_created
 
 # When creating the venv, we use the system's python (we can't use the venv's
 # python because it doesn't exist yet)
 # Some linux distros don't automatically add pip inside new venvs (Rocky Linux
-# 8, I'm looking at you), so let's also tell python that we want to have pip
+# 8, I'm looking at you), so let's also tell python that we want to have pipa
+#
+# $(realpath PATH) converts a relative path into an absolute one
 $(VENV_DIR)/venv_created:
 	python3 -m venv $(VENV_DIR)
 	$(VENV_ACTIVATE) python3 -m ensurepip --upgrade
 	$(VENV_ACTIVATE) pip3 install poetry
 	touch $@
+
+# TODO : probably we should do this in the python code
+show:
+	$(VENV_ACTIVATE) allure open fvm_out/dashboard
 
 # Count TODOs in code
 # Since each line in the recipe is run in a separate shell, to define a
@@ -172,6 +179,7 @@ clean:
 	rm -f pylint.log pylint.txt
 	rm -rf .qverify .visualizer qcache propcheck.db
 	rm -f visualizer.log qverify_ui.log qverify_ui_cmds.tcl sysinfo.log
+	rm -f viscom.vstf viscom_*.log viscom_*.logerr
 	rm -rf badges
 	rm -rf pylint
 	rm -rf test/testlib

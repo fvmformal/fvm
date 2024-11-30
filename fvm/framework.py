@@ -8,6 +8,8 @@ import time
 import subprocess
 import pathlib
 import fnmatch
+from datetime import datetime
+from io import StringIO
 
 # Third party imports
 import argparse
@@ -42,6 +44,10 @@ FVM_STEPS = [
     'resets',
     'clocks',
     'prove'
+    ]
+
+FVM_POST_STEPS = [
+    'prove.simcover'
     ]
 
 # Create a rich console object
@@ -277,10 +283,9 @@ class fvmframework:
 
         for design in self.designs:
             self.results[design] = {}
-            for step in FVM_STEPS:
+            for step in FVM_STEPS + FVM_POST_STEPS:
                 self.results[design][step] = {}
-                if step == "prove":
-                    self.results[design]['prove.simcover'] = {}
+                self.results[design][step]['message'] = ''
 
     def add_config(self, design, name, generics):
         """Adds a design configuration. The design configuration has a name and
@@ -1006,6 +1011,9 @@ class fvmframework:
             cwd_for_debug = self.outdir
         logger.info(f'command: {" ".join(cmd)}, working directory: {cwd_for_debug}')
 
+        timestamp = datetime.now().isoformat()
+        self.results[design][step]['timestamp'] = timestamp
+
         start_time = time.perf_counter()
         process = subprocess.Popen (
                   cmd,
@@ -1075,6 +1083,9 @@ class fvmframework:
         captured_stdout = ''.join(stdout_lines)
         captured_stderr = ''.join(stderr_lines)
 
+        self.results[design][step]['stdout'] = captured_stdout
+        self.results[design][step]['stderr'] = captured_stderr
+
         # Raise an exception if the return code is non-zero
         if retval != 0:
             raise subprocess.CalledProcessError(retval, cmd, output=captured_stdout, stderr=captured_stderr)
@@ -1129,6 +1140,15 @@ class fvmframework:
         # TODO: consider how we are going to present this simcover post_step:
         # is it a step? a post_step?
         if step == 'prove':
+            # TODO: encapsulate this in a separate function call
+            # TODO: check errors in every call instead of summing everything
+            # and just checking at the end (hopefully without copying the code
+            # in three different places)
+            # TODO: try to deduplicate some of the code
+            # TODO: append all the logs to the same message so it appears in
+            # the reports, and not only the last log (vcover report)
+            stdout_err = 0
+            stderr_err = 0
             replay_files = glob.glob(self.outdir+'/'+design+'/qsim_tb/*/replay.vsim.do')
             logger.trace(f'{replay_files=}')
             ucdb_files = list()
@@ -1147,8 +1167,9 @@ class fvmframework:
                 cmd = ['./replay.scr']
                 cmd_stdout, cmd_stderr = self.run_cmd(cmd, design, f'{step}.simcover', 'vsim', self.verbose, path)
                 # TODO : maybe check for errors here?
-                #stdout_err = self.logcheck(cmd_stdout, design, f'{step}.simcover', tool)
-                #stderr_err = self.logcheck(cmd_stderr, design, f'{step}.simcover', tool)
+                tool = 'vsim'
+                stdout_err = self.logcheck(cmd_stdout, design, f'{step}.simcover', tool)
+                stderr_err = self.logcheck(cmd_stderr, design, f'{step}.simcover', tool)
                 ucdb_files.append(f'{path}/sim.ucdb')
             # Merge all simulation code coverage
             path = None
@@ -1157,8 +1178,9 @@ class fvmframework:
             logger.info(f'{cmd=}, {path=}')
             cmd_stdout, cmd_stderr = self.run_cmd(cmd, design, f'{step}.simcover', 'vcover merge', self.verbose, path)
             # TODO : maybe check for errors here?
-            #stdout_err = self.logcheck(cmd_stdout, design, f'{step}.simcover', tool)
-            #stderr_err = self.logcheck(cmd_stderr, design, f'{step}.simcover', tool)
+            tool = 'vcover'
+            stdout_err = self.logcheck(cmd_stdout, design, f'{step}.simcover', tool)
+            stderr_err = self.logcheck(cmd_stderr, design, f'{step}.simcover', tool)
             # Generate an html report
             path = f'{self.outdir}/{design}'
             cmd = ['vcover', 'report', '-html', '-annotate', '-details',
@@ -1166,9 +1188,21 @@ class fvmframework:
                    'simcover', 'simcover.ucdb']
             cmd_stdout, cmd_stderr = self.run_cmd(cmd, design, f'{step}.simcover', 'vcover report', self.verbose, path)
             # TODO : maybe check for errors here?
-            #stdout_err = self.logcheck(cmd_stdout, design, f'{step}.simcover', tool)
-            #stderr_err = self.logcheck(cmd_stderr, design, f'{step}.simcover', tool)
+            tool = 'vcover'
+            stdout_err = self.logcheck(cmd_stdout, design, f'{step}.simcover', tool)
+            stderr_err = self.logcheck(cmd_stderr, design, f'{step}.simcover', tool)
             # TODO : maybe create also a text report, as #141 suggests?
+
+            # Check for errors
+            err = False
+            if stdout_err or stderr_err:
+                err = True
+            if stdout_err or stderr_err:
+                self.results[design][f'{step}.simcover']['status'] = 'fail'
+            else:
+                self.results[design][f'{step}.simcover']['status'] = 'pass'
+
+            return err
 
 
     def insert_line_before_target(self, file, target_line, line_to_insert):
@@ -1186,8 +1220,15 @@ class fvmframework:
 
     def logcheck(self, result, design, step, tool):
         """Check log for errors"""
-        err_in_log = False
+
+        # Set the specific log format for this design, step and tool
         self.set_logformat(getlogformattool(design, step, tool))
+
+        # Temporarily add a handler to capture logs
+        log_stream = StringIO()
+        handler_id = logger.add(log_stream, format="{time} {level} {message}")
+
+        err_in_log = False
         for line in result.splitlines() :
             err, warn, success = self.linecheck(line)
             # If we are in verbose mode, still check if there are errors /
@@ -1202,6 +1243,15 @@ class fvmframework:
             elif success :
                 if not self.verbose:
                     logger.success(f'SUCCESS detected in {step=}, {tool=}, {line=}')
+
+        # Capture the messages into the results
+        self.results[design][step]['message'] += log_stream.getvalue()
+
+        # Remove the handler to stop capturing messages
+        logger.remove(handler_id)
+        log_stream.close()
+
+        # Restore the previous log format
         self.set_logformat(LOGFORMAT)
         return err_in_log
 
@@ -1275,7 +1325,7 @@ class fvmframework:
         # Calculate maximum length of {design}.{step} so we can pad later
         maxlen = 0
         for design in self.designs:
-            for step in FVM_STEPS:
+            for step in FVM_STEPS + FVM_POST_STEPS:
                 curlen = len(f'{design}.{step}')
                 if curlen > maxlen:
                     maxlen = curlen
@@ -1292,7 +1342,7 @@ class fvmframework:
         console.print(text_header)
 
         for design in self.designs:
-            for step in FVM_STEPS:
+            for step in FVM_STEPS + FVM_POST_STEPS:
                 total_cont += 1
                 # Only print pass/fail/skip, the rest of steps where not
                 # selected by the user so there is no need to be redundant
@@ -1367,7 +1417,7 @@ class fvmframework:
         """Generates output reports"""
         # TODO : move this import to the top of the new file (for example,
         # reports.py)
-        from junit_xml import TestSuite, TestCase, to_xml_report_file
+        from junit_xml import TestSuite, TestCase, to_xml_report_string
         # For all designs:
         #   Define a TestSuite per design
         #   For all steps:
@@ -1375,45 +1425,76 @@ class fvmframework:
         testsuites = list()
         for design in self.designs:
             testcases = list()
-            for step in FVM_STEPS:
+            for step in FVM_STEPS + FVM_POST_STEPS:
                 if 'status' in self.results[design][step]:
                     status = self.results[design][step]['status']
+                    custom_status_string = None
                 else:
                     status = 'omit'
+                    custom_status_string = "Not executed"
 
                 if 'elapsed_time' in self.results[design][step]:
                     elapsed_time = self.results[design][step]["elapsed_time"]
                 else:
                     elapsed_time = None
 
+                if 'stdout' in self.results[design][step]:
+                    stdout = self.results[design][step]['stdout']
+                else:
+                    stdout = None
+
+                if 'stderr' in self.results[design][step]:
+                    stderr = self.results[design][step]['stderr']
+                else:
+                    stderr = None
+
+                if 'timestamp' in self.results[design][step]:
+                    timestamp = self.results[design][step]['timestamp']
+                else:
+                    timestamp = None
+
+                # status and category are optional attributes and as such they
+                # will no be automatically rendered by Allure
                 testcase = TestCase(name = f'{design}.{step}',
                                     classname = design,
                                     elapsed_sec = elapsed_time,
-                                    stdout = 'stdout goes here',
-                                    stderr = 'stderr goes here',
-                                    timestamp = None,
-                                    status = 'custom status string goes here',
-                                    category = 'category goes here',
-                                    file = 'file goes here',
-                                    line = 'line goes here',
+                                    stdout = stdout,
+                                    stderr = stderr,
+                                    timestamp = timestamp,
+                                    status = custom_status_string,
+                                    category = step,
+                                    file = self.scriptname,
+                                    line = None,
                                     log = f'{self.outdir}/{design}/{step}.log',
-                                    url = 'url goes here'
+                                    url = None
                                     )
 
+                # TODO : we can have status == 'error' for when something
+                # breaks and the tests are not actually executed. Not sure we
+                # need that here, but let's keep this note just in case. We
+                # would use testcase.add_error_info if I recall correctly
+
+                # output argument is an optional, non-standard field
+                # TODO : maybe we could just put the first line in message and
+                # all the errors in output, but Allure is supposed to render
+                # the full message even if it has more than one line of text
                 if status == 'fail':
-                    testcase.add_failure_info(message = 'error message',
-                                              output = 'output string',
-                                              failure_type = 'error type'
+                    logger.info(f'{design}.{step} failed')
+                    message = self.results[design][step]['message']
+                    print(f'{message=}')
+                    testcase.add_failure_info(message = "Error in tool log",
+                                              output = None, # 'output string',
+                                              failure_type = None #'error type'
                                               )
 
                 if status == 'skip':
                     testcase.add_skipped_info(message = 'Test skipped by user',
-                                              output = None #'output string'
+                                              output = None
                                               )
 
                 if status == 'omit':
                     testcase.add_skipped_info(message = 'Not executed due to early exit',
-                                              output = None #'output string'
+                                              output = None
                                               )
 
                 testcases.append(testcase)
@@ -1425,12 +1506,89 @@ class fvmframework:
         # error in fvmframework.setup(). But we will generate the directory and
         # the report nevertheless, because CI tools may depend on the report
         # being there.
+        xml_string = to_xml_report_string(testsuites, prettyprint=True)
+
+        # Since junit_xml doesn't support adding a name to the global
+        # testsuites set, we will modify the generated xml string before
+        # commiting it to a file
+        xml_string = xml_string.replace("<testsuites", f'<testsuites name="{self.scriptname}"')
+
+        reportfile = self.scriptname.replace('/','_')
+        if reportfile.startswith('_'):
+            reportfile = reportfile[1:]
+        reportfile, extension = os.path.splitext(reportfile)
+        reportfile = f'{self.outdir}/' + reportfile
+        reportfile = reportfile + '.xml'
+
         os.makedirs(self.outdir, exist_ok=True)
-        # TODO: make the report path/name configurable by the user
-        reportfile = f'{self.outdir}/results.xml'
         with open(reportfile, 'w') as f:
-            to_xml_report_file(f, testsuites, prettyprint=True)
-        pass
+            f.write(xml_string)
+
+        # TODO : move this to generate_html_reports function
+        import shutil
+
+        if shutil.which('allure') is not None:
+            # We normalize the path because the Popen documentation recommends
+            # to pass a fully qualified (absolute) path, and it also states
+            # that shutil.which() returns unqualified paths
+            allure_exec = os.path.abspath(shutil.which('allure'))
+            cmd = [allure_exec, 'generate', self.outdir, '--clean', '-o', f'{self.outdir}/dashboard']
+            process = subprocess.Popen (cmd,
+                                        stdout  = subprocess.PIPE,
+                                        stderr  = subprocess.PIPE,
+                                        text    = True,
+                                        bufsize = 1
+                                        )
+        else:
+            logger.warning("""allure is not found in $(PATH), cannot generate
+            HTML reports. If you are running inside a venv and have created the
+            venv with the Makefile, you should have allure inside your venv
+            folder. If you are not using a venv, you should install allure by
+            running 'python3 install_allure.py [install_dir], and add its bin/
+            directory to your $PATH'""")
+
+        # TODO : better manage this log
+        verbose = True
+
+        stdout_lines = list()
+        stderr_lines = list()
+        with process.stdout as stdout, process.stderr as stderr:
+            for line in iter(stdout.readline, ''):
+                # If verbose, print to console
+                if verbose:
+                    err, warn, success = self.linecheck(line)
+                    if err:
+                        logger.error(line.rstrip())
+                    elif warn:
+                        logger.warning(line.rstrip())
+                    elif success:
+                        logger.success(line.rstrip())
+                    else:
+                        logger.trace(line.rstrip())
+                # If not verbose, print dots
+                else:
+                    print('.', end='', flush=True)
+                stdout_lines.append(line)  # Save to list
+
+            for line in iter(stderr.readline, ''):
+                # If verbose, print to console
+                if verbose:
+                    err, warn, success = self.linecheck(line)
+                    if err:
+                        logger.error(line.rstrip())
+                    elif warn:
+                        logger.warning(line.rstrip())
+                    elif success:
+                        logger.success(line.rstrip())
+                    else:
+                        logger.trace(line.rstrip())
+                # If not verbose, print dots
+                else:
+                    print('.', end='', flush=True)
+                stderr_lines.append(line)  # Save to list
+
+        # TODO : to see the report:
+        #   allure open fvm_out/dashboard
 
 
     def exit_if_required(self, errorcode):

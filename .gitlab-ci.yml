@@ -69,9 +69,10 @@ run_concepts: &run_concepts
     when: always
     paths:
       - .coverage.$DESIGN
+      - fvm_out/*.xml
     reports:
       junit:
-        - fvm_out/$DESIGN_results.xml
+        - fvm_out/*.xml
 
 run_examples:
   <<: *run_concepts
