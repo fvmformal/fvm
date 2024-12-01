@@ -243,7 +243,7 @@ def generator(FILES, debug = False):
         output_file = vunit_name + '.psl'
 
         vunit = ''
-        vunit += f'vunit {vunit_name} ' + '{\n'
+        vunit += f'vunit {vunit_name} ' + '{\n\n'
 
         # TODO : We are assuming a number of things to make this usable:
         #   1. That the clock is the first signal that appears in the wavedrom
@@ -256,52 +256,55 @@ def generator(FILES, debug = False):
         #      5. In that case, we also are assuming that the sequence that
         #      appears first in the wavedrom is the sequence that should
         #      trigger the other one
-        if num_groups != 0:
-            for groupname in groups:
-                if groups == 0:
-                    sequence_name = f'{vunit_name}_seq'
-                else:
-                    sequence_name = f'{vunit_name}_{groupname}'
 
-                vunit += f'  sequence {sequence_name} (\n'
+        # To cover the special case where we have no groups, in that case let's
+        # define a group whose name is the empty string
+        if num_groups == 0:
+            groups.append('')
+            group = 1
 
-                # Get group arguments
-                group_arguments = list()
-                for wavelane in flattened_signal:
-                    name = get_wavelane_name(wavelane)
-                    # If the wavelane belongs to a group
-                    if name[:len(groupname)] == groupname:
-                        # Get the data field
-                        data = get_wavelane_data(wavelane)
-                        if data is not None:
-                            # Get the datatype
-                            datatype = get_wavelane_type(wavelane)
-                            actualdata = data.split()
-                            args_with_type = [[data, datatype] for data in actualdata]
-                            ic(args_with_type)
-                            group_arguments.extend(args_with_type)
+        for groupname in groups:
+            sequence_name = f'{vunit_name}_{groupname}'
 
-                # TODO : let the user specify these datatypes
-                # or we may even use a transacion/record
-                # the thing is that we can't define that in the drom JSON
+            vunit += f'  sequence {sequence_name} (\n'
 
-                ic(group_arguments)
-                for j in group_arguments:
-                    datatype = j[1]
-                    vunit += f'    hdltype {datatype} {j[0]};\n'
-                    # If we are in the last element, we don't want a semicolon
-                    # so we remove the last two characters: ';\n'
-                    if j == len(group_arguments)-1:
-                        vunit = vunit[:-2]
-                vunit +=  '  ) is {\n'
+            # Get group arguments
+            group_arguments = get_group_arguments(groupname, flattened_signal)
 
-                #for i in range(clock_cycles):
+            # TODO : let the user specify these datatypes
+            # or we may even use a transacion/record
+            # the thing is that we can't define that in the drom JSON
 
-                vunit +=  '  }\n'
+            ic(group_arguments)
+            vunit += format_group_arguments(group_arguments)
+            # If we are in the last element, we don't want a semicolon
+            # so we remove the last two characters: ';\n', then we add the \n
+            # again
+            vunit = vunit[:-2]
+            vunit += '\n'
+
+            vunit +=  '  ) is {\n'
+
+            #for i in range(clock_cycles):
+
+            vunit +=  '  }\n'
+            vunit += '\n'
 
         # TODO : create the sequence
         # In the case of exactly two groups, create the sequence
-        #if num_groups == 2:
+        if num_groups == 2:
+            vunit += '  property {vunit_name} (\n'
+            for groupname in groups:
+                group_arguments = get_group_arguments(groupname, flattened_signal)
+                vunit += format_group_arguments(group_arguments)
+            # Again, remove the unneded semicolon
+            vunit = vunit[:-2]
+            vunit += '\n'
+
+            vunit += '  ) is {\n'
+            vunit += '}\n'
+            vunit += '\n'
+
 
         vunit += '}'
 
@@ -344,6 +347,16 @@ def generator(FILES, debug = False):
 
   return(retval)
 
+
+def format_group_arguments(group_arguments):
+    """Returns the group arguments with an extra semicolon that should be
+    removed separately"""
+    string = ''
+    for j in group_arguments:
+        argument = j[0]
+        datatype = j[1]
+        string += f'    hdltype {datatype} {argument};\n'
+    return string
 
 if __name__ == "__main__":
     # Configure the argument parser

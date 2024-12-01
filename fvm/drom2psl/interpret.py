@@ -214,3 +214,21 @@ def get_wavelane_type(wavelane):
         generated PSL file, for example type: 'std_ulogic_vector(31 downto 0)'
                 """)
         return "specify_datatype_here"
+
+def get_group_arguments(groupname, flattened_signal):
+    group_arguments = list()
+    for wavelane in flattened_signal:
+        name = get_wavelane_name(wavelane)
+        # If the wavelane belongs to a group
+        if name[:len(groupname)] == groupname:
+              # Get the data field
+              data = get_wavelane_data(wavelane)
+              if data is not None:
+                  # Get the datatype
+                  datatype = get_wavelane_type(wavelane)
+                  actualdata = data.split()
+                  args_with_type = [[data, datatype] for data in actualdata]
+                  ic(args_with_type)
+                  group_arguments.extend(args_with_type)
+    return group_arguments
+
