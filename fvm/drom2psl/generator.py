@@ -220,6 +220,7 @@ def generator(FILES, debug = False):
             error("Not all wavelanes' wave fields have the same length!")
             for wavelane in flattened_signal :
                 error("  wavelane "+str(wavelane.get(NAME))+" has a wave with length "+str(len(wavelane.get(WAVE)))+" (wave is "+str(wavelane.get(WAVE))+" )")
+            ok = False
         else:
             ic("detected", lengths[0], "clock cycles")
             clock_cycles = lengths[0]
@@ -307,7 +308,7 @@ def generator(FILES, debug = False):
                         wave = get_wavelane_wave(wavelane)
                         data = get_wavelane_data(wavelane)
                         value = get_signal_value(wave, data, cycle)
-                        if value is not '-':
+                        if value != '-':
                             line += f'({name} = {value}) and '
                 # The last one doesn't need the ' and ' so we'll remove 5
                 # characters if they are ' and '

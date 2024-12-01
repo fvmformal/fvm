@@ -224,13 +224,22 @@ def get_group_arguments(groupname, flattened_signal):
               # Get the data field
               data = get_wavelane_data(wavelane)
               if data is not None:
+                  ic(data, type(data))
                   # Get the datatype
                   datatype = get_wavelane_type(wavelane)
-                  actualdata = data.split()
+                  actualdata = data2list(data)
                   args_with_type = [[data, datatype] for data in actualdata]
                   ic(args_with_type)
                   group_arguments.extend(args_with_type)
     return group_arguments
+
+def data2list(wavelane_data):
+    """Converts wavelane data to a list if it is a string, returns it untouched
+    if it is already a list"""
+    if type(wavelane_data) == str:
+        return wavelane_data.split()
+    else:
+        return wavelane_data
 
 def get_clock_value(wavelane, cycle):
     wave = get_wavelane_wave(wavelane)
@@ -238,7 +247,7 @@ def get_clock_value(wavelane, cycle):
     clkdigits = ['p', 'P', 'n', 'N', '.', '|']
 
     if digit not in clkdigits:
-        warning(f'{value=} not an appropriate value for a clock signal')
+        warning(f'{digit=} not an appropriate value for a clock signal')
         value = 1  # Do once
     elif digit == '|':
         value = 0  # Repeat zero or more
@@ -253,7 +262,7 @@ def get_signal_value(wave, data, cycle):
     digit = wave[cycle]
     ic(data, type(data))
     if data is not None:
-        datalist = data.split()
+        datalist = data2list(data)
     else:
         datalist = list()
 

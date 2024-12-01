@@ -11,7 +11,7 @@ examples_and_retvals = [
     (["test/drom2psl/tutorial/step3_signals_and_clock.json"], False),
     (["test/drom2psl/tutorial/step4_spacers.json"], False),
     (["test/drom2psl/tutorial/step5_groups.json"], False),
-    (["test/drom2psl/tutorial/step6_period_phase.json"], False),
+    (["test/drom2psl/tutorial/step6_period_phase.json"], True),
     (["test/drom2psl/tutorial/step7_config.json"], False),
     (["test/drom2psl/tutorial/step7_head_foot_fixed.json"], False),
     (["test/drom2psl/tutorial/step7_head_foot.json"], True),
