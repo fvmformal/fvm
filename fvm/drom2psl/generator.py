@@ -303,11 +303,12 @@ def generator(FILES, debug = False):
                 line += '    ('
                 for wavelane in flattened_signal[1:]:
                     name = get_wavelane_name(wavelane)
-                    wave = get_wavelane_wave(wavelane)
-                    data = get_wavelane_data(wavelane)
-                    value = get_signal_value(wave, data, cycle)
-                    if value is not '-':
-                        line += f'({name} = {value}) and '
+                    if name[:len(groupname)] == groupname:
+                        wave = get_wavelane_wave(wavelane)
+                        data = get_wavelane_data(wavelane)
+                        value = get_signal_value(wave, data, cycle)
+                        if value is not '-':
+                            line += f'({name} = {value}) and '
                 # The last one doesn't need the ' and ' so we'll remove 5
                 # characters if they are ' and '
                 if line[-5:] == ' and ':
