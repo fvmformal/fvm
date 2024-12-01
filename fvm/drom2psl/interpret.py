@@ -211,7 +211,7 @@ def get_wavelane_type(wavelane):
     else:
         warning(f"""data field present in {wavelane=} but no datatype
         specified.  If a datatype is specified, it will be included in the
-        generated PSL file, for example type: 'std_ulogic_vector(31 downto 0)'
+        generated PSL file, for example: type: 'std_ulogic_vector(31 downto 0)'
                 """)
         return "specify_datatype_here"
 
@@ -231,4 +231,80 @@ def get_group_arguments(groupname, flattened_signal):
                   ic(args_with_type)
                   group_arguments.extend(args_with_type)
     return group_arguments
+
+def get_clock_value(wavelane, cycle):
+    wave = get_wavelane_wave(wavelane)
+    digit = wave[cycle]
+    clkdigits = ['p', 'P', 'n', 'N', '.', '|']
+
+    if digit not in clkdigits:
+        warning(f'{value=} not an appropriate value for a clock signal')
+        value = 1  # Do once
+    elif digit == '|':
+        value = 0  # Repeat zero or more
+    else:
+        value = 1  # Do once
+
+    return value
+
+# TODO : assignments could be tailored to the datatypes
+def get_signal_value(wave, data, cycle):
+    datadigits = ['=', '2', '3', '4', '5', '6', '7', '8', '9']
+    digit = wave[cycle]
+    ic(data, type(data))
+    if data is not None:
+        datalist = data.split()
+    else:
+        datalist = list()
+
+    if digit == 'p' or digit == 'P' or digit == 'n' or digit == 'N':
+        value = '-'
+        warning(f'{value=} not an appropriate value for a non-clock signal, ignoring')
+    elif digit == '<' or digit == '>':
+        value = '-'
+        error("Stretching/widening operators > and < not supported")
+    elif (digit == '.' or digit == '|') and cycle == 0:
+        error("""Cannot repeat previous value if there is no previous
+        value: '.' and '|' are not supported on the first clock cycle""")
+    elif digit == '.':
+        value = get_signal_value(wave, data, cycle-1)
+    elif digit == '|':
+        value = get_signal_value(wave, data, cycle-1)
+    elif digit == 'd':
+        value = '0'
+    elif digit == 'u':
+        value = '1'
+    elif digit == 'z':
+        value = 'Z'
+    elif digit == 'x':
+        value = '-'
+    elif digit == '0':
+        value = '0'
+    elif digit == '1':
+        value = '1'
+    elif digit in datadigits:
+
+        # Initialize a pointer to the data list
+        position = 0
+
+        # For each time a data has been used before, advance the pointer to the
+        # data list
+        for c in range(cycle):
+            cycledigit = wave[c]
+            if cycledigit in datadigits:
+                position += 1
+
+        # When we reach the current cycle, if the pointer is inside the data
+        # list, there is a data for us to use. If the pointer is outside, then
+        # we don't have anything to compare to so we'll consider it a don't
+        # care
+        if position < len(data):
+            value = datalist[position]
+        else:
+            value = '-'
+    else:
+        warning("Unrecognized {digit=}, will treat as don't care")
+        value = '-'
+
+    return value
 

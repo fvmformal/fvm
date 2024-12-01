@@ -242,6 +242,10 @@ def generator(FILES, debug = False):
         vunit_name, extension = os.path.splitext(vunit_name)
         output_file = vunit_name + '.psl'
 
+        # TODO : add arguments to drom2psl and timestamp of file creation
+        vunit = '-- Automatically created by drom2psl'
+        vunit = '-- These sequences and/or properties can be reused from other PSL files by doing:'
+        vunit = f'--   inherit {vunit_name}'
         vunit = ''
         vunit += f'vunit {vunit_name} ' + '{\n\n'
 
@@ -280,33 +284,97 @@ def generator(FILES, debug = False):
             # If we are in the last element, we don't want a semicolon
             # so we remove the last two characters: ';\n', then we add the \n
             # again
-            vunit = vunit[:-2]
-            vunit += '\n'
+            if vunit[-2:] == ";\n":
+                vunit = vunit[:-2]
+                vunit += '\n'
 
             vunit +=  '  ) is {\n'
 
-            #for i in range(clock_cycles):
+            prev_line = ''
+            prev_cycles = 0
+            for cycle in range(clock_cycles):
+                cycle_string = ''
+                cycle_count = 0
+                clk_wavelane = flattened_signal[0]
+
+                # The clock wavelane is processed a bit different and apart
+                # from the rest of the wavelanes
+                line = ''
+                line += '    ('
+                for wavelane in flattened_signal[1:]:
+                    name = get_wavelane_name(wavelane)
+                    wave = get_wavelane_wave(wavelane)
+                    data = get_wavelane_data(wavelane)
+                    value = get_signal_value(wave, data, cycle)
+                    if value is not '-':
+                        line += f'({name} = {value}) and '
+                # The last one doesn't need the ' and ' so we'll remove 5
+                # characters if they are ' and '
+                if line[-5:] == ' and ':
+                    line = line[:-5]
+
+                line += ')'
+
+                # And now to compute how many cycles we have to indicate, we
+                # have to do two things:
+                #   1. Check if the clock is '|' (will mean zero or more)
+                #   2. Compare against the previous line
+                cycles = get_clock_value(flattened_signal[0], cycle)
+
+                # If lines are different, then just:
+                #   1. Finish the previous line with the cycles
+                #   2. Write the current line, except the cycles
+                if line != prev_line:
+                    if prev_cycles == 0:
+                        prev_cycles_text = '[*]'
+                    else:
+                        prev_cycles_text = f'[*{prev_cycles}]'
+
+                    if prev_line != '':
+                        vunit += prev_cycles_text + ';\n'
+
+                    vunit += line
+                    prev_line = line
+                    prev_cycles = cycles
+
+                # If lines are equal:
+                #   1. Do not finish the previous line, just add the cycles to
+                #   prev_cycles
+                else:
+                    prev_cycles += cycles
+
+            # After that, we will have the last cycles to write, so let's write
+            # them:
+            if prev_cycles == 0:
+                prev_cycles_text = '[*]'
+            else:
+                prev_cycles_text = f'[*{prev_cycles}]'
+
+            if prev_line != '':
+                vunit += prev_cycles_text + '\n'
 
             vunit +=  '  }\n'
             vunit += '\n'
 
         # TODO : create the sequence
         # In the case of exactly two groups, create the sequence
+        # TODO : maybe allow to specify the abort signal or condition?
         if num_groups == 2:
             vunit += '  property {vunit_name} (\n'
             for groupname in groups:
                 group_arguments = get_group_arguments(groupname, flattened_signal)
                 vunit += format_group_arguments(group_arguments)
-            # Again, remove the unneded semicolon
-            vunit = vunit[:-2]
+            # Again, remove the unneded semicolon and restore the deleted \n
+            if vunit[-2:] == ";\n":
+                vunit = vunit[:-2]
+                vunit +=  '\n'
+            vunit +=  '  ) is {\n'
+            vunit += f'    always (({vunit_name}_{groups[0]} -> {vunit_name}_{groups[1]}) abort rst);\n'
+            vunit += '  }\n'
             vunit += '\n'
 
-            vunit += '  ) is {\n'
-            vunit += '}\n'
-            vunit += '\n'
 
-
-        vunit += '}'
+        vunit += '}\n'
 
         ic(flattened_signal[0])
 
