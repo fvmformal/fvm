@@ -42,6 +42,7 @@ test_all:
     when: always
     paths:
       - .coverage.pytest
+      - results.xml
     reports:
       junit:
         - results.xml
@@ -132,6 +133,7 @@ full_dashboard:
   script:
     - apt update
     - apt install -y python3 python3-pip python3-venv default-jdk
+    - mv results.txt fvm_out/fvm_results
     - make report
   artifacts:
     when: always
