@@ -288,6 +288,8 @@ class fvmframework:
             for step in FVM_STEPS + FVM_POST_STEPS:
                 self.results[design][step] = {}
                 self.results[design][step]['message'] = ''
+                self.results[design][step]['stdout'] = ''
+                self.results[design][step]['stderr'] = ''
 
     def add_config(self, design, name, generics):
         """Adds a design configuration. The design configuration has a name and
@@ -1085,8 +1087,8 @@ class fvmframework:
         captured_stdout = ''.join(stdout_lines)
         captured_stderr = ''.join(stderr_lines)
 
-        self.results[design][step]['stdout'] = captured_stdout
-        self.results[design][step]['stderr'] = captured_stderr
+        self.results[design][step]['stdout'] += captured_stdout
+        self.results[design][step]['stderr'] += captured_stderr
 
         # Raise an exception if the return code is non-zero
         if retval != 0:
@@ -1174,8 +1176,8 @@ class fvmframework:
                 cmd_stdout, cmd_stderr = self.run_cmd(cmd, design, f'{step}.simcover', 'vsim', self.verbose, path)
                 # TODO : maybe check for errors here?
                 tool = 'vsim'
-                stdout_err = self.logcheck(cmd_stdout, design, f'{step}.simcover', tool)
-                stderr_err = self.logcheck(cmd_stderr, design, f'{step}.simcover', tool)
+                stdout_err += self.logcheck(cmd_stdout, design, f'{step}.simcover', tool)
+                stderr_err += self.logcheck(cmd_stderr, design, f'{step}.simcover', tool)
                 ucdb_files.append(f'{path}/sim.ucdb')
             # Merge all simulation code coverage
             path = None
@@ -1185,8 +1187,16 @@ class fvmframework:
             cmd_stdout, cmd_stderr = self.run_cmd(cmd, design, f'{step}.simcover', 'vcover merge', self.verbose, path)
             # TODO : maybe check for errors here?
             tool = 'vcover'
-            stdout_err = self.logcheck(cmd_stdout, design, f'{step}.simcover', tool)
-            stderr_err = self.logcheck(cmd_stderr, design, f'{step}.simcover', tool)
+            stdout_err += self.logcheck(cmd_stdout, design, f'{step}.simcover', tool)
+            stderr_err += self.logcheck(cmd_stderr, design, f'{step}.simcover', tool)
+
+            # Check for errors
+            err = False
+            if stdout_err or stderr_err:
+                err = True
+            if stdout_err or stderr_err:
+                self.results[design][f'{step}.simcover']['status'] = 'fail'
+
             # Generate an html report
             path = f'{self.outdir}/{design}'
             cmd = ['vcover', 'report', '-html', '-annotate', '-details',
@@ -1195,8 +1205,8 @@ class fvmframework:
             cmd_stdout, cmd_stderr = self.run_cmd(cmd, design, f'{step}.simcover', 'vcover report', self.verbose, path)
             # TODO : maybe check for errors here?
             tool = 'vcover'
-            stdout_err = self.logcheck(cmd_stdout, design, f'{step}.simcover', tool)
-            stderr_err = self.logcheck(cmd_stderr, design, f'{step}.simcover', tool)
+            stdout_err += self.logcheck(cmd_stdout, design, f'{step}.simcover', tool)
+            stderr_err += self.logcheck(cmd_stderr, design, f'{step}.simcover', tool)
             # TODO : maybe create also a text report, as #141 suggests?
 
             # Check for errors
@@ -1486,7 +1496,7 @@ class fvmframework:
                 if status == 'fail':
                     logger.info(f'{design}.{step} failed')
                     message = self.results[design][step]['message']
-                    print(f'{message=}')
+                    #print(f'{message=}')
                     testcase.add_failure_info(message = "Error in tool log",
                                               output = None, # 'output string',
                                               failure_type = None #'error type'
