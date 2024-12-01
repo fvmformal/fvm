@@ -1576,6 +1576,9 @@ class fvmframework:
                                         text    = True,
                                         bufsize = 1
                                         )
+            # Wait for the process to complete and get the return code
+            # TODO : fail if retval is not zero
+            retval = process.wait()
         else:
             logger.warning("""allure is not found in $(PATH), cannot generate
             HTML reports. If you are running inside a venv and have created the
@@ -1601,7 +1604,8 @@ class fvmframework:
                     elif success:
                         logger.success(line.rstrip())
                     else:
-                        logger.trace(line.rstrip())
+                        logger.info(line.rstrip())
+                        #logger.trace(line.rstrip())
                 # If not verbose, print dots
                 else:
                     print('.', end='', flush=True)
@@ -1618,7 +1622,8 @@ class fvmframework:
                     elif success:
                         logger.success(line.rstrip())
                     else:
-                        logger.trace(line.rstrip())
+                        logger.info(line.rstrip())
+                        #logger.trace(line.rstrip())
                 # If not verbose, print dots
                 else:
                     print('.', end='', flush=True)
