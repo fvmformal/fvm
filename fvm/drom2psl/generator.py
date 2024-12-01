@@ -244,10 +244,10 @@ def generator(FILES, debug = False):
         output_file = vunit_name + '.psl'
 
         # TODO : add arguments to drom2psl and timestamp of file creation
-        vunit = '-- Automatically created by drom2psl'
-        vunit = '-- These sequences and/or properties can be reused from other PSL files by doing:'
-        vunit = f'--   inherit {vunit_name}'
         vunit = ''
+        vunit +=  '-- Automatically created by drom2psl\n'
+        vunit +=  '-- These sequences and/or properties can be reused from other PSL files by doing:\n'
+        vunit += f'-- inherit {vunit_name}\n\n'
         vunit += f'vunit {vunit_name} ' + '{\n\n'
 
         # TODO : We are assuming a number of things to make this usable:
