@@ -32,16 +32,16 @@ def traverse_dict(prefix, dict):
     for key, value in dict.items():
         print(prefix, "type(key:)", type(key), "=>", "type(value:)", type(value))
         #print(prefix, "key=>", key, "val=>", value)
-        if key == maintypes.SIGNAL:
+        if key == SIGNAL:
             print(prefix, "is signal")
             traverse_signal(prefix+"  ", value)
-        elif key == maintypes.EDGE:
+        elif key == EDGE:
             print(prefix, "is edge")
             traverse_edge(prefix+"  ", value)
-        elif key == maintypes.ASSIGN:
+        elif key == ASSIGN:
             print(prefix, "is assign")
             traverse_edge(prefix+"  ", value)
-        elif key == maintypes.CONFIG:
+        elif key == CONFIG:
             print(prefix, "is config")
             traverse_edge(prefix+"  ", value)
         else:
@@ -56,9 +56,9 @@ def traverse_signal(prefix, signal):
     # Signal must be a list
     if not isinstance(signal, list):
         print("ERROR: signal must be a list", file=sys.stderr)
-    # TODO : check here for groups
-    #   normal signal is list of dicts with name, wave
-    #   group is a list whose first value is a string and not a dict
+    # Here we check for groups
+    #   a normal signal is list of dicts with name, wave
+    #   a group is a list whose first value is a string and not a dict
     print(prefix, "signal=>", signal)
     for index, value in enumerate(signal):
         if isinstance(value, Dict):

@@ -42,10 +42,12 @@ a wavelane may:
     or
   have at least a name field
   wave, data, node are optional
-  period and phase are also optional (and currently not supported)
+  period and phase are also optional (and we won't support them)
     period should be an integer. fractionary periods are ceil()'d up internally
       (i.e. 2.9 becomes 3)
     phase doesn't seem to have restrictions
+  type is a custom field we define where the user can specify the datatype of
+    the signal. This field is not rendered by wavedrom
 """
 NAME     = "name"
 WAVE     = "wave"
@@ -53,12 +55,13 @@ DATA     = "data"
 NODE     = "node"
 PERIOD   = "period"
 PHASE    = "phase"
+TYPE     = "type"
 
 """
 a wave is a string that contains one character per clock cycle for the signal
   each character does a different thing
   any other characters are interpreted the same as 'x'
-  we won't be supporting REDUCE nor STRETCH
+  we won't be supporting neither REDUCE nor STRETCH
 """
 PCLK     = 'p'  # clock, active on rising_edge
 PCLKEDGE = 'P'  # clock, active on rising_edge with explicit arrow

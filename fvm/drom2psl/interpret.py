@@ -193,3 +193,24 @@ def flatten (group, signal, flattened=None, hierarchyseparator="."):
 
     return flattened, ok
 
+def get_wavelane_name(wavelane):
+    return wavelane[NAME]
+
+def get_wavelane_wave(wavelane):
+    return wavelane[WAVE]
+
+def get_wavelane_data(wavelane):
+    if DATA in wavelane:
+        return wavelane[DATA]
+    else:
+        return None
+
+def get_wavelane_type(wavelane):
+    if TYPE in wavelane:
+        return wavelane[TYPE]
+    else:
+        warning(f"""data field present in {wavelane=} but no datatype
+        specified.  If a datatype is specified, it will be included in the
+        generated PSL file, for example type: 'std_ulogic_vector(31 downto 0)'
+                """)
+        return "specify_datatype_here"

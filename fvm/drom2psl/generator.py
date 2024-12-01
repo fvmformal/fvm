@@ -26,7 +26,7 @@ import wavedrom
 
 # Allow to obtain basename of input files
 from pathlib import Path
-#import os
+import os
 
 # Very cool debug function
 # Documentation here: https://pypi.org/project/varname/
@@ -51,11 +51,17 @@ from fvm.drom2psl.logging import *
 # Explanation at: https://towardsdatascience.com/do-not-use-print-for-debugging-in-python-anymore-6767b6f1866d
 from icecream import ic
 
-def generator(FILES):
+def generator(FILES, debug = False):
+
+  TRAVERSE = debug
+
+  # If FILES is a single file, convert it to a list
+  if isinstance(FILES, str):
+      FILES = [FILES]
+
   # Disable icecream if we are not debugging
   if DEBUG == False:
       ic.disable
-
 
   # Set custom prefix for icecream
   ic.configureOutput(prefix='Debug | ')
@@ -112,6 +118,9 @@ def generator(FILES):
     #debug(type(fixed_dict))
     #debug(fixed_dict)
 
+    source = json.loads(wavedrom.fixQuotes(FILE))
+    ic(source)
+
     try:
       ok = True
       dict = yaml.load(f, Loader=yaml.SafeLoader)
@@ -119,7 +128,7 @@ def generator(FILES):
       ok = False
 
     if not ok:
-      error("Invalid YAML syntax in file"+str(FILE))
+      error("Invalid YAML syntax in file: "+str(FILE))
     if ok:
       ic(dict)
 
@@ -170,9 +179,19 @@ def generator(FILES):
     #    list_elements("ListElements:", signal)
 
     if ok:
+        ic("Counting the number of primary groups")
+        num_groups = 0
+        groups = []
+        for i, value in enumerate(signal):
+            if get_type(value) == GROUP:
+                num_groups += 1
+                groups.append(get_group_name(value))
+        ic(num_groups)
+        ic(groups)
+
+    if ok:
       ic("Flattening signal")
       flattened_signal, ok = flatten("", signal, None)
-
 
     if ok:
       ic(flattened_signal)
@@ -203,6 +222,7 @@ def generator(FILES):
                 error("  wavelane "+str(wavelane.get(NAME))+" has a wave with length "+str(len(wavelane.get(WAVE)))+" (wave is "+str(wavelane.get(WAVE))+" )")
         else:
             ic("detected", lengths[0], "clock cycles")
+            clock_cycles = lengths[0]
 
     if ok:
         ic("Counting wavelanes")
@@ -214,6 +234,81 @@ def generator(FILES):
                 nonemptywavelanes += 1
         ic("detected", allwavelanes, "wavelanes")
         ic("from which", nonemptywavelanes, "are non-empty")
+
+    if ok:
+        ic("Creating a psl vunit")
+
+        vunit_name = os.path.basename(FILE)
+        vunit_name, extension = os.path.splitext(vunit_name)
+        output_file = vunit_name + '.psl'
+
+        vunit = ''
+        vunit += f'vunit {vunit_name} ' + '{\n'
+
+        # TODO : We are assuming a number of things to make this usable:
+        #   1. That the clock is the first signal that appears in the wavedrom
+        #   2. That only the clock carries the repeat zero-or-more symbol '|'
+        #   3. That all non-clock signals are in groups
+        #      TODO : we could just create the sequence with the signals if
+        #      there are no groups
+        #   4. That, if we have two top-level groups, then we are describing
+        #   some relation between two sequences
+        #      5. In that case, we also are assuming that the sequence that
+        #      appears first in the wavedrom is the sequence that should
+        #      trigger the other one
+        if num_groups != 0:
+            for groupname in groups:
+                if groups == 0:
+                    sequence_name = f'{vunit_name}_seq'
+                else:
+                    sequence_name = f'{vunit_name}_{groupname}'
+
+                vunit += f'  sequence {sequence_name} (\n'
+
+                # Get group arguments
+                group_arguments = list()
+                for wavelane in flattened_signal:
+                    name = get_wavelane_name(wavelane)
+                    # If the wavelane belongs to a group
+                    if name[:len(groupname)] == groupname:
+                        # Get the data field
+                        data = get_wavelane_data(wavelane)
+                        if data is not None:
+                            # Get the datatype
+                            datatype = get_wavelane_type(wavelane)
+                            actualdata = data.split()
+                            args_with_type = [[data, datatype] for data in actualdata]
+                            ic(args_with_type)
+                            group_arguments.extend(args_with_type)
+
+                # TODO : let the user specify these datatypes
+                # or we may even use a transacion/record
+                # the thing is that we can't define that in the drom JSON
+
+                ic(group_arguments)
+                for j in group_arguments:
+                    datatype = j[1]
+                    vunit += f'    hdltype {datatype} {j[0]};\n'
+                    # If we are in the last element, we don't want a semicolon
+                    # so we remove the last two characters: ';\n'
+                    if j == len(group_arguments)-1:
+                        vunit = vunit[:-2]
+                vunit +=  '  ) is {\n'
+
+                #for i in range(clock_cycles):
+
+                vunit +=  '  }\n'
+
+        # TODO : create the sequence
+        # In the case of exactly two groups, create the sequence
+        #if num_groups == 2:
+
+        vunit += '}'
+
+        ic(flattened_signal[0])
+
+        with open(output_file, 'w') as f:
+            f.write(vunit)
 
     ic("Was the execution correct?")
     ic(ok)
