@@ -129,9 +129,34 @@ class fvmframework:
         # Log the creation of the framework object
         logger.trace(f'Creating {self}')
 
-        # Are we called from inside a script or from stdin?
+        # Are we being called from inside a script or from stdin?
+        self.is_interactive = helpers.is_interactive()
+        if self.is_interactive:
+            logger.info('Running interactively')
+        else:
+            logger.info('Running from within a script')
+
         self.scriptname = helpers.getscriptname()
         logger.info(f'{self.scriptname=}')
+
+        # Let's define a prefix for our test results, in case the user wants to
+        # run different formal.py files and create a report that includes all
+        # of them.
+        #
+        # By default, we define the prefix as the directory where formal.py is
+        #   e.g.: if script: /home/user/mydesign/formal.py , prefix = mydesign
+        # If running in interactive mode, 'scriptname' points to the directory
+        # from where we run the python interpreter, so let's get that directory
+        # and append '_interactive' to it
+        #   e.g.: if dir: /home/user/mydesign , prefix = mydesign_interactive
+        #
+        # Users can also set a prefix using fvmframwork.set_prefix(prefix)
+        if self.is_interactive:
+            self.prefix = os.path.basename(self.scriptname)+'_interactive'
+            logger.info(f'Running interactively, {self.prefix=}')
+        else:
+            self.prefix = os.path.basename(os.path.dirname(self.scriptname))
+            logger.info(f'Running inside a script, {self.prefix=}')
 
         # Rest of instance variables
         # TODO : this is getting a bit big, we could consider restructuring
@@ -248,6 +273,11 @@ class fvmframework:
             ret = True
         return ret
 
+    def set_prefix(self, prefix):
+        if type(prefix) != str:
+            error(f'Specified {prefix=} is not a string, {type(prefix)=}')
+        self.prefix = prefix
+
     def set_toplevel(self, toplevel):
         """Sets the name of the toplevel module. Multiple toplevels to analyze
         can be specified as a list. If a single toplevel is specified, this
@@ -263,6 +293,14 @@ class fvmframework:
                 sys.exit(BAD_VALUE)
             else:
                 self.toplevel = toplevel
+
+        # TODO : in the future, the design output dirs may have the library
+        # name, such as libname.design or libname/design, so that error message
+        # will not be necessary because there won't be any clashes with fvm_*
+        # directories
+        if 'fvm_dashboard' in toplevel or 'fvm_reports' in toplevel:
+            logger.error("toplevels can not have the following reserved names: fvm_dashboard, fvm_reports")
+            sys.exit(BAD_VALUE)
 
         # If a design was specified, just run that design
         if self.design is not None:
@@ -1514,7 +1552,7 @@ class fvmframework:
 
                 testcases.append(testcase)
 
-            testsuite = TestSuite(design, testcases)
+            testsuite = TestSuite(f'{self.prefix}.{design}', testcases)
             testsuites.append(testsuite)
 
         # If the output directory doesn't exist, it is because there was an

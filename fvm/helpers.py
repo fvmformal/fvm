@@ -9,6 +9,11 @@ def getscriptname():
     scriptname = os.path.abspath(sys.argv[0])
     return(scriptname)
 
+def is_interactive():
+    """Returns True if running from a python interpreter and False if running
+    from a script"""
+    return not hasattr(sys.modules['__main__'], '__file__')
+
 def is_inside_venv():
     """Returns True if we are inside a venv, false if not"""
     if sys.prefix == sys.base_prefix:
