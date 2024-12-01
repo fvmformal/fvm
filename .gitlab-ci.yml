@@ -65,6 +65,8 @@ run_concepts: &run_concepts
     - unset LM_LICENSE_FILE
     - export SALT_LICENSE_SERVER=2101@baldr.us.es
     - yum install -y python39 java-1.8.0-openjdk
+    # TODO : the following 6 lines don't work, we should create the file from
+    # inside the python code (see issue #165)
     - echo '{"name":"GitLab CI with runner ${CI_RUNNER_ID}","type":"gitlab","reportName":"Allure Report (without history for now)",' > executor.json
     - echo "\"reportUrl\":\"${CI_PAGES_URL}/${CI_COMMIT_REF_NAME}/${CI_JOB_ID}/\"," >> executor.json
     - echo "\"buildUrl\":\"${CI_PIPELINE_URL}\"," >> executor.json
