@@ -78,6 +78,7 @@ run_concepts: &run_concepts
     paths:
       - .coverage.$DESIGN
       - fvm_out/fvm_results/*.xml
+      - fvm_out/fvm_results/executor.json
       - fvm_out/fvm_report.$DESIGN
     reports:
       junit:
