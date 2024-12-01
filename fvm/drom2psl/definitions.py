@@ -55,6 +55,36 @@ PERIOD   = "period"
 PHASE    = "phase"
 
 """
+a wave is a string that contains one character per clock cycle for the signal
+  each character does a different thing
+  any other characters are interpreted the same as 'x'
+  we won't be supporting REDUCE nor STRETCH
+"""
+PCLK     = 'p'  # clock, active on rising_edge
+PCLKEDGE = 'P'  # clock, active on rising_edge with explicit arrow
+NCLK     = 'n'  # clock, negative on falling_edge
+NCLKEDGE = 'N'  # clock, negative on falling_edge with explicit arrow
+ZERO     = '0'  # logic zero
+ONE      = '1'  # logic one
+UNKNOWN  = 'x'  # unknown value
+DOWN     = 'd'  # signal falling down with exponential shape
+UP       = 'u'  # signal rising up with exponential shape
+HIGHZ    = 'z'  # high impedance
+EQUAL    = '='  # next element in data, white color
+WHITE    = '2'  # next element in data, white color (same as '=')
+YELLOW   = '3'  # next element in data, yellow color
+ORANGE   = '4'  # next element in data, orange color
+BLUE     = '5'  # next element in data, blue color
+CYAN     = '6'  # next element in data, cyan color
+GREEN    = '7'  # next element in data, green color
+MAGENTA  = '8'  # next element in data, magenta color
+RED      = '9'  # next element in data, red color
+REPEAT   = '.'  # repeat previous value
+MULTIPLE = '|'  # repeat previous value one or more times
+REDUCE   = '<'  # following elements will be rendered twice as thin
+STRETCH  = '>'  # following elements will be rendered twice as wide
+
+"""
 an edge is a list of strings
 
 each string has these tokens:
