@@ -74,6 +74,7 @@ run_concepts: &run_concepts
     - mkdir -p fvm_out/fvm_results
     - mv executor.json fvm_out/fvm_results
     - make PYTHON="coverage run --data-file=.coverage.$DESIGN" $DESIGN
+  after_script:
     - mv fvm_out/fvm_report fvm_out/fvm_report.$DESIGN
   artifacts:
     when: always
