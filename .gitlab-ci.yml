@@ -4,7 +4,7 @@ stages:
   - examples
   - coverage
   - doc
-  - history
+#  - history
 
 count_todos_in_code:
   stage: lint_and_test
@@ -140,16 +140,16 @@ full_dashboard:
 
 # The history is much smaller than the full dashboard, so we can afford to save
 # it with a long expiry date
-save_history:
-  stage: history
-  image: debian:12
-  script:
-    - mv fvm_out/fvm_report/history history
-  artifacts:
-    when: always
-    paths:
-      - history
-    expire_in: 1 month
+#save_history:
+#  stage: history
+#  image: debian:12
+#  script:
+#    - mv fvm_out/fvm_report/history history
+#  artifacts:
+#    when: always
+#    paths:
+#      - history
+#    expire_in: 1 month
 
 
 # TODO : merge coverage files from previous stages
