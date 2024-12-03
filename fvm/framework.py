@@ -187,7 +187,7 @@ class fvmframework:
             self.tool_flags["lint methodology"] = "ip -goal start"
             self.tool_flags["rdc generate report"] = "-resetcheck"
             self.tool_flags["cdc generate report"] = "-clockcheck"
-            self.tool_flags["formal verify"] = "-auto_constraint_off -cov_mode"
+            self.tool_flags["formal verify"] = "-jix -auto_constraint_off"
 
         # Exit if args.step is unrecognized
         if args.step is not None:
@@ -545,7 +545,7 @@ class fvmframework:
         logger.trace(f'adding cutpoint: {cutpoint}')
         self.cutpoints.append(cutpoint)
 
-    def setup(self, design, config):
+    def setup(self, design, config = None):
         """Create the output directory and the scripts for a design, but do not
         run anything"""
         # Create the output directories, but do not throw an error if it already
@@ -818,7 +818,9 @@ class fvmframework:
                 print(string, file=f)
 
             #print('log_info "***** Running formal verify (model checking)..."', file=f)
-            print(f'formal verify {self.get_tool_flags("formal verify")}', file=f)
+            # If -cov_mode is specified without arguments, it calculates
+            # observability coverage
+            print(f'formal verify {self.get_tool_flags("formal verify")} -cov_mode', file=f)
             print('', file=f)
             print('## Compute Formal Coverage', file=f)
             #print('log_info "***** Running formal verify to get coverage..."', file=f)
@@ -829,10 +831,17 @@ class fvmframework:
             if not self.is_disabled('observability'):
                 print('formal generate coverage -cov_mode o', file=f)
             if not self.is_disabled('signoff'):
-                print('formal verify -auto_constraint_off -cov_mode signoff -timeout 10m', file=f)
+                print(f'formal verify {self.get_tool_flags("formal verify")} -cov_mode signoff', file=f)
                 print('formal generate coverage -cov_mode s', file=f)
+            # TODO : is reachability redundant with covercheck? the
+            # documentation states that "reachability — This argument runs
+            # reachability analysis on the entire design irrespective of the
+            # assertions. This is useful for design suitability analysis for
+            # formal verification and over-constraint analysis. Prior running
+            # of observability is not mandatory for this option." But it may be
+            # using the assumptions to check reachability
             if not self.is_disabled('reachability'):
-                print('formal verify -auto_constraint_off -cov_mode reachability -timeout 10m', file=f)
+                print(f'formal verify {self.get_tool_flags("formal verify")} -cov_mode reachability', file=f)
                 print('formal generate coverage -cov_mode r', file=f)
             # TODO : bounded reachability requires at least an inconclusive
             # assertion.
