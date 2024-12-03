@@ -153,6 +153,7 @@ $(VENV_DIR)/venv_created:
 	python3 -m venv $(VENV_DIR)
 	$(VENV_ACTIVATE) python3 -m ensurepip --upgrade
 	$(VENV_ACTIVATE) pip3 install poetry
+	$(VENV_ACTIVATE) poetry config keyring.enabled false
 	touch $@
 
 # We already do this in the python code, but sometimes something fails and
