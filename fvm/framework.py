@@ -187,7 +187,7 @@ class fvmframework:
             self.tool_flags["lint methodology"] = "ip -goal start"
             self.tool_flags["rdc generate report"] = "-resetcheck"
             self.tool_flags["cdc generate report"] = "-clockcheck"
-            self.tool_flags["formal verify"] = "-jix -auto_constraint_off"
+            self.tool_flags["formal verify"] = "-justify_initial_x -auto_constraint_off"
 
         # Exit if args.step is unrecognized
         if args.step is not None:
@@ -1209,9 +1209,11 @@ class fvmframework:
             ucdb_files = list()
             for file in replay_files:
                 # Modify the replay.vsim.do so:
+                #   - It dumps the waveforms into a .vcd file
                 #   - It specifies a unique test name so we don't get errors when
                 #      merging the UCDBs, and
                 #   - It saves a UCDB file
+                self.insert_line_after_target(file, "onerror {resume}", f'vcd dumpports -in -out *')
                 self.insert_line_before_target(file, "quit -f;", f'coverage attribute -name TESTNAME -value {pathlib.Path(file).parent.name}')
                 self.insert_line_before_target(file, "quit -f;", "coverage save sim.ucdb")
                 # TODO: Maybe we need to modify the replay.scr so it exports
@@ -1277,6 +1279,19 @@ class fvmframework:
             if line.strip() == target_line:
                 new_lines.append(line_to_insert + '\n')
             new_lines.append(line)
+
+        with open(file, 'w') as f:
+            f.writelines(new_lines)
+
+    def insert_line_after_target(self, file, target_line, line_to_insert):
+        with open(file, 'r') as f:
+            lines = f.readlines()
+
+        new_lines = []
+        for line in lines:
+            new_lines.append(line)
+            if line.strip() == target_line:
+                new_lines.append(line_to_insert + '\n')
 
         with open(file, 'w') as f:
             f.writelines(new_lines)
@@ -1362,6 +1377,9 @@ class fvmframework:
 
     def set_tool_flags(self, tool, flags):
         """Set user-defined flags for a specific tool"""
+        # TODO : warn the user if neither -jix nor -justify_initial_x is in
+        # self.tool_flags["formal verify"]: it could lead to failing
+        # assumptions during simulation
         self.tool_flags[tool] = flags
 
     def get_tool_flags(self, tool):
