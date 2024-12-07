@@ -51,7 +51,7 @@ from fvm.drom2psl.logging import *
 # Explanation at: https://towardsdatascience.com/do-not-use-print-for-debugging-in-python-anymore-6767b6f1866d
 from icecream import ic
 
-def generator(FILES, outdir = None, debug = False):
+def generator(FILES, outdir = None, verbose = True, debug = False):
 
   TRAVERSE = debug
 
@@ -364,13 +364,19 @@ def generator(FILES, outdir = None, debug = False):
             if prev_line != '':
                 vunit += prev_cycles_text + '\n'
 
-            vunit +=  '  }\n'
+            vunit +=  '  };\n'
             vunit += '\n'
 
         # TODO : create the sequence
         # In the case of exactly two groups, create the sequence
         # TODO : maybe allow to specify the abort signal or condition?
         if num_groups == 2:
+            if verbose:
+                vunit += "  -- Relational operands between sequences may be, among others:\n"
+                vunit += "  --   && : both must happen and last exactly the same number of cycles\n"
+                vunit += "  --   & : both must happen, without any requirement on their durations\n"
+                vunit += "  --   |-> : implication: both must happen, with the first cycle of the second occurring during the last cycle of the first\n"
+                vunit += "  --   |=> : non-overlapping implication: both must happen, with the first cycle of the second occuring the cycle after the last cycle of the first\n"
             vunit += f'  property {vunit_name} (\n'
             for groupname in groups:
                 group_arguments = get_group_arguments(groupname, flattened_signal)
@@ -384,14 +390,14 @@ def generator(FILES, outdir = None, debug = False):
             if vunit[-2:] == ";\n":
                 vunit = vunit[:-2]
                 vunit +=  '\n'
-            vunit +=  '  ) is {\n'
+            vunit +=  '  ) is\n' # {\n'
             # TODO : add arguments, if any, to sequence
             # TODO : maybe we can determine whether ->, =>, |->, |=>, or & is
             # appropriate?
             group0_args = format_group_arguments_in_call(get_group_arguments(groups[0], flattened_signal))
             group1_args = format_group_arguments_in_call(get_group_arguments(groups[1], flattened_signal))
-            vunit += f'    always (({vunit_name}_{groups[0]}{group0_args} & {vunit_name}_{groups[1]}{group1_args}) abort fvm_rst);\n'
-            vunit += '  }\n'
+            vunit += f'    always (({vunit_name}_{groups[0]}{group0_args} && {vunit_name}_{groups[1]}{group1_args}) abort fvm_rst);\n'
+            #vunit += '  }\n'
             vunit += '\n'
 
 
