@@ -256,6 +256,31 @@ def get_clock_value(wavelane, cycle):
 
     return value
 
+def is_pipe(wavelane, cycle):
+    """Returns True if the 'data' at 'cycle' in 'wave' is a pipe (|), which
+    means: 'repeat zero or more times'"""
+    wave = get_wavelane_wave(wavelane)
+    digit = wave[cycle]
+    if digit == '|':
+        pipe = True
+    else:
+        pipe = False
+    return pipe
+
+def gen_sere_repetition(num_cycles, or_more):
+    """Generates the SERE repetition operator according to the number of cycles
+    received and if N 'or more' cycles can be matched"""
+    if or_more == False:
+        text = f'[*{num_cycles}]'  # Exactly num_cycles
+    elif or_more == True:
+        if num_cycles == 0:
+            text = '[*]'  # Zero or more
+        elif num_cycles == 1:
+            text = '[+]'  # One or more. Could also be [*1:inf]
+        else:
+            text = f'[*{num_cycles}:inf]'  # N or more
+    return text
+
 # TODO : assignments could be tailored to the datatypes
 def get_signal_value(wave, data, cycle):
     datadigits = ['=', '2', '3', '4', '5', '6', '7', '8', '9']
@@ -287,9 +312,9 @@ def get_signal_value(wave, data, cycle):
         value = 'Z'
     elif digit == 'x':
         value = '-'
-    elif digit == '0':
+    elif digit == '0' or digit == 'l' or digit == 'L':
         value = '0'
-    elif digit == '1':
+    elif digit == '1' or digit == 'h' or digit == 'H' :
         value = '1'
     elif digit in datadigits:
 
@@ -312,7 +337,7 @@ def get_signal_value(wave, data, cycle):
         else:
             value = '-'
     else:
-        warning("Unrecognized {digit=}, will treat as don't care")
+        warning(f"Unrecognized {digit=}, will treat as don't care")
         value = '-'
 
     return value
