@@ -315,7 +315,8 @@ def generator(FILES, outdir = None, verbose = True, debug = False):
                         wave = get_wavelane_wave(wavelane)
                         data = get_wavelane_data(wavelane)
                         value = get_signal_value(wave, data, cycle)
-                        if value != '-':
+                        value = adapt_value_to_hdltype(value)
+                        if value != "'-'":
                             line += f'({name} = {value}) and '
                 # The last one doesn't need the ' and ' so we'll remove 5
                 # characters if they are ' and '

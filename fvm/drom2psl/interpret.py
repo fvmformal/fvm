@@ -352,3 +352,16 @@ def get_signal_value(wave, data, cycle):
 
     return value
 
+# TODO : here we are converting 0/1/etc to std_ulogic '0'/'1'/etc, but in the
+# future we could receive the hdltype as argument, to support different
+# datatypes, such as integer
+def adapt_value_to_hdltype(value):
+    # For std_logic, just add a couple of single quotes to the character
+    if value in ['0', '1', 'L', 'H', 'W', 'X', 'Z', 'U', '-']:
+        ret = "'"+value+"'"
+    # Any other values (such as those specified in the 'data' fields) are
+    # returned without modification
+    else:
+        ret = value
+    return ret
+
