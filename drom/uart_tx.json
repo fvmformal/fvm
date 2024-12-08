@@ -1,6 +1,6 @@
 { signal: [
-  { name: 'clk', wave: 'p..........|'},
-  { name: 'tx', wave: '03333333351.', data: 'data(0) data(1) data(2) data(3) data(4) data(5) data(6) data(7) parity', },
+  { name: 'clk', wave: 'p.........|'},
+  { name: 'tx', wave: '0333333331.', data: 'data(0) data(1) data(2) data(3) data(4) data(5) data(6) data(7)', type: 'std_ulogic_vector(7 downto 0)'},
   ],
   "config" : { "hscale" : 2 },
   "stretch" : "BIT_DURATION",

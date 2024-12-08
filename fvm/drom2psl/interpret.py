@@ -6,6 +6,13 @@ Functions to actually interpret the wavedrom dictionary
 # Explanation at: https://towardsdatascience.com/do-not-use-print-for-debugging-in-python-anymore-6767b6f1866d
 from icecream import ic
 
+# Allow usage of regular expressions
+import re
+
+# Allow to have ordered dicts (used to preserve order when removing duplicated
+# arguments)
+from collections import OrderedDict
+
 #if DEBUG == False:
 #    ic.disable
 
@@ -227,11 +234,26 @@ def get_group_arguments(groupname, flattened_signal):
                   ic(data, type(data))
                   # Get the datatype
                   datatype = get_wavelane_type(wavelane)
+                  # Get the data
                   actualdata = data2list(data)
-                  args_with_type = [[data, datatype] for data in actualdata]
+                  ic(actualdata)
+                  # Remove anything between parentheses: we don't want data(0)
+                  # and data(1) to be different arguments
+                  non_paren_data = [remove_parentheses(d) for d in actualdata]
+                  ic(non_paren_data)
+                  # Remove duplicated arguments without losing ordering
+                  deduplicated_data = unique_list = list(dict.fromkeys(non_paren_data))
+                  ic(deduplicated_data)
+                  # Create a new list with each argument and its datatype
+                  args_with_type = [[d, datatype] for d in deduplicated_data]
                   ic(args_with_type)
                   group_arguments.extend(args_with_type)
     return group_arguments
+
+def remove_parentheses(string):
+    """Removes anything between parentheses, including the parentheses, from a
+    string"""
+    return re.sub(r'\([^)]*\)', '', string).strip()
 
 def data2list(wavelane_data):
     """Converts wavelane data to a list if it is a string, returns it untouched
