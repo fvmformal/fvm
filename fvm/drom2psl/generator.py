@@ -51,7 +51,7 @@ from fvm.drom2psl.logging import *
 # Explanation at: https://towardsdatascience.com/do-not-use-print-for-debugging-in-python-anymore-6767b6f1866d
 from icecream import ic
 
-def generator(FILES, debug = False):
+def generator(FILES, outdir = None, verbose = True, debug = False):
 
   TRAVERSE = debug
 
@@ -79,6 +79,9 @@ def generator(FILES, debug = False):
   # Open the input files
   for FILE in FILES :
     f = open(FILE)
+    full_filename = Path(FILE).resolve()
+    ic(full_filename)
+
 
     # Pass the input file through the linter
     #conf = config.YamlLintConfig('extends: default')
@@ -239,13 +242,13 @@ def generator(FILES, debug = False):
     if ok:
         ic("Creating a psl vunit")
 
-        vunit_name = os.path.basename(FILE)
-        vunit_name, extension = os.path.splitext(vunit_name)
-        output_file = vunit_name + '.psl'
+        vunit_name = full_filename.stem
+        output_file = Path(full_filename).with_suffix('.psl')
 
         # TODO : add arguments to drom2psl and timestamp of file creation
         vunit = ''
         vunit +=  '-- Automatically created by drom2psl\n'
+        vunit += f'-- Input file: {full_filename}\n'
         vunit +=  '-- These sequences and/or properties can be reused from other PSL files by doing:\n'
         vunit += f'-- inherit {vunit_name}\n\n'
         vunit += f'vunit {vunit_name} ' + '{\n\n'
@@ -261,6 +264,9 @@ def generator(FILES, debug = False):
         #      5. In that case, we also are assuming that the sequence that
         #      appears first in the wavedrom is the sequence that should
         #      trigger the other one
+        # TODO : maybe if there is only one signal we don't want to assume it
+        # is a clock? Or maybe we could determine what is a clock and what is
+        # not by doing a first pass through the wavelanes
 
         # To cover the special case where we have no groups, in that case let's
         # define a group whose name is the empty string
@@ -293,6 +299,7 @@ def generator(FILES, debug = False):
 
             prev_line = ''
             prev_cycles = 0
+            prev_or_more = False
             for cycle in range(clock_cycles):
                 cycle_string = ''
                 cycle_count = 0
@@ -308,7 +315,8 @@ def generator(FILES, debug = False):
                         wave = get_wavelane_wave(wavelane)
                         data = get_wavelane_data(wavelane)
                         value = get_signal_value(wave, data, cycle)
-                        if value != '-':
+                        value = adapt_value_to_hdltype(value)
+                        if value != "'-'":
                             line += f'({name} = {value}) and '
                 # The last one doesn't need the ' and ' so we'll remove 5
                 # characters if they are ' and '
@@ -322,57 +330,75 @@ def generator(FILES, debug = False):
                 #   1. Check if the clock is '|' (will mean zero or more)
                 #   2. Compare against the previous line
                 cycles = get_clock_value(flattened_signal[0], cycle)
+                or_more = is_pipe(flattened_signal[0], cycle)
 
                 # If lines are different, then just:
                 #   1. Finish the previous line with the cycles
                 #   2. Write the current line, except the cycles
+                #   3. The actual current line will be the next prev_line
                 if line != prev_line:
-                    if prev_cycles == 0:
-                        prev_cycles_text = '[*]'
-                    else:
-                        prev_cycles_text = f'[*{prev_cycles}]'
-
+                    prev_cycles_text = gen_sere_repetition(prev_cycles,
+                                                           prev_or_more)
                     if prev_line != '':
                         vunit += prev_cycles_text + ';\n'
 
                     vunit += line
                     prev_line = line
                     prev_cycles = cycles
+                    prev_or_more = or_more
 
                 # If lines are equal:
-                #   1. Do not finish the previous line, just add the cycles to
-                #   prev_cycles
+                #   Do not finish the previous line, just add the cycles to
+                #   prev_cycles and compute the relevant 'or_more': both lines
+                #   are equal so if at least one of them allows repeat, then
+                #   the merged line must allow repeat
                 else:
                     prev_cycles += cycles
+                    if prev_or_more == True or or_more == True:
+                        prev_or_more = True
+                    else:
+                        prev_or_more = False
 
-            # After that, we will have the last cycles to write, so let's write
-            # them:
-            if prev_cycles == 0:
-                prev_cycles_text = '[*]'
-            else:
-                prev_cycles_text = f'[*{prev_cycles}]'
-
+            # After the for loop finishes, we will have the last cycles to
+            # write, so let's write them:
+            prev_cycles_text = gen_sere_repetition(prev_cycles, prev_or_more)
             if prev_line != '':
                 vunit += prev_cycles_text + '\n'
 
-            vunit +=  '  }\n'
+            vunit +=  '  };\n'
             vunit += '\n'
 
         # TODO : create the sequence
         # In the case of exactly two groups, create the sequence
         # TODO : maybe allow to specify the abort signal or condition?
         if num_groups == 2:
-            vunit += '  property {vunit_name} (\n'
+            if verbose:
+                vunit += "  -- Relational operands between sequences may be, among others:\n"
+                vunit += "  --   && : both must happen and last exactly the same number of cycles\n"
+                vunit += "  --   & : both must happen, without any requirement on their durations\n"
+                vunit += "  --   |-> : implication: both must happen, with the first cycle of the second occurring during the last cycle of the first\n"
+                vunit += "  --   |=> : non-overlapping implication: both must happen, with the first cycle of the second occuring the cycle after the last cycle of the first\n"
+            vunit += f'  property {vunit_name} (\n'
             for groupname in groups:
                 group_arguments = get_group_arguments(groupname, flattened_signal)
+                ic(group_arguments)
                 vunit += format_group_arguments(group_arguments)
+            # Add a last argument, rst, as argument for abort
+            # TODO : change the rst name if there is already an fvm_rst signal
+            # in the waveform
+            vunit += format_group_arguments([['fvm_rst', 'std_ulogic']])
             # Again, remove the unneded semicolon and restore the deleted \n
             if vunit[-2:] == ";\n":
                 vunit = vunit[:-2]
                 vunit +=  '\n'
-            vunit +=  '  ) is {\n'
-            vunit += f'    always (({vunit_name}_{groups[0]} -> {vunit_name}_{groups[1]}) abort rst);\n'
-            vunit += '  }\n'
+            vunit +=  '  ) is\n' # {\n'
+            # TODO : add arguments, if any, to sequence
+            # TODO : maybe we can determine whether ->, =>, |->, |=>, or & is
+            # appropriate?
+            group0_args = format_group_arguments_in_call(get_group_arguments(groups[0], flattened_signal))
+            group1_args = format_group_arguments_in_call(get_group_arguments(groups[1], flattened_signal))
+            vunit += f'    always (({vunit_name}_{groups[0]}{group0_args} && {vunit_name}_{groups[1]}{group1_args}) abort fvm_rst);\n'
+            #vunit += '  }\n'
             vunit += '\n'
 
 
@@ -393,7 +419,8 @@ def generator(FILES, debug = False):
           ic("Rendering the JSON into an .svg")
           render = wavedrom.render(string)
           ic(render)
-          svgfilename = Path(FILE).stem + '.svg'
+          ic(full_filename)
+          svgfilename = Path(full_filename).with_suffix('.svg')
           ic(svgfilename)
           if DEBUG:
               render.saveas(svgfilename)
@@ -426,6 +453,21 @@ def format_group_arguments(group_arguments):
         argument = j[0]
         datatype = j[1]
         string += f'    hdltype {datatype} {argument};\n'
+    return string
+
+def format_group_arguments_in_call(group_arguments):
+    """Returns the group arguments ready to parameterize a property or
+    sequence, for example: (addr, data)"""
+    string = ''
+    # Only return a non-empty string if there it at least one argument
+    if len(group_arguments) > 0:
+        string += '('
+        for j in group_arguments:
+            argument = j[0]
+            string += f'{argument}, '
+        # Remove the last command and space, and add the closing parenthesis
+        string = string[:-2]
+        string += ')'
     return string
 
 if __name__ == "__main__":

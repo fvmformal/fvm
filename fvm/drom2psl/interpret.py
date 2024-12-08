@@ -6,6 +6,13 @@ Functions to actually interpret the wavedrom dictionary
 # Explanation at: https://towardsdatascience.com/do-not-use-print-for-debugging-in-python-anymore-6767b6f1866d
 from icecream import ic
 
+# Allow usage of regular expressions
+import re
+
+# Allow to have ordered dicts (used to preserve order when removing duplicated
+# arguments)
+from collections import OrderedDict
+
 #if DEBUG == False:
 #    ic.disable
 
@@ -227,11 +234,26 @@ def get_group_arguments(groupname, flattened_signal):
                   ic(data, type(data))
                   # Get the datatype
                   datatype = get_wavelane_type(wavelane)
+                  # Get the data
                   actualdata = data2list(data)
-                  args_with_type = [[data, datatype] for data in actualdata]
+                  ic(actualdata)
+                  # Remove anything between parentheses: we don't want data(0)
+                  # and data(1) to be different arguments
+                  non_paren_data = [remove_parentheses(d) for d in actualdata]
+                  ic(non_paren_data)
+                  # Remove duplicated arguments without losing ordering
+                  deduplicated_data = unique_list = list(dict.fromkeys(non_paren_data))
+                  ic(deduplicated_data)
+                  # Create a new list with each argument and its datatype
+                  args_with_type = [[d, datatype] for d in deduplicated_data]
                   ic(args_with_type)
                   group_arguments.extend(args_with_type)
     return group_arguments
+
+def remove_parentheses(string):
+    """Removes anything between parentheses, including the parentheses, from a
+    string"""
+    return re.sub(r'\([^)]*\)', '', string).strip()
 
 def data2list(wavelane_data):
     """Converts wavelane data to a list if it is a string, returns it untouched
@@ -255,6 +277,41 @@ def get_clock_value(wavelane, cycle):
         value = 1  # Do once
 
     return value
+
+def is_pipe(wavelane, cycle):
+    """Returns True if the 'data' at 'cycle' in 'wave' is a pipe (|), which
+    means: 'repeat zero or more times'"""
+    wave = get_wavelane_wave(wavelane)
+    digit = wave[cycle]
+    if digit == '|':
+        pipe = True
+    else:
+        pipe = False
+    return pipe
+
+def gen_sere_repetition(num_cycles, or_more, comments = True):
+    """Generates the SERE repetition operator according to the number of cycles
+    received and if N 'or more' cycles can be matched"""
+    if or_more == False:
+        text = f'[*{num_cycles}]'  # Exactly num_cycles
+        if comments:
+            text += f'  -- {num_cycles} cycle'
+            if num_cycles != 1:
+                text += 's'
+    elif or_more == True:
+        if num_cycles == 0:
+            text = '[*]'  # Zero or more
+            if comments:
+                text += '  -- 0 or more cycles'
+        elif num_cycles == 1:
+            text = '[+]'  # One or more. Could also be [*1:inf]
+            if comments:
+                text += '  -- 1 or more cycles'
+        else:
+            text = f'[*{num_cycles}:inf]'  # N or more
+            if comments:
+                text += f'  -- {num_cycles} or more cycles'
+    return text
 
 # TODO : assignments could be tailored to the datatypes
 def get_signal_value(wave, data, cycle):
@@ -287,9 +344,9 @@ def get_signal_value(wave, data, cycle):
         value = 'Z'
     elif digit == 'x':
         value = '-'
-    elif digit == '0':
+    elif digit == '0' or digit == 'l' or digit == 'L':
         value = '0'
-    elif digit == '1':
+    elif digit == '1' or digit == 'h' or digit == 'H' :
         value = '1'
     elif digit in datadigits:
 
@@ -312,8 +369,21 @@ def get_signal_value(wave, data, cycle):
         else:
             value = '-'
     else:
-        warning("Unrecognized {digit=}, will treat as don't care")
+        warning(f"Unrecognized {digit=}, will treat as don't care")
         value = '-'
 
     return value
+
+# TODO : here we are converting 0/1/etc to std_ulogic '0'/'1'/etc, but in the
+# future we could receive the hdltype as argument, to support different
+# datatypes, such as integer
+def adapt_value_to_hdltype(value):
+    # For std_logic, just add a couple of single quotes to the character
+    if value in ['0', '1', 'L', 'H', 'W', 'X', 'Z', 'U', '-']:
+        ret = "'"+value+"'"
+    # Any other values (such as those specified in the 'data' fields) are
+    # returned without modification
+    else:
+        ret = value
+    return ret
 

@@ -1,0 +1,25 @@
+{
+  head: {text: 'wb_pipelined_write(addr, data)',
+      tick:  0,
+      every: 1,
+      },
+  foot: {text: 'Wishbone write, pipelined mode',
+      },
+  signal: [
+      {name: 'clk',   wave: 'p.|.|'},
+    ['Master',
+      {name: 'adr', wave: 'x3..x', data: 'addr', type: 'std_ulogic_vector(31 downto 0)'},
+      {name: 'dat', wave: 'x3..x', data: 'data', type: 'std_ulogic_vector(31 downto 0)'},
+      {name: 'cyc', wave: '01..0'},
+      {name: 'stb', wave: '010..'},
+      {name: 'sel', wave: 'x3..x', data: 'byte_enable', type: 'std_ulogic_vector(3 downto 0)'},
+      {name: 'we',  wave: 'x0..x'}
+    ],
+  {},
+    ['Slave',
+      {name: 'dat', wave: 'x...x'},
+      {name: 'ack', wave: '0..10'},
+      {name: 'err', wave: '0....'}
+    ],
+  ],
+}
