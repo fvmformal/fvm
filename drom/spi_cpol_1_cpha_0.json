@@ -1,0 +1,20 @@
+{
+  head: {text: 'spi_cpol_1_cpha_0(m2s, s2m)',
+      },
+  foot: {text: 'SPI transmission, CPOL = 1, CPHA = 0',
+      },
+  signal: [
+  ['master',
+  { name: 'sclk', wave: '1.0101010101010101.|'},
+  { name: 'cs_n', wave: '10................1.'},
+  { name: 'mosi', wave: 'z3.3.3.3.3.3.3.3.z..', data: 'm2s(7) m2s(6) m2s(5) m2s(4) m2s(3) m2s(2) m2s(1) m2s(0)'},
+  ],
+  {},
+  ['slave',
+  { name: 'mosi', wave: 'z3.3.3.3.3.3.3.3.z..', data: 's2m(7) s2m(6) s2m(5) s2m(4) s2m(3) s2m(2) s2m(1) s2m(0)'},
+  ],
+  {},
+  ],
+  "config" : { "hscale" : 1 },
+  "stretch" : "HALF_BIT_DURATION",
+}
