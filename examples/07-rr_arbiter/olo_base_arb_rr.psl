@@ -1,0 +1,35 @@
+vunit olo_base_arb_rr (olo_base_arb_rr) {
+
+    -- Default clock for PSL assertions
+    default clock is rising_edge(Clk);
+
+    -- Force a reset in the first clock cycle
+    assume_initial_reset: assume Rst = '1';
+
+    assume (not Out_Valid) -> (not Out_Ready);
+
+    sequence transmission is {
+        In_Req = "1011" and Out_Grant = "1000";
+        In_Req = "1011" and Out_Grant = "1000";
+        In_Req = "1011" and Out_Grant = "0010";
+        In_Req = "1011" and Out_Grant = "0001";
+        In_Req = "1011" and Out_Grant = "1000";
+        In_Req = "1011" and Out_Grant = "0010";
+        In_Req = "1011" and Out_Grant = "0010";
+        In_Req = "0110" and Out_Grant = "0100";
+        In_Req = "0110" and Out_Grant = "0100";
+        In_Req = "0110" and Out_Grant = "0100";
+        In_Req = "0110" and Out_Grant = "0010";
+        In_Req = "0000" and Out_Grant = "0000";
+        In_Req = "0000" and Out_Grant = "0000"
+  };
+
+    assert always {countones(In_Req) = 0} |-> {countones(Out_Grant) = 0} abort Rst;
+    assert always {countones(In_Req) >= 1} |-> {onehot(Out_Grant)} abort Rst;
+    assert always onehot0(Out_Grant) abort Rst;
+    assert always {countones(Out_Grant) = 0} |-> {Out_Valid = '0'} abort Rst;
+    assert always {countones(Out_Grant) = 1} |-> {Out_Valid = '1'} abort Rst;
+
+    cover {transmission};
+
+}

@@ -356,7 +356,7 @@ class fvmframework:
         pass to the tools"""
         string = ''
         for i in generics:
-            string += f'-g {i}={generics[i]}'
+            string += f'-g {i}={generics[i]} '
         return string
 
     # TODO : we could make this function accept also a list, but not sure if it
