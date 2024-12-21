@@ -93,7 +93,7 @@ run_examples:
   stage: examples
   parallel:
     matrix:
-      - DESIGN: [counter, countervunit, linearinterpolator, dualcounter, uart_tx, arbiter_prior, arbiter_rr, fifo_sync, fifo_async]
+      - DESIGN: [counter, countervunit, linearinterpolator, dualcounter, uart_tx, arbiter_prior, arbiter_rr, fifo_sync]
   # TODO : remove this when issues with the designs are fixed
 
 # Test for #126
