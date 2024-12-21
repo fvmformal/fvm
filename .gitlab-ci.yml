@@ -93,7 +93,7 @@ run_examples:
   stage: examples
   parallel:
     matrix:
-      - DESIGN: [00-counter, 01-countervunit, 02-linearinterpolator, 04-dualcounter, 05-uart_tx]
+      - DESIGN: [counter, countervunit, linearinterpolator, dualcounter, uart_tx, arbiter_prior, arbiter_rr, fifo_sync, fifo_async]
   # TODO : remove this when issues with the designs are fixed
 
 # Test for #126
@@ -109,17 +109,17 @@ run_steps_independently:
     - export SALT_LICENSE_SERVER=2101@baldr.us.es
     - yum install -y python39 java-1.8.0-openjdk
     - make PYTHON="coverage run --data-file=.coverage.$DESIGN" $DESIGN
-    - source .venv/bin/activate && coverage run --data-file=.coverage.$DESIGN.lint -m examples.01-countervunit.formal -s lint
+    - source .venv/bin/activate && coverage run --data-file=.coverage.$DESIGN.lint -m examples.countervunit.formal -s lint
     - make clean
-    - source .venv/bin/activate && coverage run --data-file=.coverage.$DESIGN.rulecheck --m examples.01-countervunit.formal -s friendliness
+    - source .venv/bin/activate && coverage run --data-file=.coverage.$DESIGN.rulecheck --m examples.countervunit.formal -s friendliness
     - make clean
-    - source .venv/bin/activate && coverage run --data-file=.coverage.$DESIGN.reachability --m examples.01-countervunit.formal -s reachability
+    - source .venv/bin/activate && coverage run --data-file=.coverage.$DESIGN.reachability --m examples.countervunit.formal -s reachability
     - make clean
-    - source .venv/bin/activate && coverage run --data-file=.coverage.$DESIGN.resets --m examples.01-countervunit.formal -s resets
+    - source .venv/bin/activate && coverage run --data-file=.coverage.$DESIGN.resets --m examples.countervunit.formal -s resets
     - make clean
-#    - coverage run -m examples.01-countervunit.formal -s clocks
+#    - coverage run -m examples.countervunit.formal -s clocks
 #    - make clean
-    - source .venv/bin/activate && coverage run --data-file=.coverage.$DESIGN.prove --m examples.01-countervunit.formal -s prove
+    - source .venv/bin/activate && coverage run --data-file=.coverage.$DESIGN.prove --m examples.countervunit.formal -s prove
     - make clean
   artifacts:
     when: always

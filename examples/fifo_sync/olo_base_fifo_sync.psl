@@ -1,0 +1,46 @@
+vunit olo_base_fifo_sync (olo_base_fifo_sync) {
+
+    -- Default clock for PSL assertions
+    default clock is rising_edge(Clk);
+
+    -- Force a reset in the first clock cycle
+    assume_initial_reset: assume Rst = '1';
+    assume always In_Valid -> not(In_Data = "000");
+    --assume always ( {In_Valid;In_Valid} |-> (In_Data /= prev(In_Data)) );
+
+
+    assert_Depth_g_power_2: 
+        assert log2(Depth_g) = log2ceil(Depth_g);
+    assert_never_full_and_in_valid: 
+        assert (never (Full = '1' and In_Valid = '1') ) abort Rst; 
+    assert_never_empty_and_out_ready: 
+        assert (never (Empty = '1' and Out_Ready = '1') ) abort Rst;
+    assert_never_empty_and_full: 
+        assert (never (Empty = '1' and Full = '1') ) abort Rst;
+    assert_in_level_within_bounds: 
+        assert always (unsigned(In_Level) <= Depth_g) abort Rst;
+    assert_out_level_within_bounds: 
+        assert always (unsigned(Out_Level) <= Depth_g) abort Rst;
+    assert_empty_out_level_0000: 
+        assert always (Empty = '1' -> unsigned(Out_Level) = 0) abort Rst;
+    assert_full_in_level_1000: 
+        assert always (Full = '1' -> unsigned(In_Level) = 8) abort Rst;
+    assert (never ( (unsigned(In_Level) - unsigned(Out_Level) ) > 2) ) abort Rst;
+    assert always ( unsigned(In_Level) >= unsigned(Out_Level) ) abort Rst;
+
+    sequence out_valid_not_reset is {
+        prev(In_Data) = "111";
+        Out_Valid and (not Rst);
+        Out_Valid and (not Rst);
+        Out_Valid and (not Rst);
+        Out_Valid and (not Rst);
+        Out_Valid and (not Rst);
+        Out_Valid and (not Rst);
+        Out_Valid and (not Rst);
+        Out_Valid and (not Rst);
+        Out_Valid = '0'
+    };
+
+    cover_Out_Valid: cover{[*];out_valid_not_reset;[*];out_valid_not_reset;[*];out_valid_not_reset;[*];out_valid_not_reset;[*];Full = '1'};
+
+}

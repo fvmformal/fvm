@@ -87,12 +87,12 @@ test-verbose: fvm dev-reqs
 	$(VENV_ACTIVATE) coverage run -m pytest -v -s --junit-xml="results.xml"
 
 # List with all the examples
-examplelist += 00-counter
-examplelist += 01-countervunit
-examplelist += 02-linearinterpolator
-examplelist += 04-dualcounter
-examplelist += 05-uart_tx
-examplelist += 06-uart_rx
+examplelist += counter
+examplelist += countervunit
+examplelist += linearinterpolator
+examplelist += dualcounter
+examplelist += uart_tx
+examplelist += uart_rx
 
 # List with all the concepts
 conceptlist += transactions_deprecated
