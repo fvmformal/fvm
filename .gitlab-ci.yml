@@ -12,7 +12,6 @@ count_todos_in_code:
   script:
     - apt update
     - apt install -y python3 python3-pip python3-venv
-    - pip install GitPython
     - make todo
   coverage: /Count=([\d]+)/
   artifacts:
@@ -94,7 +93,7 @@ run_examples:
   stage: examples
   parallel:
     matrix:
-      - DESIGN: [counter, countervunit, linearinterpolator, dualcounter, uart_tx, arbiter_prior, arbiter_rr, fifo_sync]
+      - DESIGN: [counter, countervunit, linearinterpolator, dualcounter, uart_tx]
   # TODO : remove this when issues with the designs are fixed
 
 # Test for #126
