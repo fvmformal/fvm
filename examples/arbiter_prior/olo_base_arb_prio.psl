@@ -19,8 +19,13 @@ vunit olo_base_arb_prio (olo_base_arb_prio) {
         In_Req = "000" and Out_Grant = "000"
     };
 
+    -- Assert Out_Grant has maximum one bit with value 1
     assert always onehot0(Out_Grant);
+
+    -- Assert when the input is 0, the output is 0
     assert always {countones(In_Req) = 0} |-> {countones(Out_Grant) = 0} abort Rst;
+
+    -- Assert when the input is not 0, the output is not 0
     assert always {countones(In_Req) >= 1} |-> {onehot(Out_Grant)};
 
     assert always ({In_Req = "000"} |-> {Out_Grant = "000"}) abort Rst;

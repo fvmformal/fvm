@@ -1,12 +1,17 @@
 vunit olo_base_arb_rr (olo_base_arb_rr) {
 
+    inherit rr_arbiter_common;
+
     -- Default clock for PSL assertions
     default clock is rising_edge(Clk);
 
     -- Force a reset in the first clock cycle
     assume_initial_reset: assume Rst = '1';
 
+    -- Output cannot be ready when it is not valid
     assume (not Out_Valid) -> (not Out_Ready);
+
+    --assume always ( countones(In_Req) > 0 -> (stable(In_Req) until_ Out_Ready) ) abort Rst;
 
     sequence transmission is {
         In_Req = "1011" and Out_Grant = "1000";
@@ -24,11 +29,43 @@ vunit olo_base_arb_rr (olo_base_arb_rr) {
         In_Req = "0000" and Out_Grant = "0000"
   };
 
-    assert always {countones(In_Req) = 0} |-> {countones(Out_Grant) = 0} abort Rst;
-    assert always {countones(In_Req) >= 1} |-> {onehot(Out_Grant)} abort Rst;
+    -- Assert Out_Grant has maximum one bit with value 1
     assert always onehot0(Out_Grant) abort Rst;
+
+    -- Assert when the input is 0, the output is 0
+    assert always {countones(In_Req) = 0} |-> {countones(Out_Grant) = 0} abort Rst;
+
+    -- Assert when the input is not 0, the output is not 0
+    assert always {countones(In_Req) >= 1} |-> {onehot(Out_Grant)} abort Rst;
+
+    -- Assert when the output is 0, the output is not valid
     assert always {countones(Out_Grant) = 0} |-> {Out_Valid = '0'} abort Rst;
+
+    -- Assert when the output is not 0, the output is valid
     assert always {countones(Out_Grant) = 1} |-> {Out_Valid = '1'} abort Rst;
+
+    -- Assert when two Out_Ready in two consecutive cycles,
+    -- the second granted output is the result of a round robin
+    -- function defined in rr_arbiter_common.psl that receives as parameters
+    -- the previous granted output and the input request. This function
+    -- simulates the round_robin algorithm.
+    assert always ( {Out_Ready: Out_Valid; Out_Ready: Out_Valid} |-> { Out_Grant = round_robin(In_Req, prev(Out_Grant)) } ) abort Rst;
+
+    -- The next few assertions are similar to the previous one.
+    -- The main difference is we do not have two consecutive cycles,
+    -- can be consecutive or not, so we cannot use operator prev(). 
+    -- So, we use 4 different assertions for each value of Out_Grant
+    assert always ( {Out_Ready: Out_Valid: Out_Grant = "1000"; (not Out_Ready)[*];Out_Ready: Out_Valid} 
+    |-> { Out_Grant = round_robin(In_Req, "1000") } ) abort Rst;
+
+    assert always ( {Out_Ready: Out_Valid: Out_Grant = "0100"; (not Out_Ready)[*]; Out_Ready: Out_Valid} 
+    |-> { Out_Grant = round_robin(In_Req, "0100") } ) abort Rst;
+
+    assert always ( {Out_Ready: Out_Valid: Out_Grant = "0010"; (not Out_Ready)[*]; Out_Ready: Out_Valid} 
+    |-> { Out_Grant = round_robin(In_Req, "0010") } ) abort Rst;
+
+    assert always ( {Out_Ready: Out_Valid: Out_Grant = "0001"; (not Out_Ready)[*]; Out_Ready: Out_Valid} 
+    |-> { Out_Grant = round_robin(In_Req, "0001") } ) abort Rst;
 
     cover {transmission};
 
