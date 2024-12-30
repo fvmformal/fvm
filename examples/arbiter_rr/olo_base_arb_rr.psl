@@ -9,7 +9,7 @@ vunit olo_base_arb_rr (olo_base_arb_rr) {
     assume_initial_reset: assume Rst = '1';
 
     -- Output cannot be ready when it is not valid
-    assume (not Out_Valid) -> (not Out_Ready);
+    assume always (not Out_Valid) -> (not Out_Ready);
 
     --assume always ( countones(In_Req) > 0 -> (stable(In_Req) until_ Out_Ready) ) abort Rst;
 

@@ -8,6 +8,9 @@ vunit olo_base_fifo_sync (olo_base_fifo_sync(rtl)) {
     -- Force a reset in the first clock cycle
     assume_initial_reset: assume Rst = '1';
 
+    -- Output cannot be ready when it is not valid
+    assume always (not Out_Valid) -> (not Out_Ready);
+
     -- This way is easier to visualize data (NOT A NECESSARY ASSUME)
     --assume always In_Valid -> not(In_Data = "000");
 
@@ -70,6 +73,12 @@ vunit olo_base_fifo_sync (olo_base_fifo_sync(rtl)) {
         Out_Ready                                                                                                                    
     }; 
 
+    sequence read_seq_prev is {   
+        not Out_Ready[*];                                                                     
+        Out_Valid:                                                            
+        Out_Ready                                                                                                                    
+    }; 
+
     -- If you write with FIFO level 0, 
     -- that is the first data out always
     property predict_level_0(
@@ -80,25 +89,55 @@ vunit olo_base_fifo_sync (olo_base_fifo_sync(rtl)) {
         |-> {Out_Data = input_tran.data} ) 
         abort rst);
 
-    -- If you write with FIFO level X and have not read in the previous cycle,
+    -- If you write with FIFO level X, 
+    -- have not read in the previous cycle,
+    -- have not read in the current cycle,
     -- that is the X + 1 data out always
     property predict(
         hdltype input_tran_in_data input_tran;
         const n
         ) is
         always ( 
-        ( {(not Out_Ready);write_sequence(input_tran):(not Out_Ready)[+]; read_seq[*n]} 
+        ( {(not Out_Ready);write_sequence(input_tran):(not Out_Ready)[+]; read_seq_prev[*n]} 
         |-> {Out_Data = input_tran.data} ) 
         abort rst);
 
-    -- If you write with FIFO level X and have read in the previous cycle,
+    -- If you write with FIFO level X,
+    -- have read in the previous cycle,
+    -- have not read in the current cycle,
     -- that is the X data out always
     property predict_b(
         hdltype input_tran_in_data input_tran;
         const n
         ) is
         always ( 
-        ( {read_seq;write_sequence(input_tran):(not Out_Ready)[+]; read_seq[*n]} 
+        ( {read_seq;write_sequence(input_tran):(not Out_Ready)[+]; read_seq_prev[*n]} 
+        |-> {Out_Data = input_tran.data} ) 
+        abort rst);   
+
+    -- If you write with FIFO level X,
+    -- have read in the previous cycle,
+    -- have read in the current cycle,
+    -- that is the X - 1 data out always
+    property predict_c(
+        hdltype input_tran_in_data input_tran;
+        const n
+        ) is
+        always ( 
+        ( {read_seq;write_sequence(input_tran):read_seq; read_seq_prev[*n]} 
+        |-> {Out_Data = input_tran.data} ) 
+        abort rst);     
+
+    -- If you write with FIFO level X,
+    -- have not read in the previous cycle,
+    -- have read in the current cycle,
+    -- that is the X data out always
+    property predict_d(
+        hdltype input_tran_in_data input_tran;
+        const n
+        ) is
+        always ( 
+        ( {(not Out_Ready);write_sequence(input_tran):read_seq; read_seq_prev[*n]} 
         |-> {Out_Data = input_tran.data} ) 
         abort rst);    
 
@@ -113,8 +152,11 @@ vunit olo_base_fifo_sync (olo_base_fifo_sync(rtl)) {
             %if i = 0 %then
                 assert predict_level_0(input_trans(i, j));
             %else
+                -- Different combinations because latency 1
                 assert predict(input_trans(i, j), i + 1);
                 assert predict_b(input_trans(i, j), i);
+                assert predict_c(input_trans(i, j), i - 1);
+                assert predict_d(input_trans(i, j), i);
             %end
         %end
     %end
