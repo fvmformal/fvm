@@ -1,0 +1,86 @@
+vunit olo_base_fifo_async (olo_base_fifo_async) {
+
+    -- Force a reset in the first clock cycle
+    assume_initial_reset_in: assume (In_Rst = '1') @rising_edge(In_Clk);
+    assume_initial_reset_out: assume (Out_Rst = '1') @rising_edge(Out_Clk);
+
+    -- This way is easier to visualize data (NOT A NECESSARY ASSUME)
+    assume always (In_Valid -> not(In_Data = "000") ) @rising_edge(In_Clk);
+
+    -- This way is easier to visualize data, otherwise it keeps
+    -- the same value of In_Data (NOT A NECESSARY ASSUME)
+    assume always ( ( In_Valid -> (In_Data /= prev(In_Data)) ) abort In_Rst) @rising_edge(In_Clk);
+
+    assert always  ( (unsigned(In_Level) = Depth_g) -> In_Full)  @rising_edge(In_Clk);
+
+    -- Assert the FIFO is never full and the input is ready
+    assert_never_full_and_in_ready: 
+        assert ( never (In_Full = '1' and In_Ready = '1') ) @rising_edge(In_Clk);
+
+    -- Assert the FIFO is never full and the output is valid
+    assert_never_full_and_out_valid: 
+        assert ( (never (Out_Full = '1' and Out_Valid = '1')) abort Out_Rst) @rising_edge(Out_Clk);
+
+    assert_always_not_full_and_in_ready: 
+        assert always ( ( (not In_Full) -> In_Ready ) abort In_Rst ) @rising_edge(In_Clk);
+    
+    -- Assert the FIFO is never full and the input is valid
+    assert_never_empty_and_out_valid: 
+        assert ( (never (Out_Empty and Out_Valid) ) abort Out_Rst ) @rising_edge(Out_Clk);
+
+    assert_always_not_empty_and_out_valid: 
+        assert always ( ( (not Out_Empty) -> Out_Valid)  abort Out_Rst ) @rising_edge(Out_Clk); 
+
+    -- Assert the FIFO level calculated on the write side is always
+    -- less than the depth of the FIFO
+    assert_in_level_within_bounds: 
+        assert always ( (unsigned(In_Level) <= Depth_g) abort In_Rst) @rising_edge(In_Clk); 
+
+    -- Assert the FIFO level calculated on the read side is always
+    -- less than the depth of the FIFO
+    assert_out_level_within_bounds: 
+        assert always ( (unsigned(Out_Level) <= Depth_g) abort Out_Rst) @rising_edge(Out_Clk); 
+
+    -- Assert if not reset, the FIFO level only changes one unit
+    assert always  ( 
+        {not In_RstOut: not In_Rst; not In_RstOut: not In_Rst}
+        |-> {
+        (unsigned(prev(In_Level)) = unsigned(In_Level) ) or
+        (unsigned(prev(In_Level)) = unsigned(In_Level) + 1) or
+        (unsigned(prev(In_Level)) + 1 = unsigned(In_Level) )
+        }
+    ) @rising_edge(In_Clk); 
+
+    sequence write_FIFO is {
+        [*];
+        In_Valid and In_Ready and (not In_RstOut);
+        In_Valid and In_Ready and (not In_RstOut);
+        (not In_RstOut);
+        (not In_RstOut);
+        (not In_RstOut);
+        (not In_RstOut);
+        (not In_RstOut);
+        (not In_RstOut);
+        (not In_RstOut);
+        (not In_RstOut)
+    } @rising_edge(In_Clk);
+
+    sequence read_FIFO is {
+        [*];
+        Out_Valid and Out_Ready and (not Out_RstOut);
+        Out_Valid and Out_Ready and (not Out_RstOut);
+        Out_Valid and Out_Ready and (not Out_RstOut);
+        Out_Valid and Out_Ready and (not Out_RstOut);
+        Out_Valid and Out_Ready and (not Out_RstOut);
+        Out_Rst;
+        not Out_Rst;
+        not Out_Rst;
+        not Out_Rst;
+        not Out_Rst;
+        not Out_Rst;
+        not Out_Rst
+    } @rising_edge(Out_Clk);
+
+    cover{write_FIFO};
+    cover{read_FIFO};
+}
