@@ -1,0 +1,48 @@
+vunit olo_axi_lite_slave (olo_axi_lite_slave) {
+
+    -- Default clock for PSL assertions
+    default clock is rising_edge(Clk);
+
+    -- Force a reset in the first clock cycle
+    assume_initial_reset: assume Rst = '1';
+
+    assume always Rb_Wr -> (unsigned(Rb_WrData) /= 0);
+
+    assert always ( Rb_Wr -> prev(S_AxiLite_WValid) ) abort Rst;
+
+    assert always ( (S_AxiLite_WValid and S_AxiLite_WReady) -> next S_AxiLite_BValid ) abort Rst;
+
+    assert always ( ( S_AxiLite_WReady and (not prev(S_AxiLite_WReady)) ) -> prev(S_AxiLite_AWReady) ) abort Rst;
+
+    assert always ( {S_AxiLite_WReady: S_AxiLite_WValid; Rb_Wr} |-> {Rb_WrData = prev(S_AxiLite_WData)} ) abort Rst;
+
+    --Valid_ReadData : assert always {S_AxiLite_RValid and S_AxiLite_RReady} |-> {S_AxiLite_RResp = "00"} abort Rst;
+
+    --assert always (Rb_Rd -> eventually! Rb_RdValid) abort Rst;
+
+    assert ( never (Rb_Rd and Rb_Wr) ) abort Rst;
+
+    cover{[*]; not Rst: Rb_Wr; [*]; not Rst: Rb_Wr; [*]; not Rst: Rb_Rd; (not Rst)[*10]; [*]; Rb_RdValid; [*]; not Rst: Rb_Rd; [*]; Rb_RdValid};
+
+    cover{[*]; not Rst: Rb_Wr; true[*10]};
+
+    cover{[*]; 
+    ((Rb_Rd = '0') and (Rb_RdValid = '0'))[*1];
+    ((Rb_Addr = x"10") and (Rb_Rd = '1') and (Rb_RdValid = '0'))[*1];
+    ((Rb_Rd = '0') and (Rb_RdValid = '1') and (Rb_RdData = x"DEADBEEF"))[*1];
+    ((Rb_Rd = '0') and (Rb_RdValid = '0'))[*2];
+    ((Rb_Addr = x"0C") and (Rb_Rd = '1') and (Rb_RdValid = '0'))[*1];
+    ((Rb_Rd = '0') and (Rb_RdValid = '0'))[*2];
+    ((Rb_Rd = '0') and (Rb_RdValid = '1') and (Rb_RdData = x"C001D00D"))[*1];
+    ((Rb_Rd = '0') and (Rb_RdValid = '0'))[*1]
+    };
+
+    cover{[*];
+    ((Rb_Wr = '0'))[*1];
+    ((Rb_Addr = x"10") and (Rb_Wr = '1') and (Rb_ByteEna = x"F") and (Rb_WrData = x"DEADBEEF"))[*1];
+    ((Rb_Wr = '0'))[*3];
+    ((Rb_Addr = x"0C") and (Rb_Wr = '1') and (Rb_ByteEna = x"C") and (Rb_WrData = x"C001D00D"))[*1];
+    ((Rb_Wr = '0'))[*3] 
+    };
+
+}
