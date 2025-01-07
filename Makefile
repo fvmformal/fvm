@@ -8,6 +8,7 @@
 VENV_DIR ?= .venv
 VENV_ACTIVATE ?= . $(VENV_DIR)/bin/activate &&
 PYTHON ?= python3
+POETRY_VERSION ?= 1.8.5
 
 # If VENV_DIR is unset, set REQS_DIR to . so the files "reqs_installed" and
 # "dev-reqs_installed" can be created
@@ -152,7 +153,7 @@ venv: $(VENV_DIR)/venv_created
 $(VENV_DIR)/venv_created:
 	python3 -m venv $(VENV_DIR)
 	$(VENV_ACTIVATE) python3 -m ensurepip --upgrade
-	$(VENV_ACTIVATE) pip3 install poetry
+	$(VENV_ACTIVATE) pip3 install poetry==$(POETRY_VERSION)
 	$(VENV_ACTIVATE) poetry config keyring.enabled false
 	touch $@
 
