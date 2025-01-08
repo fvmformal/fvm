@@ -15,9 +15,5 @@ fvm.add_psl_source("examples/axi_lite_slave/olo_axi_lite_slave.psl")
 
 fvm.set_toplevel("olo_axi_lite_slave")
 
-fvm.skip('lint')
-fvm.skip('friendliness')
 fvm.skip('reachability')
-fvm.skip('resets')
-fvm.skip('clocks')
 fvm.run()
