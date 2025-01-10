@@ -1,0 +1,14 @@
+vunit olo_axi_master_simple (olo_axi_master_simple) {
+
+    -- Default clock for PSL assertions
+    default clock is rising_edge(Clk);
+
+    -- Force a reset in the first clock cycle
+    assume_initial_reset: assume Rst = '1';
+
+    assert (never (Wr_Done and Wr_Error) ) abort Rst;
+    assert always (Wr_Done -> prev(M_Axi_BValid)) abort Rst;
+    cover{Rst;[*];Wr_Done:not Rst};
+    cover{Rst;[*];Wr_Error: not Rst};
+
+}
