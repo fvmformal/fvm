@@ -2,8 +2,6 @@ vunit colors (colors(behavioral)) {
 
     use work.colors_external.all;
 
-    type elnene_t is (caca, culo, pedo, pis);
-
     -- Default clock for PSL assertions
     default clock is rising_edge(clk);
 
