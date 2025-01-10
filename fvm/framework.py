@@ -801,7 +801,7 @@ class fvmframework:
                 print(f'netlist blackbox {blackbox}', file=f)
 
             for blackbox_instance in self.blackbox_instances:
-                print(f'netlist blackbox_instance {blackbox_instance}', file=f)
+                print(f'netlist blackbox instance {blackbox_instance}', file=f)
 
             for cutpoint in self.cutpoints:
                 string = f'netlist cutpoint {cutpoint["signal"]}'
