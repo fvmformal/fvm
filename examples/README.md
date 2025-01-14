@@ -35,3 +35,5 @@ of each example, although it may vary depending on the generics.
    AXI4 and AXI Lite. Medium to verify. Friendliness score: 62.89%.
 - [``axi_master_full``](axi_master_full): A module that initiates AXI4 transactions as a 
   master. Difficult to verify. Friendliness score: 59.97%.
+- [``udp``](udp): Friendliness score: 24.79%
+- [``IPV4Engine``](udp): Friendliness score: 23.59%
