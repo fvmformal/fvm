@@ -1,0 +1,159 @@
+vunit olo_axi_master_simple (olo_axi_master_simple) {
+
+  use work.axi_master_common.all;
+
+  -- Default clock for PSL assertions
+  default clock is rising_edge(Clk);
+
+  -- Force a reset in the first clock cycle
+  assume_initial_reset: assume Rst = '1';
+
+  -- This way is easier to visualize data (NOT A NECESSARY ASSUME)
+  assume_always_write_valid_not_0:
+    assume always Wr_Valid -> not(unsigned(Wr_Data) = 0);
+
+  -- This way is easier to visualize data (NOT A NECESSARY ASSUME)
+  assume_always_write_valid_data_changes:
+    assume always ( Wr_Valid -> (Wr_Data /= prev(Wr_Data)) ) abort Rst;
+
+  -- This way is easier to visualize data (NOT A NECESSARY ASSUME)
+  assume_always_CmdRd_Valid_size_not_0:
+    assume always ( CmdRd_Valid -> (unsigned(CmdRd_Size) /= 0) ) abort Rst;
+
+  -- This way is easier to visualize data (NOT A NECESSARY ASSUME)
+  assume_always_CmdRd_Valid_addr_not_0:
+    assume always ( CmdRd_Valid -> (unsigned(CmdRd_Addr) /= 0) ) abort Rst;
+
+  --assume always Wr_Valid -> not(unsigned(CmdWr_Addr) = 0);
+  --assume always Wr_Valid -> not(unsigned(CmdWr_Size) = 0);
+
+  -- Wr_valid is an input that only activates
+  -- when Wr_ready is '1'
+  assume_always_not_wr_ready_not_wr_walid:
+    assume always (not Wr_Ready -> not Wr_Valid) abort Rst;
+
+  -- CmdWr_Valid is an input that only activates
+  -- when CmdWr_Ready is '1'
+  assume_always_not_cmdwr_ready_not_cmdwr_valid:
+    assume always (not CmdWr_Ready -> not CmdWr_Valid) abort Rst;
+
+  -- CmdRd_Valid is an input that only activates
+  -- when CmdRd_Ready is '1' 
+  assume_always_not_cmdrd_ready_not_cmdrd_valid:
+    assume always (not CmdRd_Ready -> not CmdRd_Valid) abort Rst;
+
+  -- To simplify verification, only the high latency mode.
+  -- Obviously, in exhaustive verification, it must be verified.
+  assume_high_latency_mode:
+    assume never CmdWr_LowLat;
+
+  -- ASSERT CONSTANT OUTPUTS
+  assert_constant_M_Axi_AwSize:
+    assert always M_Axi_AwSize = std_logic_vector(to_unsigned(log2(AxiDataWidth_g / 8), 3));
+
+  assert_constant_M_Axi_ArSize:
+    assert always M_Axi_ArSize = std_logic_vector(to_unsigned(log2(AxiDataWidth_g / 8), 3));
+
+  assert_constant_M_Axi_ArBurst:
+    assert always M_Axi_ArBurst = AxiBurst_Incr_c;
+  
+  assert_constant_M_Axi_AwBurst:
+    assert always M_Axi_AwBurst = AxiBurst_Incr_c;
+
+  assert_constant_M_Axi_AwCache:
+    assert always M_Axi_AwCache = "0011";
+  
+  assert_constant_M_Axi_ArCache:
+    assert always M_Axi_ArCache = "0011";
+
+  assert_constant_M_Axi_AwProt:
+    assert always M_Axi_AwProt = "000";
+
+  assert_constant_M_Axi_ArProt:
+    assert always M_Axi_ArProt = "000";
+
+  assert_constant_M_Axi_AwLock:
+    assert never M_Axi_AwLock;
+
+  assert_constant_M_Axi_ArLock:  
+    assert never M_Axi_ArLock;
+
+  assert_constant_M_Axi_BReady:
+    assert always M_Axi_BReady;
+
+  -- READ ASSERTIONS
+  -- User commands read
+  -- Channel AR gets requested address
+  -- Channel R sends the requested data
+  -- User receives the requested data
+
+  assert_never_read_done_and_err:
+    assert (never (Rd_Done and Rd_Error) ) abort Rst;
+
+  assert_always_read_done_prev_M_Axi_RLast:
+    assert always ( Rd_Done -> prev(M_Axi_RLast) ) abort Rst;
+
+  assert_always_read_err_prev_M_Axi_RLast:  
+    assert always ( Rd_Error -> prev(M_Axi_RLast) ) abort Rst;
+
+  assert_never_CmdRd_Ready_and_M_Axi_ArValid:
+    assert (never (CmdRd_Ready and M_Axi_ArValid) ) abort Rst;
+
+  assert_always_CmdRd_Valid_next_not_CmdRd_Ready:
+    assert always ( {CmdRd_Valid} |=> {not CmdRd_Ready} ) abort Rst;
+
+  assert_read_address_is_correct:
+    assert always ( {CmdRd_Valid: not M_Axi_ArValid; (not M_Axi_ArValid)[*4]; M_Axi_ArValid: M_Axi_ArReady} 
+    |-> {M_Axi_ArAddr = maskBits(prev(CmdRd_Addr,5))} ) abort Rst;
+
+  --assert always ( M_Axi_ArValid -> prev(Rd_Ready) ) abort Rst;
+
+  --assert always ( (CmdRd_Valid and CmdRd_Ready) -> eventually! M_Axi_ArValid) abort Rst;
+
+  -- WRITE ASSERTIONS
+  -- User commands write
+  -- User sends the data
+  -- Channel AW gets the write address
+  -- Channel W writes data
+  -- Channel B acknowledges the write
+
+  -- Wr_Ready es igual a 0 excepto cuando su FIFO (i_fifo_wr_data) está llena 
+  -- assert always ( (not i_fifo_rd_data.Full) -> Wr_Ready ) abort Rst;
+  -- assert always ( Wr_Ready) abort Rst;
+
+  assert_never_write_done_and_err:
+    assert (never (Wr_Done and Wr_Error) ) abort Rst;
+
+  assert_always_write_done_prev_M_Axi_BValid:
+    assert always ( Wr_Done -> prev(M_Axi_BValid) ) abort Rst;
+
+  assert_always_write_err_prev_M_Axi_BValid:
+    assert always ( Wr_Error -> prev(M_Axi_BValid) ) abort Rst;
+  
+  assert_stable_M_Axi_AwAddr_when_M_Axi_AwReady_0:
+    assert always ( {M_Axi_AwValid = '1': M_Axi_AwReady = '0'} |=> {stable(M_Axi_AwAddr)} ) abort Rst;
+  
+  --assert always ( {M_Axi_BResp /= AxiResp_Okay_c: M_Axi_BValid: M_Axi_BReady} |=> {Wr_Error} ) abort Rst;
+
+  assert_always_write_done_prev_respOK:
+    assert always ( Wr_Done -> prev(M_Axi_BResp = AxiResp_Okay_c) ) abort Rst;
+  --assert always ( Wr_Error -> prev(M_Axi_BResp /= AxiResp_Okay_c) ) abort Rst;
+  --assert always ( {not M_Axi_WValid: M_Axi_BValid: M_Axi_BResp /= AxiResp_Okay_c} |=> Wr_Error) abort Rst;
+
+  sequence transmission is {
+    M_Axi_WValid:
+    M_Axi_WReady
+  };
+
+  sequence input_tran_read is {
+    CmdRd_Valid:
+    CmdRd_Ready:
+    (unsigned(CmdRd_Addr) = 100):
+    (unsigned(CmdRd_Size) = 10)
+  };
+
+  cover{Rst;[*];Wr_Done:not Rst};
+  cover{Rst;[*];Wr_Error: not Rst};
+  cover{transmission[*6]; [*]; M_Axi_BValid; [*]; Wr_Done};
+  cover{Rst;[*];input_tran_read;(not Rst)[*];M_Axi_ArValid: not Rst: unsigned(M_Axi_ArAddr) = 100; (not Rst)[*]; (not Rst and M_Axi_RValid)[=5]; (not Rst)[*]; M_Axi_RLast; (not Rst)[*] ;Rd_Done};
+  }
