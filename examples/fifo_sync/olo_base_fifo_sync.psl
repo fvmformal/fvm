@@ -1,7 +1,8 @@
 vunit olo_base_fifo_sync (olo_base_fifo_sync(rtl)) {
 
-    inherit fifo_sync_common;
+    --inherit fifo_sync_common;
 
+    use work.fifo_sync_common.all;
     -- Default clock for PSL assertions
     default clock is rising_edge(Clk);
 
@@ -144,22 +145,38 @@ vunit olo_base_fifo_sync (olo_base_fifo_sync(rtl)) {
     type input_tran_matrix is array(0 to 8, 0 to 7) of input_tran_in_data;
     signal input_trans : input_tran_matrix;
 
-    %for i in 0..8 do
-        %for j in 0..7 do
-            input_trans(i, j).level <= std_logic_vector(to_unsigned(i, input_trans(i, j).level'length));
-            input_trans(i, j).data <= std_logic_vector(to_unsigned(j, input_trans(i, j).data'length));
+    signal data_assert: std_logic_vector(Width_g-1  downto 0);
+    assume always stable(data_assert);
 
-            %if i = 0 %then
-                assert predict_level_0(input_trans(i, j));
-            %else
-                -- Different combinations because latency 1
-                assert predict(input_trans(i, j), i + 1);
-                assert predict_b(input_trans(i, j), i);
-                assert predict_c(input_trans(i, j), i - 1);
-                assert predict_d(input_trans(i, j), i);
-            %end
-        %end
-    %end
+    input_trans(0, 4).level <= "0000000";
+    input_trans(0, 4).data <= data_assert;
+
+    assert predict_level_0(input_trans(0, 4));
+
+    input_trans(1, 4).level <= "0000001";
+    input_trans(1, 4).data <= data_assert;
+
+    level_1_a: assert predict(input_trans(1, 4), 1 + 1);
+    level_1_b: assert predict_b(input_trans(1, 4), 1);
+    -- Vacuous
+    level_1_c: assert predict_c(input_trans(1, 4), 1 - 1);
+    level_1_d: assert predict_d(input_trans(1, 4), 1);
+
+    input_trans(5, 4).level <= "0000101";
+    input_trans(5, 4).data <= data_assert;
+
+    level_5_a: assert predict(input_trans(5, 4), 5 + 1);
+    level_5_b: assert predict_b(input_trans(5, 4), 5);
+    level_5_c: assert predict_c(input_trans(5, 4), 5 - 1);
+    level_5_d: assert predict_d(input_trans(5, 4), 5);
+
+    input_trans(7, 4).level <= "0111111";
+    input_trans(7, 4).data <= data_assert;
+
+    --level_7_a: assert predict(input_trans(7, 4), 31 + 1);
+    --level_7_b: assert predict_b(input_trans(7, 4), 31);
+    --level_7_c: assert predict_c(input_trans(7, 4), 31 - 1);
+    --level_7_d: assert predict_d(input_trans(7, 4), 31);
 
     sequence write_FIFO is {
         [*];
@@ -184,7 +201,7 @@ vunit olo_base_fifo_sync (olo_base_fifo_sync(rtl)) {
 
     -- Cover all the important events in a FIFO: write, read,
     -- full, empty...
-    cover_write_and_read_FIFO: cover{write_FIFO; read_FIFO;write_FIFO;[*];Full;(not Rst)[*10];Empty;In_Level = "0000";In_Level = "0000";In_Level = "0000";[*];Full};
+    cover_write_and_read_FIFO: cover{write_FIFO; read_FIFO;write_FIFO;[*];Full;(not Rst)[*10];Empty;unsigned(In_Level) = 0;unsigned(In_Level) = 0;unsigned(In_Level) = 0;[*];Full};
     
     -- Generate multiple covers with a for loop
     --%for j in 1..10 do
