@@ -148,12 +148,12 @@ vunit olo_base_fifo_sync (olo_base_fifo_sync(rtl)) {
     signal data_assert: std_logic_vector(Width_g-1  downto 0);
     assume always stable(data_assert);
 
-    input_trans(0, 4).level <= "0000000";
+    input_trans(0, 4).level <= "00000";
     input_trans(0, 4).data <= data_assert;
 
     assert predict_level_0(input_trans(0, 4));
 
-    input_trans(1, 4).level <= "0000001";
+    input_trans(1, 4).level <= "00001";
     input_trans(1, 4).data <= data_assert;
 
     level_1_a: assert predict(input_trans(1, 4), 1 + 1);
@@ -162,7 +162,7 @@ vunit olo_base_fifo_sync (olo_base_fifo_sync(rtl)) {
     level_1_c: assert predict_c(input_trans(1, 4), 1 - 1);
     level_1_d: assert predict_d(input_trans(1, 4), 1);
 
-    input_trans(5, 4).level <= "0000101";
+    input_trans(5, 4).level <= "00101";
     input_trans(5, 4).data <= data_assert;
 
     level_5_a: assert predict(input_trans(5, 4), 5 + 1);
@@ -170,13 +170,13 @@ vunit olo_base_fifo_sync (olo_base_fifo_sync(rtl)) {
     level_5_c: assert predict_c(input_trans(5, 4), 5 - 1);
     level_5_d: assert predict_d(input_trans(5, 4), 5);
 
-    input_trans(7, 4).level <= "0111111";
+    input_trans(7, 4).level <= "01111";
     input_trans(7, 4).data <= data_assert;
 
-    --level_7_a: assert predict(input_trans(7, 4), 31 + 1);
-    --level_7_b: assert predict_b(input_trans(7, 4), 31);
-    --level_7_c: assert predict_c(input_trans(7, 4), 31 - 1);
-    --level_7_d: assert predict_d(input_trans(7, 4), 31);
+    level_7_a: assert predict(input_trans(7, 4), 32 + 1);
+    level_7_b: assert predict_b(input_trans(7, 4), 32);
+    level_7_c: assert predict_c(input_trans(7, 4), 32 - 1);
+    level_7_d: assert predict_d(input_trans(7, 4), 32);
 
     sequence write_FIFO is {
         [*];

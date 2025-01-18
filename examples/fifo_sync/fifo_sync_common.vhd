@@ -7,7 +7,7 @@ use work.olo_base_pkg_math.all;
 package fifo_sync_common is
 
     constant Width_g : integer := 8;
-    constant Depth_g : integer := 128;
+    constant Depth_g : integer := 32;
 
     type input_tran_in_data is record
         data : std_logic_vector(Width_g - 1 downto 0);

@@ -1,8 +1,0 @@
-vunit fifo_sync_common {
-
-    type input_tran_in_data is record
-        data : std_logic_vector(Width_g - 1 downto 0);
-        level: std_logic_vector(log2ceil(Depth_g + 1) - 1 downto 0);  
-    end record;
-
-}
