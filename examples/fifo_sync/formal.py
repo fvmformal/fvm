@@ -17,7 +17,7 @@ fvm.set_toplevel("olo_base_fifo_sync")
 #fvm.add_config("olo_base_fifo_sync", "config_width_3_depth_16", {"Width_g": 3, "Depth_g": 16})
 #fvm.add_config("olo_base_fifo_sync", "config_width_8_depth_16", {"Width_g": 8, "Depth_g": 16})
 #fvm.add_config("olo_base_fifo_sync", "config_width_8_depth_128", {"Width_g": 8, "Depth_g": 128})
-fvm.add_config("olo_base_fifo_sync", "config_width_8_depth_32", {"Width_g": 8, "Depth_g": 32})
+fvm.add_config("olo_base_fifo_sync", "config_width_8_depth_32", {"Width_g": 8, "Depth_g": 8})
 
 #fvm.skip('lint')
 #fvm.skip('friendliness')
