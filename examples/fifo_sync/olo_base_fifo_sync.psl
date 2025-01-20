@@ -173,10 +173,10 @@ vunit olo_base_fifo_sync (olo_base_fifo_sync(rtl)) {
     input_trans(7, 4).level <= "01111";
     input_trans(7, 4).data <= data_assert;
 
-    level_7_a: assert predict(input_trans(7, 4), 32 + 1);
-    level_7_b: assert predict_b(input_trans(7, 4), 32);
-    level_7_c: assert predict_c(input_trans(7, 4), 32 - 1);
-    level_7_d: assert predict_d(input_trans(7, 4), 32);
+    level_7_a: assert predict(input_trans(7, 4), 15 + 1);
+    level_7_b: assert predict_b(input_trans(7, 4), 15);
+    level_7_c: assert predict_c(input_trans(7, 4), 15 - 1);
+    level_7_d: assert predict_d(input_trans(7, 4), 15);
 
     sequence write_FIFO is {
         [*];
