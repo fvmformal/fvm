@@ -145,16 +145,13 @@ vunit olo_base_fifo_sync (olo_base_fifo_sync(rtl)) {
     type input_tran_matrix is array(0 to 8, 0 to 7) of input_tran_in_data;
     signal input_trans : input_tran_matrix;
 
-    signal data_assert: std_logic_vector(Width_g-1  downto 0);
-    assume always stable(data_assert);
-
-    input_trans(0, 4).level <= "000";
-    input_trans(0, 4).data <= data_assert;
+    input_trans(0, 4).level <= "0000";
+    input_trans(0, 4).data <= "010";
 
     assert predict_level_0(input_trans(0, 4));
 
-    input_trans(1, 4).level <= "001";
-    input_trans(1, 4).data <= data_assert;
+    input_trans(1, 4).level <= "0001";
+    input_trans(1, 4).data <= "100";
 
     level_1_a: assert predict(input_trans(1, 4), 1 + 1);
     level_1_b: assert predict_b(input_trans(1, 4), 1);
@@ -162,16 +159,16 @@ vunit olo_base_fifo_sync (olo_base_fifo_sync(rtl)) {
     level_1_c: assert predict_c(input_trans(1, 4), 1 - 1);
     level_1_d: assert predict_d(input_trans(1, 4), 1);
 
-    input_trans(5, 4).level <= "101";
-    input_trans(5, 4).data <= data_assert;
+    input_trans(5, 4).level <= "0101";
+    input_trans(5, 4).data <= "001";
 
     level_5_a: assert predict(input_trans(5, 4), 5 + 1);
     level_5_b: assert predict_b(input_trans(5, 4), 5);
     level_5_c: assert predict_c(input_trans(5, 4), 5 - 1);
     level_5_d: assert predict_d(input_trans(5, 4), 5);
 
-    input_trans(7, 4).level <= "111";
-    input_trans(7, 4).data <= data_assert;
+    input_trans(7, 4).level <= "0111";
+    input_trans(7, 4).data <= "111";
 
     level_7_a: assert predict(input_trans(7, 4), 7 + 1);
     level_7_b: assert predict_b(input_trans(7, 4), 7);

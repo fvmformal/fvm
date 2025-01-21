@@ -6,7 +6,7 @@ use work.olo_base_pkg_math.all;
 
 package fifo_sync_common is
 
-    constant Width_g : integer := 8;
+    constant Width_g : integer := 3;
     constant Depth_g : integer := 8;
 
     type input_tran_in_data is record
