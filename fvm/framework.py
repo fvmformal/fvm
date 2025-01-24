@@ -40,6 +40,7 @@ def getlogformattool(design, step, tool):
 FVM_STEPS = [
     'lint',
     'friendliness',
+    'rule-checking',
     'reachability',
     'resets',
     'clocks',
@@ -571,6 +572,7 @@ class fvmframework:
             self.create_f_file(f'{path}/properties.f', self.psl_sources)
             self.genlintscript("lint.do", path)
             self.genfriendlinessscript("friendliness.do", path)
+            self.genrule_checkingscript("rule-checking.do", path)
             self.genreachabilityscript("reachability.do", path)
             self.genresetscript("resets.do", path)
             self.genclockscript("clocks.do", path)
@@ -717,7 +719,17 @@ class fvmframework:
         self.gencompilescript(filename, path)
         with open(path+'/'+filename, "a") as f:
             print(f'autocheck compile {self.get_tool_flags("autocheck compile")} -d {self.current_toplevel} {self.generic_args}', file=f)
-            print(f'autocheck verify {self.get_tool_flags("autocheck verify")}', file=f)
+            print('exit', file=f)
+
+    # TODO : set sensible defaults here and allow for user optionality too
+    def genrule_checkingscript(self, filename, path):
+        """Generate script to run AutoCheck, which also generates a report we
+        analyze to determine the design's formal-friendliness"""
+        self.gencompilescript(filename, path)
+        with open(path+'/'+filename, "a") as f:
+            print(f'autocheck report inconclusives', file=f)
+            print(f'autocheck compile {self.get_tool_flags("autocheck compile")} -d {self.current_toplevel} {self.generic_args}', file=f)
+            print(f'autocheck verify {self.get_tool_flags("autocheck verify")} -timeout 1m', file=f)
             print('exit', file=f)
 
     # TODO : set sensible defaults here and allow for user optionality too,
@@ -789,7 +801,6 @@ class fvmframework:
             print('', file=f)
             print('## Run PropCheck', file=f)
             #print('log_info "***** Running formal compile (compiling formal model)..."', file=f)
-
             print('formal compile ', end='', file=f)
             print(f'-d {self.current_toplevel} {self.generic_args} ', end='', file=f)
             for i in self.psl_sources :
@@ -801,7 +812,7 @@ class fvmframework:
                 print(f'netlist blackbox {blackbox}', file=f)
 
             for blackbox_instance in self.blackbox_instances:
-                print(f'netlist blackbox_instance {blackbox_instance}', file=f)
+                print(f'netlist blackbox instance {blackbox_instance}', file=f)
 
             for cutpoint in self.cutpoints:
                 string = f'netlist cutpoint {cutpoint["signal"]}'
