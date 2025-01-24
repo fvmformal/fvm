@@ -40,7 +40,6 @@ def getlogformattool(design, step, tool):
 # Steps, in order of execution, of the methodology
 FVM_STEPS = [
     'lint',
-    'xcheck',
     'friendliness',
     'rule-checking',
     'reachability',
