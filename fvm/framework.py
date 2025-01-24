@@ -16,6 +16,7 @@ import argparse
 from loguru import logger
 from rich.console import Console
 from rich.text import Text
+from collections import OrderedDict
 
 # Our own imports
 from fvm import toolchains
@@ -165,6 +166,7 @@ class fvmframework:
         self.toplevel = list()
         self.current_toplevel = ''
         self.vhdl_sources = list()
+        self.libraries_from_vhdl_sources = list()
         self.psl_sources = list()
         self.skip_list = list()
         self.disabled_coverage = list()
@@ -196,7 +198,21 @@ class fvmframework:
                 logger.error(f'step {args.step} not available in {self.toolchain}. Available steps are: {list(toolchains.TOOLS[self.toolchain].keys())}')
                 self.exit_if_required(BAD_VALUE)
 
-    def add_vhdl_source(self, src):
+    def run_command(self, command):
+        """Execute a system command and handle errors."""
+        try:
+            result = subprocess.run(command, shell=True, check=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            logger.info(f'Command succeeded: {command}')
+            logger.debug(f'STDOUT: {result.stdout.strip()}')
+            if result.stderr.strip():
+                logger.debug(f'STDERR: {result.stderr.strip()}')
+            return result.stdout.strip()
+        except subprocess.CalledProcessError as e:
+            logger.error(f'Command failed: {command}')
+            logger.error(f'Error: {e.stderr.strip()}')
+            raise
+
+    def add_vhdl_source(self, src, library="work"):
         """Add a single VHDL source"""
         logger.info(f'Adding VHDL source: {src}')
         if not os.path.exists(src) :
@@ -206,7 +222,43 @@ class fvmframework:
         if extension not in ['.vhd', '.VHD', '.vhdl', '.VHDL'] :
             logger.warning(f'VHDL source {src=} does not have a typical VHDL extension, instead it has {extension=}')
         self.vhdl_sources.append(src)
+        self.libraries_from_vhdl_sources.append(library)
         logger.debug(f'{self.vhdl_sources=}')
+
+    def add_external_library(self, name, src):
+        """Add an external library"""
+        logger.info(f'Adding the external library: {name} from {src}')
+        if not os.path.exists(src) :
+            logger.error(f'External library not found: {name} from {src}')
+            self.exit_if_required(BAD_VALUE)
+        try:
+            logger.info(f'Compiling library {name} from {src}')
+            self.run_command(f'vlib {name}')
+            self.run_command(f'vmap {name} {name}')
+            vhdl_files = [os.path.join(root, file) 
+                        for root, _, files in os.walk(src) 
+                        for file in files if file.endswith(('.vhd', '.VHD', '.vhdl', '.VHDL'))]
+            if vhdl_files:
+                logger.info(f'Compiling VHDL files for external library {name}')
+                self.run_command(f'vcom -work {name} -{self.vhdlstd} -autoorder {" ".join(vhdl_files)}')
+        except Exception as e:
+            logger.error(f'Error compiling library {name}: {e}')
+            self.exit_if_required(BAD_VALUE)
+        logger.info(f'Successfully added and mapped library {name}')
+
+    def add_precompiled_library(self, name, path):
+        """Add a precompiled external library"""
+        logger.info(f'Adding precompiled library: {name} from {path}')
+        if not os.path.exists(path):
+            logger.error(f'Precompiled library path not found: {path}')
+            self.exit_if_required(BAD_VALUE)
+        try:
+            logger.info(f'Mapping precompiled library {name} to {path}')
+            self.run_command(f'vmap {name} {path}')
+        except Exception as e:
+            logger.error(f'Error mapping precompiled library {name}: {e}')
+            self.exit_if_required(BAD_VALUE)
+        logger.info(f'Successfully mapped precompiled library {name}')
 
     def clear_vhdl_sources(self):
         """Removes all VHDL sources from the project"""
@@ -230,14 +282,14 @@ class fvmframework:
         logger.info(f'Removing all PSL sources')
         self.psl_sources = []
 
-    def add_vhdl_sources(self, globstr):
+    def add_vhdl_sources(self, globstr, library="work"):
         """Add multiple VHDL sources by globbing a pattern"""
         sources = glob.glob(globstr)
         if len(sources) == 0 :
             logger.error(f'No files found for pattern {globstr}')
             self.exit_if_required(BAD_VALUE)
         for source in sources:
-            self.add_vhdl_source(source)
+            self.add_vhdl_source(source, library)
 
     def add_psl_sources(self, globstr):
         """Add multiple PSL sources by globbing a pattern"""
@@ -583,18 +635,25 @@ class fvmframework:
         # TODO : we must also compile the Verilog sources, if they exist
         # TODO : we must check for the case of only-verilog designs (no VHDL files)
         # TODO : we must check for the case of only-VHDL designs (no verilog files)
-        # TODO : support libraries other than work (see #154)
+        library_path = f"libraries" 
+        os.makedirs(library_path, exist_ok=True) 
         """ This is used as header for the other scripts, since we need to have
         a compiled netlist in order to do anything"""
-        with open(path+'/'+filename, "w") as f:
+        with open(path + '/' + filename, "w") as f:
             print('onerror exit', file=f)
-            print('if {[file exists work]} {',file=f)
-            print('    vdel -all', file=f)
-            print('}', file=f)
-            print(f'vlib {self.get_tool_flags("vlib")} work', file=f)
-            print(f'vmap {self.get_tool_flags("vmap")} work work', file=f)
-            print(f'vcom {self.get_tool_flags("vcom")} -{self.vhdlstd} -autoorder -f {path}/design.f', file=f)
-            print('', file=f)
+            ordered_libraries = OrderedDict.fromkeys(self.libraries_from_vhdl_sources) 
+            for lib in ordered_libraries:
+                lib_dir = f"{library_path}/{lib}"  
+                print(f'if {{[file exists {lib_dir}]}} {{', file=f)
+                print(f'    vdel -lib {lib_dir} -all', file=f)
+                print('}', file=f)
+                print(f'vlib {self.get_tool_flags("vlib")} {lib_dir}', file=f)
+                print(f'vmap {self.get_tool_flags("vmap")} {lib} {lib_dir}', file=f)
+                lib_sources = [src for src, library in zip(self.vhdl_sources, self.libraries_from_vhdl_sources) if library == lib]
+                f_file_path = f'{path}/{lib}_design.f'
+                self.create_f_file(f_file_path, lib_sources)
+                print(f'vcom {self.get_tool_flags("vcom")} -{self.vhdlstd} -work {lib} -autoorder -f {f_file_path}', file=f)
+                print('', file=f)
 
     def gen_reset_config(self, filename, path):
         with open(path+'/'+filename, "a") as f:
