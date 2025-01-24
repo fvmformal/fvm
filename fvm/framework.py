@@ -10,13 +10,13 @@ import pathlib
 import fnmatch
 from datetime import datetime
 from io import StringIO
+from collections import OrderedDict
 
 # Third party imports
 import argparse
 from loguru import logger
 from rich.console import Console
 from rich.text import Text
-from collections import OrderedDict
 
 # Our own imports
 from fvm import toolchains
@@ -40,6 +40,7 @@ def getlogformattool(design, step, tool):
 # Steps, in order of execution, of the methodology
 FVM_STEPS = [
     'lint',
+    'xcheck',
     'friendliness',
     'rule-checking',
     'reachability',
