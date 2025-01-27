@@ -7,13 +7,7 @@ fvm = fvmframework()
 subprocess.run(['git', 'clone', '--recurse-submodules=:src', 
 'https://github.com/open-logic/open-logic'])
 
-fvm.add_vhdl_source("open-logic/src/base/vhdl/olo_base_fifo_async.vhd")
-fvm.add_vhdl_source("open-logic/src/base/vhdl/olo_base_pkg_array.vhd")
-fvm.add_vhdl_source("open-logic/src/base/vhdl/olo_base_pkg_logic.vhd")
-fvm.add_vhdl_source("open-logic/src/base/vhdl/olo_base_pkg_math.vhd")
-fvm.add_vhdl_source("open-logic/src/base/vhdl/olo_base_cc_bits.vhd")
-fvm.add_vhdl_source("open-logic/src/base/vhdl/olo_base_cc_reset.vhd")
-fvm.add_vhdl_source("open-logic/src/base/vhdl/olo_base_ram_sdp.vhd")
+fvm.add_vhdl_sources("open-logic/src/base/vhdl/*.vhd")
 
 fvm.add_psl_source("examples/fifo_async/olo_base_fifo_async.psl")
 
