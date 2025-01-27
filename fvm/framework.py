@@ -22,6 +22,8 @@ from rich.text import Text
 from fvm import toolchains
 from fvm import logcounter
 from fvm import helpers
+from fvm import generate_test_cases
+from fvm import parse_reports
 from fvm.parse_design_rpt import *
 
 # Error codes
@@ -165,6 +167,7 @@ class fvmframework:
         # this, maybe defining a structure per toplevel
         self.toplevel = list()
         self.current_toplevel = ''
+        self.start_time_setup = None
         self.vhdl_sources = list()
         self.libraries_from_vhdl_sources = list()
         self.psl_sources = list()
@@ -931,6 +934,7 @@ class fvmframework:
         """Run everything"""
         self.init_results()
 
+        self.start_time_setup = datetime.now().isoformat()
         # TODO: correctly manage self.list here (self.list is True if -l or
         # --list was provided as a command-line argument)
 
@@ -944,6 +948,7 @@ class fvmframework:
 
         self.pretty_summary()
         self.generate_reports()
+        self.generate_allure()
         err = self.check_errors()
         if err :
           self.exit_if_required(CHECK_FAILED)
@@ -1559,6 +1564,113 @@ class fvmframework:
         console.print(text)
         console.print(text_footer)
 
+    def clear_directory(self, directory_path):
+        try:
+            if os.path.exists(directory_path) and os.path.isdir(directory_path):
+                for item in os.listdir(directory_path):
+                    item_path = os.path.join(directory_path, item)
+
+                    if os.path.isdir(item_path):
+                        shutil.rmtree(item_path)
+                    else:
+                        os.remove(item_path)
+        except Exception as e:
+            print(f"Error occurred while clearing the directory: {e}")
+
+    def generate_allure(self):
+
+        self.clear_directory("fvm_out/dashboard/allure-results")
+        file_path = "fvm_out/dashboard"
+        os.makedirs(file_path, exist_ok=True)
+        file_path = "fvm_out/dashboard/allure-results"
+        os.makedirs(file_path, exist_ok=True)        
+        file_path = "fvm_out/dashboard/allure-report"
+        os.makedirs(file_path, exist_ok=True)
+
+        for design in self.designs:
+            for step in FVM_STEPS + FVM_POST_STEPS:
+                if 'status' in self.results[design][step] and self.results[design][step]['status'] != "skip":
+                    status = self.results[design][step]['status']
+                    custom_status_string = None
+                    if self.results[design][step]['status'] == "pass":
+                        status = "passed"
+                    elif self.results[design][step]['status'] == "fail":
+                        status = "failed"
+                    start_time_str = self.results[design][step]['timestamp']
+                    start_time_obj = datetime.fromisoformat(start_time_str)
+                    start_time_sec = start_time_obj.timestamp()
+                    start_time = int(start_time_sec * 1000)
+                    stop_time = start_time + self.results[design][step]["elapsed_time"] * 1000
+                    if 'stdout' in self.results[design][step]:
+                        stdout = self.results[design][step]['stdout']
+                    if step == 'reachability':
+                        reachability_rpt_path = f'{self.outdir}/{design}/covercheck_verify.rpt'
+                        reachability_html_path = f'{self.outdir}/{design}/reachability.html'
+                        if os.path.exists(reachability_rpt_path):
+                            parse_reports.parse_reachability_report_to_html(reachability_rpt_path, reachability_html_path)
+                            reachability_html = reachability_html_path
+                        else:
+                            reachability_html = None                    
+                    else:
+                        reachability_html = None
+                    if step == 'friendliness' and status == "passed":
+                        friendliness_score = self.results[design][step]['score']
+                    else:
+                        friendliness_score = None
+                    observability_html = None   
+                    formal_reachability_html = None   
+                    formal_signoff_html = None   
+                    if step == 'prove':
+                        property_summary = generate_test_cases.parse_property_summary(f'{self.outdir}/{design}/{step}.log')
+                        formal_signoff_html = None   
+                        if not self.is_disabled('observability'):
+                            observability_rpt_path = f'{self.outdir}/{design}/formal_observability.rpt'
+                            observability_html_path = f'{self.outdir}/{design}/formal_observability.html'
+                            if os.path.exists(observability_rpt_path):
+                                parse_reports.parse_formal_observability_report_to_html(observability_rpt_path, observability_html_path)
+                                observability_html = observability_html_path
+                            else:
+                                observability_html = None   
+                        if not self.is_disabled('reachability'):
+                            formal_reachability_rpt_path = f'{self.outdir}/{design}/formal_reachability.rpt'
+                            formal_reachability_html_path = f'{self.outdir}/{design}/formal_reachability.html'
+                            if os.path.exists(formal_reachability_rpt_path):
+                                parse_reports.parse_formal_reachability_report_to_html(formal_reachability_rpt_path, formal_reachability_html_path)
+                                formal_reachability_html = formal_reachability_html_path
+                            else:
+                                formal_reachability_html = None   
+                        if not self.is_disabled('signoff'):
+                            formal_signoff_rpt_path = f'{self.outdir}/{design}/formal_signoff.rpt'
+                            formal_signoff_html_path = f'{self.outdir}/{design}/formal_signoff.html'
+                            if os.path.exists(formal_signoff_rpt_path):
+                                parse_reports.parse_formal_signoff_report_to_html(formal_signoff_rpt_path, formal_signoff_html_path)
+                                formal_signoff_html = formal_signoff_html_path
+                            else:
+                                formal_signoff_html = None   
+                    else:
+                        property_summary = None
+                        observability_html = None   
+                        formal_reachability_html = None
+                        formal_signoff_html = None
+                    generate_test_cases.generate_test_case( design, status=status, 
+                                                            start_time=start_time, stop_time=stop_time, step=step,
+                                                            stdout = stdout, property_summary = property_summary,
+                                                            reachability_html = reachability_html,
+                                                            friendliness_score=friendliness_score,
+                                                            observability_html=observability_html,
+                                                            formal_reachability_html=formal_reachability_html,
+                                                            formal_signoff_html=formal_signoff_html)
+                elif 'status' in self.results[design][step] and self.results[design][step]['status'] == "skip":
+                    status = "skipped"                            
+                    start_time_str = datetime.now().isoformat()
+                    start_time_obj = datetime.fromisoformat(self.start_time_setup)
+                    start_time_sec = start_time_obj.timestamp()
+                    start_time = int(start_time_sec * 1000)
+                    generate_test_cases.generate_test_case( design, status=status, 
+                                                            start_time=start_time, stop_time=start_time, step=step)
+                else:
+                    status = 'omit'
+
     # TODO: move this to a different file
     # TODO: separate functionality in at least two functions, maybe three:
     #       - generate_xml_report
@@ -1787,4 +1899,5 @@ class fvmframework:
         else:
             self.pretty_summary()
             self.generate_reports()
+            self.generate_allure()
             sys.exit(errorcode)
