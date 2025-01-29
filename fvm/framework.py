@@ -168,6 +168,7 @@ class fvmframework:
         self.toplevel = list()
         self.current_toplevel = ''
         self.start_time_setup = None
+        self.init_reset = list()
         self.vhdl_sources = list()
         self.libraries_from_vhdl_sources = list()
         self.psl_sources = list()
@@ -328,6 +329,17 @@ class fvmframework:
             logger.success(f'{tool=} found at {path=}')
             ret = True
         return ret
+
+    def formal_initialize_rst(self, rst, active_high=True):
+        """
+        Initialize reset for formal steps.
+        """
+        if active_high:
+            line = f'formal init {{{rst}=1;##2;{rst}=0}}'
+            self.init_reset.append(line)
+        else:
+            line = f'formal init {{{rst}=0;##2;{rst}=1}}'
+            self.init_reset.append(line)
 
     def set_prefix(self, prefix):
         if type(prefix) != str:
@@ -790,6 +802,8 @@ class fvmframework:
         self.gencompilescript(filename, path)
         with open(path+'/'+filename, "a") as f:
             print(f'autocheck report inconclusives', file=f)
+            for line in self.init_reset:
+                print(line, file=f)
             print(f'autocheck compile {self.get_tool_flags("autocheck compile")} -d {self.current_toplevel} {self.generic_args}', file=f)
             print(f'autocheck verify {self.get_tool_flags("autocheck verify")} -timeout 1m', file=f)
             print('exit', file=f)
@@ -803,6 +817,8 @@ class fvmframework:
         """Generate a script to run CoverCheck"""
         self.gencompilescript(filename, path)
         with open(path+'/'+filename, "a") as f:
+            for line in self.init_reset:
+                print(line, file=f)
             print(f'covercheck compile {self.get_tool_flags("covercheck compile")} -d {self.current_toplevel} {self.generic_args}', file=f)
             # if .ucdb file is specified:
             #    print('covercheck load ucdb {ucdb_file}', file=f)
@@ -863,6 +879,8 @@ class fvmframework:
             print('', file=f)
             print('## Run PropCheck', file=f)
             #print('log_info "***** Running formal compile (compiling formal model)..."', file=f)
+            for line in self.init_reset:
+                print(line, file=f)
             print('formal compile ', end='', file=f)
             print(f'-d {self.current_toplevel} {self.generic_args} ', end='', file=f)
             for i in self.psl_sources :
