@@ -1638,8 +1638,10 @@ class fvmframework:
                     observability_html = None   
                     formal_reachability_html = None   
                     formal_signoff_html = None   
+                    properties = None
                     if step == 'prove':
                         property_summary = generate_test_cases.parse_property_summary(f'{self.outdir}/{design}/{step}.log')
+                        properties = generate_test_cases.parse_log_to_json(f'{self.outdir}/{design}/{step}.log')
                         formal_signoff_html = None   
                         if not self.is_disabled('observability'):
                             observability_rpt_path = f'{self.outdir}/{design}/formal_observability.rpt'
@@ -1677,7 +1679,8 @@ class fvmframework:
                                                             friendliness_score=friendliness_score,
                                                             observability_html=observability_html,
                                                             formal_reachability_html=formal_reachability_html,
-                                                            formal_signoff_html=formal_signoff_html)
+                                                            formal_signoff_html=formal_signoff_html,
+                                                            properties=properties)
                 elif 'status' in self.results[design][step] and self.results[design][step]['status'] == "skip":
                     status = "skipped"                            
                     start_time_str = datetime.now().isoformat()
