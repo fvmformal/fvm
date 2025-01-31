@@ -10,6 +10,7 @@ QUESTA_TOOLS = {
         # step           : ["tool",       "wrapper"],
         "lint"           : ["lint",       "qverify"],
         "friendliness"   : ["autocheck",  "qverify"],
+        "rule-checking"  : ["autocheck",  "qverify"],
         "reachability"   : ["covercheck", "qverify"],
         "resets"         : ["rdc",        "qverify"],
         "clocks"         : ["cdc",        "qverify"],
