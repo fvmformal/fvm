@@ -944,6 +944,7 @@ class fvmframework:
             #    print('formal generate coverage -cov_mode b', file=f)
             print(f'formal generate testbenches {self.get_tool_flags("formal generate testbenches")}', file=f)
             print('formal generate waveforms', file=f)
+            print('formal generate waveforms -vcd', file=f)
             print('formal generate report', file=f)
             print('', file=f)
             print('exit', file=f)
