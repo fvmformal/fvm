@@ -2,7 +2,7 @@ from fvm import fvmframework
 
 # Prove properties of counter
 fvm = fvmframework()
-fvm.add_vhdl_source("examples/04-dualcounter/counter.vhd")
+fvm.add_vhdl_source("examples/dualcounter/counter.vhd")
 fvm.add_psl_source("concepts/assert_to_assume/counter_properties.psl")
 fvm.add_psl_source("concepts/assert_to_assume/counter.psl")
 fvm.set_toplevel('counter')

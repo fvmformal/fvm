@@ -1,0 +1,124 @@
+-- If we want to be able to define processes in this file, we need to associate
+-- the vunit to a specific entity/architecture pair
+vunit interpolator (interpolator(interpolator_arch)) {
+
+    -- Default clock for PSL assertions
+    default clock is rising_edge(clk);
+
+    -- Defining sequences allows for:
+    --   1. Simplifying our properties
+    --   2. Reusing code (write less and be less error-prone when the same
+    --      sequence appears in multiple properties)
+    -- An interesting sequence to see here is that, beginning from the cycle
+    -- after activation, we will have a valid output each cycle for 12 cycles
+    sequence twelve_estim_valid is {estim_valid[*12]};
+
+    -- Assume a reset in the first clock cycle
+    -- Since we don't have an 'always', this assumption only applies to the
+    -- first clock cycle
+    assume_initial_reset: assume rst = '1';
+
+    -- Assume the interpolator will not be activated when it is in reset
+    assume_not_activated_when_in_reset:
+        assume always (rst) -> (not valid);
+        --assume always (rst = '1') -> (valid = '0');
+
+    -- Assume inferior and superior do not change during the 12 cycles output
+    assume always ({valid} |=> {stable(inferior)[*12]}) abort rst;
+    assume always ({valid} |=> {stable(superior)[*12]}) abort rst;
+
+    -- Assume the interpolator will not be activated on the 12 cycles after
+    -- being activated (the interpolator needs 12 cycles to output the 12
+    -- interpolated data)
+    assume_not_activated_when_interpolating:
+        assume always {valid} |=> {(not valid)[*12]};
+
+    -- After a valid input, we have one valid output, unless someone asserts
+    -- the reset input
+    -- (this assertion has been commented out because it is superseded by the
+    -- next one, which includes the 12 cycles after assertion of valid)
+    --valid_output_after_valid_input:
+    --    assert always (({valid} |-> next(estim_valid)) abort rst);
+
+    -- After a valid input, we have 12 valid outputs, unless someone asserts
+    -- the reset input
+    valid_outputs_after_valid_input:
+        assert always (({valid} |=> twelve_estim_valid) abort rst);
+
+    -- Cover at least one interpolation
+    cover_twelve_estim_valid:
+        cover twelve_estim_valid;
+
+    -- This assertion will fire
+    --assert_will_fire:
+    --    assert always (({not valid} |=> twelve_estim_valid) abort rst);
+
+    -- Parameterizable input sequence
+    sequence input_seq (                                                           
+        hdltype interpolator_input_tran input_tran                                                                                                   
+        ) is {                                                                        
+        inferior = input_tran.infr:                                                            
+        superior = input_tran.supr:                                                            
+        valid    = '1'                                                              
+    }; 
+
+    -- Parameterizable output sequence
+    sequence output_seq (                                                          
+    hdltype interpolator_output_tran output_tran                                                        
+    ) is {                                                                        
+        (abs(estim.re - output_tran.data(0).re) < 2):
+        (abs(estim.im - output_tran.data(0).im) < 2):
+        estim_valid = '1';                                                          
+        (abs(estim.re - output_tran.data(1).re) < 4):
+        (abs(estim.im - output_tran.data(1).im) < 4):
+        estim_valid = '1';                                                          
+        (abs(estim.re - output_tran.data(2).re) < 3):
+        (abs(estim.im - output_tran.data(2).im) < 3):
+        estim_valid = '1';                                                          
+        (abs(estim.re - output_tran.data(3).re) < 3):
+        (abs(estim.im - output_tran.data(3).im) < 3):
+        estim_valid = '1';                                                          
+        (abs(estim.re - output_tran.data(4).re) < 3):
+        (abs(estim.im - output_tran.data(4).im) < 3):
+        estim_valid = '1';                                                         
+        (abs(estim.re - output_tran.data(5).re) < 4):
+        (abs(estim.im - output_tran.data(5).im) < 4):
+        estim_valid = '1';                                                          
+        (abs(estim.re - output_tran.data(6).re) < 3):
+        (abs(estim.im - output_tran.data(6).im) < 3):
+        estim_valid = '1';                                                          
+        (abs(estim.re - output_tran.data(7).re) < 4):
+        (abs(estim.im - output_tran.data(7).im) < 4):
+        estim_valid = '1';                                                          
+        (abs(estim.re - output_tran.data(8).re) < 3):
+        (abs(estim.im - output_tran.data(8).im) < 3):
+        estim_valid = '1';                                                          
+        (abs(estim.re - output_tran.data(9).re) < 3):
+        (abs(estim.im - output_tran.data(9).im) < 3):
+        estim_valid = '1';                                                          
+        (abs(estim.re - output_tran.data(10).re) < 3):
+        (abs(estim.im - output_tran.data(10).im) < 3):
+        estim_valid = '1';                                                          
+        (abs(estim.re - output_tran.data(11).re) < 4):
+        (abs(estim.im - output_tran.data(11).im) < 4):
+        estim_valid = '1'                                                           
+    };           
+
+    -- Parameterizable property that relates the input and
+    -- the output sequence
+    property interpolation(
+        hdltype interpolator_input_tran input_tran;
+        hdltype interpolator_output_tran output_tran
+        ) is
+        always ((input_seq(input_tran) |=> output_seq(output_tran)) abort rst);
+
+    -- Input transaction assignation
+    signal input_tran : interpolator_input_tran;
+    input_tran.infr <= inferior;
+    input_tran.supr <= superior;
+
+    -- Assert the parameterized property
+    interpolator_works_correctly:
+       assert interpolation(input_tran, interpolator_predict(input_tran));
+
+}

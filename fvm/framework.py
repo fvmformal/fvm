@@ -10,6 +10,7 @@ import pathlib
 import fnmatch
 from datetime import datetime
 from io import StringIO
+from collections import OrderedDict
 
 # Third party imports
 import argparse
@@ -21,6 +22,8 @@ from rich.text import Text
 from fvm import toolchains
 from fvm import logcounter
 from fvm import helpers
+from fvm import generate_test_cases
+from fvm import parse_reports
 from fvm.parse_design_rpt import *
 
 # Error codes
@@ -40,6 +43,7 @@ def getlogformattool(design, step, tool):
 FVM_STEPS = [
     'lint',
     'friendliness',
+    'rule-checking',
     'reachability',
     'resets',
     'clocks',
@@ -163,7 +167,10 @@ class fvmframework:
         # this, maybe defining a structure per toplevel
         self.toplevel = list()
         self.current_toplevel = ''
+        self.start_time_setup = None
+        self.init_reset = list()
         self.vhdl_sources = list()
+        self.libraries_from_vhdl_sources = list()
         self.psl_sources = list()
         self.skip_list = list()
         self.disabled_coverage = list()
@@ -195,7 +202,21 @@ class fvmframework:
                 logger.error(f'step {args.step} not available in {self.toolchain}. Available steps are: {list(toolchains.TOOLS[self.toolchain].keys())}')
                 self.exit_if_required(BAD_VALUE)
 
-    def add_vhdl_source(self, src):
+    def run_command(self, command):
+        """Execute a system command and handle errors."""
+        try:
+            result = subprocess.run(command, shell=True, check=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            logger.info(f'Command succeeded: {command}')
+            logger.debug(f'STDOUT: {result.stdout.strip()}')
+            if result.stderr.strip():
+                logger.debug(f'STDERR: {result.stderr.strip()}')
+            return result.stdout.strip()
+        except subprocess.CalledProcessError as e:
+            logger.error(f'Command failed: {command}')
+            logger.error(f'Error: {e.stderr.strip()}')
+            raise
+
+    def add_vhdl_source(self, src, library="work"):
         """Add a single VHDL source"""
         logger.info(f'Adding VHDL source: {src}')
         if not os.path.exists(src) :
@@ -205,7 +226,43 @@ class fvmframework:
         if extension not in ['.vhd', '.VHD', '.vhdl', '.VHDL'] :
             logger.warning(f'VHDL source {src=} does not have a typical VHDL extension, instead it has {extension=}')
         self.vhdl_sources.append(src)
+        self.libraries_from_vhdl_sources.append(library)
         logger.debug(f'{self.vhdl_sources=}')
+
+    def add_external_library(self, name, src):
+        """Add an external library"""
+        logger.info(f'Adding the external library: {name} from {src}')
+        if not os.path.exists(src) :
+            logger.error(f'External library not found: {name} from {src}')
+            self.exit_if_required(BAD_VALUE)
+        try:
+            logger.info(f'Compiling library {name} from {src}')
+            self.run_command(f'vlib {name}')
+            self.run_command(f'vmap {name} {name}')
+            vhdl_files = [os.path.join(root, file) 
+                        for root, _, files in os.walk(src) 
+                        for file in files if file.endswith(('.vhd', '.VHD', '.vhdl', '.VHDL'))]
+            if vhdl_files:
+                logger.info(f'Compiling VHDL files for external library {name}')
+                self.run_command(f'vcom -work {name} -{self.vhdlstd} -autoorder {" ".join(vhdl_files)}')
+        except Exception as e:
+            logger.error(f'Error compiling library {name}: {e}')
+            self.exit_if_required(BAD_VALUE)
+        logger.info(f'Successfully added and mapped library {name}')
+
+    def add_precompiled_library(self, name, path):
+        """Add a precompiled external library"""
+        logger.info(f'Adding precompiled library: {name} from {path}')
+        if not os.path.exists(path):
+            logger.error(f'Precompiled library path not found: {path}')
+            self.exit_if_required(BAD_VALUE)
+        try:
+            logger.info(f'Mapping precompiled library {name} to {path}')
+            self.run_command(f'vmap {name} {path}')
+        except Exception as e:
+            logger.error(f'Error mapping precompiled library {name}: {e}')
+            self.exit_if_required(BAD_VALUE)
+        logger.info(f'Successfully mapped precompiled library {name}')
 
     def clear_vhdl_sources(self):
         """Removes all VHDL sources from the project"""
@@ -229,14 +286,14 @@ class fvmframework:
         logger.info(f'Removing all PSL sources')
         self.psl_sources = []
 
-    def add_vhdl_sources(self, globstr):
+    def add_vhdl_sources(self, globstr, library="work"):
         """Add multiple VHDL sources by globbing a pattern"""
         sources = glob.glob(globstr)
         if len(sources) == 0 :
             logger.error(f'No files found for pattern {globstr}')
             self.exit_if_required(BAD_VALUE)
         for source in sources:
-            self.add_vhdl_source(source)
+            self.add_vhdl_source(source, library)
 
     def add_psl_sources(self, globstr):
         """Add multiple PSL sources by globbing a pattern"""
@@ -272,6 +329,17 @@ class fvmframework:
             logger.success(f'{tool=} found at {path=}')
             ret = True
         return ret
+
+    def formal_initialize_rst(self, rst, active_high=True):
+        """
+        Initialize reset for formal steps.
+        """
+        if active_high:
+            line = f'formal init {{{rst}=1;##2;{rst}=0}}'
+            self.init_reset.append(line)
+        else:
+            line = f'formal init {{{rst}=0;##2;{rst}=1}}'
+            self.init_reset.append(line)
 
     def set_prefix(self, prefix):
         if type(prefix) != str:
@@ -356,7 +424,7 @@ class fvmframework:
         pass to the tools"""
         string = ''
         for i in generics:
-            string += f'-g {i}={generics[i]}'
+            string += f'-g {i}={generics[i]} '
         return string
 
     # TODO : we could make this function accept also a list, but not sure if it
@@ -571,6 +639,7 @@ class fvmframework:
             self.create_f_file(f'{path}/properties.f', self.psl_sources)
             self.genlintscript("lint.do", path)
             self.genfriendlinessscript("friendliness.do", path)
+            self.genrule_checkingscript("rule-checking.do", path)
             self.genreachabilityscript("reachability.do", path)
             self.genresetscript("resets.do", path)
             self.genclockscript("clocks.do", path)
@@ -581,18 +650,25 @@ class fvmframework:
         # TODO : we must also compile the Verilog sources, if they exist
         # TODO : we must check for the case of only-verilog designs (no VHDL files)
         # TODO : we must check for the case of only-VHDL designs (no verilog files)
-        # TODO : support libraries other than work (see #154)
+        library_path = f"libraries" 
+        os.makedirs(library_path, exist_ok=True) 
         """ This is used as header for the other scripts, since we need to have
         a compiled netlist in order to do anything"""
-        with open(path+'/'+filename, "w") as f:
+        with open(path + '/' + filename, "w") as f:
             print('onerror exit', file=f)
-            print('if {[file exists work]} {',file=f)
-            print('    vdel -all', file=f)
-            print('}', file=f)
-            print(f'vlib {self.get_tool_flags("vlib")} work', file=f)
-            print(f'vmap {self.get_tool_flags("vmap")} work work', file=f)
-            print(f'vcom {self.get_tool_flags("vcom")} -{self.vhdlstd} -autoorder -f {path}/design.f', file=f)
-            print('', file=f)
+            ordered_libraries = OrderedDict.fromkeys(self.libraries_from_vhdl_sources) 
+            for lib in ordered_libraries:
+                lib_dir = f"{library_path}/{lib}"  
+                print(f'if {{[file exists {lib_dir}]}} {{', file=f)
+                print(f'    vdel -lib {lib_dir} -all', file=f)
+                print('}', file=f)
+                print(f'vlib {self.get_tool_flags("vlib")} {lib_dir}', file=f)
+                print(f'vmap {self.get_tool_flags("vmap")} {lib} {lib_dir}', file=f)
+                lib_sources = [src for src, library in zip(self.vhdl_sources, self.libraries_from_vhdl_sources) if library == lib]
+                f_file_path = f'{path}/{lib}_design.f'
+                self.create_f_file(f_file_path, lib_sources)
+                print(f'vcom {self.get_tool_flags("vcom")} -{self.vhdlstd} -work {lib} -autoorder -f {f_file_path}', file=f)
+                print('', file=f)
 
     def gen_reset_config(self, filename, path):
         with open(path+'/'+filename, "a") as f:
@@ -717,7 +793,19 @@ class fvmframework:
         self.gencompilescript(filename, path)
         with open(path+'/'+filename, "a") as f:
             print(f'autocheck compile {self.get_tool_flags("autocheck compile")} -d {self.current_toplevel} {self.generic_args}', file=f)
-            print(f'autocheck verify {self.get_tool_flags("autocheck verify")}', file=f)
+            print('exit', file=f)
+
+    # TODO : set sensible defaults here and allow for user optionality too
+    def genrule_checkingscript(self, filename, path):
+        """Generate script to run AutoCheck, which also generates a report we
+        analyze to determine the design's formal-friendliness"""
+        self.gencompilescript(filename, path)
+        with open(path+'/'+filename, "a") as f:
+            print(f'autocheck report inconclusives', file=f)
+            for line in self.init_reset:
+                print(line, file=f)
+            print(f'autocheck compile {self.get_tool_flags("autocheck compile")} -d {self.current_toplevel} {self.generic_args}', file=f)
+            print(f'autocheck verify {self.get_tool_flags("autocheck verify")} -timeout 1m', file=f)
             print('exit', file=f)
 
     # TODO : set sensible defaults here and allow for user optionality too,
@@ -729,6 +817,8 @@ class fvmframework:
         """Generate a script to run CoverCheck"""
         self.gencompilescript(filename, path)
         with open(path+'/'+filename, "a") as f:
+            for line in self.init_reset:
+                print(line, file=f)
             print(f'covercheck compile {self.get_tool_flags("covercheck compile")} -d {self.current_toplevel} {self.generic_args}', file=f)
             # if .ucdb file is specified:
             #    print('covercheck load ucdb {ucdb_file}', file=f)
@@ -789,7 +879,8 @@ class fvmframework:
             print('', file=f)
             print('## Run PropCheck', file=f)
             #print('log_info "***** Running formal compile (compiling formal model)..."', file=f)
-
+            for line in self.init_reset:
+                print(line, file=f)
             print('formal compile ', end='', file=f)
             print(f'-d {self.current_toplevel} {self.generic_args} ', end='', file=f)
             for i in self.psl_sources :
@@ -801,7 +892,7 @@ class fvmframework:
                 print(f'netlist blackbox {blackbox}', file=f)
 
             for blackbox_instance in self.blackbox_instances:
-                print(f'netlist blackbox_instance {blackbox_instance}', file=f)
+                print(f'netlist blackbox instance {blackbox_instance}', file=f)
 
             for cutpoint in self.cutpoints:
                 string = f'netlist cutpoint {cutpoint["signal"]}'
@@ -852,6 +943,8 @@ class fvmframework:
             #    print('formal verify -auto_constraint_off -cov_mode bounded_reachability -timeout 10m', file=f)
             #    print('formal generate coverage -cov_mode b', file=f)
             print(f'formal generate testbenches {self.get_tool_flags("formal generate testbenches")}', file=f)
+            print('formal generate waveforms', file=f)
+            print('formal generate waveforms -vcd', file=f)
             print('formal generate report', file=f)
             print('', file=f)
             print('exit', file=f)
@@ -860,6 +953,7 @@ class fvmframework:
         """Run everything"""
         self.init_results()
 
+        self.start_time_setup = datetime.now().isoformat()
         # TODO: correctly manage self.list here (self.list is True if -l or
         # --list was provided as a command-line argument)
 
@@ -873,6 +967,7 @@ class fvmframework:
 
         self.pretty_summary()
         self.generate_reports()
+        self.generate_allure()
         err = self.check_errors()
         if err :
           self.exit_if_required(CHECK_FAILED)
@@ -1488,6 +1583,116 @@ class fvmframework:
         console.print(text)
         console.print(text_footer)
 
+    def clear_directory(self, directory_path):
+        try:
+            if os.path.exists(directory_path) and os.path.isdir(directory_path):
+                for item in os.listdir(directory_path):
+                    item_path = os.path.join(directory_path, item)
+
+                    if os.path.isdir(item_path):
+                        shutil.rmtree(item_path)
+                    else:
+                        os.remove(item_path)
+        except Exception as e:
+            print(f"Error occurred while clearing the directory: {e}")
+
+    def generate_allure(self):
+
+        self.clear_directory("fvm_out/dashboard/allure-results")
+        file_path = "fvm_out/dashboard"
+        os.makedirs(file_path, exist_ok=True)
+        file_path = "fvm_out/dashboard/allure-results"
+        os.makedirs(file_path, exist_ok=True)        
+        file_path = "fvm_out/dashboard/allure-report"
+        os.makedirs(file_path, exist_ok=True)
+
+        for design in self.designs:
+            for step in FVM_STEPS + FVM_POST_STEPS:
+                if 'status' in self.results[design][step] and self.results[design][step]['status'] != "skip":
+                    status = self.results[design][step]['status']
+                    custom_status_string = None
+                    if self.results[design][step]['status'] == "pass":
+                        status = "passed"
+                    elif self.results[design][step]['status'] == "fail":
+                        status = "failed"
+                    start_time_str = self.results[design][step]['timestamp']
+                    start_time_obj = datetime.fromisoformat(start_time_str)
+                    start_time_sec = start_time_obj.timestamp()
+                    start_time = int(start_time_sec * 1000)
+                    stop_time = start_time + self.results[design][step]["elapsed_time"] * 1000
+                    if 'stdout' in self.results[design][step]:
+                        stdout = self.results[design][step]['stdout']
+                    if step == 'reachability':
+                        reachability_rpt_path = f'{self.outdir}/{design}/covercheck_verify.rpt'
+                        reachability_html_path = f'{self.outdir}/{design}/reachability.html'
+                        if os.path.exists(reachability_rpt_path):
+                            parse_reports.parse_reachability_report_to_html(reachability_rpt_path, reachability_html_path)
+                            reachability_html = reachability_html_path
+                        else:
+                            reachability_html = None                    
+                    else:
+                        reachability_html = None
+                    if step == 'friendliness' and status == "passed":
+                        friendliness_score = self.results[design][step]['score']
+                    else:
+                        friendliness_score = None
+                    observability_html = None   
+                    formal_reachability_html = None   
+                    formal_signoff_html = None   
+                    properties = None
+                    if step == 'prove':
+                        property_summary = generate_test_cases.parse_property_summary(f'{self.outdir}/{design}/{step}.log')
+                        properties = generate_test_cases.parse_log_to_json(f'{self.outdir}/{design}/{step}.log')
+                        formal_signoff_html = None   
+                        if not self.is_disabled('observability'):
+                            observability_rpt_path = f'{self.outdir}/{design}/formal_observability.rpt'
+                            observability_html_path = f'{self.outdir}/{design}/formal_observability.html'
+                            if os.path.exists(observability_rpt_path):
+                                parse_reports.parse_formal_observability_report_to_html(observability_rpt_path, observability_html_path)
+                                observability_html = observability_html_path
+                            else:
+                                observability_html = None   
+                        if not self.is_disabled('reachability'):
+                            formal_reachability_rpt_path = f'{self.outdir}/{design}/formal_reachability.rpt'
+                            formal_reachability_html_path = f'{self.outdir}/{design}/formal_reachability.html'
+                            if os.path.exists(formal_reachability_rpt_path):
+                                parse_reports.parse_formal_reachability_report_to_html(formal_reachability_rpt_path, formal_reachability_html_path)
+                                formal_reachability_html = formal_reachability_html_path
+                            else:
+                                formal_reachability_html = None   
+                        if not self.is_disabled('signoff'):
+                            formal_signoff_rpt_path = f'{self.outdir}/{design}/formal_signoff.rpt'
+                            formal_signoff_html_path = f'{self.outdir}/{design}/formal_signoff.html'
+                            if os.path.exists(formal_signoff_rpt_path):
+                                parse_reports.parse_formal_signoff_report_to_html(formal_signoff_rpt_path, formal_signoff_html_path)
+                                formal_signoff_html = formal_signoff_html_path
+                            else:
+                                formal_signoff_html = None   
+                    else:
+                        property_summary = None
+                        observability_html = None   
+                        formal_reachability_html = None
+                        formal_signoff_html = None
+                    generate_test_cases.generate_test_case( design, status=status, 
+                                                            start_time=start_time, stop_time=stop_time, step=step,
+                                                            stdout = stdout, property_summary = property_summary,
+                                                            reachability_html = reachability_html,
+                                                            friendliness_score=friendliness_score,
+                                                            observability_html=observability_html,
+                                                            formal_reachability_html=formal_reachability_html,
+                                                            formal_signoff_html=formal_signoff_html,
+                                                            properties=properties)
+                elif 'status' in self.results[design][step] and self.results[design][step]['status'] == "skip":
+                    status = "skipped"                            
+                    start_time_str = datetime.now().isoformat()
+                    start_time_obj = datetime.fromisoformat(self.start_time_setup)
+                    start_time_sec = start_time_obj.timestamp()
+                    start_time = int(start_time_sec * 1000)
+                    generate_test_cases.generate_test_case( design, status=status, 
+                                                            start_time=start_time, stop_time=start_time, step=step)
+                else:
+                    status = 'omit'
+
     # TODO: move this to a different file
     # TODO: separate functionality in at least two functions, maybe three:
     #       - generate_xml_report
@@ -1716,4 +1921,5 @@ class fvmframework:
         else:
             self.pretty_summary()
             self.generate_reports()
+            self.generate_allure()
             sys.exit(errorcode)

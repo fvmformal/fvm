@@ -1,0 +1,134 @@
+vunit olo_axi_lite_slave (olo_axi_lite_slave) {
+
+    -- Default clock for PSL assertions
+    default clock is rising_edge(Clk);
+
+    -- Force a reset in the first clock cycle
+    assume_initial_reset: assume Rst = '1';
+
+    -- This way is easier to visualize data (NOT A NECESSARY ASSUME)
+    assume always Rb_Wr -> (unsigned(Rb_WrData) /= 0);
+
+    -- This way is easier to visualize data (NOT A NECESSARY ASSUME)
+    assume always Rb_RdValid -> (unsigned(Rb_RdData) /= 0);
+
+    assume always Rst -> (not Rb_RdValid);
+
+    assume never (Rb_RdValid and Rb_Rd);
+
+    -- READ ASSERTIONS
+    -- AR Channel requests data from an address
+    -- Read from the register bank
+    -- R Channel returns the requested data 
+
+    -- Assert if the address is ready,
+    -- it was valid in the previous cycle
+    assert_read_address_ready_prev_valid:
+        assert always (S_AxiLite_ARReady -> prev(S_AxiLite_ARValid)) abort Rst;
+
+    -- Assert if read enable,
+    -- it was valid in the previous cycle
+    assert_read_enable_prev_ready:
+        assert always ( Rb_Rd -> prev(S_AxiLite_ARReady) ) abort Rst;
+
+    -- Assert the register bank receives the address
+    -- from the request
+    assert_address_received:
+        assert always ( {S_AxiLite_ARValid; S_AxiLite_ARReady} |=> {Rb_Addr = prev(S_AxiLite_ARAddr)} ) abort Rst;
+    assert_address_received_2:
+        assert always ( {S_AxiLite_ARValid: (not S_AxiLite_ARReady)[*]; S_AxiLite_ARReady} |=> {Rb_Addr = prev(S_AxiLite_ARAddr)} ) abort Rst;
+
+    -- Assert the R Channel receives the data
+    -- from the register bank
+    assert_data_received:
+        assert always ( {Rb_Rd; Rb_RdValid} |=> {S_AxiLite_RValid: S_AxiLite_RData = prev(Rb_RdData): S_AxiLite_RResp = "00"} ) abort Rst;
+    assert_data_received_2:
+        assert always ( 
+        {Rb_Rd; (not Rb_RdValid)[*1 to (ReadTimeoutClks_g-2) ]; Rb_RdValid} 
+        |=> {S_AxiLite_RValid: S_AxiLite_RData = prev(Rb_RdData)} 
+        ) abort Rst;
+
+    -- Assert if the R Channel does not receive
+    -- the data from the register bank, the response
+    -- is error
+    assert_data_not_received:
+        assert always ( {Rb_Rd; (not Rb_RdValid)[*ReadTimeoutClks_g]} |=> {S_AxiLite_RResp = "10"} ) abort Rst;
+
+    -- Assert if the response is valid and ready,
+    -- the next cycle is not sent
+    assert_response_valid:
+        assert always ( {S_AxiLite_RValid: S_AxiLite_RReady} |=> {not S_AxiLite_RValid} ) abort Rst;
+
+    -- The response cannot have these values
+    assert_response_never_01:
+        assert (never (S_AxiLite_RResp = "01") ) abort Rst;
+    assert_response_never_11:
+        assert (never (S_AxiLite_RResp = "11") ) abort Rst;
+
+    -- WRITE ASSERTIONS
+    -- Channel AW sends the write address
+    -- Channel W sends the data
+    -- Write in the bank register
+    -- Channel B acknowledges the write
+
+    -- Assert if the address is ready,
+    -- it was valid in the previous cycle
+    assert_write_address_ready_prev_valid:
+        assert always (S_AxiLite_AWReady -> prev(S_AxiLite_AWValid)) abort Rst;
+
+    -- Assert the register bank receives the address
+    -- from the request
+    -- Does not work because the 2 least significant bits
+    -- TODO: Fix it
+    --assert_write_address_received:
+    --    assert always ( {S_AxiLite_AWValid; S_AxiLite_AWReady} |=> {Rb_Addr = prev(S_AxiLite_AWAddr)} ) abort Rst;
+    --assert_write_address_received_2:
+    --    assert always ( {S_AxiLite_AWValid: (not S_AxiLite_AWReady)[*]; S_AxiLite_AWReady} |=> {Rb_Addr = prev(S_AxiLite_AWAddr)} ) abort Rst;
+
+    -- Assert if write enable,
+    -- it was valid in the previous cycle
+    assert_write_enable_prev_valid:
+        assert always ( Rb_Wr -> ( prev(S_AxiLite_WValid) and prev(S_AxiLite_WReady) ) ) abort Rst;
+
+    assert always ( (S_AxiLite_WValid and S_AxiLite_WReady) -> next S_AxiLite_BValid ) abort Rst;
+
+    assert always ( ( S_AxiLite_WReady and (not prev(S_AxiLite_WReady)) ) -> prev(S_AxiLite_AWReady) ) abort Rst;
+
+    assert always ( {S_AxiLite_WReady: S_AxiLite_WValid; Rb_Wr} |-> {Rb_WrData = prev(S_AxiLite_WData)} ) abort Rst;
+
+    -- Writes cannot fail
+    assert always (S_AxiLite_BResp = "00"); 
+
+    -- READ AND WRITE ASSERTIONS
+    -- Assert never write and read at the same time,
+    -- OpenLogic AXI Lite Slave cannot read and write
+    -- at the same time
+    assert_never_read_and_write:
+        assert ( never (Rb_Rd and Rb_Wr) ) abort Rst;
+
+    assert_never_read_and_write_axi:
+        assert ( never (S_AxiLite_WValid and S_AxiLite_RValid) ) abort Rst;
+
+    -- Cover everything that can happen
+    cover{[*]; not Rst: Rb_Wr; [*]; not Rst: Rb_Wr: Rb_Addr = x"10"; [*]; not Rst: Rb_Rd; (not Rst)[*10]; [*]; Rb_RdValid; [*]; not Rst: Rb_Rd; [*]; Rb_RdValid};
+
+    cover{[*]; 
+    ((Rb_Rd = '0') and (Rb_RdValid = '0'))[*1];
+    ((Rb_Addr = x"10") and (Rb_Rd = '1') and (Rb_RdValid = '0'))[*1];
+    ((Rb_Rd = '0') and (Rb_RdValid = '1') and (Rb_RdData = x"DEADBEEF"))[*1];
+    ((Rb_Rd = '0') and (Rb_RdValid = '0'))[*2];
+    ((Rb_Addr = x"0C") and (Rb_Rd = '1') and (Rb_RdValid = '0'))[*1];
+    ((Rb_Rd = '0') and (Rb_RdValid = '0'))[*2];
+    ((Rb_Rd = '0') and (Rb_RdValid = '1') and (Rb_RdData = x"C001D00D"))[*1];
+    ((Rb_Rd = '0') and (Rb_RdValid = '0'))[*1]
+    };
+
+    cover{[*];
+    ((Rb_Wr = '0'))[*1];
+    ((Rb_Addr = x"10") and (Rb_Wr = '1') and (Rb_ByteEna = x"F") and (Rb_WrData = x"DEADBEEF"))[*1];
+    ((Rb_Wr = '0'))[*3];
+    ((Rb_Addr = x"0C") and (Rb_Wr = '1') and (Rb_ByteEna = x"C") and (Rb_WrData = x"C001D00D"))[*1];
+    ((Rb_Wr = '0'))[*3] 
+    };
+
+}

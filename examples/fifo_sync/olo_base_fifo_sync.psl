@@ -1,0 +1,208 @@
+vunit olo_base_fifo_sync (olo_base_fifo_sync(rtl)) {
+
+    --inherit fifo_sync_common;
+
+    use work.fifo_sync_common.all;
+    -- Default clock for PSL assertions
+    default clock is rising_edge(Clk);
+
+    -- Force a reset in the first clock cycle
+    assume_initial_reset: assume Rst = '1';
+
+    -- Output cannot be ready when it is not valid
+    assume always (not Out_Valid) -> (not Out_Ready);
+
+    -- This way is easier to visualize data (NOT A NECESSARY ASSUME)
+    --assume always In_Valid -> not(In_Data = "000");
+
+    -- This way is easier to visualize data, otherwise it keeps
+    -- the same value of In_Data (NOT A NECESSARY ASSUME)
+    assume always ( In_Valid -> (In_Data /= prev(In_Data)) ) abort Rst;
+
+    -- Assert the FIFO is never full and the input is ready
+    assert_never_full_and_in_ready: 
+        assert (never (Full and In_Ready) ) abort Rst; 
+    
+    -- Assert the FIFO is never empty and the output is valid
+    assert_never_empty_and_out_valid: 
+        assert (never (Empty = '1' and Out_Valid = '1') ) abort Rst;
+
+    -- Assert the FIFO is never full and empty at the same time
+    assert_never_empty_and_full: 
+        assert (never (Empty = '1' and Full = '1') ) abort Rst;
+    
+    -- Assert the FIFO level calculated on the write side is always
+    -- less than the depth of the FIFO
+    assert_in_level_within_bounds: 
+        assert always (unsigned(In_Level) <= Depth_g) abort Rst;
+
+    -- Assert the FIFO level calculated on the read side is always
+    -- less than the depth of the FIFO
+    assert_out_level_within_bounds: 
+        assert always (unsigned(Out_Level) <= Depth_g) abort Rst;
+
+    -- Assert when empty the read level is 0
+    assert_empty_out_level_0: 
+        assert always (Empty = '1' -> unsigned(Out_Level) = 0) abort Rst;
+
+    -- Assert when full the write level is 8 (depth of the FIFO)
+    assert_full_in_level_8: 
+        assert always (Full = '1' -> unsigned(In_Level) = Depth_g) abort Rst;
+
+    -- Assert the write level is, at most, 2 plus the read level,
+    -- because latency of the RAM is 1.
+    assert (never ( (unsigned(In_Level) - unsigned(Out_Level) ) > 2) ) abort Rst;
+
+    -- Assert the write level is bigger or equals to the read level
+    assert always ( unsigned(In_Level) >= unsigned(Out_Level) ) abort Rst;
+
+    -- Assert not Out_Valid after In_Level = 0 because RAM has latency 1
+    assert_not_out_valid_after_in_level_0:
+        assert always { unsigned(In_Level) = 0 } |=> { not Out_Valid } abort Rst;
+
+    sequence write_sequence(
+        hdltype input_tran_in_data input
+    ) is {    
+        In_Data = input.data:
+        In_Level = input.level:                                                                    
+        In_Valid:                                                            
+        In_Ready                                                                                                                        
+    }; 
+
+    sequence read_seq is {                                                                        
+        Out_Valid:                                                            
+        Out_Ready                                                                                                                    
+    }; 
+
+    sequence read_seq_prev is {   
+        not Out_Ready[*];                                                                     
+        Out_Valid:                                                            
+        Out_Ready                                                                                                                    
+    }; 
+
+    -- If you write with FIFO level 0, 
+    -- that is the first data out always
+    property predict_level_0(
+        hdltype input_tran_in_data input_tran
+        ) is
+        always ( 
+        ( {write_sequence(input_tran):(not Out_Ready)[+]; read_seq} 
+        |-> {Out_Data = input_tran.data} ) 
+        abort rst);
+
+    -- If you write with FIFO level X, 
+    -- have not read in the previous cycle,
+    -- have not read in the current cycle,
+    -- that is the X + 1 data out always
+    property predict(
+        hdltype input_tran_in_data input_tran;
+        const n
+        ) is
+        always ( 
+        ( {(not Out_Ready);write_sequence(input_tran):(not Out_Ready)[+]; read_seq_prev[*n]} 
+        |-> {Out_Data = input_tran.data} ) 
+        abort rst);
+
+    -- If you write with FIFO level X,
+    -- have read in the previous cycle,
+    -- have not read in the current cycle,
+    -- that is the X data out always
+    property predict_b(
+        hdltype input_tran_in_data input_tran;
+        const n
+        ) is
+        always ( 
+        ( {read_seq;write_sequence(input_tran):(not Out_Ready)[+]; read_seq_prev[*n]} 
+        |-> {Out_Data = input_tran.data} ) 
+        abort rst);   
+
+    -- If you write with FIFO level X,
+    -- have read in the previous cycle,
+    -- have read in the current cycle,
+    -- that is the X - 1 data out always
+    property predict_c(
+        hdltype input_tran_in_data input_tran;
+        const n
+        ) is
+        always ( 
+        ( {read_seq;write_sequence(input_tran):read_seq; read_seq_prev[*n]} 
+        |-> {Out_Data = input_tran.data} ) 
+        abort rst);     
+
+    -- If you write with FIFO level X,
+    -- have not read in the previous cycle,
+    -- have read in the current cycle,
+    -- that is the X data out always
+    property predict_d(
+        hdltype input_tran_in_data input_tran;
+        const n
+        ) is
+        always ( 
+        ( {(not Out_Ready);write_sequence(input_tran):read_seq; read_seq_prev[*n]} 
+        |-> {Out_Data = input_tran.data} ) 
+        abort rst);    
+
+    type input_tran_matrix is array(0 to 8, 0 to 7) of input_tran_in_data;
+    signal input_trans : input_tran_matrix;
+
+    input_trans(0, 4).level <= "0000";
+    input_trans(0, 4).data <= "010";
+
+    assert predict_level_0(input_trans(0, 4));
+
+    input_trans(1, 4).level <= "0001";
+    input_trans(1, 4).data <= "100";
+
+    level_1_a: assert predict(input_trans(1, 4), 1 + 1);
+    level_1_b: assert predict_b(input_trans(1, 4), 1);
+    -- Vacuous
+    level_1_c: assert predict_c(input_trans(1, 4), 1 - 1);
+    level_1_d: assert predict_d(input_trans(1, 4), 1);
+
+    input_trans(5, 4).level <= "0101";
+    input_trans(5, 4).data <= "001";
+
+    level_5_a: assert predict(input_trans(5, 4), 5 + 1);
+    level_5_b: assert predict_b(input_trans(5, 4), 5);
+    level_5_c: assert predict_c(input_trans(5, 4), 5 - 1);
+    level_5_d: assert predict_d(input_trans(5, 4), 5);
+
+    input_trans(7, 4).level <= "0111";
+    input_trans(7, 4).data <= "111";
+
+    level_7_a: assert predict(input_trans(7, 4), 7 + 1);
+    level_7_b: assert predict_b(input_trans(7, 4), 7);
+    level_7_c: assert predict_c(input_trans(7, 4), 7 - 1);
+    level_7_d: assert predict_d(input_trans(7, 4), 7);
+
+    sequence write_FIFO is {
+        [*];
+        In_Valid and In_Ready and (not Rst);
+        In_Valid and In_Ready and (not Rst);
+        In_Valid and In_Ready and (not Rst);
+        In_Valid and In_Ready and (not Rst);
+        In_Valid and In_Ready and (not Rst);
+        In_Valid and In_Ready and (not Rst)
+    };
+
+    sequence read_FIFO is {
+        [*];
+        Out_Valid and Out_Ready and (not Rst);
+        Out_Valid and Out_Ready and (not Rst);
+        Out_Valid and Out_Ready and (not Rst);
+        Out_Valid and Out_Ready and (not Rst);
+        Out_Valid and Out_Ready and (not Rst);
+        Out_Valid and Out_Ready and (not Rst);
+        Out_Valid and Out_Ready and (not Rst)
+    };
+
+    -- Cover all the important events in a FIFO: write, read,
+    -- full, empty...
+    cover_write_and_read_FIFO: cover{write_FIFO; read_FIFO;write_FIFO;[*];Full;(not Rst)[*10];Empty;unsigned(In_Level) = 0;unsigned(In_Level) = 0;unsigned(In_Level) = 0;[*];Full};
+    
+    -- Generate multiple covers with a for loop
+    --%for j in 1..10 do
+    --    cover{write_FIFO[*j]};
+    --%end
+
+}

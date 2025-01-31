@@ -4,6 +4,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 use work.edc_common.all;
+use work.interpolator_common.all;
 
 entity interpolator is
         port (
@@ -53,11 +54,10 @@ begin
         else                         -- Between 0 and 11: interpolate
             n_i <= i + 1;
             estim_valid <= '1';
+            estim_aux.re <= inferior.re*(12-signed(resize(i, i'length+1))) + superior.re*signed(resize(i, i'length+1));
+            estim_aux.im <= inferior.im*(12-signed(resize(i, i'length+1))) + superior.im*signed(resize(i, i'length+1));
         end if;
     end process;
-
-    estim_aux.re <= inferior.re*(12-signed(resize(i, i'length+1))) + superior.re*signed(resize(i, i'length+1));
-    estim_aux.im <= inferior.im*(12-signed(resize(i, i'length+1))) + superior.im*signed(resize(i, i'length+1));
 
     -- Discard the most significant bit since it doesn't contain any
     -- information (it is redundant with bit 13), and keep the 10 most
