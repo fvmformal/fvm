@@ -44,6 +44,7 @@ FVM_STEPS = [
     'lint',
     'friendliness',
     'rulecheck',
+    'xverify',
     'reachability',
     'resets',
     'clocks',
@@ -640,6 +641,7 @@ class fvmframework:
             self.genlintscript("lint.do", path)
             self.genfriendlinessscript("friendliness.do", path)
             self.genrulecheckscript("rulecheck.do", path)
+            self.genxverifyscript("xverify.do", path)
             self.genreachabilityscript("reachability.do", path)
             self.genresetscript("resets.do", path)
             self.genclockscript("clocks.do", path)
@@ -788,7 +790,7 @@ class fvmframework:
 
     # TODO : set sensible defaults here and allow for user optionality too
     def genfriendlinessscript(self, filename, path):
-        """Generate script to run AutoCheck, which also generates a report we
+        """Generate script to compile AutoCheck, which also generates a report we
         analyze to determine the design's formal-friendliness"""
         self.gencompilescript(filename, path)
         with open(path+'/'+filename, "a") as f:
@@ -797,8 +799,7 @@ class fvmframework:
 
     # TODO : set sensible defaults here and allow for user optionality too
     def genrulecheckscript(self, filename, path):
-        """Generate script to run AutoCheck, which also generates a report we
-        analyze to determine the design's formal-friendliness"""
+        """Generate script to run AutoCheck"""
         self.gencompilescript(filename, path)
         with open(path+'/'+filename, "a") as f:
             print(f'autocheck report inconclusives', file=f)
@@ -806,6 +807,17 @@ class fvmframework:
                 print(line, file=f)
             print(f'autocheck compile {self.get_tool_flags("autocheck compile")} -d {self.current_toplevel} {self.generic_args}', file=f)
             print(f'autocheck verify {self.get_tool_flags("autocheck verify")} -timeout 1m', file=f)
+            print('exit', file=f)
+
+    # TODO : set sensible defaults here and allow for user optionality too
+    def genxverifyscript(self, filename, path):
+        """Generate script to run X-Check"""
+        self.gencompilescript(filename, path)
+        with open(path+'/'+filename, "a") as f:
+            for line in self.init_reset:
+                print(line, file=f)
+            print(f'xcheck compile {self.get_tool_flags("autocheck compile")} -d {self.current_toplevel} {self.generic_args}', file=f)
+            print(f'xcheck verify {self.get_tool_flags("autocheck verify")} -timeout 1m', file=f)
             print('exit', file=f)
 
     # TODO : set sensible defaults here and allow for user optionality too,

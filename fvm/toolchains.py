@@ -11,6 +11,7 @@ QUESTA_TOOLS = {
         "lint"           : ["lint",       "qverify"],
         "friendliness"   : ["autocheck",  "qverify"],
         "rulecheck"      : ["autocheck",  "qverify"],
+        "xverify"        : ["xcheck",     "qverify"],
         "reachability"   : ["covercheck", "qverify"],
         "resets"         : ["rdc",        "qverify"],
         "clocks"         : ["cdc",        "qverify"],
