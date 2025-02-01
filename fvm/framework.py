@@ -1302,6 +1302,8 @@ class fvmframework:
             replay_files = glob.glob(self.outdir+'/'+design+'/qsim_tb/*/replay.vsim.do')
             logger.trace(f'{replay_files=}')
             ucdb_files = list()
+            elapsed_time = 0
+            timestamp = None
             for file in replay_files:
                 # Modify the replay.vsim.do so:
                 #   - It dumps the waveforms into a .vcd file
@@ -1318,6 +1320,9 @@ class fvmframework:
                 path = pathlib.Path(file).parent
                 cmd = ['./replay.scr']
                 cmd_stdout, cmd_stderr = self.run_cmd(cmd, design, f'{step}.simcover', 'vsim', self.verbose, path)
+                elapsed_time += self.results[design][f'{step}.simcover']['elapsed_time']
+                if timestamp is None:
+                    timestamp = self.results[design][f'{step}.simcover']['timestamp']
                 # TODO : maybe check for errors here?
                 tool = 'vsim'
                 stdout_err += self.logcheck(cmd_stdout, design, f'{step}.simcover', tool)
@@ -1329,6 +1334,9 @@ class fvmframework:
             cmd = cmd + ucdb_files
             logger.info(f'{cmd=}, {path=}')
             cmd_stdout, cmd_stderr = self.run_cmd(cmd, design, f'{step}.simcover', 'vcover merge', self.verbose, path)
+            elapsed_time += self.results[design][f'{step}.simcover']['elapsed_time']
+            if timestamp is None:
+                timestamp = self.results[design][f'{step}.simcover']['timestamp']
             # TODO : maybe check for errors here?
             tool = 'vcover'
             stdout_err += self.logcheck(cmd_stdout, design, f'{step}.simcover', tool)
@@ -1347,6 +1355,9 @@ class fvmframework:
                    '-testdetails', '-codeAll', '-multibitverbose', '-out',
                    'simcover', 'simcover.ucdb']
             cmd_stdout, cmd_stderr = self.run_cmd(cmd, design, f'{step}.simcover', 'vcover report', self.verbose, path)
+            elapsed_time += self.results[design][f'{step}.simcover']['elapsed_time']
+            self.results[design][f'{step}.simcover']['timestamp'] = timestamp
+            self.results[design][f'{step}.simcover']['elapsed_time'] = elapsed_time
             # TODO : maybe check for errors here?
             tool = 'vcover'
             stdout_err += self.logcheck(cmd_stdout, design, f'{step}.simcover', tool)
