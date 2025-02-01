@@ -43,7 +43,7 @@ def getlogformattool(design, step, tool):
 FVM_STEPS = [
     'lint',
     'friendliness',
-    'rule-checking',
+    'rulecheck',
     'reachability',
     'resets',
     'clocks',
@@ -639,7 +639,7 @@ class fvmframework:
             self.create_f_file(f'{path}/properties.f', self.psl_sources)
             self.genlintscript("lint.do", path)
             self.genfriendlinessscript("friendliness.do", path)
-            self.genrule_checkingscript("rule-checking.do", path)
+            self.genrulecheckscript("rulecheck.do", path)
             self.genreachabilityscript("reachability.do", path)
             self.genresetscript("resets.do", path)
             self.genclockscript("clocks.do", path)
@@ -796,7 +796,7 @@ class fvmframework:
             print('exit', file=f)
 
     # TODO : set sensible defaults here and allow for user optionality too
-    def genrule_checkingscript(self, filename, path):
+    def genrulecheckscript(self, filename, path):
         """Generate script to run AutoCheck, which also generates a report we
         analyze to determine the design's formal-friendliness"""
         self.gencompilescript(filename, path)
