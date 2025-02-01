@@ -15,7 +15,8 @@ QUESTA_TOOLS = {
         "reachability"   : ["covercheck", "qverify"],
         "resets"         : ["rdc",        "qverify"],
         "clocks"         : ["cdc",        "qverify"],
-        "prove"          : ["propcheck",  "qverify"]
+        "prove"          : ["propcheck",  "qverify"],
+        "prove.coverage" : ["propcheck",  "qverify"]
 #        "simulate"       : ["vsim", "vsim"],
 #        "createemptylib" : ["vlib", "vlib"],
 #        "compilevhdl"    : ["vcom", "vcom"],
