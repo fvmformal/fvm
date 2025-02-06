@@ -332,15 +332,15 @@ class fvmframework:
             ret = True
         return ret
 
-    def formal_initialize_rst(self, rst, active_high=True):
+    def formal_initialize_rst(self, rst, active_high=True, cycles=1):
         """
         Initialize reset for formal steps.
         """
         if active_high:
-            line = f'formal init {{{rst}=1;##2;{rst}=0}}'
+            line = f'formal init {{{rst}=1;##{cycles+1};{rst}=0}}'
             self.init_reset.append(line)
         else:
-            line = f'formal init {{{rst}=0;##2;{rst}=1}}'
+            line = f'formal init {{{rst}=0;##{cycles+1};{rst}=1}}'
             self.init_reset.append(line)
 
     def set_prefix(self, prefix):
