@@ -34,6 +34,7 @@ all:
 	@echo   "make report       -> create a dashboard with reports after execution"
 	@echo   "make show         -> open dashboard"
 	@echo   "make todo         -> count TODOs in code and generate badge for gitlab"
+	@echo   "make docs         -> generate documentation using sphinx"
 	@echo   "make clean        -> remove temporary files"
 	@echo   "make realclean    -> remove temporary files and python venv"
 
@@ -181,6 +182,11 @@ todo: $(VENV_DIR)/venv_created
 	@echo "TODOs=$(TODOs)"
 	@$(VENV_ACTIVATE) anybadge --value=$(TODOs) --label=TODOs --file=badges/todo.svg 1=green 10=yellow 20=orange 30=tomato 999=red
 
+# Generate documentation
+docs: dev-reqs
+	sphinx-apidoc -o doc/sphinx/source fvm
+	make -C doc/sphinx/ html
+
 # Remove generated files
 clean:
 	rm -f results.xml flex*.log vish_stacktrace.vstf modelsim.ini
@@ -198,6 +204,7 @@ clean:
 	rm -f test/test.vhd test/test2.vhd test/test3.vhd
 	rm -f test/test.psl test/test2.psl test/test3.psl
 	rm -rf dist
+	rm -rf doc/sphinx/build/*
 
 # Remove venv and generated files
 realclean: clean

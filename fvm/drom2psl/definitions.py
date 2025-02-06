@@ -2,12 +2,12 @@
 The json file must contain a dict
 
 The dict described in the json file can have the following fields:
-    signal (mandatory)
-    edge   (optional)
-    head   (optional)
-    foot   (optional)
-    assign (not supported, it is for drawing schematics)
-    config (not supported, it is just for cosmetic purposes)
+    - signal (mandatory)
+    - edge   (optional)
+    - head   (optional)
+    - foot   (optional)
+    - assign (not supported, it is for drawing schematics)
+    - config (not supported, it is just for cosmetic purposes)
 """
 SIGNAL   = "signal"
 EDGE     = "edge"
@@ -20,17 +20,14 @@ CONFIG   = "config"
 signal is a list of signalelements
 
 signalelements may be either dict or list
-  if dict, signalelement is a wavelane
-  if list, signalelement is a group of wavelanes
+  - if dict, signalelement is a wavelane
+  - if list, signalelement is a group of wavelanes
 
 a group is a list that has:
-  a name as first element (mandatory)
-    and either:
-  one or more groups
-    or
-  one or more wavelanes
-
-
+  - a name as first element (mandatory)
+  - and either:
+    - one or more groups, or
+    - one or more wavelanes
 """
 WAVELANE = "wavelane"
 GROUP    = "group"
@@ -38,15 +35,16 @@ STRING   = "string"
 
 """
 a wavelane may:
-  be an empty wavelane
-    or
-  have at least a name field
-  wave, data, node are optional
-  period and phase are also optional (and we won't support them)
-    period should be an integer. fractionary periods are ceil()'d up internally
-      (i.e. 2.9 becomes 3)
-    phase doesn't seem to have restrictions
-  type is a custom field we define where the user can specify the datatype of
+  - be an empty wavelane, or
+  - have at least a name field
+  - wave, data, node are optional
+  - period and phase are also optional (and we won't support them)
+
+    - period should be an integer. fractionary periods are ceil()'d up
+      internally (i.e. 2.9 becomes 3)
+    - phase doesn't seem to have restrictions
+
+  - type is a custom field we define where the user can specify the datatype of
     the signal. This field is not rendered by wavedrom
 """
 NAME     = "name"
@@ -59,9 +57,9 @@ TYPE     = "type"
 
 """
 a wave is a string that contains one character per clock cycle for the signal
-  each character does a different thing
-  any other characters are interpreted the same as 'x'
-  we won't be supporting neither REDUCE nor STRETCH
+  - each character does a different thing
+  - any other characters are interpreted the same as 'x'
+  - we won't be supporting neither REDUCE nor STRETCH
 """
 PCLK     = 'p'  # clock, active on rising_edge
 PCLKEDGE = 'P'  # clock, active on rising_edge with explicit arrow
@@ -95,13 +93,13 @@ STRETCH  = '>'  # following elements will be rendered twice as wide
 an edge is a list of strings
 
 each string has these tokens:
-    <source><arrow><destination>[<whitespace><label>]
+  - <source><arrow><destination>[<whitespace><label>]
 
-  source must have been defined in a node inside a wavelane
-  destination must have been defined in a node inside a wavelane
-  arrow must be one of the allowable values
-  whitespace (optional) is just whitespace
-  label (optional) can be any string
+  - source must have been defined in a node inside a wavelane
+  - destination must have been defined in a node inside a wavelane
+  - arrow must be one of the allowable values
+  - whitespace (optional) is just whitespace
+  - label (optional) can be any string
 
 if a label is used, whitespace is mandatory
 """
