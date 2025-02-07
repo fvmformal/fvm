@@ -8,5 +8,5 @@ poetry2setup  # To create a setup.py from pyproject.toml     (MIT license)
 
 # Documentation requirements
 sphinx                    # To generate html documentation   (BSD license)
-sphinx_autodoc_typehints  # Allows documenting arg types     (MIT license)
+#sphinx_autodoc_typehints  # Allows documenting arg types     (MIT license)
 sphinx-rtd-theme          # Read the docs sphinx theme       (MIT license)

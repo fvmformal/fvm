@@ -39,7 +39,7 @@ extensions = [
     "sphinx.ext.autodoc",       # Extract docstrings
     "sphinx.ext.napoleon",      # Support Google/NumPy-style docstrings
     "sphinx.ext.viewcode",      # Add links to source code
-    "sphinx_autodoc_typehints", # Show type hints
+    #"sphinx_autodoc_typehints", # Show type hints
     #"sphinx.ext.coverage",      # Report documentation coverage (we are not
       #using it, because when using autodoc, coverage believes everything is
       #documented)
