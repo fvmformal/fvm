@@ -195,7 +195,7 @@ pycoverage:
 # https://dev.to/zenika/gitlab-pages-preview-the-no-compromise-hack-to-serve-per-branch-pages-5599
 # (but also look for other alternatives)
 pages:
-  stage: deploypages
+  stage: deploy
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
   script:
