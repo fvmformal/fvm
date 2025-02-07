@@ -186,8 +186,8 @@ todo: $(VENV_DIR)/venv_created
 # Generate documentation
 # TODO : move anybadge to dev-reqs
 docs: dev-reqs
-	sphinx-apidoc -o doc/sphinx/source fvm
-	make -C doc/sphinx/ html
+	$(VENV_ACTIVATE) sphinx-apidoc -o doc/sphinx/source fvm
+	$(VENV_ACTIVATE) make -C doc/sphinx/ html
 	mkdir -p badges
 	rm -f badges/undocumented.svg
 	$(VENV_ACTIVATE) pip3 install anybadge
