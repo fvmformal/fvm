@@ -174,6 +174,7 @@ show: reqs
 # Count TODOs in code
 # Since each line in the recipe is run in a separate shell, to define a
 # variable and be able to read its value later we need to use GNU Make's $eval
+# TODO : move anybadge to dev-reqs
 TODOs := $(shell grep -r TODO * | grep -v grep | wc -l)
 todo: $(VENV_DIR)/venv_created
 	$(VENV_ACTIVATE) pip3 install anybadge
@@ -183,9 +184,14 @@ todo: $(VENV_DIR)/venv_created
 	@$(VENV_ACTIVATE) anybadge --value=$(TODOs) --label=TODOs --file=badges/todo.svg 1=green 10=yellow 20=orange 30=tomato 999=red
 
 # Generate documentation
+# TODO : move anybadge to dev-reqs
 docs: dev-reqs
 	sphinx-apidoc -o doc/sphinx/source fvm
 	make -C doc/sphinx/ html
+	mkdir -p badges
+	rm -f badges/undocumented.svg
+	$(VENV_ACTIVATE) pip3 install anybadge
+	@$(VENV_ACTIVATE) anybadge --value=$(shell cat doc/sphinx/undocumented_count.txt) --label=undocumented --file=badges/undocumented.svg 1=green 10=yellow 20=orange 30=tomato 999=red
 
 # Remove generated files
 clean:

@@ -151,6 +151,7 @@ apidoc:
     when: always
     paths:
       - doc/sphinx/build/html
+      - badges/undocumented.svg
   coverage: /Total undocumented members: ([\d]+)/
 
 # The history is much smaller than the full dashboard, so we can afford to save

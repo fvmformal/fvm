@@ -25,6 +25,9 @@ def print_undocumented_count(app, exception):
     global undocumented_count
     print(f"\nTotal undocumented members: {undocumented_count}")
 
+    with open("undocumented_count.txt", "w") as f:
+        print(f'{undocumented_count}', file=f)
+
 def setup(app):
     app.connect("autodoc-process-docstring", warn_undocumented)
     app.connect("build-finished", print_undocumented_count)
