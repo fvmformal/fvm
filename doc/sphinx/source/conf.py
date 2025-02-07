@@ -23,7 +23,7 @@ def warn_undocumented(app, what, name, obj, options, lines):
 
 def print_undocumented_count(app, exception):
     global undocumented_count
-    print(f"\nTotal undocumented members: {undocumented_count}")
+    print(f"\nTotal undocumented members= {undocumented_count}")
 
     with open("undocumented_count.txt", "w") as f:
         print(f'{undocumented_count}', file=f)
