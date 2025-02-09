@@ -1,0 +1,20 @@
+from fvm import fvmframework
+import subprocess
+import os
+
+fvm = fvmframework()
+
+subprocess.run(['git', 'clone', 
+'https://github.com/nullobject/sdram-fpga'])
+
+fvm.add_vhdl_source("sdram-fpga/sdram.vhd")
+
+fvm.add_psl_source("examples/sdram/sdram.psl")
+
+fvm.set_toplevel("sdram")
+fvm.add_config("sdram", "config_freq_10_desl_200", {"CLK_FREQ": 10.0, "T_DESL": 200.0})
+
+fvm.skip('reachability')
+fvm.skip('prove.coverage')
+fvm.skip('prove.simcover')
+fvm.run()
