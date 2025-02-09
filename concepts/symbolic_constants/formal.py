@@ -7,6 +7,6 @@ fvm.add_psl_sources("concepts/symbolic_constants/uart_tx.psl")
 fvm.set_toplevel("uart_tx")
 # We need to skip the simcover step because QuestaSim does not support the
 # restrict() PSL directive
-fvm.skip("prove.coverage")
+fvm.skip("prove.formalcover")
 fvm.skip("prove.simcover")
 fvm.run()

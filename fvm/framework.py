@@ -52,7 +52,7 @@ FVM_STEPS = [
     ]
 
 FVM_POST_STEPS = [
-    'prove.coverage',
+    'prove.formalcover',
     'prove.simcover'
     ]
 
@@ -1274,18 +1274,18 @@ class fvmframework:
             data = data_from_design_summary(rpt)
             self.results[design][step]['data'] = data
             self.results[design][step]['score'] = friendliness_score(data)
-        if step == 'prove' and self.is_skipped(design, 'prove.coverage'):
-            self.results[design]['prove.coverage']['status'] = 'skip'
-        if step == 'prove' and not self.is_skipped(design, 'prove.coverage'):
+        if step == 'prove' and self.is_skipped(design, 'prove.formalcover'):
+            self.results[design]['prove.formalcover']['status'] = 'skip'
+        if step == 'prove' and not self.is_skipped(design, 'prove.formalcover'):
             property_summary = generate_test_cases.parse_property_summary(f'{path}/prove.log')
             inconclusives = property_summary.get('Assertions', {}).get('Inconclusive', 0)
-            with open(f"{path}/prove_coverage.do", "w") as f: 
+            with open(f"{path}/prove_formalcover.do", "w") as f: 
                 print(f"formal load db {path}/propcheck.db",file=f)
                 if not self.is_disabled('observability'):
-                    print('formal generate coverage -cov_mode o', file=f)
+                    print('formal generate coverage -detail_all -cov_mode o', file=f)
                 if not self.is_disabled('signoff'):
                     print(f'formal verify {self.get_tool_flags("formal verify")} -cov_mode signoff', file=f)
-                    print('formal generate coverage -cov_mode s', file=f)
+                    print('formal generate coverage -detail_all -cov_mode s', file=f)
                 # TODO : is reachability redundant with covercheck? the
                 # documentation states that "reachability — This argument runs
                 # reachability analysis on the entire design irrespective of the
@@ -1295,7 +1295,7 @@ class fvmframework:
                 # using the assumptions to check reachability
                 if not self.is_disabled('reachability'):
                     print(f'formal verify {self.get_tool_flags("formal verify")} -cov_mode reachability', file=f)
-                    print('formal generate coverage -cov_mode r', file=f)
+                    print('formal generate coverage -detail_all -cov_mode r', file=f)
                 # TODO : bounded reachability requires at least an inconclusive
                 # assertion.
                 # TODO : it is clear then we need to run coverage in another
@@ -1303,7 +1303,7 @@ class fvmframework:
                 # collection
                 if not self.is_disabled('bounded_reachability') and inconclusives != 0:
                     print(f'formal verify {self.get_tool_flags("formal verify")} -cov_mode bounded_reachability', file=f)
-                    print('formal generate coverage -cov_mode b', file=f)
+                    print('formal generate coverage -detail_all -cov_mode b', file=f)
                 print('', file=f)
                 print('exit', file=f)
             tool = toolchains.TOOLS[self.toolchain][step][0]
@@ -1312,18 +1312,18 @@ class fvmframework:
             logger.info(f'prove.simcover, running {tool=} with {wrapper=}')
             logger.debug(f'Running {tool=} with {wrapper=}')
             if self.toolchain == "questa":
-                cmd = [wrapper, '-c', '-od', path, '-do', f'{path}/prove_coverage.do']
+                cmd = [wrapper, '-c', '-od', path, '-do', f'{path}/prove_formalcover.do']
                 if self.list == True :
-                    logger.info(f'Available step: prove.coverage. Tool: {tool}, command = {" ".join(cmd)}')
+                    logger.info(f'Available step: prove.formalcover. Tool: {tool}, command = {" ".join(cmd)}')
                 elif self.guinorun == True :
                     logger.info(f'{self.guinorun=}, will not run {step=} with {tool=}')
                 else :
                     logger.trace(f'command: {" ".join(cmd)=}')
-                    cmd_stdout, cmd_stderr = self.run_cmd(cmd, design, 'prove.coverage', tool, self.verbose)
-                    stdout_err = self.logcheck(cmd_stdout, design, 'prove.coverage', tool)
-                    stderr_err = self.logcheck(cmd_stderr, design, 'prove.coverage', tool)
-                    logfile = f'{path}/prove_coverage.log'
-                    logger.info(f'prove.simcover, {tool=}, finished, output written to {logfile}')
+                    cmd_stdout, cmd_stderr = self.run_cmd(cmd, design, 'prove.formalcover', tool, self.verbose)
+                    stdout_err = self.logcheck(cmd_stdout, design, 'prove.formalcover', tool)
+                    stderr_err = self.logcheck(cmd_stderr, design, 'prove.formalcover', tool)
+                    logfile = f'{path}/prove_formalcover.log'
+                    logger.info(f'prove.formalcover, {tool=}, finished, output written to {logfile}')
                     with open(logfile, 'w') as f :
                         f.write(cmd_stdout)
                         f.write(cmd_stderr)
@@ -1333,9 +1333,9 @@ class fvmframework:
                     if stdout_err or stderr_err:
                         err = True
                     if stdout_err or stderr_err:
-                        self.results[design]['prove.coverage']['status'] = 'fail'
+                        self.results[design]['prove.formalcover']['status'] = 'fail'
                     else:
-                        self.results[design]['prove.coverage']['status'] = 'pass'
+                        self.results[design]['prove.formalcover']['status'] = 'pass'
                     if self.gui :
                         open_gui = True
                 if self.guinorun and self.list == False :
@@ -1347,10 +1347,10 @@ class fvmframework:
                 # TODO : code here can be deduplicated by having the database
                 # names (.db) in a dictionary -> just open {tool}.db
                 if open_gui:
-                    logger.info(f'prove.coverage, {tool=}, opening results with GUI')
+                    logger.info(f'prove.formalcover, {tool=}, opening results with GUI')
                     cmd = [wrapper, f'{path}/{tool}.db']
                     logger.trace(f'command: {" ".join(cmd)=}')
-                    self.run_cmd(cmd, design, 'prove.coverage', tool, self.verbose)
+                    self.run_cmd(cmd, design, 'prove.formalcover', tool, self.verbose)
         # TODO: consider how we are going to present this simcover post_step:
         # is it a step? a post_step?
         # TODO: this needs a refactor but unfortunately I don't have the time
@@ -1723,7 +1723,7 @@ class fvmframework:
                     if step == 'prove':
                         properties = generate_test_cases.parse_log_to_json(f'{self.outdir}/{design}/{step}.log')
                         property_summary = generate_test_cases.parse_property_summary(f'{self.outdir}/{design}/{step}.log')
-                    if step == 'prove.coverage':
+                    if step == 'prove.formalcover':
                         formal_signoff_html = None   
                         if not self.is_disabled('observability'):
                             observability_rpt_path = f'{self.outdir}/{design}/formal_observability.rpt'

@@ -19,5 +19,5 @@ fvm.set_toplevel("olo_base_arb_rr")
 fvm.add_config("olo_base_arb_rr", "config_width_4", {"Width_g": 4})
 
 fvm.skip("reachability")
-fvm.skip('prove.coverage')
+fvm.skip('prove.formalcover')
 fvm.run()

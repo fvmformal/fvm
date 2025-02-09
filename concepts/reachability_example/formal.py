@@ -7,5 +7,5 @@ fvm.set_toplevel("counter")
 # Reachability is skipped because is going to fail,
 # and we don't want to break the CI.
 fvm.skip('reachability')
-fvm.skip('prove.coverage')
+fvm.skip('prove.formalcover')
 fvm.run()

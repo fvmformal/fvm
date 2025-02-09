@@ -104,7 +104,7 @@ def generate_test_case(design_name, step, status="passed", start_time=None, stop
             }
 
         attachment_uuid = str(uuid.uuid4())
-        if step != "prove.simcover" and step != "prove.coverage":
+        if step != "prove.simcover" and step != "prove.formalcover":
             try:
                 output_attachment_file = f"fvm_out/dashboard/allure-results/{attachment_uuid}-attachment.log"
                 original_file = f"fvm_out/{design_name}/{step}.log" 
@@ -140,7 +140,7 @@ def generate_test_case(design_name, step, status="passed", start_time=None, stop
                         )
         else:
             attachments = []
-            if step == 'prove.coverage':
+            if step == 'prove.formalcover':
                 if formal_reachability_html != None:
                     if os.path.exists(formal_reachability_html):
                         attachment_uuid = str(uuid.uuid4()) 
