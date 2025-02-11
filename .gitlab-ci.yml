@@ -4,6 +4,7 @@ stages:
   - examples
   - coverage
   - doc
+  - deploy
 #  - history
 
 count_todos_in_code:
@@ -139,6 +140,20 @@ full_dashboard:
     paths:
       - fvm_out/fvm_report
 
+apidoc:
+  stage: doc
+  image: debian:12
+  script:
+    - apt update
+    - apt install -y python3 python3-pip python3-venv
+    - make docs
+  artifacts:
+    when: always
+    paths:
+      - doc/sphinx/build/html
+      - badges/undocumented.svg
+  coverage: /Total undocumented members= ([\d]+)/
+
 # The history is much smaller than the full dashboard, so we can afford to save
 # it with a long expiry date
 #save_history:
@@ -170,3 +185,23 @@ pycoverage:
       coverage_report:
         coverage_format: cobertura
         path: coverage.xml
+
+# Deploy to gitlab pages
+# This is done only on the main branch: if not, pages would be overwritten by
+# all pipelines running in all branches, and we don't want that. We want our
+# gitlab pages to point to the stable version
+# TODO : maybe there is way of serving multiple versions on the gitlab pages,
+# doing something similar as what we would like to do keeping the Allure
+# history. See
+# https://dev.to/zenika/gitlab-pages-preview-the-no-compromise-hack-to-serve-per-branch-pages-5599
+# (but also look for other alternatives)
+pages:
+  stage: deploy
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+  script:
+    - mv doc/sphinx/build/html public
+    - echo Publishing gitlab pages
+  artifacts:
+    paths:
+      - public

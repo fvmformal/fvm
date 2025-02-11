@@ -34,6 +34,7 @@ all:
 	@echo   "make report       -> create a dashboard with reports after execution"
 	@echo   "make show         -> open dashboard"
 	@echo   "make todo         -> count TODOs in code and generate badge for gitlab"
+	@echo   "make docs         -> generate documentation using sphinx"
 	@echo   "make clean        -> remove temporary files"
 	@echo   "make realclean    -> remove temporary files and python venv"
 
@@ -173,6 +174,7 @@ show: reqs
 # Count TODOs in code
 # Since each line in the recipe is run in a separate shell, to define a
 # variable and be able to read its value later we need to use GNU Make's $eval
+# TODO : move anybadge to dev-reqs
 TODOs := $(shell grep -r TODO * | grep -v grep | wc -l)
 todo: $(VENV_DIR)/venv_created
 	$(VENV_ACTIVATE) pip3 install anybadge
@@ -180,6 +182,16 @@ todo: $(VENV_DIR)/venv_created
 	rm -f badges/todo.svg
 	@echo "TODOs=$(TODOs)"
 	@$(VENV_ACTIVATE) anybadge --value=$(TODOs) --label=TODOs --file=badges/todo.svg 1=green 10=yellow 20=orange 30=tomato 999=red
+
+# Generate documentation
+# TODO : move anybadge to dev-reqs
+docs: dev-reqs
+	$(VENV_ACTIVATE) sphinx-apidoc -o doc/sphinx/source fvm
+	$(VENV_ACTIVATE) make -C doc/sphinx/ html
+	mkdir -p badges
+	rm -f badges/undocumented.svg
+	$(VENV_ACTIVATE) pip3 install anybadge
+	@$(VENV_ACTIVATE) anybadge --value=$(shell cat doc/sphinx/undocumented_count.txt) --label=undocumented --file=badges/undocumented.svg 1=green 10=yellow 20=orange 30=tomato 999=red
 
 # Remove generated files
 clean:
@@ -198,6 +210,7 @@ clean:
 	rm -f test/test.vhd test/test2.vhd test/test3.vhd
 	rm -f test/test.psl test/test2.psl test/test3.psl
 	rm -rf dist
+	rm -rf doc/sphinx/build/*
 
 # Remove venv and generated files
 realclean: clean

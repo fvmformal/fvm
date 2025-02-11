@@ -26,6 +26,8 @@ pytest = "^8.3.3"
 pylint = "^3.3.1"
 pylint-exit = "^1.2.0"
 poetry2setup = "^1.1.0"
+sphinx = "^7.4"
+sphinx-rtd-theme = "^3.0.2"
 
 [build-system]
 requires = ["poetry-core"]
