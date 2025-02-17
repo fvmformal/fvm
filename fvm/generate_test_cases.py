@@ -104,7 +104,7 @@ def generate_test_case(design_name, step, status="passed", start_time=None, stop
             }
 
         attachment_uuid = str(uuid.uuid4())
-        if step != "prove.simcover":
+        if step != "prove.simcover" and step != "prove.formalcover":
             try:
                 output_attachment_file = f"fvm_out/dashboard/allure-results/{attachment_uuid}-attachment.log"
                 original_file = f"fvm_out/{design_name}/{step}.log" 
@@ -138,7 +138,9 @@ def generate_test_case(design_name, step, status="passed", start_time=None, stop
                             "type": "text/html"
                             }
                         )
-            elif step == 'prove':
+        else:
+            attachments = []
+            if step == 'prove.formalcover':
                 if formal_reachability_html != None:
                     if os.path.exists(formal_reachability_html):
                         attachment_uuid = str(uuid.uuid4()) 
@@ -190,18 +192,17 @@ def generate_test_case(design_name, step, status="passed", start_time=None, stop
                             "type": "text/html"
                             }
                         )
-        else:
             attachment_uuid = str(uuid.uuid4())
             output_attachment_file = f"fvm_out/dashboard/allure-results/{attachment_uuid}-attachment.log"
             with open(output_attachment_file, "w") as log_file:
                 log_file.write(stdout)
-            attachments = [
+            attachments.append(
                 {
                     "name": f"{step}.log",
                     "source": f"{attachment_uuid}-attachment.log",
                     "type": "text/plain"
                 }
-            ]
+            )
 
     if step == "prove":
         properties = json.loads(properties)

@@ -43,7 +43,8 @@ def getlogformattool(design, step, tool):
 FVM_STEPS = [
     'lint',
     'friendliness',
-    'rule-checking',
+    'rulecheck',
+    'xverify',
     'reachability',
     'resets',
     'clocks',
@@ -51,6 +52,7 @@ FVM_STEPS = [
     ]
 
 FVM_POST_STEPS = [
+    'prove.formalcover',
     'prove.simcover'
     ]
 
@@ -330,15 +332,15 @@ class fvmframework:
             ret = True
         return ret
 
-    def formal_initialize_rst(self, rst, active_high=True):
+    def formal_initialize_rst(self, rst, active_high=True, cycles=1):
         """
         Initialize reset for formal steps.
         """
         if active_high:
-            line = f'formal init {{{rst}=1;##2;{rst}=0}}'
+            line = f'formal init {{{rst}=1;##{cycles+1};{rst}=0}}'
             self.init_reset.append(line)
         else:
-            line = f'formal init {{{rst}=0;##2;{rst}=1}}'
+            line = f'formal init {{{rst}=0;##{cycles+1};{rst}=1}}'
             self.init_reset.append(line)
 
     def set_prefix(self, prefix):
@@ -639,7 +641,8 @@ class fvmframework:
             self.create_f_file(f'{path}/properties.f', self.psl_sources)
             self.genlintscript("lint.do", path)
             self.genfriendlinessscript("friendliness.do", path)
-            self.genrule_checkingscript("rule-checking.do", path)
+            self.genrulecheckscript("rulecheck.do", path)
+            self.genxverifyscript("xverify.do", path)
             self.genreachabilityscript("reachability.do", path)
             self.genresetscript("resets.do", path)
             self.genclockscript("clocks.do", path)
@@ -788,7 +791,7 @@ class fvmframework:
 
     # TODO : set sensible defaults here and allow for user optionality too
     def genfriendlinessscript(self, filename, path):
-        """Generate script to run AutoCheck, which also generates a report we
+        """Generate script to compile AutoCheck, which also generates a report we
         analyze to determine the design's formal-friendliness"""
         self.gencompilescript(filename, path)
         with open(path+'/'+filename, "a") as f:
@@ -796,9 +799,8 @@ class fvmframework:
             print('exit', file=f)
 
     # TODO : set sensible defaults here and allow for user optionality too
-    def genrule_checkingscript(self, filename, path):
-        """Generate script to run AutoCheck, which also generates a report we
-        analyze to determine the design's formal-friendliness"""
+    def genrulecheckscript(self, filename, path):
+        """Generate script to run AutoCheck"""
         self.gencompilescript(filename, path)
         with open(path+'/'+filename, "a") as f:
             print(f'autocheck report inconclusives', file=f)
@@ -806,6 +808,17 @@ class fvmframework:
                 print(line, file=f)
             print(f'autocheck compile {self.get_tool_flags("autocheck compile")} -d {self.current_toplevel} {self.generic_args}', file=f)
             print(f'autocheck verify {self.get_tool_flags("autocheck verify")} -timeout 1m', file=f)
+            print('exit', file=f)
+
+    # TODO : set sensible defaults here and allow for user optionality too
+    def genxverifyscript(self, filename, path):
+        """Generate script to run X-Check"""
+        self.gencompilescript(filename, path)
+        with open(path+'/'+filename, "a") as f:
+            for line in self.init_reset:
+                print(line, file=f)
+            print(f'xcheck compile {self.get_tool_flags("xcheck compile")} -d {self.current_toplevel} {self.generic_args}', file=f)
+            print(f'xcheck verify {self.get_tool_flags("xcheck verify")}', file=f)
             print('exit', file=f)
 
     # TODO : set sensible defaults here and allow for user optionality too,
@@ -911,6 +924,7 @@ class fvmframework:
             #print('log_info "***** Running formal verify (model checking)..."', file=f)
             # If -cov_mode is specified without arguments, it calculates
             # observability coverage
+            print(f'formal coverage enable -code sbceft', file=f)
             print(f'formal verify {self.get_tool_flags("formal verify")} -cov_mode', file=f)
             print('', file=f)
             print('## Compute Formal Coverage', file=f)
@@ -919,29 +933,6 @@ class fvmframework:
             # scripts so we can better capture if there have been any errors,
             # and also to annotate if they have been skipped
             #print('log_info "***** Running formal generate coverage..."', file=f)
-            if not self.is_disabled('observability'):
-                print('formal generate coverage -cov_mode o', file=f)
-            if not self.is_disabled('signoff'):
-                print(f'formal verify {self.get_tool_flags("formal verify")} -cov_mode signoff', file=f)
-                print('formal generate coverage -cov_mode s', file=f)
-            # TODO : is reachability redundant with covercheck? the
-            # documentation states that "reachability — This argument runs
-            # reachability analysis on the entire design irrespective of the
-            # assertions. This is useful for design suitability analysis for
-            # formal verification and over-constraint analysis. Prior running
-            # of observability is not mandatory for this option." But it may be
-            # using the assumptions to check reachability
-            if not self.is_disabled('reachability'):
-                print(f'formal verify {self.get_tool_flags("formal verify")} -cov_mode reachability', file=f)
-                print('formal generate coverage -cov_mode r', file=f)
-            # TODO : bounded reachability requires at least an inconclusive
-            # assertion.
-            # TODO : it is clear then we need to run coverage in another
-            # script, so we may add or not the bounded reachability coverage
-            # collection
-            #if not self.is_disabled('bounded_reachability'):
-            #    print('formal verify -auto_constraint_off -cov_mode bounded_reachability -timeout 10m', file=f)
-            #    print('formal generate coverage -cov_mode b', file=f)
             print(f'formal generate testbenches {self.get_tool_flags("formal generate testbenches")}', file=f)
             print('formal generate waveforms', file=f)
             print('formal generate waveforms -vcd', file=f)
@@ -1283,6 +1274,71 @@ class fvmframework:
             data = data_from_design_summary(rpt)
             self.results[design][step]['data'] = data
             self.results[design][step]['score'] = friendliness_score(data)
+        if step == 'prove' and self.is_skipped(design, 'prove.formalcover'):
+            self.results[design]['prove.formalcover']['status'] = 'skip'
+        if step == 'prove' and not self.is_skipped(design, 'prove.formalcover'):
+            property_summary = generate_test_cases.parse_property_summary(f'{path}/prove.log')
+            inconclusives = property_summary.get('Assertions', {}).get('Inconclusive', 0)
+            with open(f"{path}/prove_formalcover.do", "w") as f: 
+                print(f"formal load db {path}/propcheck.db",file=f)
+                if not self.is_disabled('observability'):
+                    print('formal generate coverage -detail_all -cov_mode o', file=f)
+                if not self.is_disabled('reachability'):
+                    print(f'formal verify {self.get_tool_flags("formal verify")} -cov_mode reachability', file=f)
+                    print('formal generate coverage -detail_all -cov_mode r', file=f)
+                if not self.is_disabled('bounded_reachability') and inconclusives != 0:
+                    print(f'formal verify {self.get_tool_flags("formal verify")} -cov_mode bounded_reachability', file=f)
+                    print('formal generate coverage -detail_all -cov_mode b', file=f)
+                if not self.is_disabled('signoff'):
+                    print(f'formal verify {self.get_tool_flags("formal verify")} -cov_mode signoff', file=f)
+                    print('formal generate coverage -detail_all -cov_mode s', file=f)
+                print('', file=f)
+                print('exit', file=f)
+            tool = toolchains.TOOLS[self.toolchain][step][0]
+            wrapper = toolchains.TOOLS[self.toolchain][step][1]
+            open_gui = False
+            logger.info(f'prove.simcover, running {tool=} with {wrapper=}')
+            logger.debug(f'Running {tool=} with {wrapper=}')
+            if self.toolchain == "questa":
+                cmd = [wrapper, '-c', '-od', path, '-do', f'{path}/prove_formalcover.do']
+                if self.list == True :
+                    logger.info(f'Available step: prove.formalcover. Tool: {tool}, command = {" ".join(cmd)}')
+                elif self.guinorun == True :
+                    logger.info(f'{self.guinorun=}, will not run {step=} with {tool=}')
+                else :
+                    logger.trace(f'command: {" ".join(cmd)=}')
+                    cmd_stdout, cmd_stderr = self.run_cmd(cmd, design, 'prove.formalcover', tool, self.verbose)
+                    stdout_err = self.logcheck(cmd_stdout, design, 'prove.formalcover', tool)
+                    stderr_err = self.logcheck(cmd_stderr, design, 'prove.formalcover', tool)
+                    logfile = f'{path}/prove_formalcover.log'
+                    logger.info(f'prove.formalcover, {tool=}, finished, output written to {logfile}')
+                    with open(logfile, 'w') as f :
+                        f.write(cmd_stdout)
+                        f.write(cmd_stderr)
+                    # We cannot exit here immediately because then we wouldn't
+                    # be able to open the GUI if there is any error, but we can
+                    # record the error and propagate it outside the function
+                    if stdout_err or stderr_err:
+                        err = True
+                    if stdout_err or stderr_err:
+                        self.results[design]['prove.formalcover']['status'] = 'fail'
+                    else:
+                        self.results[design]['prove.formalcover']['status'] = 'pass'
+                    if self.gui :
+                        open_gui = True
+                if self.guinorun and self.list == False :
+                    open_gui = True
+                # TODO : maybe check for errors also in the GUI?
+                # TODO : maybe run the GUI processes without blocking
+                # the rest of the steps? For that we would probably
+                # need to pass another option to run_cmd
+                # TODO : code here can be deduplicated by having the database
+                # names (.db) in a dictionary -> just open {tool}.db
+                if open_gui:
+                    logger.info(f'prove.formalcover, {tool=}, opening results with GUI')
+                    cmd = [wrapper, f'{path}/{tool}.db']
+                    logger.trace(f'command: {" ".join(cmd)=}')
+                    self.run_cmd(cmd, design, 'prove.formalcover', tool, self.verbose)
         # TODO: consider how we are going to present this simcover post_step:
         # is it a step? a post_step?
         # TODO: this needs a refactor but unfortunately I don't have the time
@@ -1302,6 +1358,8 @@ class fvmframework:
             replay_files = glob.glob(self.outdir+'/'+design+'/qsim_tb/*/replay.vsim.do')
             logger.trace(f'{replay_files=}')
             ucdb_files = list()
+            elapsed_time = 0
+            timestamp = None
             for file in replay_files:
                 # Modify the replay.vsim.do so:
                 #   - It dumps the waveforms into a .vcd file
@@ -1318,6 +1376,9 @@ class fvmframework:
                 path = pathlib.Path(file).parent
                 cmd = ['./replay.scr']
                 cmd_stdout, cmd_stderr = self.run_cmd(cmd, design, f'{step}.simcover', 'vsim', self.verbose, path)
+                elapsed_time += self.results[design][f'{step}.simcover']['elapsed_time']
+                if timestamp is None:
+                    timestamp = self.results[design][f'{step}.simcover']['timestamp']
                 # TODO : maybe check for errors here?
                 tool = 'vsim'
                 stdout_err += self.logcheck(cmd_stdout, design, f'{step}.simcover', tool)
@@ -1329,6 +1390,9 @@ class fvmframework:
             cmd = cmd + ucdb_files
             logger.info(f'{cmd=}, {path=}')
             cmd_stdout, cmd_stderr = self.run_cmd(cmd, design, f'{step}.simcover', 'vcover merge', self.verbose, path)
+            elapsed_time += self.results[design][f'{step}.simcover']['elapsed_time']
+            if timestamp is None:
+                timestamp = self.results[design][f'{step}.simcover']['timestamp']
             # TODO : maybe check for errors here?
             tool = 'vcover'
             stdout_err += self.logcheck(cmd_stdout, design, f'{step}.simcover', tool)
@@ -1347,6 +1411,9 @@ class fvmframework:
                    '-testdetails', '-codeAll', '-multibitverbose', '-out',
                    'simcover', 'simcover.ucdb']
             cmd_stdout, cmd_stderr = self.run_cmd(cmd, design, f'{step}.simcover', 'vcover report', self.verbose, path)
+            elapsed_time += self.results[design][f'{step}.simcover']['elapsed_time']
+            self.results[design][f'{step}.simcover']['timestamp'] = timestamp
+            self.results[design][f'{step}.simcover']['elapsed_time'] = elapsed_time
             # TODO : maybe check for errors here?
             tool = 'vcover'
             stdout_err += self.logcheck(cmd_stdout, design, f'{step}.simcover', tool)
@@ -1640,9 +1707,11 @@ class fvmframework:
                     formal_reachability_html = None   
                     formal_signoff_html = None   
                     properties = None
+                    property_summary = None
                     if step == 'prove':
-                        property_summary = generate_test_cases.parse_property_summary(f'{self.outdir}/{design}/{step}.log')
                         properties = generate_test_cases.parse_log_to_json(f'{self.outdir}/{design}/{step}.log')
+                        property_summary = generate_test_cases.parse_property_summary(f'{self.outdir}/{design}/{step}.log')
+                    if step == 'prove.formalcover':
                         formal_signoff_html = None   
                         if not self.is_disabled('observability'):
                             observability_rpt_path = f'{self.outdir}/{design}/formal_observability.rpt'
@@ -1669,7 +1738,6 @@ class fvmframework:
                             else:
                                 formal_signoff_html = None   
                     else:
-                        property_summary = None
                         observability_html = None   
                         formal_reachability_html = None
                         formal_signoff_html = None

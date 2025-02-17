@@ -1,0 +1,103 @@
+vunit sdram (sdram(arch)) {
+
+    -- Our example uses shorter wait times compared to a commercial 
+    -- SDRAM to make verification easier. 
+    -- Note that the wait times are calculated based on the data from 
+    -- our example and are not parameterized to improve readability.
+
+    -- In this design, some outputs are used to identify 
+    -- the current state. Therefore, to verify the design, instead 
+    -- of using the state—which could degrade the quality of the 
+    -- assertions as it is an internal signal—we use the outputs
+    -- sdram_cs_n, sdram_ras_n, sdram_cas_n and sdram_we_n as a 
+    -- reference. 
+
+    -- Default clock for PSL assertions
+    default clock is rising_edge(clk);
+
+    -- Force a reset in the first clock cycle
+    assume_initial_reset: assume reset = '1';
+
+    -- This way is easier to visualize data (NOT A NECESSARY ASSUME)
+    --assume always (valid = '1' -> (countones(q) /= 0) ) abort reset;
+    -- This way is easier to visualize data (NOT A NECESSARY ASSUME)
+    --assume always (countones(data) /= 0)  abort reset;
+    -- This way is easier to visualize data (NOT A NECESSARY ASSUME)
+    --assume always (countones(addr) /= 0)  abort reset;
+
+    -- If the data is acknowledged, there was a previous request
+    assert_ack_after_req: assert always (ack -> prev(req)) abort reset;
+
+    -- If write enable is active in state ACTIVE,
+    -- the next state will be WRITE
+    assert_we_next_write:
+        assert always ( { we; sdram_cs_n = '0': sdram_ras_n = '0': sdram_cas_n = '1': sdram_we_n = '1' } 
+        |=> { sdram_cs_n = '0': sdram_ras_n = '1': sdram_cas_n = '0': sdram_we_n = '0' } ) abort reset;
+
+    -- If write enable is not active in state ACTIVE,
+    -- the next state will be READ
+    assert_not_we_next_read:
+        assert always ( { not we; sdram_cs_n = '0': sdram_ras_n = '0': sdram_cas_n = '1': sdram_we_n = '1' } 
+        |=> { sdram_cs_n = '0': sdram_ras_n = '1': sdram_cas_n = '0': sdram_we_n = '1' } ) abort reset;
+
+    -- If there is a reset, it takes 7 cycles to go to IDLE.
+    -- It is interesting that we use prev(reset) instead of reset,
+    -- that is because we want to abort reset during the property
+    -- and if the reference is prev(reset), we don't include the reset in the property.
+    -- If we use reset and abort reset, the property will be vacuous.
+    assert_7_cycles_to_idle:
+        assert always ( prev(reset) -> next[6] (start) ) abort reset;
+
+    -- If there isn't a reset in 68 cycles, it will autorefresh. 
+    -- The autorefresh happens when the current state ends.
+    assert_refresh:
+        assert always ( {reset; (not reset)[*68]: start; not reset} |-> 
+        { sdram_cs_n = '0': sdram_ras_n = '0': sdram_cas_n = '0': sdram_we_n = '1' } );
+
+    -- This value is always 0
+    assert_sdram_dqmh_0: assert always (sdram_dqmh = '0');
+    -- This value is always 0
+    assert_sdram_dqml_0: assert always (sdram_dqml = '0');
+    -- This value is always 0 except from two cycles after the reset
+    assert_sdram_cs_n_after_2_reset: assert always (sdram_cs_n -> prev(reset,2));
+    -- This value is always 1 except from reset or a cycle after the reset
+    assert_sdram_cke_after_reset:
+        assert always ( (sdram_cke = '0') -> (reset or prev(reset)) ); 
+
+    -- If output is valid, assert the output data is correct
+    assert_q_msb_correct:
+        assert always ( valid -> (q (31 downto 16) = prev(sdram_dq,2)) ) abort reset;
+    -- If output is valid, assert the output data is correct
+    assert_q_lsb_correct:
+        assert always ( valid -> (q (15 downto 0) = prev(sdram_dq)) ) abort reset;
+
+    -- Assert the sdram controller receives the correct address
+    assert_sdram_ba_correct:
+        assert always ( { sdram_cs_n = '0': sdram_ras_n = '1': sdram_cas_n = '0': sdram_we_n = '0' } 
+        |-> { prev(sdram_ba) = prev(addr(22 downto 21),2) } ) abort reset;
+
+    -- Assert the sdram controller receives the correct address
+    assert_sdram_a_correct:
+        assert always ( { sdram_cs_n = '0': sdram_ras_n = '1': sdram_cas_n = '0': sdram_we_n = '0' } 
+        |-> { prev(sdram_a) = prev(addr(20 downto 8),2) } ) abort reset;
+
+    -- Assert the sdram controller receives the correct address
+    assert_sdram_a_correct_2:
+        assert always ( { sdram_cs_n = '0': sdram_ras_n = '1': sdram_cas_n = '0': sdram_we_n = '0' } 
+        |-> { sdram_a = "0010" & prev(addr(7 downto 0),2) & '0' } ) abort reset;
+
+    -- Assert the sdram controller receives the correct data
+    assert_sdram_dq_correct:
+        assert always ( { sdram_cs_n = '0': sdram_ras_n = '1': sdram_cas_n = '0': sdram_we_n = '0' } 
+        |-> { sdram_dq = prev(data(31 downto 16), 2) } ) abort reset;
+
+    -- Assert the sdram controller receives the correct data
+    assert_sdram_dq_correct_2:
+    assert always ( { sdram_cs_n = '0': sdram_ras_n = '1': sdram_cas_n = '0': sdram_we_n = '0' } 
+    |=> { sdram_dq = prev(data(15 downto 0), 3) } ) abort reset;
+
+    -- Cover a few states
+    cover_mode: cover {state = MODE};
+    cover_write_valid: cover {valid: not reset};
+    cover_refresh: cover {state = REFRESH};
+}

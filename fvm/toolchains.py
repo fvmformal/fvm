@@ -10,11 +10,13 @@ QUESTA_TOOLS = {
         # step           : ["tool",       "wrapper"],
         "lint"           : ["lint",       "qverify"],
         "friendliness"   : ["autocheck",  "qverify"],
-        "rule-checking"  : ["autocheck",  "qverify"],
+        "rulecheck"      : ["autocheck",  "qverify"],
+        "xverify"        : ["xcheck",     "qverify"],
         "reachability"   : ["covercheck", "qverify"],
         "resets"         : ["rdc",        "qverify"],
         "clocks"         : ["cdc",        "qverify"],
-        "prove"          : ["propcheck",  "qverify"]
+        "prove"          : ["propcheck",  "qverify"],
+        "prove.formalcover" : ["propcheck",  "qverify"]
 #        "simulate"       : ["vsim", "vsim"],
 #        "createemptylib" : ["vlib", "vlib"],
 #        "compilevhdl"    : ["vcom", "vcom"],

@@ -1,0 +1,58 @@
+vunit div32 (div32(rtl)) {
+
+    use ieee.std_logic_1164.all;
+    use ieee.numeric_std.all;
+    use gaisler.div32_common.all;
+
+    -- Default clock for PSL assertions
+    default clock is rising_edge(clk);
+
+    -- Force a reset in the first clock cycle
+    assume_initial_reset: assume rst = '0';
+
+    -- Assume that the division starts only in idle state
+    assume_start_in_idle:
+        assume always ( divi.start -> r.state = "000" );
+
+    -- Assume data is unsigned. For now, we are just testing unsigned division
+    assume_data_unsigned: assume always ( divi.signed = '0' );
+  
+    -- Assume data is unsigned. For now, we are just testing unsigned division
+    assume_y_unsigned: assume always (divi.y(32) = '0');
+    assume_op1_unsigned: assume always (divi.op1(32) = '0');
+    assume_op2_unsigned: assume always (divi.op2(32) = '0'); 
+
+    -- Only considering some values for the division
+    assume always ( divi.y(29 downto 20) = "0000000000" );
+    assume always ( divi.op1(29 downto 20) = "0000000000" );
+    assume always ( divi.op2(29 downto 20) = "0000000000" );
+    assume always ( divi.y(16 downto 8) = "000000000" );
+    assume always ( divi.op1(16 downto 8) = "000000000" );
+    assume always ( divi.op2(16 downto 8) = "000000000" );
+    assume always ( divi.y(6 downto 2) = "00000" );
+    assume always ( divi.op1(6 downto 2) = "00000" );
+    assume always ( divi.op2(6 downto 2) = "00000" );
+
+    -- Assert that the division is not ready when is flushed
+    assert_flush: assert always ( {divi.flush: not divo.ready} |=> {not divo.ready} ) abort (rst = '0');
+
+    -- Assert that the division is done in 36 cycles,
+    -- it is aborted if the holdn signal is active 
+    -- or if the division is flushed or if the reset is active
+    assert_divider_36_cycles: 
+        assert always ( ( ( {divi.start; true[*34]} |=> {divo.ready} ) abort (holdn = '0') ) abort divi.flush ) abort (rst = '0');
+
+    -- Assert that the division is correct.
+    -- The inputs divi.y, divi.op1 and divi.op2 must be stable
+    -- during the division. divo.icc is "0000" to avoid overflows,
+    -- zeros or signed values.
+    assert_check_divider: 
+        assert always ( ( {divi.start; (stable(divi.y) and stable(divi.op1) and stable(divi.op2))[*34]; divo.ready: divo.icc="0000"; divo.icc="0000"} |-> 
+        { unsigned(divo.result - verify_division(prev(divi.y,3), prev(divi.op1,3), prev(divi.op2,3))) < 2} ) abort (holdn = '0') ) abort (rst = '0');
+
+    -- Cover one division
+    cover_one_division: cover{[*]; divo.ready: rst};
+    -- Cover two divisions
+    cover_two_divisions: cover{[*]; divo.ready: rst: holdn; [*]; divo.ready: rst: holdn};
+
+}
