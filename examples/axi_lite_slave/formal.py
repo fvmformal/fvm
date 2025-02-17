@@ -4,7 +4,7 @@ import os
 
 fvm = fvmframework()
 
-subprocess.run(['git', 'clone', '--recurse-submodules=:src', '--branch 3.0.1', 'https://github.com/open-logic/open-logic'])
+subprocess.run(['git', 'clone', '--recurse-submodules=:src', '--branch', '3.0.1', 'https://github.com/open-logic/open-logic'])
 
 fvm.add_vhdl_sources("open-logic/src/base/vhdl/*.vhd")
 fvm.add_vhdl_source("open-logic/src/axi/vhdl/olo_axi_pkg_protocol.vhd")
