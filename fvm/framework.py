@@ -1283,27 +1283,15 @@ class fvmframework:
                 print(f"formal load db {path}/propcheck.db",file=f)
                 if not self.is_disabled('observability'):
                     print('formal generate coverage -detail_all -cov_mode o', file=f)
-                if not self.is_disabled('signoff'):
-                    print(f'formal verify {self.get_tool_flags("formal verify")} -cov_mode signoff', file=f)
-                    print('formal generate coverage -detail_all -cov_mode s', file=f)
-                # TODO : is reachability redundant with covercheck? the
-                # documentation states that "reachability — This argument runs
-                # reachability analysis on the entire design irrespective of the
-                # assertions. This is useful for design suitability analysis for
-                # formal verification and over-constraint analysis. Prior running
-                # of observability is not mandatory for this option." But it may be
-                # using the assumptions to check reachability
                 if not self.is_disabled('reachability'):
                     print(f'formal verify {self.get_tool_flags("formal verify")} -cov_mode reachability', file=f)
                     print('formal generate coverage -detail_all -cov_mode r', file=f)
-                # TODO : bounded reachability requires at least an inconclusive
-                # assertion.
-                # TODO : it is clear then we need to run coverage in another
-                # script, so we may add or not the bounded reachability coverage
-                # collection
                 if not self.is_disabled('bounded_reachability') and inconclusives != 0:
                     print(f'formal verify {self.get_tool_flags("formal verify")} -cov_mode bounded_reachability', file=f)
                     print('formal generate coverage -detail_all -cov_mode b', file=f)
+                if not self.is_disabled('signoff'):
+                    print(f'formal verify {self.get_tool_flags("formal verify")} -cov_mode signoff', file=f)
+                    print('formal generate coverage -detail_all -cov_mode s', file=f)
                 print('', file=f)
                 print('exit', file=f)
             tool = toolchains.TOOLS[self.toolchain][step][0]
