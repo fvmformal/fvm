@@ -55,6 +55,7 @@ fvm.add_vhdl_source(f"{extracted_folder}/{extracted_folder}/lib/grlib/stdlib/ver
 fvm.add_vhdl_source(f"{extracted_folder}/{extracted_folder}/lib/grlib/stdlib/stdlib.vhd","grlib")
 fvm.add_vhdl_source(f"{extracted_folder}/{extracted_folder}/lib/grlib/amba/devices.vhd","grlib")
 fvm.add_vhdl_source(f"{extracted_folder}/{extracted_folder}/lib/grlib/amba/amba.vhd","grlib")
+fvm.add_vhdl_source(f"{extracted_folder}/{extracted_folder}/lib/techmap/gencomp/gencomp.vhd","techmap")
 fvm.add_vhdl_source(f"{extracted_folder}/{extracted_folder}/lib/gaisler/ddr/ddrpkg.vhd","gaisler")
 fvm.add_vhdl_source(f"{extracted_folder}/{extracted_folder}/lib/gaisler/ddr/ddrintpkg.vhd","gaisler")
 fvm.add_vhdl_source(f"{extracted_folder}/{extracted_folder}/lib/gaisler/ddr/ddr2spax_ddr.vhd","gaisler")
