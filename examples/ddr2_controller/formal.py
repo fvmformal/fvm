@@ -25,11 +25,17 @@ download_link = "https://download.gaisler.com/products/GRLIB/bin/grlib-gpl-2024.
 file_name = os.path.basename(download_link)
 
 # If the file already exists, skip downloading
-if os.path.exists(file_name):
-    print(f"The file {file_name} is already downloaded.")
-else:
+if not os.path.exists(file_name):
     print(f"Downloading: {download_link}")
-    os.system(f"wget {download_link}")
+    response = requests.get(download_link, stream=True)
+    if response.status_code == 200:
+        with open(file_name, 'wb') as f:
+            for chunk in response.iter_content(1024):
+                f.write(chunk)
+        print(f"Download complete: {file_name}")
+    else:
+        print(f"Failed to download {download_link}, status code: {response.status_code}")
+        exit(1)
 
 # Extract if not already extracted
 extracted_folder = file_name.replace(".tar.gz", "")
