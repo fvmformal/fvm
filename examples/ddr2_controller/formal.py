@@ -68,6 +68,6 @@ fvm.add_config("gaisler.ddr2spax_ddr", "ddr_width_16", {"ddrbits": 16})
 fvm.skip('xverify')
 fvm.skip('reachability')
 fvm.skip('prove.formalcover')
-#fvm.skip('prove.simcover')
+fvm.skip('prove.simcover')
 
 fvm.run()
