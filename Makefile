@@ -191,7 +191,7 @@ docs: dev-reqs
 	mkdir -p badges
 	rm -f badges/undocumented.svg
 	$(VENV_ACTIVATE) pip3 install anybadge
-	$(VENV_ACTIVATE) anybadge --value=$(shell cat doc/sphinx/undocumented_count.txt) --label=undocumented --file=badges/undocumented.svg 1=green 10=yellow 20=orange 30=tomato 999=red
+	$(VENV_ACTIVATE) anybadge --value=`cat doc/sphinx/undocumented_count.txt` --label=undocumented --file=badges/undocumented.svg 1=green 10=yellow 20=orange 30=tomato 999=red
 
 # Remove generated files
 clean:
