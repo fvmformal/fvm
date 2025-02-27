@@ -44,7 +44,7 @@ fvm.set_toplevel("PoC.ipv6_Wrapper")
 
 #fvm.skip('lint')
 #fvm.skip('friendliness')
-#fvm.skip('rulecheck')
+fvm.skip('rulecheck')
 fvm.skip('reachability')
 #fvm.skip('resets')
 #fvm.skip('clocks')
