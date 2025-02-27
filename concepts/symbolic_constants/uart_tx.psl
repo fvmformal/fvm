@@ -24,12 +24,13 @@ vunit uart_tx(uart_tx(Behavioral)) {
     --assume always (data = x"AA"); --(data = prev(data));
 
   -- Cover a number of transmissions
-  cover_one_transmission:
   cover_two_transmisions_two_cycles_between_them:
     cover {transmission(data); true[*2]; transmission(data)};
 
   cover_two_transmisions_any_cycles_between_them:
     cover {transmission(data); true[*]; transmission(data)};
+  
+  cover_one_transmission:
     cover transmission(data);
 
   -- We can define sequences reusing other sequences, which is helpful to
