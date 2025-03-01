@@ -175,6 +175,7 @@ class fvmframework:
         self.libraries_from_vhdl_sources = list()
         self.psl_sources = list()
         self.skip_list = list()
+        self.allow_failure_list = list()
         self.disabled_coverage = list()
         self.toolchain = "questa"
         self.vhdlstd = "2008"
@@ -435,6 +436,12 @@ class fvmframework:
         """Allow to skip specific steps and/or designs. Accepts the wilcards
         '*' and '*'"""
         self.skip_list.append(f'{design}.{step}')
+
+    # TODO : use message
+    def allow_failure(self, step, design='*', message='Failure allowed'):
+        """Allow failures for specific steps and/or designs. Accepts the wildcards
+        '*' and '*'"""
+        self.allow_failure_list.append(f'{design}.{step}')
 
     def disable_coverage(self, covtype, design='*'):
         """Allow disabling specific coverage collection types. Allowed values
@@ -836,7 +843,7 @@ class fvmframework:
             # if .ucdb file is specified:
             #    print('covercheck load ucdb {ucdb_file}', file=f)
             #    print(f'covercheck verify -covered_items', file=f)
-            print(f'covercheck {self.get_tool_flags("covercheck verify")} verify', file=f)
+            print(f'covercheck verify {self.get_tool_flags("covercheck verify")}', file=f)
             print('exit', file=f)
 
     def genresetscript(self, filename, path):
@@ -1065,6 +1072,13 @@ class fvmframework:
                 return True
         return False
 
+    def is_failure_allowed(self, design, step):
+        """Returns True if design.step is allowed to fail, otherwise returns False"""
+        for failure_str in self.allow_failure_list:
+            if fnmatch.fnmatch(f'{design}.{step}', failure_str):
+                return True
+        return False
+
     def is_disabled(self, covtype):
         """Returns True if design.prove.covtype must not be collected, otherwise returns False"""
         for disable_str in self.disabled_coverage:
@@ -1106,9 +1120,13 @@ class fvmframework:
                     # be able to open the GUI if there is any error, but we can
                     # record the error and propagate it outside the function
                     if stdout_err or stderr_err:
-                        err = True
+                        if self.is_failure_allowed(design, step) == False:
+                            err = True
                     if stdout_err or stderr_err:
-                        self.results[design][step]['status'] = 'fail'
+                        if self.is_failure_allowed(design, step) == False:
+                            self.results[design][step]['status'] = 'fail'
+                        else:
+                            self.results[design][step]['status'] = 'broken'
                     else:
                         self.results[design][step]['status'] = 'pass'
                     if self.gui :
@@ -1319,9 +1337,13 @@ class fvmframework:
                     # be able to open the GUI if there is any error, but we can
                     # record the error and propagate it outside the function
                     if stdout_err or stderr_err:
-                        err = True
+                        if self.is_failure_allowed(design, 'prove.formalcover') == False:
+                            err = True
                     if stdout_err or stderr_err:
-                        self.results[design]['prove.formalcover']['status'] = 'fail'
+                        if self.is_failure_allowed(design, 'prove.formalcover') == False:
+                            self.results[design]['prove.formalcover']['status'] = 'fail'
+                        else:
+                            self.results[design]['prove.formalcover']['status'] = 'broken'
                     else:
                         self.results[design]['prove.formalcover']['status'] = 'pass'
                     if self.gui :
@@ -1401,9 +1423,13 @@ class fvmframework:
             # Check for errors
             err = False
             if stdout_err or stderr_err:
-                err = True
+                if self.is_failure_allowed(design, 'prove.simcover') == False:
+                    err = True
             if stdout_err or stderr_err:
-                self.results[design][f'{step}.simcover']['status'] = 'fail'
+                if self.is_failure_allowed(design, 'prove.simcover') == False:
+                    self.results[design][f'{step}.simcover']['status'] = 'fail'
+                else:
+                    self.results[design][f'{step}.simcover']['status'] = 'broken'
 
             # Generate an html report
             path = f'{self.outdir}/{design}'
@@ -1423,9 +1449,13 @@ class fvmframework:
             # Check for errors
             err = False
             if stdout_err or stderr_err:
-                err = True
+                if self.is_failure_allowed(design, 'prove.simcover') == False:
+                    err = True
             if stdout_err or stderr_err:
-                self.results[design][f'{step}.simcover']['status'] = 'fail'
+                if self.is_failure_allowed(design, 'prove.simcover') == False:
+                    self.results[design][f'{step}.simcover']['status'] = 'fail'
+                else:
+                    self.results[design][f'{step}.simcover']['status'] = 'broken'
             else:
                 self.results[design][f'{step}.simcover']['status'] = 'pass'
 
@@ -1578,6 +1608,7 @@ class fvmframework:
         total_pass = 0
         total_fail = 0
         total_skip = 0
+        total_broken = 0
         total_cont = 0
         total_stat = 0
 
@@ -1601,6 +1632,9 @@ class fvmframework:
                     elif status == 'skip':
                         style = 'bold yellow'
                         total_skip += 1
+                    elif status == 'broken':
+                        style = 'bold yellow'
+                        total_broken += 1
                     text = Text()
                     text.append(status, style=style)
                     text.append(' ')
@@ -1637,6 +1671,11 @@ class fvmframework:
             text = Text()
             text.append('skip', style='bold yellow')
             text.append(f' {total_skip} of {total_cont}')
+            console.print(text)
+        if total_broken != 0:
+            text = Text()
+            text.append('broken', style='bold yellow')
+            text.append(f' {total_broken} of {total_cont}')
             console.print(text)
         if total_stat != total_cont:
             text = Text()
