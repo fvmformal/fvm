@@ -195,6 +195,9 @@ class fvmframework:
         # Specific tool defaults for each toolchain
         if self.toolchain == "questa":
             self.tool_flags["lint methodology"] = "ip -goal start"
+            self.tool_flags["autocheck verify"] = ""
+            self.tool_flags["xcheck verify"] = ""
+            self.tool_flags["covercheck verify"] = ""
             self.tool_flags["rdc generate report"] = "-resetcheck"
             self.tool_flags["cdc generate report"] = "-clockcheck"
             self.tool_flags["formal verify"] = "-justify_initial_x -auto_constraint_off"
@@ -204,6 +207,18 @@ class fvmframework:
             if args.step not in toolchains.TOOLS[self.toolchain]:
                 logger.error(f'step {args.step} not available in {self.toolchain}. Available steps are: {list(toolchains.TOOLS[self.toolchain].keys())}')
                 self.exit_if_required(BAD_VALUE)
+
+    def timeout(self, step, timeout):
+        """Set the timeout for a specific step"""
+        timeout_value = f" -timeout {timeout} "
+        if step == "rulecheck":
+            self.tool_flags["autocheck verify"] += timeout_value
+        elif step == "xverify":
+            self.tool_flags["xcheck verify"] += timeout_value
+        elif step == "reachability":
+            self.tool_flags["covercheck verify"] += timeout_value
+        elif step == "prove":
+            self.tool_flags["formal verify"] += timeout_value
 
     def run_command(self, command):
         """Execute a system command and handle errors."""
@@ -814,7 +829,7 @@ class fvmframework:
             for line in self.init_reset:
                 print(line, file=f)
             print(f'autocheck compile {self.get_tool_flags("autocheck compile")} -d {self.current_toplevel} {self.generic_args}', file=f)
-            print(f'autocheck verify {self.get_tool_flags("autocheck verify")} -timeout 1m', file=f)
+            print(f'autocheck verify {self.get_tool_flags("autocheck verify")}', file=f)
             print('exit', file=f)
 
     # TODO : set sensible defaults here and allow for user optionality too
