@@ -1516,6 +1516,10 @@ class fvmframework:
         err_in_log = False
         for line in result.splitlines() :
             err, warn, success = self.linecheck(line)
+
+            if self.is_failure_allowed(design, step) == True and err:
+                warn = True
+                err = False
             # If we are in verbose mode, still check if there are errors /
             # warnings / etc. but do not duplicate the messages
             if err :
