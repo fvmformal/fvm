@@ -1300,7 +1300,7 @@ class fvmframework:
         """Run post processing for a specific step of the methodology"""
         # Currently we only do post-processing after the friendliness and prove
         # steps
-        logger.trace('run_post_step, {design=}, {step=})')
+        logger.trace(f'run_post_step, {design=}, {step=})')
         path = self.current_path
         if step == 'friendliness':
             rpt = path+'/autocheck_design.rpt'
