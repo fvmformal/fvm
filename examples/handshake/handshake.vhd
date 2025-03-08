@@ -2,6 +2,11 @@ library ieee;
 use ieee.std_logic_1164.all;
 
 -- Handshaker to pass multi-bit signals between two clock domains
+--
+-- Each interface has its own reset: we can't have the same reset for both,
+-- because even asynchronous resets must be synchronously deasserted for the
+-- circuits to work without issues. If we try a single reset for both
+-- interfaces, questa CDC/RDC very rightly complains
 entity handshake is
     generic (
         DATA_WIDTH : positive   := 8;   -- Width of data to pass 
@@ -9,14 +14,15 @@ entity handshake is
         RST_VALUE  : std_ulogic := '0'  -- Reset value for the synchronizer FFs
     );
     port (
-        rst        : in  std_ulogic;  -- asyncronous reset, active high
         -- A: writing (requesting) interface
         a_clk      : in  std_ulogic;  -- clock of the requesting clock domain
+        a_rst      : in  std_ulogic;  -- reset of the requesting clock domain
         a_data_in  : in  std_ulogic_vector(DATA_WIDTH-1 downto 0);  -- Data from A to B
         a_req_in   : in  std_ulogic;  -- request from A
         a_ack_out  : out std_ulogic;  -- acknowledge from B
         -- B: reading (acknowledging) interface
         b_clk      : in  std_ulogic;  -- clock of the acknowledging clock domain
+        b_rst      : in  std_ulogic;  -- reset of the acknowledging clock domain
         b_data_out : out std_ulogic_vector(DATA_WIDTH-1 downto 0);  -- Data from A to B
         b_ack_in   : in  std_ulogic;  -- acknowledge from B
         b_req_out  : out std_ulogic   -- request from A
@@ -48,7 +54,7 @@ begin
       )
       port map (
         input  => a_req_in,
-        rst    => rst,
+        rst    => b_rst,
         clk    => b_clk,
         output => b_req_out
       );
@@ -61,7 +67,7 @@ begin
       )
       port map (
         input  => b_ack_in,
-        rst    => rst,
+        rst    => a_rst,
         clk    => a_clk,
         output => a_ack_out
       );
