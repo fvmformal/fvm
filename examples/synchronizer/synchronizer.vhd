@@ -23,7 +23,8 @@ begin
 
     -- A synchronizer needs at least two flip-flops
     assert STAGES >= 2
-        report synchronizer'PATH_NAME & " bad value for STAGES (" &
+        --report synchronizer'PATH_NAME & " bad value for STAGES (" &  -- not supported by propcheck :(
+        report "synchronizer:" & " bad value for STAGES (" &
                integer'IMAGE(STAGES) & "), should be at least 2"
         severity failure;
 
