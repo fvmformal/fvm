@@ -24,6 +24,7 @@ from fvm import logcounter
 from fvm import helpers
 from fvm import generate_test_cases
 from fvm import parse_reports
+from fvm import parse_simcover
 from fvm.parse_design_rpt import *
 
 # Error codes
@@ -191,6 +192,7 @@ class fvmframework:
         self.post_hooks = dict()
         self.designs = list()
         self.design_configs = dict()
+        self.simcover_summary = dict()
 
         # Specific tool defaults for each toolchain
         if self.toolchain == "questa":
@@ -1445,6 +1447,34 @@ class fvmframework:
                     self.results[design][f'{step}.simcover']['status'] = 'fail'
                 else:
                     self.results[design][f'{step}.simcover']['status'] = 'broken'
+
+            # Generate simcover summary
+            path = f'{self.outdir}/{design}'
+            cmd = ['vcover', 'report', '-csv', '-hierarchical', 'simcover.ucdb',
+                   '-output', 'simulation_coverage.log']
+            cmd_stdout, cmd_stderr = self.run_cmd(cmd, design, f'{step}.simcover', 'vcover report', self.verbose, path)
+            elapsed_time += self.results[design][f'{step}.simcover']['elapsed_time']
+            self.results[design][f'{step}.simcover']['timestamp'] = timestamp
+            self.results[design][f'{step}.simcover']['elapsed_time'] = elapsed_time
+            tool = 'vcover'
+            stdout_err += self.logcheck(cmd_stdout, design, f'{step}.simcover', tool)
+            stderr_err += self.logcheck(cmd_stderr, design, f'{step}.simcover', tool)
+
+            # Check for errors
+            err = False
+            if stdout_err or stderr_err:
+                if self.is_failure_allowed(design, 'prove.simcover') == False:
+                    err = True
+            if stdout_err or stderr_err:
+                if self.is_failure_allowed(design, 'prove.simcover') == False:
+                    self.results[design][f'{step}.simcover']['status'] = 'fail'
+                else:
+                    self.results[design][f'{step}.simcover']['status'] = 'broken'
+            else:
+                self.results[design][f'{step}.simcover']['status'] = 'pass'
+
+            coverage_data = parse_simcover.parse_coverage_report(f'{path}/simulation_coverage.log')
+            self.simcover_summary = parse_simcover.sum_coverage_data(coverage_data)
 
             # Generate an html report
             path = f'{self.outdir}/{design}'
