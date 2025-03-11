@@ -25,6 +25,8 @@ from fvm import helpers
 from fvm import generate_test_cases
 from fvm import parse_reports
 from fvm import parse_simcover
+from fvm import formal_signoff_parse
+from fvm import reachability_parse
 from fvm.parse_design_rpt import *
 
 # Error codes
@@ -192,8 +194,10 @@ class fvmframework:
         self.post_hooks = dict()
         self.designs = list()
         self.design_configs = dict()
-        self.simcover_summary = dict()
+        self.reachability_summary = dict()
         self.property_summary = dict()
+        self.formalcover_summary = dict()
+        self.simcover_summary = dict()
 
         # Specific tool defaults for each toolchain
         if self.toolchain == "questa":
@@ -1133,6 +1137,24 @@ class fvmframework:
                     # maybe we shouldn't do it here
                     if step == 'prove' :
                         self.property_summary = generate_test_cases.property_summary(f'{path}/formal_verify.rpt')
+
+                    # Parse reachability summary here,
+                    # maybe we shouldn't do it here.
+                    # Maybe we should delete previous covercheck_verify.rpt?
+                    if step == 'reachability':
+                        reachability_rpt_path = f'{self.outdir}/{design}/covercheck_verify.rpt'
+                        reachability_html_path = f'{self.outdir}/{design}/reachability.html'
+                        if os.path.exists(reachability_rpt_path):
+                            parse_reports.parse_reachability_report_to_html(reachability_rpt_path, reachability_html_path)
+                            reachability_html = reachability_html_path
+                        else:
+                            reachability_html = None 
+                        if reachability_html is not None:
+                            with open(reachability_html, 'r', encoding='utf-8') as f:
+                                html_content = f.read()
+
+                            tables = reachability_parse.parse_single_table(html_content)
+                            self.reachability_summary = reachability_parse.add_total_row(tables)
                     logfile = f'{path}/{step}.log'
                     logger.info(f'{step=}, {tool=}, finished, output written to {logfile}')
                     with open(logfile, 'w') as f :
@@ -1383,6 +1405,24 @@ class fvmframework:
                     cmd = [wrapper, f'{path}/{tool}.db']
                     logger.trace(f'command: {" ".join(cmd)=}')
                     self.run_cmd(cmd, design, 'prove.formalcover', tool, self.verbose)
+            
+            if not self.is_disabled('signoff'):
+                formal_signoff_rpt_path = f'{path}/formal_signoff.rpt'
+                formal_signoff_html_path = f'{path}/formal_signoff.html'
+                if os.path.exists(formal_signoff_rpt_path):
+                    parse_reports.parse_formal_signoff_report_to_html(formal_signoff_rpt_path, formal_signoff_html_path)
+                    formal_signoff_html = formal_signoff_html_path
+                else:
+                    formal_signoff_html = None   
+                if formal_signoff_html is not None:
+                    with open(formal_signoff_html, 'r', encoding='utf-8') as f:
+                        html_content = f.read()
+
+                    tables = formal_signoff_parse.parse_coverage_table(html_content)
+                    filtered_tables = formal_signoff_parse.filter_coverage_tables(tables)
+
+                    if filtered_tables:
+                        self.formalcover_summary = formal_signoff_parse.add_total_field(filtered_tables[0])
         # TODO: consider how we are going to present this simcover post_step:
         # is it a step? a post_step?
         # TODO: this needs a refactor but unfortunately I don't have the time
