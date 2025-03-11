@@ -390,3 +390,108 @@ def parse_log_to_json(log_file):
                     results[category].append(entry)
 
     return json.dumps(results, indent=4)
+
+
+def property_summary(file_path):
+    """
+    Parses a property summary from a log file and organizes the data in a hierarchical structure.
+
+    :param file_path: Path to the log file to be parsed.
+    :return: A dictionary containing the parsed property summary data.
+    """
+    # Regular expressions to extract information
+    property_pattern = re.compile(r'(.+?)\s+(\d+)')
+    sub_property_pattern = re.compile(r'\s{2}(.+?)\s+\((\d+)\)')
+
+    log_data = {}
+
+    # Flag to indicate if we are in the "Property Summary" section
+    in_property_summary = False
+
+    # Variables to handle the hierarchy
+    current_parent = None
+
+    with open(file_path, 'r') as file:
+        lines = file.readlines()
+
+    i = 0
+    while i < len(lines):
+        line = lines[i].strip()
+
+        # Check if we are in the "Property Summary" section
+        if "Property Summary" in line:
+            in_property_summary = True
+            i += 1
+            continue 
+
+        # If we are in the "Property Summary" section, process the lines
+        if in_property_summary:
+            if line.startswith("==="):
+                if i + 2 < len(lines) and lines[i + 1].strip() == "" and lines[i + 2].strip() == "":
+                    break 
+
+            # If we find a separation line (---), start capturing children
+            if line.startswith("---"):
+                i += 1
+                continue 
+
+            # Skip empty lines
+            if line == "":
+                i += 1
+                continue
+
+            # Look for main properties
+            property_match = property_pattern.match(lines[i])
+            if property_match:
+                property_name = property_match.group(1).strip()
+                property_count = int(property_match.group(2))
+
+                # If there is no current parent, it's a main property
+                if current_parent is None or lines[i - 1].startswith("==="):
+                    log_data[property_name] = {'Count': property_count}
+                    current_parent = property_name 
+                else:
+                    # If there is a current parent, it's a child property
+                    if 'Children' not in log_data[current_parent]:
+                        log_data[current_parent]['Children'] = {}
+                    log_data[current_parent]['Children'][property_name] = {'Count': property_count}
+
+            # Look for sub-properties (lines with double indentation)
+            sub_property_match = sub_property_pattern.match(lines[i])
+            if sub_property_match:
+                sub_property_name = sub_property_match.group(1).strip()
+                sub_property_count = int(sub_property_match.group(2))
+                # Assign the sub-property to the last child of the current parent
+                if current_parent and 'Children' in log_data[current_parent]:
+                    last_child = list(log_data[current_parent]['Children'].keys())[-1]
+                    log_data[current_parent]['Children'][last_child][sub_property_name] = sub_property_count
+
+        i += 1
+
+    return log_data
+
+
+def generate_property_summary(property_summary):
+    """
+    Generates a summary from the property summary.
+
+    :param property_summary: A dictionary containing the property summary.
+    :return: A string containing the formatted summary.
+    """
+    summary = []
+
+    for key, value in property_summary.items():
+        count = value['Count']
+        summary.append(f"{key}: {count}")
+
+        if 'Children' in value:
+            for child_key, child_value in value['Children'].items():
+                child_count = child_value['Count']
+                summary.append(f" \_ {child_key}: {child_count}/{count}")
+
+                # Iterate over all keys in child_value that are not 'Count'
+                for sub_key, sub_value in child_value.items():
+                    if sub_key != 'Count':
+                        summary.append(f"    \_ {sub_key}: {sub_value}/{child_count}")
+
+    return "\n".join(summary)

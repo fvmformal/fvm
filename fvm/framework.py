@@ -193,6 +193,7 @@ class fvmframework:
         self.designs = list()
         self.design_configs = dict()
         self.simcover_summary = dict()
+        self.property_summary = dict()
 
         # Specific tool defaults for each toolchain
         if self.toolchain == "questa":
@@ -1128,6 +1129,10 @@ class fvmframework:
                     cmd_stdout, cmd_stderr = self.run_cmd(cmd, design, step, tool, self.verbose)
                     stdout_err = self.logcheck(cmd_stdout, design, step, tool)
                     stderr_err = self.logcheck(cmd_stderr, design, step, tool)
+                    # Parse property summary here,
+                    # maybe we shouldn't do it here
+                    if step == 'prove' :
+                        self.property_summary = generate_test_cases.property_summary(f'{path}/formal_verify.rpt')
                     logfile = f'{path}/{step}.log'
                     logger.info(f'{step=}, {tool=}, finished, output written to {logfile}')
                     with open(logfile, 'w') as f :
@@ -1643,7 +1648,7 @@ class fvmframework:
         # assume/assert/fired/proven/cover/covered/uncoverable/etc. For this,
         # we may need to post-process the prove step log
         # TODO : print elapsed time
-
+     
         # Calculate maximum length of {design}.{step} so we can pad later
         maxlen = 0
         for design in self.designs:
