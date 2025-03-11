@@ -186,6 +186,24 @@ pycoverage:
         coverage_format: cobertura
         path: coverage.xml
 
+# Deploy institutional website
+#
+# It is important we cd before the lftp command: if not, we may push the whole
+# repo to the public website. We want the second command to NOT run if the
+# first command fails, so that's why we use the && instead of a different line
+# in the script
+#
+# For now the website is just a placeholder: in the future, we will include
+# more content
+website:
+  stage: deploy
+  image: alpine:3
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+  script:
+    - apk add lftp
+    - cd doc/website && lftp -p 22 -u $FTP_USERNAME,$FTP_PASSWORD $FTP_HOST -e "mirror -R -e . ; quit"
+
 # Deploy to gitlab pages
 # This is done only on the main branch: if not, pages would be overwritten by
 # all pipelines running in all branches, and we don't want that. We want our
