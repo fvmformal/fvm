@@ -1342,6 +1342,7 @@ class fvmframework:
             property_summary = generate_test_cases.parse_property_summary(f'{path}/prove.log')
             inconclusives = property_summary.get('Assertions', {}).get('Inconclusive', 0)
             with open(f"{path}/prove_formalcover.do", "w") as f: 
+                print('onerror exit', file=f)
                 print(f"formal load db {path}/propcheck.db",file=f)
                 if not self.is_disabled('observability'):
                     print('formal generate coverage -detail_all -cov_mode o', file=f)
