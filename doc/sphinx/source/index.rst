@@ -29,6 +29,22 @@ Contact
 
 .. toctree::
    :maxdepth: 4
-   :caption: Contents:
+   :caption: About
+   :hidden:
+
+   fvm_intro
+   fv_intro
+
+.. toctree::
+   :maxdepth: 4
+   :caption: Examples
+   :hidden:
+
+   examples
+
+.. toctree::
+   :maxdepth: 4
+   :caption: Apidoc
+   :hidden:
 
    modules

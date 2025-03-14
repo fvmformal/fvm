@@ -5,11 +5,20 @@
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
+import os
+import datetime
 
+# Project details
 project = 'fvm'
-copyright = '2025, Universidad de Sevilla'
 author = 'Universidad de Sevilla'
-release = '0.1-dev'
+version = '0.1' # Short version number (major.minor)
+release = '0.1.0' # Full version number (major.minor.patch)
+
+current_year = datetime.datetime.now().year
+copyright = f'2024-{current_year}, Universidad de Sevilla'
+
+# Determine if we are building on readthedocs
+on_rtd = os.environ.get("READTHEDOCS") == True
 
 # Connect to autodoc-process-docstring
 
@@ -39,6 +48,8 @@ extensions = [
     "sphinx.ext.autodoc",       # Extract docstrings
     "sphinx.ext.napoleon",      # Support Google/NumPy-style docstrings
     "sphinx.ext.viewcode",      # Add links to source code
+    "sphinx.ext.todo",          # Allow todonotes
+    "sphinxcontrib.mermaid",    # To have mermaid diagrams
     #"sphinx_autodoc_typehints", # Show type hints
     #"sphinx.ext.coverage",      # Report documentation coverage (we are not
       #using it, because when using autodoc, coverage believes everything is
@@ -46,6 +57,10 @@ extensions = [
 ]
 
 autodoc_typehints = "description"  # Type hints appear in descriptions
+
+todo_include_todos = True  # Render to-dos in output
+
+mermaid_version = '10.3.0'
 
 # Having these options will warn about missing docstrings
 autodoc_default_options = {
@@ -71,3 +86,10 @@ exclude_patterns = []
 #html_theme = 'alabaster'
 html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
+html_favicon = '_static/favicon.ico'
+html_logo = '_static/android-chrome-192x192.png'
+
+if html_theme == 'sphinx_rtd_theme':
+    html_theme_options = {
+        'logo_only': True,
+        }

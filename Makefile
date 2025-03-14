@@ -210,7 +210,8 @@ clean:
 	rm -f test/test.vhd test/test2.vhd test/test3.vhd
 	rm -f test/test.psl test/test2.psl test/test3.psl
 	rm -rf dist
-	rm -rf doc/sphinx/build/*
+	rm -rf doc/sphinx/source/fvm.drom2psl.rst doc/sphinx/source/fvm.rst doc/sphinx/source/modules.rst
+	rm -rf doc/sphinx/build/* doc/sphinx/undocumented_count.txt
 
 # Remove venv and generated files
 realclean: clean
