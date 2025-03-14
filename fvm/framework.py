@@ -886,7 +886,7 @@ class fvmframework:
                 print(f'slec configure -spec -d {design}', file=f)
                 print(f'slec configure -impl -d {design}', file=f)                
 
-            print(f'slec compile', file=f)
+            print(f'slec compile {self.generic_args}', file=f)
             print(f'slec verify -auto_constraint_off -justify_initial_x', file=f)
             print(f'slec generate report', file=f)
             print(f'slec generate waveforms -vcd', file=f)
