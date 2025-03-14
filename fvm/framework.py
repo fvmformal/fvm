@@ -49,6 +49,7 @@ FVM_STEPS = [
     'rulecheck',
     'xverify',
     'reachability',
+    'fault',
     'resets',
     'clocks',
     'prove'
@@ -673,6 +674,7 @@ class fvmframework:
             self.genrulecheckscript("rulecheck.do", path)
             self.genxverifyscript("xverify.do", path)
             self.genreachabilityscript("reachability.do", path)
+            self.genfaultscript("fault.do", path)
             self.genresetscript("resets.do", path)
             self.genclockscript("clocks.do", path)
             self.genprovescript("prove.do", path)
@@ -866,6 +868,22 @@ class fvmframework:
             #    print('covercheck load ucdb {ucdb_file}', file=f)
             #    print(f'covercheck verify -covered_items', file=f)
             print(f'covercheck verify {self.get_tool_flags("covercheck verify")}', file=f)
+            print('exit', file=f)
+
+    def genfaultscript(self, filename, path):
+        """Generate a script to run SLEC"""
+        self.gencompilescript(filename, path)
+        with open(path+'/'+filename, "a") as f:
+            for line in self.init_reset:
+                print(line, file=f)
+            lib, design = self.current_toplevel.rsplit(".", 1)
+            print(f'slec configure -spec -d {design} -work {lib}', file=f)
+            print(f'slec configure -impl -d {design} -work {lib}', file=f)
+
+            print(f'slec compile', file=f)
+            print(f'slec verify -auto_constraint_off -justify_initial_x', file=f)
+            print(f'slec generate report', file=f)
+            print(f'slec generate waveforms -vcd', file=f)
             print('exit', file=f)
 
     def genresetscript(self, filename, path):

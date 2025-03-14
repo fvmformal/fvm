@@ -13,6 +13,7 @@ QUESTA_TOOLS = {
         "rulecheck"      : ["autocheck",  "qverify"],
         "xverify"        : ["xcheck",     "qverify"],
         "reachability"   : ["covercheck", "qverify"],
+        "fault"          : ["slec",       "qverify"],
         "resets"         : ["rdc",        "qverify"],
         "clocks"         : ["cdc",        "qverify"],
         "prove"          : ["propcheck",  "qverify"],
