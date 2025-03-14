@@ -876,9 +876,15 @@ class fvmframework:
         with open(path+'/'+filename, "a") as f:
             for line in self.init_reset:
                 print(line, file=f)
-            lib, design = self.current_toplevel.rsplit(".", 1)
-            print(f'slec configure -spec -d {design} -work {lib}', file=f)
-            print(f'slec configure -impl -d {design} -work {lib}', file=f)
+            parts = self.current_toplevel.rsplit(".", 1)
+            if len(parts) == 2:
+                lib, design = parts
+                print(f'slec configure -spec -d {design} -work {lib}', file=f)
+                print(f'slec configure -impl -d {design} -work {lib}', file=f)
+            else:
+                design = parts[0]
+                print(f'slec configure -spec -d {design}', file=f)
+                print(f'slec configure -impl -d {design}', file=f)                
 
             print(f'slec compile', file=f)
             print(f'slec verify -auto_constraint_off -justify_initial_x', file=f)
