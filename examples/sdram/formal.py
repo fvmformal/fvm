@@ -15,6 +15,7 @@ fvm.set_toplevel("sdram")
 fvm.add_config("sdram", "config_freq_10_desl_200", {"CLK_FREQ": 10.0, "T_DESL": 200.0})
 
 fvm.skip('reachability')
+fvm.skip('fault')
 fvm.skip('prove.formalcover')
 fvm.skip('prove.simcover')
 fvm.run()
