@@ -202,6 +202,7 @@ website:
     - if: $CI_COMMIT_BRANCH == "main"
   script:
     - apk add lftp openssh
+    - mkdir ~/.ssh
     - echo "institucional.us.es ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHQ6I6yxtNPZrW3bRpoXlDV+6QywmEp4j0ReeZETQGzi" >> ~/.ssh/known_hosts
     - cd doc/website && lftp -p 22 -u $FTP_USERNAME,$FTP_PASSWORD $FTP_HOST -e "mirror -R -e . ; quit"
 
