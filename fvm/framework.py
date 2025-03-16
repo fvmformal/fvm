@@ -62,8 +62,11 @@ FVM_POST_STEPS = [
 
 # Create a rich console object
 # TODO: force_terminal should enable color inside gitlab CI, but may break
-# non-color terminals?
-console = Console(force_terminal=True)
+# non-color terminals? maybe we should use environment variables instead? see https://rich.readthedocs.io/en/stable/console.html#environment-variables
+# For CI systems that support colors but where we don't want any interactivity
+# (such as gitlab-ci), we set force_terminal to True and force_interactive to
+# False
+console = Console(force_terminal=True, force_interactive=False)
 
 class fvmframework:
 
@@ -1137,6 +1140,7 @@ class fvmframework:
     # deduplicate this so this function does not get unwieldy
     def run_step(self, design, step):
         """Run a specific step of the methodology"""
+        console.rule(f'[bold white]{design}.{step}[/bold white]')
         err = False
         path = self.current_path
         open_gui = False
@@ -1713,7 +1717,19 @@ class fvmframework:
         # assume/assert/fired/proven/cover/covered/uncoverable/etc. For this,
         # we may need to post-process the prove step log
         # TODO : print elapsed time
-     
+        from rich.table import Table
+        from rich.measure import Measurement
+        from rich.box import ROUNDED
+
+        summary_console = Console(force_terminal=True, force_interactive=False,
+                                  record=True)
+        table = Table(title="[cyan]FVM Summary[/cyan]")
+        table.add_column("status", justify="left", min_width=6)
+        table.add_column("design.step", justify="left", min_width=25)
+        table.add_column("results", justify="right", min_width=5)
+        table.add_column("elapsed time", justify="right", min_width=12)
+
+        print(self.property_summary)
         # Calculate maximum length of {design}.{step} so we can pad later
         maxlen = 0
         for design in self.designs:
@@ -1732,7 +1748,7 @@ class fvmframework:
         total_stat = 0
 
         text_header = Text("==== Summary ==============================================")
-        console.print(text_header)
+        summary_console.print(text_header)
 
         for design in self.designs:
             for step in FVM_STEPS + FVM_POST_STEPS:
@@ -1760,53 +1776,200 @@ class fvmframework:
                     design_step = f'{design}.{step}'
                     text.append(f'{design_step:<{maxlen}}')
 
+                    result_str_for_table = ""
                     score_str =  '                '
                     if step == 'friendliness':
                         if "score" in self.results[design][step]:
                             score = self.results[design][step]["score"]
                             score_str = f' (score: {score:.2f}%)'
+                            result_str_for_table = f'[bold green]{score:.2f}%[/bold green]'
+                        else:
+                            result_str_for_table = "N/A"
                     text.append(score_str)
 
+                    if step == 'reachability':
+                        if self.reachability_summary:
+                            score = next( (float(entry["Unreachable"].split("(")[-1].strip(" %)")) 
+                                   for entry in self.reachability_summary["data"] 
+                                   if entry.get("Coverage Type") == "Total"), 0.0)    
+                            if status == 'pass':                        
+                                result_str_for_table = f'[bold green]{score}%[/bold green]'
+                            else:
+                                result_str_for_table = f'[bold red]{score}%[/bold red]'
+                        else:
+                            result_str_for_table = "N/A"
+
+                    if step == 'prove.formalcover':
+                        if self.formalcover_summary:
+                            score = next( (float(entry["Covered (P)"].split("(")[-1].strip(" %)")) 
+                                   for entry in self.formalcover_summary["data"] 
+                                   if entry.get("Coverage Type") == "Total"), 0.0)   
+                            if status == 'pass':                         
+                                result_str_for_table = f'[bold green]{score}%[/bold green]'
+                            else:
+                                result_str_for_table = f'[bold red]{score}%[/bold red]'
+                        else:
+                            result_str_for_table = "N/A"
+
+                    if step == 'prove.simcover':
+                        if self.simcover_summary:
+                            score = self.simcover_summary.get("Total", {}).get("percentage", 0)
+                            if status == 'pass':
+                                result_str_for_table = f'[bold green]{score}%[/bold green]'
+                            else:
+                                result_str_for_table = f'[bold red]{score}%[/bold red]'
+                        else:
+                            result_str_for_table = "N/A"
+                        
+                    time_str_for_table = "N/A"
                     if "elapsed_time" in self.results[design][step]:
                         time = self.results[design][step]["elapsed_time"]
                         total_time += time
                         time_str = f' ({helpers.readable_time(time)})'
+                        time_str_for_table = helpers.readable_time(time)
                         text.append(time_str)
                     #text.append(f' result={self.results[design][step]}', style='white')
-                    console.print(text)
+                    summary_console.print(text)
+                    table.add_row(f'[{style}]{status}[/{style}]',
+                                  f'{design}.{step}', result_str_for_table,
+                                  time_str_for_table)
                     #print(f'{status} {design}.{step}, result={self.results[design][step]}')
+
+                    if step == "prove" and self.property_summary:
+                        # TODO: Change self.property_summary to self.results[design][step]["property_summary"]
+                        prop_summary = self.property_summary
+
+                        assumes = prop_summary.get("Assumes", {}).get("Count", 0)
+                        asserts = prop_summary.get("Asserts", {}).get("Count", 0)
+                        covers = prop_summary.get("Covers", {}).get("Count", 0)
+
+                        table.add_row("", "  Assumes", str(assumes), "")
+
+                        asserts_children = prop_summary.get("Asserts", {}).get("Children", {})
+                        failed_count = asserts_children.get("Fired", {}).get("Count", 0)
+                        inconclusive_count = asserts_children.get("Inconclusive", {}).get("Count", 0)
+                        proven_data = asserts_children.get("Proven", {}).get("Children", {})
+                        vacuous_count = proven_data.get("Vacuous", {}).get("Count", 0)
+
+                        if failed_count > 0:
+                            color_asserts = "bold red" 
+                        elif inconclusive_count > 0:
+                            color_asserts = "bold grey"
+                        elif vacuous_count > 0:
+                            color_asserts = "bold yellow"
+                        else:
+                            color_asserts = "bold green"
+
+                        table.add_row("", f"  [{color_asserts}]Asserts[/{color_asserts}]", str(asserts), "")
+
+
+                        color_map_asserts = {
+                            "Proven": "bold green",
+                            "Fired": "bold red",
+                            "Inconclusive": "bold grey",
+                            "Vacuous": "bold yellow",
+                            "Proven with Warning": "bold yellow",
+                            "Fired with Warning": "bold yellow",
+                            "Fired without Waveform": "bold red"
+                            }
+
+                        for key, value in asserts_children.items():
+                            count = value.get("Count", 0)
+                            formatted_str = f"{count}/{asserts}" if asserts else f"{count}/0"
+                            color_asserts_children = color_map_asserts.get(key, "bold green")
+                            table.add_row("", f"    └ {key}", f"[{color_asserts_children}]{formatted_str}[/{color_asserts_children}]", "")
+
+                            for subkey, subval in value.items():
+                                if subkey != "Count": 
+                                    subcount = subval
+                                    formatted_substr = f"{subcount}/{count}" if count else f"{subcount}/0"
+                                    color_asserts_children = color_map_asserts.get(subkey, "bold green")
+                                    table.add_row("", f"       └ {subkey}", f"[{color_asserts_children}]{formatted_substr}[/{color_asserts_children}]", "")
+
+                        covers_children = prop_summary.get("Covers", {}).get("Children", {})
+                        uncovered_count = covers_children.get("Uncovered", {}).get("Count", 0)
+                        not_a_target_count = covers_children.get("Not a Target", {}).get("Count", 0)
+
+                        if uncovered_count > 0:
+                            color_covers = "bold red" 
+                        elif not_a_target_count > 0:
+                            color_covers = "bold grey"
+                        else:
+                            color_covers = "bold green"
+
+                        color_map_covers = {
+                            "Covered": "bold green",
+                            "Uncovered": "bold red",
+                            "Not a Target": "bold grey",
+                            "Covered with Warning": "bold yellow",
+                            "Covered without Waveform": "bold yellow"
+                            }
+                        
+                        table.add_row("", f"  [{color_covers}]Covers[/{color_covers}]", str(covers), "")
+                        for key, value in covers_children.items():
+                            count = value.get("Count", 0)
+                            formatted_str = f"{count}/{covers}" if covers else f"{count}/0"
+                            color_covers_children = color_map_covers.get(key, "bold green")
+                            table.add_row("", f"    └ {key}", f"[{color_covers_children}]{formatted_str}[/{color_covers_children}]", "")
+
+                            for subkey, subval in value.items():
+                                if subkey != "Count":
+                                    subcount = subval
+                                    formatted_substr = f"{subcount}/{count}" if count else f"{subcount}/0"
+                                    color_covers_children = color_map_covers.get(subkey, "bold green")
+                                    table.add_row("", f"       └ {subkey}", f"[{color_covers_children}]{formatted_substr}[/{color_covers_children}]", "")
         text_footer = Text("===========================================================")
         console.print(text_footer)
         text = Text()
         text.append('pass', style='bold green')
         text.append(f' {total_pass} of {total_cont}')
-        console.print(text)
+        summary_console.print(text)
+        summary = f"[bold green]  pass[/bold green] {total_pass} of {total_cont}\n"
         if total_fail != 0:
             text = Text()
             text.append('fail', style='bold red')
             text.append(f' {total_fail} of {total_cont}')
-            console.print(text)
+            summary_console.print(text)
+            summary += f"[bold red]  fail[/bold red] {total_fail} of {total_cont}\n"
         if total_skip != 0:
             text = Text()
             text.append('skip', style='bold yellow')
             text.append(f' {total_skip} of {total_cont}')
-            console.print(text)
+            summary_console.print(text)
+            summary += f"[bold yellow]  skip[/bold yellow] {total_skip} of {total_cont}\n"
         if total_broken != 0:
             text = Text()
             text.append('broken', style='bold yellow')
             text.append(f' {total_broken} of {total_cont}')
-            console.print(text)
+            summary_console.print(text)
+            summary += f"[bold yellow]  broken[/bold yellow] {total_broken} of {total_cont}\n"
         if total_stat != total_cont:
             text = Text()
             text.append('omit', style='bold white')
             text.append(f' {total_cont - total_stat} of {total_cont} (not executed due to early exit)')
-            console.print(text)
-        console.print(text_footer)
+            summary_console.print(text)
+            summary += f"[bold white]  omit[/bold white] {total_cont - total_stat} of {total_cont}\n"
+        summary_console.print(text_footer)
         text = Text()
         text.append(f'Total time  : {helpers.readable_time(total_time)}\n')
         text.append(f'Elapsed time: (not yet implemented)')
-        console.print(text)
-        console.print(text_footer)
+        summary_console.print(text)
+        summary_console.print(text_footer)
+        summary_console.print(table)
+
+        console_options = console.options
+        table_width = Measurement.get(summary_console, console_options, table).maximum
+        separator_line = " "
+        separator_line += "─" * table_width
+        summary += f"{separator_line}\n"
+        summary += f"{'  Total time:'} [bold cyan]{helpers.readable_time(total_time)}[/bold cyan]\n"
+        summary_console.print(summary)
+        # If self.outdir doesn't exist, something went wrong: in that case, do
+        # not try to save the HTML summary
+        if os.path.isdir(self.outdir):
+            summary_console.save_html(f'{self.outdir}/summary.html')
+        else:
+            logger.error(f'Cannot access output directory {self.outdir}, something went wrong')
 
     def clear_directory(self, directory_path):
         try:
