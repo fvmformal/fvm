@@ -1815,9 +1815,9 @@ class fvmframework:
                         if self.simcover_summary:
                             score = self.simcover_summary.get("Total", {}).get("percentage", 0)
                             if status == 'pass':
-                                result_str_for_table = f'[bold green]{score}%[/bold green]'
+                                result_str_for_table = f'[bold green]{score}[/bold green]'
                             else:
-                                result_str_for_table = f'[bold red]{score}%[/bold red]'
+                                result_str_for_table = f'[bold red]{score}[/bold red]'
                         else:
                             result_str_for_table = "N/A"
                         
