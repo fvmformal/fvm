@@ -1467,7 +1467,7 @@ class fvmframework:
 
                         formalcover_console = Console(force_terminal=True, force_interactive=False,
                                                 record=True)
-                        table = Table(title=f"[cyan]{formalcover_summary["title"]}[/cyan]")
+                        table = Table(title=f"[cyan]{formalcover_summary['title']}[/cyan]")
 
                         table.add_column("Status", style="bold")
                         table.add_column("Coverage Type", style="cyan")
