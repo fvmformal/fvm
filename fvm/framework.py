@@ -27,6 +27,7 @@ from fvm import parse_reports
 from fvm import parse_simcover
 from fvm import formal_signoff_parse
 from fvm import reachability_parse
+from fvm import parse_lint
 from fvm.parse_design_rpt import *
 
 # Error codes
@@ -202,6 +203,7 @@ class fvmframework:
         self.property_summary = dict()
         self.formalcover_summary = dict()
         self.simcover_summary = dict()
+        self.lint_summary = dict()
 
         # Specific tool defaults for each toolchain
         if self.toolchain == "questa":
@@ -1174,6 +1176,13 @@ class fvmframework:
                     cmd_stdout, cmd_stderr = self.run_cmd(cmd, design, step, tool, self.verbose)
                     stdout_err = self.logcheck(cmd_stdout, design, step, tool)
                     stderr_err = self.logcheck(cmd_stderr, design, step, tool)
+
+                    # Parse lint summary here,
+                    # maybe we shouldn't do it here
+                    if step == 'lint' :
+                        lint_rpt_path = f'{self.outdir}/{design}/lint.rpt'
+                        if os.path.exists(lint_rpt_path):
+                            self.lint_summary = parse_lint.parse_check_summary(lint_rpt_path)
                     # Parse property summary here,
                     # maybe we shouldn't do it here
                     if step == 'prove' :
@@ -1900,6 +1909,18 @@ class fvmframework:
 
                     result_str_for_table = ""
                     score_str =  '                '
+
+                    if step == 'lint':
+                        if self.lint_summary:
+                            lint_errors = self.lint_summary['Error']['count']
+                            lint_warnings = self.lint_summary['Warning']['count']
+                            
+                            result_str_for_table += f"[bold red]{lint_errors}E[/bold red]"
+                            result_str_for_table += " "
+                            result_str_for_table += f"[bold yellow]{lint_warnings}W[/bold yellow]"
+                        else:
+                            result_str_for_table = "N/A"
+
                     if step == 'friendliness':
                         if "score" in self.results[design][step]:
                             score = self.results[design][step]["score"]
