@@ -1452,6 +1452,65 @@ class fvmframework:
 
                     if filtered_tables:
                         self.formalcover_summary = formal_signoff_parse.add_total_field(filtered_tables[0])
+                        formalcover_summary = self.formalcover_summary
+                        goal_percentages = {
+                            "Branch": 0.0,
+                            "Condition": 0.0,
+                            "Expression": 0.0,
+                            "FSM State": 0.0,
+                            "FSM Transition": 0.0,
+                            "Statement": 0.0,
+                            "Toggle": 0.0,
+                            "Covergroup Bin": 0.0,
+                            "Total": 0.0,
+                        }
+
+                        formalcover_console = Console(force_terminal=True, force_interactive=False,
+                                                record=True)
+                        table = Table(title=f"[cyan]{formalcover_summary["title"]}[/cyan]")
+
+                        table.add_column("Status", style="bold")
+                        table.add_column("Coverage Type", style="cyan")
+                        table.add_column("Total", justify="right")
+                        table.add_column("Uncovered", justify="right")
+                        table.add_column("Excluded", justify="right")
+                        table.add_column("Covered (P)", justify="right")
+                        table.add_column("Goal (%)", justify="right")
+
+                        fail_found = False
+
+                        for entry in formalcover_summary["data"]:
+                            coverage_type = entry["Coverage Type"]
+                            covered_text = entry["Covered (P)"].split("(")[-1].strip(" %)")
+
+                            if covered_text == "N/A":
+                                status = "[white]omit[/white]"
+                                covered_display = f"[bold white]{entry['Covered (P)']}[/bold white]"
+                                covered_percentage = 0.0 
+                            else:
+                                covered_percentage = float(covered_text)
+                                goal = goal_percentages.get(coverage_type, 0.0)
+
+                                if covered_percentage >= goal:
+                                    status = "[green]pass[/green]"
+                                    covered_display = f"[bold green]{entry['Covered (P)']}[/bold green]"
+                                else:
+                                    status = "[red]fail[/red]"
+                                    covered_display = f"[bold red]{entry['Covered (P)']}[/bold red]"
+                                    fail_found = True 
+
+                            table.add_row(
+                                status,
+                                coverage_type,
+                                str(entry["Total"]),
+                                str(entry["Uncovered"]),
+                                str(entry["Excluded"]),
+                                covered_display,
+                                f"{goal:.1f}%",
+                            )
+
+                        self.results[design]['prove.formalcover']['status'] = "fail" if fail_found else "pass"
+                        formalcover_console.print(table)
         # TODO: consider how we are going to present this simcover post_step:
         # is it a step? a post_step?
         # TODO: this needs a refactor but unfortunately I don't have the time
@@ -1577,6 +1636,56 @@ class fvmframework:
                     self.results[design][f'{step}.simcover']['status'] = 'broken'
             else:
                 self.results[design][f'{step}.simcover']['status'] = 'pass'
+
+            if self.simcover_summary is not None:
+                simcover_summary = self.simcover_summary
+                goal_percentages = {
+                    "Branches": 0.0,
+                    "Conditions": 0.0,
+                    "Statments": 0.0,
+                    "Toggles": 0.0,
+                    "Total": 0.0,
+                }
+
+                simcover_console = Console(force_terminal=True, force_interactive=False,
+                                        record=True)
+                table = Table(title=f"[cyan]Simulation Coverage Summary for Design: {design} [/cyan]")
+
+                table.add_column("Status", style="bold")
+                table.add_column("Coverage Type", style="cyan")
+                table.add_column("Covered", justify="right")
+                table.add_column("Total", justify="right")
+                table.add_column("Percentage", justify="right")
+                table.add_column("Goal (%)", justify="right")
+
+                fail_found = False
+
+                for coverage_type, values in simcover_summary.items():
+                    covered = values["covered"]
+                    total = values["total"]
+                    percentage_text = values["percentage"].strip("%")
+                    covered_percentage = float(percentage_text)
+                    goal = goal_percentages.get(coverage_type, 0.0)
+
+                    if covered_percentage >= goal:
+                        status = "[green]pass[/green]"
+                        percentage_display = f"[bold green]{values['percentage']}[/bold green]"
+                    else:
+                        status = "[red]fail[/red]"
+                        percentage_display = f"[bold red]{values['percentage']}[/bold red]"
+                        fail_found = True  
+
+                    table.add_row(
+                        status,
+                        coverage_type,
+                        str(covered),
+                        str(total),
+                        percentage_display,
+                        f"{goal:.1f}%",
+                    )
+
+                self.results[design]['prove.simcover']['status'] = "fail" if fail_found else "pass"
+                simcover_console.print(table)
 
             return err
 
@@ -1729,7 +1838,6 @@ class fvmframework:
         table.add_column("results", justify="right", min_width=5)
         table.add_column("elapsed time", justify="right", min_width=12)
 
-        print(self.property_summary)
         # Calculate maximum length of {design}.{step} so we can pad later
         maxlen = 0
         for design in self.designs:
@@ -1838,7 +1946,6 @@ class fvmframework:
                     if step == "prove" and self.property_summary:
                         # TODO: Change self.property_summary to self.results[design][step]["property_summary"]
                         prop_summary = self.property_summary
-
                         assumes = prop_summary.get("Assumes", {}).get("Count", 0)
                         asserts = prop_summary.get("Asserts", {}).get("Count", 0)
                         covers = prop_summary.get("Covers", {}).get("Count", 0)
