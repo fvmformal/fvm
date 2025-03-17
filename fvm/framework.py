@@ -889,6 +889,19 @@ class fvmframework:
                 print(f'slec configure -spec -d {design}', file=f)
                 print(f'slec configure -impl -d {design}', file=f)                
 
+            for cutpoint in self.cutpoints:
+                string = f'netlist cutpoint impl.{cutpoint["signal"]}'
+                if cutpoint["module"] is not None:
+                    string += f' -module {cutpoint["module"]}'
+                if cutpoint["resetval"] is True:
+                    string += ' -reset_value'
+                if cutpoint["condition"] is not None:
+                    string += f'-cond {cutpoint["condition"]}'
+                if cutpoint["driver"] is not None:
+                    string += f'-cond {cutpoint["driver"]}'
+                if cutpoint["wildcards_dont_match_hierarchy_separators"] is True:
+                    string += '-match_local_scope'
+                print(string, file=f)
             print(f'slec compile {self.generic_args}', file=f)
             print(f'slec verify -auto_constraint_off -justify_initial_x', file=f)
             print(f'slec generate report', file=f)
