@@ -28,6 +28,7 @@ from fvm import parse_simcover
 from fvm import formal_signoff_parse
 from fvm import reachability_parse
 from fvm import parse_lint
+from fvm import parse_rulecheck
 from fvm.parse_design_rpt import *
 
 # Error codes
@@ -204,6 +205,7 @@ class fvmframework:
         self.formalcover_summary = dict()
         self.simcover_summary = dict()
         self.lint_summary = dict()
+        self.rulecheck_summary = dict()
 
         # Specific tool defaults for each toolchain
         if self.toolchain == "questa":
@@ -1183,6 +1185,12 @@ class fvmframework:
                         lint_rpt_path = f'{self.outdir}/{design}/lint.rpt'
                         if os.path.exists(lint_rpt_path):
                             self.lint_summary = parse_lint.parse_check_summary(lint_rpt_path)
+                    # Parse rulecheck summary here,
+                    # maybe we shouldn't do it here
+                    if step == 'rulecheck' :
+                        rulecheck_rpt_path = f'{self.outdir}/{design}/autocheck_verify.rpt'
+                        if os.path.exists(rulecheck_rpt_path):
+                            self.rulecheck_summary = parse_rulecheck.parse_type_and_severity(rulecheck_rpt_path)
                     # Parse property summary here,
                     # maybe we shouldn't do it here
                     if step == 'prove' :
@@ -1930,6 +1938,21 @@ class fvmframework:
                             result_str_for_table = "N/A"
                     text.append(score_str)
 
+                    if step == 'rulecheck':
+                        if self.rulecheck_summary:
+                            severity_occurrences = parse_rulecheck.count_severity_occurrences(self.rulecheck_summary)
+                            rulecheck_errors = severity_occurrences['Violation']
+                            rulecheck_warnings = severity_occurrences['Caution']
+                            rulecheck_inconclusives = severity_occurrences['Inconclusive']
+                            
+                            result_str_for_table += f"[bold red]{rulecheck_errors}V[/bold red]"
+                            result_str_for_table += " "
+                            result_str_for_table += f"[bold yellow]{rulecheck_warnings}C[/bold yellow]"
+                            result_str_for_table += " "
+                            result_str_for_table += f"[bold white]{rulecheck_inconclusives}I[/bold white]"
+                        else:
+                            result_str_for_table = "N/A"
+
                     if step == 'reachability':
                         if self.reachability_summary:
                             score = next( (float(entry["Unreachable"].split("(")[-1].strip(" %)")) 
@@ -1996,7 +2019,7 @@ class fvmframework:
                         if failed_count > 0:
                             color_asserts = "bold red" 
                         elif inconclusive_count > 0:
-                            color_asserts = "bold grey"
+                            color_asserts = "bold white"
                         elif vacuous_count > 0:
                             color_asserts = "bold yellow"
                         else:
@@ -2008,7 +2031,7 @@ class fvmframework:
                         color_map_asserts = {
                             "Proven": "bold green",
                             "Fired": "bold red",
-                            "Inconclusive": "bold grey",
+                            "Inconclusive": "bold white",
                             "Vacuous": "bold yellow",
                             "Proven with Warning": "bold yellow",
                             "Fired with Warning": "bold yellow",
@@ -2035,14 +2058,14 @@ class fvmframework:
                         if uncovered_count > 0:
                             color_covers = "bold red" 
                         elif not_a_target_count > 0:
-                            color_covers = "bold grey"
+                            color_covers = "bold white"
                         else:
                             color_covers = "bold green"
 
                         color_map_covers = {
                             "Covered": "bold green",
                             "Uncovered": "bold red",
-                            "Not a Target": "bold grey",
+                            "Not a Target": "bold white",
                             "Covered with Warning": "bold yellow",
                             "Covered without Waveform": "bold yellow"
                             }
