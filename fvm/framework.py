@@ -1500,6 +1500,7 @@ class fvmframework:
                                 status = "[white]omit[/white]"
                                 covered_display = f"[bold white]{entry['Covered (P)']}[/bold white]"
                                 covered_percentage = 0.0 
+                                goal = 0.0
                             else:
                                 covered_percentage = float(covered_text)
                                 goal = goal_percentages.get(coverage_type, 0.0)
