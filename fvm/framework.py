@@ -971,9 +971,9 @@ class fvmframework:
                     string += ' -reset_value'
                 if cutpoint["condition"] is not None:
                     string += f'-cond {cutpoint["condition"]}'
-                if cutpoint["drive"] is not None:
+                if cutpoint["driver"] is not None:
                     string += f'-cond {cutpoint["driver"]}'
-                if cutpoint["wildcards_dont_match_hierarchy"] is True:
+                if cutpoint["wildcards_dont_match_hierarchy_separators"] is True:
                     string += '-match_local_scope'
                 print(string, file=f)
 
