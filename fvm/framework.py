@@ -1502,9 +1502,9 @@ class fvmframework:
                             table.add_row(
                                 status,
                                 coverage_type,
-                                str(entry["Total"]),
-                                str(entry["Uncovered"]),
-                                str(entry["Excluded"]),
+                                str(entry.get("Total","0")),
+                                str(entry.get("Uncovered","0")),
+                                str(entry.get("Excluded", "0")),
                                 covered_display,
                                 f"{goal:.1f}%",
                             )
