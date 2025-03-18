@@ -1920,7 +1920,7 @@ class fvmframework:
 
         #text_header = Text("==== Summary ==============================================")
         #summary_console.print(text_header)
-
+        table = None
         for design in self.designs:
             table = None
             table = Table(title=f"[cyan]FVM Summary: {design}[/cyan]")
