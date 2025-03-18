@@ -32,6 +32,7 @@ from fvm import parse_rulecheck
 from fvm import parse_xverify
 from fvm import parse_resets
 from fvm import parse_clocks
+from fvm import parse_fault
 from fvm.parse_design_rpt import *
 
 # Error codes
@@ -212,6 +213,7 @@ class fvmframework:
         self.xverify_summary = dict()
         self.resets_summary = dict()
         self.clocks_summary = dict()
+        self.fault_summary = dict()
 
         # Specific tool defaults for each toolchain
         if self.toolchain == "questa":
@@ -1203,6 +1205,12 @@ class fvmframework:
                         xverify_rpt_path = f'{self.outdir}/{design}/xcheck_verify.rpt'
                         if os.path.exists(xverify_rpt_path):
                             self.xverify_summary = parse_xverify.parse_type_and_result(xverify_rpt_path)
+                    # Parse fault summary here,
+                    # maybe we shouldn't do it here
+                    if step == 'fault' :
+                        fault_rpt_path = f'{self.outdir}/{design}/slec_verify.rpt'
+                        if os.path.exists(fault_rpt_path):
+                            self.fault_summary = parse_fault.parse_fault_summary(fault_rpt_path)
                     # Parse resets summary here,
                     # maybe we shouldn't do it here
                     if step == 'resets' :
@@ -2003,6 +2011,19 @@ class fvmframework:
                                 result_str_for_table = f'[bold green]{score}%[/bold green]'
                             else:
                                 result_str_for_table = f'[bold red]{score}%[/bold red]'
+                        else:
+                            result_str_for_table = "N/A"
+
+                    if step == 'fault':
+                        if self.fault_summary:
+                            fault_summary = self.fault_summary
+                            print(fault_summary)
+                            fault_total_targets = fault_summary["Targets"]["Total"]
+                            fault_total_proven = fault_summary["Targets"]["Proven"]
+                            if fault_total_targets == fault_total_proven:
+                                result_str_for_table += f"[bold green]{fault_total_proven}/{fault_total_targets}[/bold green]"
+                            else:
+                                result_str_for_table += f"[bold red]{fault_total_proven}/{fault_total_targets}[/bold red]"
                         else:
                             result_str_for_table = "N/A"
 
