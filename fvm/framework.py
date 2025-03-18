@@ -29,6 +29,7 @@ from fvm import formal_signoff_parse
 from fvm import reachability_parse
 from fvm import parse_lint
 from fvm import parse_rulecheck
+from fvm import parse_xverify
 from fvm.parse_design_rpt import *
 
 # Error codes
@@ -206,6 +207,7 @@ class fvmframework:
         self.simcover_summary = dict()
         self.lint_summary = dict()
         self.rulecheck_summary = dict()
+        self.xverify_summary = dict()
 
         # Specific tool defaults for each toolchain
         if self.toolchain == "questa":
@@ -1165,7 +1167,7 @@ class fvmframework:
         if step in toolchains.TOOLS[self.toolchain] :
             tool = toolchains.TOOLS[self.toolchain][step][0]
             wrapper = toolchains.TOOLS[self.toolchain][step][1]
-            logger.info(f'{step=}, running {tool=} with {wrapper=}')
+            #logger.info(f'{step=}, running {tool=} with {wrapper=}')
             logger.debug(f'Running {tool=} with {wrapper=}')
             if self.toolchain == "questa":
                 cmd = [wrapper, '-c', '-od', path, '-do', f'{path}/{step}.do']
@@ -1191,10 +1193,18 @@ class fvmframework:
                         rulecheck_rpt_path = f'{self.outdir}/{design}/autocheck_verify.rpt'
                         if os.path.exists(rulecheck_rpt_path):
                             self.rulecheck_summary = parse_rulecheck.parse_type_and_severity(rulecheck_rpt_path)
+                    # Parse xverify summary here,
+                    # maybe we shouldn't do it here
+                    if step == 'xverify' :
+                        xverify_rpt_path = f'{self.outdir}/{design}/xcheck_verify.rpt'
+                        if os.path.exists(xverify_rpt_path):
+                            self.xverify_summary = parse_xverify.parse_type_and_result(xverify_rpt_path)
                     # Parse property summary here,
                     # maybe we shouldn't do it here
                     if step == 'prove' :
-                        self.property_summary = generate_test_cases.property_summary(f'{path}/formal_verify.rpt')
+                        prove_rpt_path = f'{self.outdir}/{design}/formal_verify.rpt'
+                        if os.path.exists(prove_rpt_path):
+                            self.property_summary = generate_test_cases.property_summary(prove_rpt_path)
 
                     # Parse reachability summary here,
                     # maybe we shouldn't do it here.
@@ -1950,6 +1960,21 @@ class fvmframework:
                             result_str_for_table += f"[bold yellow]{rulecheck_warnings}C[/bold yellow]"
                             result_str_for_table += " "
                             result_str_for_table += f"[bold white]{rulecheck_inconclusives}I[/bold white]"
+                        else:
+                            result_str_for_table = "N/A"
+
+                    if step == 'xverify':
+                        if self.xverify_summary:
+                            result_occurrences = parse_xverify.count_result_occurrences(self.xverify_summary)
+                            xverify_errors = result_occurrences['Incorruptible']
+                            xverify_warnings = result_occurrences['Corruptible']
+                            xverify_inconclusives = result_occurrences['Inconclusive']
+                            
+                            result_str_for_table += f"[bold red]{xverify_errors}I[/bold red]"
+                            result_str_for_table += " "
+                            result_str_for_table += f"[bold yellow]{xverify_warnings}C[/bold yellow]"
+                            result_str_for_table += " "
+                            result_str_for_table += f"[bold white]{xverify_inconclusives}I[/bold white]"
                         else:
                             result_str_for_table = "N/A"
 
