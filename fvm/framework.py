@@ -31,6 +31,7 @@ from fvm import parse_lint
 from fvm import parse_rulecheck
 from fvm import parse_xverify
 from fvm import parse_resets
+from fvm import parse_clocks
 from fvm.parse_design_rpt import *
 
 # Error codes
@@ -210,6 +211,7 @@ class fvmframework:
         self.rulecheck_summary = dict()
         self.xverify_summary = dict()
         self.resets_summary = dict()
+        self.clocks_summary = dict()
 
         # Specific tool defaults for each toolchain
         if self.toolchain == "questa":
@@ -1207,6 +1209,12 @@ class fvmframework:
                         resets_rpt_path = f'{self.outdir}/{design}/rdc.rpt'
                         if os.path.exists(resets_rpt_path):
                             self.resets_summary = parse_resets.parse_resets_results(resets_rpt_path)
+                    # Parse clocks summary here,
+                    # maybe we shouldn't do it here
+                    if step == 'clocks' :
+                        clocks_rpt_path = f'{self.outdir}/{design}/cdc.rpt'
+                        if os.path.exists(clocks_rpt_path):
+                            self.clocks_summary = parse_clocks.parse_clocks_results(clocks_rpt_path)
                     # Parse property summary here,
                     # maybe we shouldn't do it here
                     if step == 'prove' :
@@ -2007,6 +2015,21 @@ class fvmframework:
                             result_str_for_table += f"[bold red]{resets_violation}V[/bold red]"
                             result_str_for_table += " "
                             result_str_for_table += f"[bold yellow]{resets_caution}C[/bold yellow]"
+                        else:
+                            result_str_for_table = "N/A"
+            
+                    if step == 'clocks':
+                        if self.clocks_summary:
+                            clocks_summary = self.clocks_summary
+                            clocks_violation = clocks_summary["Violations"]["count"]
+                            clocks_caution = clocks_summary["Cautions"]["count"]
+                            clocks_proven = clocks_summary["Proven"]["count"]
+
+                            result_str_for_table += f"[bold red]{clocks_violation}V[/bold red]"
+                            result_str_for_table += " "
+                            result_str_for_table += f"[bold yellow]{clocks_caution}C[/bold yellow]"
+                            result_str_for_table += " "
+                            result_str_for_table += f"[bold green]{clocks_proven}P[/bold green]"
                         else:
                             result_str_for_table = "N/A"
 
