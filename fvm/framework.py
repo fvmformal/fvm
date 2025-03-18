@@ -30,6 +30,7 @@ from fvm import reachability_parse
 from fvm import parse_lint
 from fvm import parse_rulecheck
 from fvm import parse_xverify
+from fvm import parse_resets
 from fvm.parse_design_rpt import *
 
 # Error codes
@@ -208,6 +209,7 @@ class fvmframework:
         self.lint_summary = dict()
         self.rulecheck_summary = dict()
         self.xverify_summary = dict()
+        self.resets_summary = dict()
 
         # Specific tool defaults for each toolchain
         if self.toolchain == "questa":
@@ -1199,6 +1201,12 @@ class fvmframework:
                         xverify_rpt_path = f'{self.outdir}/{design}/xcheck_verify.rpt'
                         if os.path.exists(xverify_rpt_path):
                             self.xverify_summary = parse_xverify.parse_type_and_result(xverify_rpt_path)
+                    # Parse resets summary here,
+                    # maybe we shouldn't do it here
+                    if step == 'resets' :
+                        resets_rpt_path = f'{self.outdir}/{design}/rdc.rpt'
+                        if os.path.exists(resets_rpt_path):
+                            self.resets_summary = parse_resets.parse_resets_results(resets_rpt_path)
                     # Parse property summary here,
                     # maybe we shouldn't do it here
                     if step == 'prove' :
@@ -1966,13 +1974,13 @@ class fvmframework:
                     if step == 'xverify':
                         if self.xverify_summary:
                             result_occurrences = parse_xverify.count_result_occurrences(self.xverify_summary)
-                            xverify_errors = result_occurrences['Incorruptible']
-                            xverify_warnings = result_occurrences['Corruptible']
+                            xverify_errors = result_occurrences['Corruptible']
+                            xverify_warnings = result_occurrences['Incorruptible']
                             xverify_inconclusives = result_occurrences['Inconclusive']
                             
-                            result_str_for_table += f"[bold red]{xverify_errors}I[/bold red]"
+                            result_str_for_table += f"[bold red]{xverify_errors}C[/bold red]"
                             result_str_for_table += " "
-                            result_str_for_table += f"[bold yellow]{xverify_warnings}C[/bold yellow]"
+                            result_str_for_table += f"[bold yellow]{xverify_warnings}I[/bold yellow]"
                             result_str_for_table += " "
                             result_str_for_table += f"[bold white]{xverify_inconclusives}I[/bold white]"
                         else:
@@ -1987,6 +1995,18 @@ class fvmframework:
                                 result_str_for_table = f'[bold green]{score}%[/bold green]'
                             else:
                                 result_str_for_table = f'[bold red]{score}%[/bold red]'
+                        else:
+                            result_str_for_table = "N/A"
+
+                    if step == 'resets':
+                        if self.resets_summary:
+                            resets_summary = self.resets_summary
+                            resets_violation = resets_summary["Violation"]["count"]
+                            resets_caution = resets_summary["Caution"]["count"]
+                            
+                            result_str_for_table += f"[bold red]{resets_violation}V[/bold red]"
+                            result_str_for_table += " "
+                            result_str_for_table += f"[bold yellow]{resets_caution}C[/bold yellow]"
                         else:
                             result_str_for_table = "N/A"
 
