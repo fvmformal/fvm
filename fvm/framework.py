@@ -1897,11 +1897,6 @@ class fvmframework:
 
         summary_console = Console(force_terminal=True, force_interactive=False,
                                   record=True)
-        table = Table(title="[cyan]FVM Summary[/cyan]")
-        table.add_column("status", justify="left", min_width=6)
-        table.add_column("design.step", justify="left", min_width=25)
-        table.add_column("results", justify="right", min_width=5)
-        table.add_column("elapsed time", justify="right", min_width=12)
 
         # Calculate maximum length of {design}.{step} so we can pad later
         maxlen = 0
@@ -1920,10 +1915,16 @@ class fvmframework:
         total_cont = 0
         total_stat = 0
 
-        text_header = Text("==== Summary ==============================================")
-        summary_console.print(text_header)
+        #text_header = Text("==== Summary ==============================================")
+        #summary_console.print(text_header)
 
         for design in self.designs:
+            table = None
+            table = Table(title=f"[cyan]FVM Summary: {design}[/cyan]")
+            table.add_column("status", justify="left", min_width=6)
+            table.add_column("design.step", justify="left", min_width=25)
+            table.add_column("results", justify="right", min_width=5)
+            table.add_column("elapsed time", justify="right", min_width=12)
             for step in FVM_STEPS + FVM_POST_STEPS:
                 total_cont += 1
                 # Only print pass/fail/skip, the rest of steps where not
@@ -1943,11 +1944,11 @@ class fvmframework:
                     elif status == 'broken':
                         style = 'bold yellow'
                         total_broken += 1
-                    text = Text()
-                    text.append(status, style=style)
-                    text.append(' ')
+                    #text = Text()
+                    #text.append(status, style=style)
+                    #text.append(' ')
                     design_step = f'{design}.{step}'
-                    text.append(f'{design_step:<{maxlen}}')
+                    #text.append(f'{design_step:<{maxlen}}')
 
                     result_str_for_table = ""
                     score_str =  '                '
@@ -1970,7 +1971,7 @@ class fvmframework:
                             result_str_for_table = f'[bold green]{score:.2f}%[/bold green]'
                         else:
                             result_str_for_table = "N/A"
-                    text.append(score_str)
+                    #text.append(score_str)
 
                     if step == 'rulecheck':
                         if self.rulecheck_summary:
@@ -2017,7 +2018,6 @@ class fvmframework:
                     if step == 'fault':
                         if self.fault_summary:
                             fault_summary = self.fault_summary
-                            print(fault_summary)
                             fault_total_targets = fault_summary["Targets"]["Total"]
                             fault_total_proven = fault_summary["Targets"]["Proven"]
                             if fault_total_targets == fault_total_proven:
@@ -2082,11 +2082,11 @@ class fvmframework:
                         total_time += time
                         time_str = f' ({helpers.readable_time(time)})'
                         time_str_for_table = helpers.readable_time(time)
-                        text.append(time_str)
+                        #text.append(time_str)
                     #text.append(f' result={self.results[design][step]}', style='white')
-                    summary_console.print(text)
+                    #summary_console.print(text)
                     table.add_row(f'[{style}]{status}[/{style}]',
-                                  f'{design}.{step}', result_str_for_table,
+                                  f'{step}', result_str_for_table,
                                   time_str_for_table)
                     #print(f'{status} {design}.{step}, result={self.results[design][step]}')
 
@@ -2172,44 +2172,46 @@ class fvmframework:
                                     formatted_substr = f"{subcount}/{count}" if count else f"{subcount}/0"
                                     color_covers_children = color_map_covers.get(subkey, "bold green")
                                     table.add_row("", f"       └ {subkey}", f"[{color_covers_children}]{formatted_substr}[/{color_covers_children}]", "")
-        text_footer = Text("===========================================================")
-        console.print(text_footer)
-        text = Text()
-        text.append('pass', style='bold green')
-        text.append(f' {total_pass} of {total_cont}')
-        summary_console.print(text)
+            summary_console.print(table)
+
+        #text_footer = Text("===========================================================")
+        #console.print(text_footer)
+        #text = Text()
+        #text.append('pass', style='bold green')
+        #text.append(f' {total_pass} of {total_cont}')
+        #summary_console.print(text)
         summary = f"[bold green]  pass[/bold green] {total_pass} of {total_cont}\n"
         if total_fail != 0:
-            text = Text()
-            text.append('fail', style='bold red')
-            text.append(f' {total_fail} of {total_cont}')
-            summary_console.print(text)
+            #text = Text()
+            #text.append('fail', style='bold red')
+            #text.append(f' {total_fail} of {total_cont}')
+            #summary_console.print(text)
             summary += f"[bold red]  fail[/bold red] {total_fail} of {total_cont}\n"
         if total_skip != 0:
-            text = Text()
-            text.append('skip', style='bold yellow')
-            text.append(f' {total_skip} of {total_cont}')
-            summary_console.print(text)
+            #text = Text()
+            #text.append('skip', style='bold yellow')
+            #text.append(f' {total_skip} of {total_cont}')
+            #summary_console.print(text)
             summary += f"[bold yellow]  skip[/bold yellow] {total_skip} of {total_cont}\n"
         if total_broken != 0:
-            text = Text()
-            text.append('broken', style='bold yellow')
-            text.append(f' {total_broken} of {total_cont}')
-            summary_console.print(text)
+            #text = Text()
+            #text.append('broken', style='bold yellow')
+            #text.append(f' {total_broken} of {total_cont}')
+            #summary_console.print(text)
             summary += f"[bold yellow]  broken[/bold yellow] {total_broken} of {total_cont}\n"
         if total_stat != total_cont:
-            text = Text()
-            text.append('omit', style='bold white')
-            text.append(f' {total_cont - total_stat} of {total_cont} (not executed due to early exit)')
-            summary_console.print(text)
+            #text = Text()
+            #text.append('omit', style='bold white')
+            #text.append(f' {total_cont - total_stat} of {total_cont} (not executed due to early exit)')
+            #summary_console.print(text)
             summary += f"[bold white]  omit[/bold white] {total_cont - total_stat} of {total_cont}\n"
-        summary_console.print(text_footer)
-        text = Text()
-        text.append(f'Total time  : {helpers.readable_time(total_time)}\n')
-        text.append(f'Elapsed time: (not yet implemented)')
-        summary_console.print(text)
-        summary_console.print(text_footer)
-        summary_console.print(table)
+        #summary_console.print(text_footer)
+        #text = Text()
+        #text.append(f'Total time  : {helpers.readable_time(total_time)}\n')
+        #text.append(f'Elapsed time: (not yet implemented)')
+        #summary_console.print(text)
+        #summary_console.print(text_footer)
+        #summary_console.print(table)
 
         console_options = console.options
         table_width = Measurement.get(summary_console, console_options, table).maximum
