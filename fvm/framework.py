@@ -1921,11 +1921,6 @@ class fvmframework:
         #text_header = Text("==== Summary ==============================================")
         #summary_console.print(text_header)
         table = None
-        table = Table(title=f"[cyan]FVM Summary: {design}[/cyan]")
-        table.add_column("status", justify="left", min_width=6)
-        table.add_column("design.step", justify="left", min_width=25)
-        table.add_column("results", justify="right", min_width=5)
-        table.add_column("elapsed time", justify="right", min_width=12)
         for design in self.designs:
             table = None
             table = Table(title=f"[cyan]FVM Summary: {design}[/cyan]")
@@ -2222,7 +2217,10 @@ class fvmframework:
         #summary_console.print(table)
 
         console_options = console.options
-        table_width = Measurement.get(summary_console, console_options, table).maximum
+        if table is not None:
+            table_width = Measurement.get(summary_console, console_options, table).maximum
+        else:
+            table_width = 0
         separator_line = " "
         separator_line += "─" * table_width
         summary += f"{separator_line}\n"
