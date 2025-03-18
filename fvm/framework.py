@@ -1431,6 +1431,7 @@ class fvmframework:
         if step == 'prove' and self.is_skipped(design, 'prove.formalcover'):
             self.results[design]['prove.formalcover']['status'] = 'skip'
         if step == 'prove' and not self.is_skipped(design, 'prove.formalcover'):
+            console.rule(f'[bold white]{design}.prove.formalcover[/bold white]')
             property_summary = generate_test_cases.parse_property_summary(f'{path}/prove.log')
             inconclusives = property_summary.get('Assertions', {}).get('Inconclusive', 0)
             with open(f"{path}/prove_formalcover.do", "w") as f: 
@@ -1583,6 +1584,7 @@ class fvmframework:
         if step == 'prove' and self.is_skipped(design, 'prove.simcover'):
             self.results[design]['prove.simcover']['status'] = 'skip'
         if step == 'prove' and not self.is_skipped(design, 'prove.simcover'):
+            console.rule(f'[bold white]{design}.prove.simcover[/bold white]')
             # TODO: encapsulate this in a separate function call
             # TODO: check errors in every call instead of summing everything
             # and just checking at the end (hopefully without copying the code
@@ -1895,6 +1897,7 @@ class fvmframework:
         from rich.measure import Measurement
         from rich.box import ROUNDED
 
+        console.rule(f'[bold white]FVM Summary[/bold white]')
         summary_console = Console(force_terminal=True, force_interactive=False,
                                   record=True)
 
