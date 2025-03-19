@@ -17,7 +17,6 @@ QUESTA_TOOLS = {
         "resets"         : ["rdc",        "qverify"],
         "clocks"         : ["cdc",        "qverify"],
         "prove"          : ["propcheck",  "qverify"],
-        "prove.formalcover" : ["propcheck",  "qverify"]
 #        "simulate"       : ["vsim", "vsim"],
 #        "createemptylib" : ["vlib", "vlib"],
 #        "compilevhdl"    : ["vcom", "vcom"],

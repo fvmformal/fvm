@@ -1452,15 +1452,12 @@ class fvmframework:
                 print('exit', file=f)
             tool = toolchains.TOOLS[self.toolchain][step][0]
             wrapper = toolchains.TOOLS[self.toolchain][step][1]
-            open_gui = False
             logger.info(f'prove.simcover, running {tool=} with {wrapper=}')
             logger.debug(f'Running {tool=} with {wrapper=}')
             if self.toolchain == "questa":
                 cmd = [wrapper, '-c', '-od', path, '-do', f'{path}/prove_formalcover.do']
                 if self.list == True :
                     logger.info(f'Available step: prove.formalcover. Tool: {tool}, command = {" ".join(cmd)}')
-                elif self.guinorun == True :
-                    logger.info(f'{self.guinorun=}, will not run {step=} with {tool=}')
                 else :
                     logger.trace(f'command: {" ".join(cmd)=}')
                     cmd_stdout, cmd_stderr = self.run_cmd(cmd, design, 'prove.formalcover', tool, self.verbose)
@@ -1471,9 +1468,6 @@ class fvmframework:
                     with open(logfile, 'w') as f :
                         f.write(cmd_stdout)
                         f.write(cmd_stderr)
-                    # We cannot exit here immediately because then we wouldn't
-                    # be able to open the GUI if there is any error, but we can
-                    # record the error and propagate it outside the function
                     if stdout_err or stderr_err:
                         if self.is_failure_allowed(design, 'prove.formalcover') == False:
                             err = True
@@ -1484,21 +1478,6 @@ class fvmframework:
                             self.results[design]['prove.formalcover']['status'] = 'broken'
                     else:
                         self.results[design]['prove.formalcover']['status'] = 'pass'
-                    if self.gui :
-                        open_gui = True
-                if self.guinorun and self.list == False :
-                    open_gui = True
-                # TODO : maybe check for errors also in the GUI?
-                # TODO : maybe run the GUI processes without blocking
-                # the rest of the steps? For that we would probably
-                # need to pass another option to run_cmd
-                # TODO : code here can be deduplicated by having the database
-                # names (.db) in a dictionary -> just open {tool}.db
-                if open_gui:
-                    logger.info(f'prove.formalcover, {tool=}, opening results with GUI')
-                    cmd = [wrapper, f'{path}/{tool}.db']
-                    logger.trace(f'command: {" ".join(cmd)=}')
-                    self.run_cmd(cmd, design, 'prove.formalcover', tool, self.verbose)
             
             if not self.is_disabled('signoff'):
                 formal_signoff_rpt_path = f'{path}/formal_signoff.rpt'
