@@ -24,7 +24,7 @@ architecture interpolator_arch of interpolator is
     signal estim_aux : complex15;              -- Result of the interpolation, before discarding the LSB
 
     -- Two signals needed for the firewall assertions
-    signal firewall_inferior, firewall_superior : complex10;
+    -- signal firewall_inferior, firewall_superior : complex10;
 
 begin
 
