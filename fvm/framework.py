@@ -2144,7 +2144,7 @@ class fvmframework:
                                     table.add_row("", f"       └ {subkey}", f"[{color_asserts_children}]{formatted_substr}[/{color_asserts_children}]", "")
 
                         covers_children = prop_summary.get("Covers", {}).get("Children", {})
-                        uncovered_count = covers_children.get("Uncovered", {}).get("Count", 0)
+                        uncovered_count = covers_children.get("Uncoverable", {}).get("Count", 0)
                         not_a_target_count = covers_children.get("Not a Target", {}).get("Count", 0)
 
                         if uncovered_count > 0:
@@ -2156,7 +2156,7 @@ class fvmframework:
 
                         color_map_covers = {
                             "Covered": "bold green",
-                            "Uncovered": "bold red",
+                            "Uncoverable": "bold red",
                             "Not a Target": "bold white",
                             "Covered with Warning": "bold yellow",
                             "Covered without Waveform": "bold yellow"
