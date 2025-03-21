@@ -2352,7 +2352,8 @@ class fvmframework:
                 else:
                     status = 'omit'
 
-                import shutil
+
+        import shutil
 
         if shutil.which('allure') is not None:
             # We normalize the path because the Popen documentation recommends
