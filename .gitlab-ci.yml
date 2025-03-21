@@ -77,6 +77,7 @@ run_concepts: &run_concepts
     - make PYTHON="coverage run --data-file=.coverage.$DESIGN" $DESIGN
   after_script:
     - mv fvm_out/fvm_report fvm_out/fvm_report.$DESIGN
+    - mv fvm_out/allure-report fvm_out/allure-report.$DESIGN
   artifacts:
     when: always
     paths:
