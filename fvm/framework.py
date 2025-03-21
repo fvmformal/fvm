@@ -1904,7 +1904,7 @@ class fvmframework:
             table = None
             table = Table(title=f"[cyan]FVM Summary: {design}[/cyan]")
             table.add_column("status", justify="left", min_width=6)
-            table.add_column("design.step", justify="left", min_width=25)
+            table.add_column("step", justify="left", min_width=25)
             table.add_column("results", justify="right", min_width=5)
             table.add_column("elapsed time", justify="right", min_width=12)
             for step in FVM_STEPS + FVM_POST_STEPS:
@@ -1940,9 +1940,14 @@ class fvmframework:
                             lint_errors = self.lint_summary['Error']['count']
                             lint_warnings = self.lint_summary['Warning']['count']
                             
-                            result_str_for_table += f"[bold red]{lint_errors}E[/bold red]"
-                            result_str_for_table += " "
-                            result_str_for_table += f"[bold yellow]{lint_warnings}W[/bold yellow]"
+                            if lint_errors != 0:
+                                result_str_for_table += f"[bold red]{lint_errors}E[/bold red]"
+                                status = 'fail'
+                            if lint_warnings != 0:
+                                result_str_for_table += " "
+                                result_str_for_table += f"[bold yellow]{lint_warnings}W[/bold yellow]"
+                            if lint_errors == 0 and lint_warnings == 0:
+                                result_str_for_table += "[bold green]okey![/bold green]"
                         else:
                             result_str_for_table = "N/A"
 
@@ -1962,11 +1967,17 @@ class fvmframework:
                             rulecheck_warnings = severity_occurrences['Caution']
                             rulecheck_inconclusives = severity_occurrences['Inconclusive']
                             
-                            result_str_for_table += f"[bold red]{rulecheck_errors}V[/bold red]"
-                            result_str_for_table += " "
-                            result_str_for_table += f"[bold yellow]{rulecheck_warnings}C[/bold yellow]"
-                            result_str_for_table += " "
-                            result_str_for_table += f"[bold white]{rulecheck_inconclusives}I[/bold white]"
+                            if rulecheck_errors != 0:
+                                result_str_for_table += f"[bold red]{rulecheck_errors}V[/bold red]"
+                                status = 'fail'
+                            if rulecheck_warnings != 0:
+                                result_str_for_table += " "
+                                result_str_for_table += f"[bold yellow]{rulecheck_warnings}C[/bold yellow]"
+                            if rulecheck_inconclusives != 0:
+                                result_str_for_table += " "
+                                result_str_for_table += f"[bold white]{rulecheck_inconclusives}I[/bold white]"
+                            if rulecheck_errors == 0 and rulecheck_warnings == 0 and rulecheck_inconclusives == 0:
+                                result_str_for_table += "[bold green]okey![/bold green]"
                         else:
                             result_str_for_table = "N/A"
 
@@ -1977,11 +1988,17 @@ class fvmframework:
                             xverify_warnings = result_occurrences['Incorruptible']
                             xverify_inconclusives = result_occurrences['Inconclusive']
                             
-                            result_str_for_table += f"[bold red]{xverify_errors}C[/bold red]"
-                            result_str_for_table += " "
-                            result_str_for_table += f"[bold yellow]{xverify_warnings}I[/bold yellow]"
-                            result_str_for_table += " "
-                            result_str_for_table += f"[bold white]{xverify_inconclusives}I[/bold white]"
+                            if xverify_errors != 0:
+                                result_str_for_table += f"[bold red]{xverify_errors}C[/bold red]"
+                                status = 'fail'
+                            if xverify_warnings != 0:
+                                result_str_for_table += " "
+                                result_str_for_table += f"[bold yellow]{xverify_warnings}I[/bold yellow]"
+                            if xverify_inconclusives != 0:
+                                result_str_for_table += " "
+                                result_str_for_table += f"[bold white]{xverify_inconclusives}I[/bold white]"
+                            if xverify_errors == 0 and xverify_warnings == 0 and xverify_inconclusives == 0:
+                                result_str_for_table += "[bold green]okey![/bold green]"
                         else:
                             result_str_for_table = "N/A"
 
@@ -2006,6 +2023,7 @@ class fvmframework:
                                 result_str_for_table += f"[bold green]{fault_total_proven}/{fault_total_targets}[/bold green]"
                             else:
                                 result_str_for_table += f"[bold red]{fault_total_proven}/{fault_total_targets}[/bold red]"
+                                status = 'fail'
                         else:
                             result_str_for_table = "N/A"
 
@@ -2015,9 +2033,14 @@ class fvmframework:
                             resets_violation = resets_summary["Violation"]["count"]
                             resets_caution = resets_summary["Caution"]["count"]
                             
-                            result_str_for_table += f"[bold red]{resets_violation}V[/bold red]"
-                            result_str_for_table += " "
-                            result_str_for_table += f"[bold yellow]{resets_caution}C[/bold yellow]"
+                            if resets_violation != 0:
+                                result_str_for_table += f"[bold red]{resets_violation}V[/bold red]"
+                                status = 'fail'
+                            if resets_caution != 0:
+                                result_str_for_table += " "
+                                result_str_for_table += f"[bold yellow]{resets_caution}C[/bold yellow]"
+                            if resets_violation == 0 and resets_caution == 0:
+                                result_str_for_table += "[bold green]okey![/bold green]"
                         else:
                             result_str_for_table = "N/A"
             
@@ -2028,11 +2051,17 @@ class fvmframework:
                             clocks_caution = clocks_summary["Cautions"]["count"]
                             clocks_proven = clocks_summary["Proven"]["count"]
 
-                            result_str_for_table += f"[bold red]{clocks_violation}V[/bold red]"
-                            result_str_for_table += " "
-                            result_str_for_table += f"[bold yellow]{clocks_caution}C[/bold yellow]"
-                            result_str_for_table += " "
-                            result_str_for_table += f"[bold green]{clocks_proven}P[/bold green]"
+                            if clocks_violation != 0:
+                                result_str_for_table += f"[bold red]{clocks_violation}V[/bold red]"
+                                status = 'fail'
+                            if clocks_caution != 0:
+                                result_str_for_table += " "
+                                result_str_for_table += f"[bold yellow]{clocks_caution}C[/bold yellow]"
+                            if clocks_proven != 0:
+                                result_str_for_table += " "
+                                result_str_for_table += f"[bold green]{clocks_proven}P[/bold green]"
+                            if clocks_violation == 0 and clocks_caution == 0 and clocks_proven == 0:
+                                result_str_for_table += "[bold green]okey![/bold green]"
                         else:
                             result_str_for_table = "N/A"
 
