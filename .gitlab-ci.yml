@@ -84,6 +84,7 @@ run_concepts: &run_concepts
       - fvm_out/fvm_results/*.xml
       - fvm_out/fvm_results/executor.json
       - fvm_out/fvm_report.$DESIGN
+      - fvm_out/dashboard/allure-report.$DESIGN
     reports:
       junit:
         - fvm_out/fvm_results/*.xml
@@ -138,6 +139,7 @@ full_dashboard:
     when: always
     paths:
       - fvm_out/fvm_report
+      - fvm_out/dashboard/allure-report
 
 # The history is much smaller than the full dashboard, so we can afford to save
 # it with a long expiry date

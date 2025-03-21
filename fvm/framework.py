@@ -2352,6 +2352,34 @@ class fvmframework:
                 else:
                     status = 'omit'
 
+                import shutil
+
+        if shutil.which('allure') is not None:
+            # We normalize the path because the Popen documentation recommends
+            # to pass a fully qualified (absolute) path, and it also states
+            # that shutil.which() returns unqualified paths
+            allure_res = f'{self.outdir}/dashboard/allure-results'
+            allure_rep = f'{self.outdir}/dashboard/allure-report'
+            allure_exec = os.path.abspath(shutil.which('allure'))
+            cmd = [allure_exec, 'generate', allure_res, '-o', allure_rep]
+            logger.info(f'Generating dashboard with {cmd=}')
+            process = subprocess.Popen (cmd,
+                                        stdout  = subprocess.PIPE,
+                                        stderr  = subprocess.PIPE,
+                                        text    = True,
+                                        bufsize = 1
+                                        )
+            # Wait for the process to complete and get the return code
+            # TODO : fail if retval is not zero
+            retval = process.wait()
+        else:
+            logger.warning("""allure is not found in $(PATH), cannot generate
+            HTML reports. If you are running inside a venv and have created the
+            venv with the Makefile, you should have allure inside your venv
+            folder. If you are not using a venv, you should install allure by
+            running 'python3 install_allure.py [install_dir], and add its bin/
+            directory to your $PATH'""")
+
     # TODO: move this to a different file
     # TODO: separate functionality in at least two functions, maybe three:
     #       - generate_xml_report
