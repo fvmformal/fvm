@@ -87,6 +87,9 @@ run_concepts: &run_concepts
       - fvm_out/fvm_results/*.xml
       - fvm_out/fvm_results/executor.json
       - fvm_out/fvm_report.$DESIGN
+      - fvm_out/dashboard/allure-results/*.html
+      - fvm_out/dashboard/allure-results/*.json
+      - fvm_out/dashboard/allure-results/*.log
       - fvm_out/dashboard/allure-report.$DESIGN
     reports:
       junit:
