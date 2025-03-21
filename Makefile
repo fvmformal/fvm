@@ -164,6 +164,9 @@ newreport: reqs
 
 report: reqs
 	$(VENV_ACTIVATE) allure generate fvm_out/fvm_results -o fvm_out/fvm_report
+	
+updated_report: reqs
+	$(VENV_ACTIVATE) allure generate fvm_out/dashboard/allure-results -o fvm_out/dashboard/allure-report
 
 # TODO : probably we should do this in the python code, for example providing
 # an executable python file called fvm_show or similar
