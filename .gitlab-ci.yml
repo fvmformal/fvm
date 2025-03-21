@@ -74,6 +74,8 @@ run_concepts: &run_concepts
     - echo "\"buildName\":\"GitLab Job Run ${CI_JOB_ID}\",\"buildOrder\":\"${CI_JOB_ID}\"}" >> executor.json
     - mkdir -p fvm_out/fvm_results
     - mv executor.json fvm_out/fvm_results
+    - mkdir -p fvm_out/dashboard/allure-report
+    - mkdir -p fvm_out/dashboard/allure-results
     - make PYTHON="coverage run --data-file=.coverage.$DESIGN" $DESIGN
   after_script:
     - mv fvm_out/fvm_report fvm_out/fvm_report.$DESIGN
@@ -142,6 +144,7 @@ full_dashboard:
     paths:
       - fvm_out/fvm_report
       - fvm_out/dashboard/allure-report
+      - fvm_out/dashboard/allure-report2
 
 # The history is much smaller than the full dashboard, so we can afford to save
 # it with a long expiry date
