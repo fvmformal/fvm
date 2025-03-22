@@ -1914,18 +1914,6 @@ class fvmframework:
                 if 'status' in self.results[design][step]:
                     total_stat += 1
                     status = self.results[design][step]['status']
-                    if status == 'pass':
-                        style = 'bold green'
-                        total_pass += 1
-                    elif status == 'fail':
-                        style = 'bold red'
-                        total_fail += 1
-                    elif status == 'skip':
-                        style = 'bold yellow'
-                        total_skip += 1
-                    elif status == 'broken':
-                        style = 'bold yellow'
-                        total_broken += 1
                     #text = Text()
                     #text.append(status, style=style)
                     #text.append(' ')
@@ -2096,6 +2084,18 @@ class fvmframework:
                         #text.append(time_str)
                     #text.append(f' result={self.results[design][step]}', style='white')
                     #summary_console.print(text)
+                    if status == 'pass':
+                        style = 'bold green'
+                        total_pass += 1
+                    elif status == 'fail':
+                        style = 'bold red'
+                        total_fail += 1
+                    elif status == 'skip':
+                        style = 'bold yellow'
+                        total_skip += 1
+                    elif status == 'broken':
+                        style = 'bold yellow'
+                        total_broken += 1
                     table.add_row(f'[{style}]{status}[/{style}]',
                                   f'{step}', result_str_for_table,
                                   time_str_for_table)
