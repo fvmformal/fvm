@@ -975,12 +975,6 @@ class fvmframework:
             #print('log_info "***** Running formal compile (compiling formal model)..."', file=f)
             for line in self.init_reset:
                 print(line, file=f)
-            print('formal compile ', end='', file=f)
-            print(f'-d {self.current_toplevel} {self.generic_args} ', end='', file=f)
-            for i in self.psl_sources :
-                print(f'-pslfile {i} ', end='', file=f)
-            print('-include_code_cov ', end='', file=f)
-            print(f'{self.get_tool_flags("formal compile")}', file=f)
 
             for blackbox in self.blackboxes:
                 print(f'netlist blackbox {blackbox}', file=f)
@@ -997,10 +991,17 @@ class fvmframework:
                 if cutpoint["condition"] is not None:
                     string += f'-cond {cutpoint["condition"]}'
                 if cutpoint["driver"] is not None:
-                    string += f'-cond {cutpoint["driver"]}'
+                    string += f'-driver {cutpoint["driver"]}'
                 if cutpoint["wildcards_dont_match_hierarchy_separators"] is True:
                     string += '-match_local_scope'
                 print(string, file=f)
+
+            print('formal compile ', end='', file=f)
+            print(f'-d {self.current_toplevel} {self.generic_args} ', end='', file=f)
+            for i in self.psl_sources :
+                print(f'-pslfile {i} ', end='', file=f)
+            print('-include_code_cov ', end='', file=f)
+            print(f'{self.get_tool_flags("formal compile")}', file=f)
 
             #print('log_info "***** Running formal verify (model checking)..."', file=f)
             # If -cov_mode is specified without arguments, it calculates
