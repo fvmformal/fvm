@@ -14,6 +14,10 @@ Easy examples
 Example 1
 ^^^^^^^^^
 
+Let's verify a simple counter!
+
+Please find the code of the design in INSERT LINK
+
 Bla bla bla. Please note that ble ble ble
 
 Example 2

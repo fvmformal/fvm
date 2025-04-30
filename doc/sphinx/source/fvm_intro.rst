@@ -1,3 +1,5 @@
+.. _fvm_intro:
+
 What is FVM?
 ======================================
 
@@ -23,115 +25,45 @@ The FVM is available under the permissive/free? license **LICENSE**
 Components
 ----------------------------
 
-The different parts of the FVM are...
+The different parts of the FVM are:
 
-.. todo::
-  Describe
+- A defined methodology, with detailed steps.
+- Helper tools that reduce the learning curve and effort required to write
+  the formal properties
+- A build and test framework that acts as an abstraction layer to interface
+  with the software tools, generates XML files for Continuous Integration
+  systems, and creates reports.
+- A repository of examples, in increasing order of difficulty, that serve to
+  introduce the concepts of the FVM gradually, with self-sustaining examples
+  that can be studied and understood incrementally.
+- Documentation and training materials to help new users understand both formal
+  verification in general, and the FVM. You are reading those :)
+
+A graphical summary of the FVM can be found below:
+
+.. image:: _static/FVM_summary.png
+   :alt: A graphical summary of the FVM
 
 The methodology steps
 ~~~~~~~~~~~~~~~~~~~~~
 
 As FVM is a methodology, it starts by defining a number of steps to perform:
 
-The steps are:
+The steps can be organized as follows:
 
-1. Leverage any available automated tools
-2. Create properties for the design under verification
-3. Run a model checking / property checking tool
-4. Generate coverage metrics, including simulation metrics for traces generated
-   in the previous step
+- Leverage any available automated tools
+- Create properties for the design under verification, leveraging the provided
+  helper tools
+- Run a model checking / property checking tool to prove or disprove the
+  defined properties
+- Generate reports and coverage metrics, including simulation metrics for
+  traces generated in the previous step
 
-.. todo::
+The diagram below expands the list, since there are many automated tools
+available:
 
-   Improve diagram
-
-.. mermaid::
-  :caption: A graphical summary of the FVM methodology
-
-  graph TB
-
-    subgraph ToolLint[ ]
-      direction LR
-      BoxLint[Lint] -.- DescLint[Statically check for possible issues in the design]
-    end
-
-    subgraph ToolFriendliness[ ]
-      direction LR
-      BoxFriendliness[AutoCheck] -.- DescFriendliness[Check for formal-friendliness]
-    end
-
-    subgraph ToolRulecheck[ ]
-      direction LR
-      BoxRulecheck[AutoCheck] -.- DescRulecheck[Detect other possible issues in the design]
-    end
-
-    subgraph ToolXverify[ ]
-      direction LR
-      BoxXverify[X-Check] -.- DescXverify[Check propagation of unknown values]
-    end
-
-    subgraph ToolCoverCheck[ ]
-      direction LR
-      BoxCoverCheck[CoverCheck] -.- DescCoverCheck[Detect uncoverable elements]
-    end
-
-    subgraph ToolCDC[ ]
-      direction LR
-      BoxCDC[CDC] -.- DescCDC[Identify potential issues with Clock Domain Crossing]
-    end
-
-    subgraph ToolRDC[ ]
-      direction LR
-      BoxRDC[RDC] -.- DescRDC[Identify potential issues with Reset Domain Crossing]
-    end
-
-    subgraph Tool4[ ]
-      direction LR
-      Box4[FVM Helper Tools] -.- Desc4[Help the user write the formal properties]
-    end
-
-    subgraph Tool5[ ]
-      direction LR
-      Box5[PropCheck] -.- Desc5[Demonstrate whether the formal properties hold or not]
-    end
-
-    subgraph ToolPropCheckCoverage[ ]
-      direction LR
-      BoxPropCheckCoverage[PropCheck] -.- DescPropCheckCoverage[Generate formal coverage metrics]
-    end
-
-    subgraph ToolQuestaSim[ ]
-      direction LR
-      BoxQuestaSim[QuestaSim] -.- DescQuestaSim[Simulate reached cover statements]
-    end
-
-    subgraph AutoTools[Automated Formal Tools]
-      direction TB
-      ToolLint --> ToolFriendliness
-      ToolFriendliness --> ToolRulecheck
-      ToolRulecheck --> ToolXverify
-      ToolXverify --> ToolCoverCheck
-      ToolCoverCheck --> ToolRDC
-      ToolRDC --> ToolCDC
-    end
-
-    subgraph ModelCheck[Property Checking]
-      direction TB
-      Tool4 --> Tool5
-      Tool5 --> ToolPropCheckCoverage
-      ToolPropCheckCoverage --> ToolQuestaSim
-    end
-
-    subgraph Tool6[Formal Verification Methodology]
-      direction LR
-      Box6[FVM build & test framework] -.- Desc6a[Simplify tool execution]
-      Box6 -.- Desc6b[Generate Reports]
-      AutoTools --> ModelCheck
-    end
-
-    style Tool6 fill:#e0f7fa, stroke:#333, stroke-width:2px, color:#000
-    style AutoTools fill:#add8e6, stroke:#333, stroke-width:2px, color:#000
-    style ModelCheck fill:#add8e6, stroke:#333, stroke-width:2px, color:#000
+.. image:: _static/FVM_steps.png
+   :alt: A graphical summary of the FVM steps
 
 
 The build and test framework
@@ -156,6 +88,8 @@ Supported toolchains
 
 Currently, just the Questa Formal Tools (and Questa Simulator, for the
 `simcover` step) are supported
+
+The following table relates each FVM step with the relevant Questa tool
 
 .. list-table:: FVM and the Questa toolchain
    :widths: 25 25
@@ -188,10 +122,66 @@ Currently, just the Questa Formal Tools (and Questa Simulator, for the
 Drom2psl
 ~~~~~~~~
 
-``drom2psl`` is a package provided with FVM that aims to reduce...
+``drom2psl`` is a package provided with FVM that aims to reduce the learning
+curve and necessary effort to define formal properties.
 
-.. todo::
-  Describe
+From a `Wavedrom <https://wavedrom.com>`_ `.json` file, sequences are
+extracted, even with parameters.
+
+For example, from the following `.json` file:
+
+.. code-block::
+
+   {
+   head: {text: 'wb_classic_read(addr, data)',
+       tick:  0,
+       every: 1,
+       },
+   foot: {text: 'Wishbone read, classic mode',
+       },
+   signal: [
+       {name: 'clk',   wave: 'p|.|'},
+     ['Master',
+       {name: 'adr', wave: 'x3.x', data: 'addr', type: 'std_ulogic_vector(31 downto 0)'},
+       {name: 'dat', wave: 'x...'},
+       {name: 'cyc', wave: '01.0'},
+       {name: 'stb', wave: '01.0'},
+       {name: 'sel', wave: 'x...'},
+       {name: 'we',  wave: 'x0.x'}
+     ],
+   {},
+     ['Slave',
+       {name: 'dat', wave: 'x.3x', data: 'data', type: 'std_ulogic_vector(31 downto 0)'},
+       {name: 'ack', wave: '0.10'},
+       {name: 'err', wave: '0...'}
+     ],
+   ],
+ }
+
+The following PSL file is generated:
+
+
+.. code-block::
+
+   vunit wishbone_classic_read {
+
+     sequence wishbone_classic_read_Master (
+       hdltype std_ulogic_vector(31 downto 0) addr
+     ) is {
+       ((Master.cyc = '0') and (Master.stb = '0'))[*1]  -- 1 cycle;
+       ((Master.adr = addr) and (Master.cyc = '1') and (Master.stb = '1') and (Master.we = '0'))[+]  -- 1 or more cycles;
+       ((Master.cyc = '0') and (Master.stb = '0'))[*]  -- 0 or more cycles
+     };
+
+     sequence wishbone_classic_read_Slave (
+       hdltype std_ulogic_vector(31 downto 0) data
+     ) is {
+       ((Slave.ack = '0') and (Slave.err = '0'))[+]  -- 1 or more cycles;
+       ((Slave.dat = data) and (Slave.ack = '1') and (Slave.err = '0'))[*1]  -- 1 cycle;
+       ((Slave.ack = '0') and (Slave.err = '0'))[*]  -- 0 or more cycles
+     };
+
+   }
 
 
 Repository of examples

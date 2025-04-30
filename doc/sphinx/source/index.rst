@@ -3,37 +3,36 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-fvm documentation
-=================
+Welcome to FVM!
+===============
 
-Add your content using ``reStructuredText`` syntax. See the
-`reStructuredText <https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_
-documentation for details.
+FVM is a Formal Verification Methodology that aims to lower the adoption
+barriers for formal verification.
 
+In other words, let's make Formal Verification easier!
 
-TODO: configure theme options (maybe default options are enough, or maybe some
-specific options will make the docs better). See available options here:
-https://sphinx-rtd-theme.readthedocs.io/en/stable/configuring.html
+To learn more, go to the next section: :ref:`fv_intro`
 
-TODO: write text below
-
-FVM
-
-What is FVM
-
-Training materials
-
-License
-
-Contact
+.. todo::
+    Add your content using ``reStructuredText`` syntax. See the
+    `reStructuredText <https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_
+    documentation for details.
 
 .. toctree::
    :maxdepth: 4
    :caption: About
    :hidden:
 
-   fvm_intro
    fv_intro
+   fvm_intro
+
+.. toctree::
+   :maxdepth: 4
+   :caption: Getting started
+   :hidden:
+
+   installation
+   firstexample
 
 .. toctree::
    :maxdepth: 4
@@ -48,3 +47,19 @@ Contact
    :hidden:
 
    modules
+
+.. toctree::
+   :maxdepth: 4
+   :caption: Guidelines
+   :hidden:
+
+   formaltestplans
+   formalfriendlydesign
+
+.. toctree::
+   :maxdepth: 4
+   :caption: Appendix
+   :hidden:
+
+   license
+   acknowledgement
