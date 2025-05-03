@@ -15,8 +15,8 @@ import sys
 
 # Use yamllint to detect common YAML errors, such as key in dict defined more
 # than once
-import yamllint
-from yamllint import config
+#import yamllint
+#from yamllint import config
 
 # To easily get command-line arguments
 import argparse
