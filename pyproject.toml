@@ -2,7 +2,7 @@
 name = "fvm"
 version = "0.1.0"
 description = "A Formal Verification Methodology to lower adoption barriers for Formal Verification of ASIC and FPGA designs in the Space sector"
-authors = ["Hipolito Guzman <hguzman@us.es>"]
+authors = ["Hipolito Guzmán-Miranda <hguzman@us.es>, Marcos López García <marlopgar40@alum.us.es>"]
 license = "To Be Determined"
 readme = "README.md"
 homepage = "https://fvm.us.es"
@@ -14,7 +14,6 @@ rich = "^13.9.4"
 junit-xml = "^1.9"
 humanize = "^4.11.0"
 pyyaml = "^6.0.2"
-yamllint = "^1.35.1"
 wavedrom = "^2.0.3.post3"
 termcolor = "^2.5.0"
 icecream = "^2.1.3"
