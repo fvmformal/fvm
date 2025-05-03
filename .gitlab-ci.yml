@@ -59,7 +59,7 @@ test_all:
 # TODO : Add results.xml, when our framework generates it
 run_concepts: &run_concepts
   stage: concepts
-  image: registry.woden.us.es/containers/questa:2024.3
+  image: registry.woden.us.es/containers/questa:2025.1_2
   parallel:
     matrix:
       - DESIGN: [transactions_deprecated, parameterized_sequences, inheriting_vunits, inheriting_multiple_vunits, parameterized_properties, multiple_designs, symbolic_constants, user_defined_hdltypes, user_defined_hdltypes_in_package, user_defined_hdltypes_in_external_package, assert_to_assume, defining_clocks_and_resets, hooks, design_configurations, assertion_decomposition, reachability_example]
@@ -104,7 +104,7 @@ run_examples:
 # TODO : this could be implemented more cleanly using parallel:matrix
 run_steps_independently:
   stage: examples
-  image: registry.woden.us.es/containers/questa:2024.3
+  image: registry.woden.us.es/containers/questa:2025.1_2
   script:
     - unset LM_LICENSE_FILE
     - export SALT_LICENSE_SERVER=2101@baldr.us.es
