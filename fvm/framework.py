@@ -24,6 +24,15 @@ from fvm import logcounter
 from fvm import helpers
 from fvm import generate_test_cases
 from fvm import parse_reports
+from fvm import parse_simcover
+from fvm import formal_signoff_parse
+from fvm import reachability_parse
+from fvm import parse_lint
+from fvm import parse_rulecheck
+from fvm import parse_xverify
+from fvm import parse_resets
+from fvm import parse_clocks
+from fvm import parse_fault
 from fvm.parse_design_rpt import *
 
 # Error codes
@@ -46,6 +55,7 @@ FVM_STEPS = [
     'rulecheck',
     'xverify',
     'reachability',
+    'fault',
     'resets',
     'clocks',
     'prove'
@@ -58,8 +68,11 @@ FVM_POST_STEPS = [
 
 # Create a rich console object
 # TODO: force_terminal should enable color inside gitlab CI, but may break
-# non-color terminals?
-console = Console(force_terminal=True)
+# non-color terminals? maybe we should use environment variables instead? see https://rich.readthedocs.io/en/stable/console.html#environment-variables
+# For CI systems that support colors but where we don't want any interactivity
+# (such as gitlab-ci), we set force_terminal to True and force_interactive to
+# False
+console = Console(force_terminal=True, force_interactive=False)
 
 class fvmframework:
 
@@ -175,6 +188,7 @@ class fvmframework:
         self.libraries_from_vhdl_sources = list()
         self.psl_sources = list()
         self.skip_list = list()
+        self.allow_failure_list = list()
         self.disabled_coverage = list()
         self.toolchain = "questa"
         self.vhdlstd = "2008"
@@ -190,10 +204,23 @@ class fvmframework:
         self.post_hooks = dict()
         self.designs = list()
         self.design_configs = dict()
+        self.reachability_summary = dict()
+        self.property_summary = dict()
+        self.formalcover_summary = dict()
+        self.simcover_summary = dict()
+        self.lint_summary = dict()
+        self.rulecheck_summary = dict()
+        self.xverify_summary = dict()
+        self.resets_summary = dict()
+        self.clocks_summary = dict()
+        self.fault_summary = dict()
 
         # Specific tool defaults for each toolchain
         if self.toolchain == "questa":
             self.tool_flags["lint methodology"] = "ip -goal start"
+            self.tool_flags["autocheck verify"] = ""
+            self.tool_flags["xcheck verify"] = ""
+            self.tool_flags["covercheck verify"] = ""
             self.tool_flags["rdc generate report"] = "-resetcheck"
             self.tool_flags["cdc generate report"] = "-clockcheck"
             self.tool_flags["formal verify"] = "-justify_initial_x -auto_constraint_off"
@@ -203,6 +230,18 @@ class fvmframework:
             if args.step not in toolchains.TOOLS[self.toolchain]:
                 logger.error(f'step {args.step} not available in {self.toolchain}. Available steps are: {list(toolchains.TOOLS[self.toolchain].keys())}')
                 self.exit_if_required(BAD_VALUE)
+
+    def timeout(self, step, timeout):
+        """Set the timeout for a specific step"""
+        timeout_value = f" -timeout {timeout} "
+        if step == "rulecheck":
+            self.tool_flags["autocheck verify"] += timeout_value
+        elif step == "xverify":
+            self.tool_flags["xcheck verify"] += timeout_value
+        elif step == "reachability":
+            self.tool_flags["covercheck verify"] += timeout_value
+        elif step == "prove":
+            self.tool_flags["formal verify"] += timeout_value
 
     def run_command(self, command):
         """Execute a system command and handle errors."""
@@ -436,6 +475,12 @@ class fvmframework:
         '*' and '*'"""
         self.skip_list.append(f'{design}.{step}')
 
+    # TODO : use message
+    def allow_failure(self, step, design='*', message='Failure allowed'):
+        """Allow failures for specific steps and/or designs. Accepts the wildcards
+        '*' and '*'"""
+        self.allow_failure_list.append(f'{design}.{step}')
+
     def disable_coverage(self, covtype, design='*'):
         """Allow disabling specific coverage collection types. Allowed values
         for covtype are 'observability', 'reachability',
@@ -644,6 +689,7 @@ class fvmframework:
             self.genrulecheckscript("rulecheck.do", path)
             self.genxverifyscript("xverify.do", path)
             self.genreachabilityscript("reachability.do", path)
+            self.genfaultscript("fault.do", path)
             self.genresetscript("resets.do", path)
             self.genclockscript("clocks.do", path)
             self.genprovescript("prove.do", path)
@@ -807,7 +853,7 @@ class fvmframework:
             for line in self.init_reset:
                 print(line, file=f)
             print(f'autocheck compile {self.get_tool_flags("autocheck compile")} -d {self.current_toplevel} {self.generic_args}', file=f)
-            print(f'autocheck verify {self.get_tool_flags("autocheck verify")} -timeout 1m', file=f)
+            print(f'autocheck verify {self.get_tool_flags("autocheck verify")}', file=f)
             print('exit', file=f)
 
     # TODO : set sensible defaults here and allow for user optionality too
@@ -836,7 +882,42 @@ class fvmframework:
             # if .ucdb file is specified:
             #    print('covercheck load ucdb {ucdb_file}', file=f)
             #    print(f'covercheck verify -covered_items', file=f)
-            print(f'covercheck {self.get_tool_flags("covercheck verify")} verify', file=f)
+            print(f'covercheck verify {self.get_tool_flags("covercheck verify")}', file=f)
+            print('exit', file=f)
+
+    def genfaultscript(self, filename, path):
+        """Generate a script to run SLEC"""
+        self.gencompilescript(filename, path)
+        with open(path+'/'+filename, "a") as f:
+            for line in self.init_reset:
+                print(line, file=f)
+            parts = self.current_toplevel.rsplit(".", 1)
+            if len(parts) == 2:
+                lib, design = parts
+                print(f'slec configure -spec -d {design} -work {lib}', file=f)
+                print(f'slec configure -impl -d {design} -work {lib}', file=f)
+            else:
+                design = parts[0]
+                print(f'slec configure -spec -d {design}', file=f)
+                print(f'slec configure -impl -d {design}', file=f)                
+
+            for cutpoint in self.cutpoints:
+                string = f'netlist cutpoint impl.{cutpoint["signal"]}'
+                if cutpoint["module"] is not None:
+                    string += f' -module {cutpoint["module"]}'
+                if cutpoint["resetval"] is True:
+                    string += ' -reset_value'
+                if cutpoint["condition"] is not None:
+                    string += f'-cond {cutpoint["condition"]}'
+                if cutpoint["driver"] is not None:
+                    string += f'-cond {cutpoint["driver"]}'
+                if cutpoint["wildcards_dont_match_hierarchy_separators"] is True:
+                    string += '-match_local_scope'
+                print(string, file=f)
+            print(f'slec compile {self.generic_args}', file=f)
+            print(f'slec verify -auto_constraint_off -justify_initial_x', file=f)
+            print(f'slec generate report', file=f)
+            print(f'slec generate waveforms -vcd', file=f)
             print('exit', file=f)
 
     def genresetscript(self, filename, path):
@@ -894,12 +975,6 @@ class fvmframework:
             #print('log_info "***** Running formal compile (compiling formal model)..."', file=f)
             for line in self.init_reset:
                 print(line, file=f)
-            print('formal compile ', end='', file=f)
-            print(f'-d {self.current_toplevel} {self.generic_args} ', end='', file=f)
-            for i in self.psl_sources :
-                print(f'-pslfile {i} ', end='', file=f)
-            print('-include_code_cov ', end='', file=f)
-            print(f'{self.get_tool_flags("formal compile")}', file=f)
 
             for blackbox in self.blackboxes:
                 print(f'netlist blackbox {blackbox}', file=f)
@@ -915,11 +990,18 @@ class fvmframework:
                     string += ' -reset_value'
                 if cutpoint["condition"] is not None:
                     string += f'-cond {cutpoint["condition"]}'
-                if cutpoint["drive"] is not None:
-                    string += f'-cond {cutpoint["driver"]}'
-                if cutpoint["wildcards_dont_match_hierarchy"] is True:
+                if cutpoint["driver"] is not None:
+                    string += f'-driver {cutpoint["driver"]}'
+                if cutpoint["wildcards_dont_match_hierarchy_separators"] is True:
                     string += '-match_local_scope'
                 print(string, file=f)
+
+            print('formal compile ', end='', file=f)
+            print(f'-d {self.current_toplevel} {self.generic_args} ', end='', file=f)
+            for i in self.psl_sources :
+                print(f'-pslfile {i} ', end='', file=f)
+            print('-include_code_cov ', end='', file=f)
+            print(f'{self.get_tool_flags("formal compile")}', file=f)
 
             #print('log_info "***** Running formal verify (model checking)..."', file=f)
             # If -cov_mode is specified without arguments, it calculates
@@ -1065,6 +1147,13 @@ class fvmframework:
                 return True
         return False
 
+    def is_failure_allowed(self, design, step):
+        """Returns True if design.step is allowed to fail, otherwise returns False"""
+        for failure_str in self.allow_failure_list:
+            if fnmatch.fnmatch(f'{design}.{step}', failure_str):
+                return True
+        return False
+
     def is_disabled(self, covtype):
         """Returns True if design.prove.covtype must not be collected, otherwise returns False"""
         for disable_str in self.disabled_coverage:
@@ -1077,6 +1166,7 @@ class fvmframework:
     # deduplicate this so this function does not get unwieldy
     def run_step(self, design, step):
         """Run a specific step of the methodology"""
+        console.rule(f'[bold white]{design}.{step}[/bold white]')
         err = False
         path = self.current_path
         open_gui = False
@@ -1084,7 +1174,7 @@ class fvmframework:
         if step in toolchains.TOOLS[self.toolchain] :
             tool = toolchains.TOOLS[self.toolchain][step][0]
             wrapper = toolchains.TOOLS[self.toolchain][step][1]
-            logger.info(f'{step=}, running {tool=} with {wrapper=}')
+            #logger.info(f'{step=}, running {tool=} with {wrapper=}')
             logger.debug(f'Running {tool=} with {wrapper=}')
             if self.toolchain == "questa":
                 cmd = [wrapper, '-c', '-od', path, '-do', f'{path}/{step}.do']
@@ -1097,6 +1187,67 @@ class fvmframework:
                     cmd_stdout, cmd_stderr = self.run_cmd(cmd, design, step, tool, self.verbose)
                     stdout_err = self.logcheck(cmd_stdout, design, step, tool)
                     stderr_err = self.logcheck(cmd_stderr, design, step, tool)
+
+                    # Parse lint summary here,
+                    # maybe we shouldn't do it here
+                    if step == 'lint' :
+                        lint_rpt_path = f'{self.outdir}/{design}/lint.rpt'
+                        if os.path.exists(lint_rpt_path):
+                            self.lint_summary = parse_lint.parse_check_summary(lint_rpt_path)
+                    # Parse rulecheck summary here,
+                    # maybe we shouldn't do it here
+                    if step == 'rulecheck' :
+                        rulecheck_rpt_path = f'{self.outdir}/{design}/autocheck_verify.rpt'
+                        if os.path.exists(rulecheck_rpt_path):
+                            self.rulecheck_summary = parse_rulecheck.parse_type_and_severity(rulecheck_rpt_path)
+                    # Parse xverify summary here,
+                    # maybe we shouldn't do it here
+                    if step == 'xverify' :
+                        xverify_rpt_path = f'{self.outdir}/{design}/xcheck_verify.rpt'
+                        if os.path.exists(xverify_rpt_path):
+                            self.xverify_summary = parse_xverify.parse_type_and_result(xverify_rpt_path)
+                    # Parse fault summary here,
+                    # maybe we shouldn't do it here
+                    if step == 'fault' :
+                        fault_rpt_path = f'{self.outdir}/{design}/slec_verify.rpt'
+                        if os.path.exists(fault_rpt_path):
+                            self.fault_summary = parse_fault.parse_fault_summary(fault_rpt_path)
+                    # Parse resets summary here,
+                    # maybe we shouldn't do it here
+                    if step == 'resets' :
+                        resets_rpt_path = f'{self.outdir}/{design}/rdc.rpt'
+                        if os.path.exists(resets_rpt_path):
+                            self.resets_summary = parse_resets.parse_resets_results(resets_rpt_path)
+                    # Parse clocks summary here,
+                    # maybe we shouldn't do it here
+                    if step == 'clocks' :
+                        clocks_rpt_path = f'{self.outdir}/{design}/cdc.rpt'
+                        if os.path.exists(clocks_rpt_path):
+                            self.clocks_summary = parse_clocks.parse_clocks_results(clocks_rpt_path)
+                    # Parse property summary here,
+                    # maybe we shouldn't do it here
+                    if step == 'prove' :
+                        prove_rpt_path = f'{self.outdir}/{design}/formal_verify.rpt'
+                        if os.path.exists(prove_rpt_path):
+                            self.property_summary = generate_test_cases.property_summary(prove_rpt_path)
+
+                    # Parse reachability summary here,
+                    # maybe we shouldn't do it here.
+                    # Maybe we should delete previous covercheck_verify.rpt?
+                    if step == 'reachability':
+                        reachability_rpt_path = f'{self.outdir}/{design}/covercheck_verify.rpt'
+                        reachability_html_path = f'{self.outdir}/{design}/reachability.html'
+                        if os.path.exists(reachability_rpt_path):
+                            parse_reports.parse_reachability_report_to_html(reachability_rpt_path, reachability_html_path)
+                            reachability_html = reachability_html_path
+                        else:
+                            reachability_html = None 
+                        if reachability_html is not None:
+                            with open(reachability_html, 'r', encoding='utf-8') as f:
+                                html_content = f.read()
+
+                            tables = reachability_parse.parse_single_table(html_content)
+                            self.reachability_summary = reachability_parse.add_total_row(tables)
                     logfile = f'{path}/{step}.log'
                     logger.info(f'{step=}, {tool=}, finished, output written to {logfile}')
                     with open(logfile, 'w') as f :
@@ -1106,9 +1257,13 @@ class fvmframework:
                     # be able to open the GUI if there is any error, but we can
                     # record the error and propagate it outside the function
                     if stdout_err or stderr_err:
-                        err = True
+                        if self.is_failure_allowed(design, step) == False:
+                            err = True
                     if stdout_err or stderr_err:
-                        self.results[design][step]['status'] = 'fail'
+                        if self.is_failure_allowed(design, step) == False:
+                            self.results[design][step]['status'] = 'fail'
+                        else:
+                            self.results[design][step]['status'] = 'broken'
                     else:
                         self.results[design][step]['status'] = 'pass'
                     if self.gui :
@@ -1267,7 +1422,7 @@ class fvmframework:
         """Run post processing for a specific step of the methodology"""
         # Currently we only do post-processing after the friendliness and prove
         # steps
-        logger.trace('run_post_step, {design=}, {step=})')
+        logger.trace(f'run_post_step, {design=}, {step=})')
         path = self.current_path
         if step == 'friendliness':
             rpt = path+'/autocheck_design.rpt'
@@ -1277,9 +1432,11 @@ class fvmframework:
         if step == 'prove' and self.is_skipped(design, 'prove.formalcover'):
             self.results[design]['prove.formalcover']['status'] = 'skip'
         if step == 'prove' and not self.is_skipped(design, 'prove.formalcover'):
+            console.rule(f'[bold white]{design}.prove.formalcover[/bold white]')
             property_summary = generate_test_cases.parse_property_summary(f'{path}/prove.log')
             inconclusives = property_summary.get('Assertions', {}).get('Inconclusive', 0)
             with open(f"{path}/prove_formalcover.do", "w") as f: 
+                print('onerror exit', file=f)
                 print(f"formal load db {path}/propcheck.db",file=f)
                 if not self.is_disabled('observability'):
                     print('formal generate coverage -detail_all -cov_mode o', file=f)
@@ -1296,15 +1453,12 @@ class fvmframework:
                 print('exit', file=f)
             tool = toolchains.TOOLS[self.toolchain][step][0]
             wrapper = toolchains.TOOLS[self.toolchain][step][1]
-            open_gui = False
             logger.info(f'prove.simcover, running {tool=} with {wrapper=}')
             logger.debug(f'Running {tool=} with {wrapper=}')
             if self.toolchain == "questa":
                 cmd = [wrapper, '-c', '-od', path, '-do', f'{path}/prove_formalcover.do']
                 if self.list == True :
                     logger.info(f'Available step: prove.formalcover. Tool: {tool}, command = {" ".join(cmd)}')
-                elif self.guinorun == True :
-                    logger.info(f'{self.guinorun=}, will not run {step=} with {tool=}')
                 else :
                     logger.trace(f'command: {" ".join(cmd)=}')
                     cmd_stdout, cmd_stderr = self.run_cmd(cmd, design, 'prove.formalcover', tool, self.verbose)
@@ -1315,30 +1469,94 @@ class fvmframework:
                     with open(logfile, 'w') as f :
                         f.write(cmd_stdout)
                         f.write(cmd_stderr)
-                    # We cannot exit here immediately because then we wouldn't
-                    # be able to open the GUI if there is any error, but we can
-                    # record the error and propagate it outside the function
                     if stdout_err or stderr_err:
-                        err = True
+                        if self.is_failure_allowed(design, 'prove.formalcover') == False:
+                            err = True
                     if stdout_err or stderr_err:
-                        self.results[design]['prove.formalcover']['status'] = 'fail'
+                        if self.is_failure_allowed(design, 'prove.formalcover') == False:
+                            self.results[design]['prove.formalcover']['status'] = 'fail'
+                        else:
+                            self.results[design]['prove.formalcover']['status'] = 'broken'
                     else:
                         self.results[design]['prove.formalcover']['status'] = 'pass'
-                    if self.gui :
-                        open_gui = True
-                if self.guinorun and self.list == False :
-                    open_gui = True
-                # TODO : maybe check for errors also in the GUI?
-                # TODO : maybe run the GUI processes without blocking
-                # the rest of the steps? For that we would probably
-                # need to pass another option to run_cmd
-                # TODO : code here can be deduplicated by having the database
-                # names (.db) in a dictionary -> just open {tool}.db
-                if open_gui:
-                    logger.info(f'prove.formalcover, {tool=}, opening results with GUI')
-                    cmd = [wrapper, f'{path}/{tool}.db']
-                    logger.trace(f'command: {" ".join(cmd)=}')
-                    self.run_cmd(cmd, design, 'prove.formalcover', tool, self.verbose)
+            
+            if not self.is_disabled('signoff'):
+                formal_signoff_rpt_path = f'{path}/formal_signoff.rpt'
+                formal_signoff_html_path = f'{path}/formal_signoff.html'
+                if os.path.exists(formal_signoff_rpt_path):
+                    parse_reports.parse_formal_signoff_report_to_html(formal_signoff_rpt_path, formal_signoff_html_path)
+                    formal_signoff_html = formal_signoff_html_path
+                else:
+                    formal_signoff_html = None   
+                if formal_signoff_html is not None:
+                    with open(formal_signoff_html, 'r', encoding='utf-8') as f:
+                        html_content = f.read()
+
+                    tables = formal_signoff_parse.parse_coverage_table(html_content)
+                    filtered_tables = formal_signoff_parse.filter_coverage_tables(tables)
+
+                    if filtered_tables:
+                        self.formalcover_summary = formal_signoff_parse.add_total_field(filtered_tables[0])
+                        formalcover_summary = self.formalcover_summary
+                        goal_percentages = {
+                            "Branch": 0.0,
+                            "Condition": 0.0,
+                            "Expression": 0.0,
+                            "FSM State": 0.0,
+                            "FSM Transition": 0.0,
+                            "Statement": 0.0,
+                            "Toggle": 0.0,
+                            "Covergroup Bin": 0.0,
+                            "Total": 0.0,
+                        }
+
+                        formalcover_console = Console(force_terminal=True, force_interactive=False,
+                                                record=True)
+                        table = Table(title=f"[cyan]{formalcover_summary['title']}[/cyan]")
+
+                        table.add_column("Status", style="bold")
+                        table.add_column("Coverage Type", style="cyan")
+                        table.add_column("Total", justify="right")
+                        table.add_column("Uncovered", justify="right")
+                        table.add_column("Excluded", justify="right")
+                        table.add_column("Covered (P)", justify="right")
+                        table.add_column("Goal (%)", justify="right")
+
+                        fail_found = False
+
+                        for entry in formalcover_summary["data"]:
+                            coverage_type = entry["Coverage Type"]
+                            covered_text = entry["Covered (P)"].split("(")[-1].strip(" %)")
+
+                            if covered_text == "N/A":
+                                status = "[white]omit[/white]"
+                                covered_display = f"[bold white]{entry['Covered (P)']}[/bold white]"
+                                covered_percentage = 0.0 
+                                goal = 0.0
+                            else:
+                                covered_percentage = float(covered_text)
+                                goal = goal_percentages.get(coverage_type, 0.0)
+
+                                if covered_percentage >= goal:
+                                    status = "[green]pass[/green]"
+                                    covered_display = f"[bold green]{entry['Covered (P)']}[/bold green]"
+                                else:
+                                    status = "[red]fail[/red]"
+                                    covered_display = f"[bold red]{entry['Covered (P)']}[/bold red]"
+                                    fail_found = True 
+
+                            table.add_row(
+                                status,
+                                coverage_type,
+                                str(entry.get("Total","0")),
+                                str(entry.get("Uncovered","0")),
+                                str(entry.get("Excluded", "0")),
+                                covered_display,
+                                f"{goal:.1f}%",
+                            )
+
+                        self.results[design]['prove.formalcover']['status'] = "fail" if fail_found else "pass"
+                        formalcover_console.print(table)
         # TODO: consider how we are going to present this simcover post_step:
         # is it a step? a post_step?
         # TODO: this needs a refactor but unfortunately I don't have the time
@@ -1346,6 +1564,7 @@ class fvmframework:
         if step == 'prove' and self.is_skipped(design, 'prove.simcover'):
             self.results[design]['prove.simcover']['status'] = 'skip'
         if step == 'prove' and not self.is_skipped(design, 'prove.simcover'):
+            console.rule(f'[bold white]{design}.prove.simcover[/bold white]')
             # TODO: encapsulate this in a separate function call
             # TODO: check errors in every call instead of summing everything
             # and just checking at the end (hopefully without copying the code
@@ -1401,9 +1620,41 @@ class fvmframework:
             # Check for errors
             err = False
             if stdout_err or stderr_err:
-                err = True
+                if self.is_failure_allowed(design, 'prove.simcover') == False:
+                    err = True
             if stdout_err or stderr_err:
-                self.results[design][f'{step}.simcover']['status'] = 'fail'
+                if self.is_failure_allowed(design, 'prove.simcover') == False:
+                    self.results[design][f'{step}.simcover']['status'] = 'fail'
+                else:
+                    self.results[design][f'{step}.simcover']['status'] = 'broken'
+
+            # Generate simcover summary
+            path = f'{self.outdir}/{design}'
+            cmd = ['vcover', 'report', '-csv', '-hierarchical', 'simcover.ucdb',
+                   '-output', 'simulation_coverage.log']
+            cmd_stdout, cmd_stderr = self.run_cmd(cmd, design, f'{step}.simcover', 'vcover report', self.verbose, path)
+            elapsed_time += self.results[design][f'{step}.simcover']['elapsed_time']
+            self.results[design][f'{step}.simcover']['timestamp'] = timestamp
+            self.results[design][f'{step}.simcover']['elapsed_time'] = elapsed_time
+            tool = 'vcover'
+            stdout_err += self.logcheck(cmd_stdout, design, f'{step}.simcover', tool)
+            stderr_err += self.logcheck(cmd_stderr, design, f'{step}.simcover', tool)
+
+            # Check for errors
+            err = False
+            if stdout_err or stderr_err:
+                if self.is_failure_allowed(design, 'prove.simcover') == False:
+                    err = True
+            if stdout_err or stderr_err:
+                if self.is_failure_allowed(design, 'prove.simcover') == False:
+                    self.results[design][f'{step}.simcover']['status'] = 'fail'
+                else:
+                    self.results[design][f'{step}.simcover']['status'] = 'broken'
+            else:
+                self.results[design][f'{step}.simcover']['status'] = 'pass'
+
+            coverage_data = parse_simcover.parse_coverage_report(f'{path}/simulation_coverage.log')
+            self.simcover_summary = parse_simcover.sum_coverage_data(coverage_data)
 
             # Generate an html report
             path = f'{self.outdir}/{design}'
@@ -1423,11 +1674,65 @@ class fvmframework:
             # Check for errors
             err = False
             if stdout_err or stderr_err:
-                err = True
+                if self.is_failure_allowed(design, 'prove.simcover') == False:
+                    err = True
             if stdout_err or stderr_err:
-                self.results[design][f'{step}.simcover']['status'] = 'fail'
+                if self.is_failure_allowed(design, 'prove.simcover') == False:
+                    self.results[design][f'{step}.simcover']['status'] = 'fail'
+                else:
+                    self.results[design][f'{step}.simcover']['status'] = 'broken'
             else:
                 self.results[design][f'{step}.simcover']['status'] = 'pass'
+
+            if self.simcover_summary is not None:
+                simcover_summary = self.simcover_summary
+                goal_percentages = {
+                    "Branches": 0.0,
+                    "Conditions": 0.0,
+                    "Statments": 0.0,
+                    "Toggles": 0.0,
+                    "Total": 0.0,
+                }
+
+                simcover_console = Console(force_terminal=True, force_interactive=False,
+                                        record=True)
+                table = Table(title=f"[cyan]Simulation Coverage Summary for Design: {design} [/cyan]")
+
+                table.add_column("Status", style="bold")
+                table.add_column("Coverage Type", style="cyan")
+                table.add_column("Covered", justify="right")
+                table.add_column("Total", justify="right")
+                table.add_column("Percentage", justify="right")
+                table.add_column("Goal (%)", justify="right")
+
+                fail_found = False
+
+                for coverage_type, values in simcover_summary.items():
+                    covered = values["covered"]
+                    total = values["total"]
+                    percentage_text = values["percentage"].strip("%")
+                    covered_percentage = float(percentage_text)
+                    goal = goal_percentages.get(coverage_type, 0.0)
+
+                    if covered_percentage >= goal:
+                        status = "[green]pass[/green]"
+                        percentage_display = f"[bold green]{values['percentage']}[/bold green]"
+                    else:
+                        status = "[red]fail[/red]"
+                        percentage_display = f"[bold red]{values['percentage']}[/bold red]"
+                        fail_found = True  
+
+                    table.add_row(
+                        status,
+                        coverage_type,
+                        str(covered),
+                        str(total),
+                        percentage_display,
+                        f"{goal:.1f}%",
+                    )
+
+                self.results[design]['prove.simcover']['status'] = "fail" if fail_found else "pass"
+                simcover_console.print(table)
 
             return err
 
@@ -1471,6 +1776,10 @@ class fvmframework:
         err_in_log = False
         for line in result.splitlines() :
             err, warn, success = self.linecheck(line)
+
+            if self.is_failure_allowed(design, step) == True and err:
+                warn = True
+                err = False
             # If we are in verbose mode, still check if there are errors /
             # warnings / etc. but do not duplicate the messages
             if err :
@@ -1564,6 +1873,13 @@ class fvmframework:
         # assume/assert/fired/proven/cover/covered/uncoverable/etc. For this,
         # we may need to post-process the prove step log
         # TODO : print elapsed time
+        from rich.table import Table
+        from rich.measure import Measurement
+        from rich.box import ROUNDED
+
+        console.rule(f'[bold white]FVM Summary[/bold white]')
+        summary_console = Console(force_terminal=True, force_interactive=False,
+                                  record=True)
 
         # Calculate maximum length of {design}.{step} so we can pad later
         maxlen = 0
@@ -1578,13 +1894,20 @@ class fvmframework:
         total_pass = 0
         total_fail = 0
         total_skip = 0
+        total_broken = 0
         total_cont = 0
         total_stat = 0
 
-        text_header = Text("==== Summary ==============================================")
-        console.print(text_header)
-
+        #text_header = Text("==== Summary ==============================================")
+        #summary_console.print(text_header)
+        table = None
         for design in self.designs:
+            table = None
+            table = Table(title=f"[cyan]FVM Summary: {design}[/cyan]")
+            table.add_column("status", justify="left", min_width=6)
+            table.add_column("step", justify="left", min_width=25)
+            table.add_column("results", justify="right", min_width=5)
+            table.add_column("elapsed time", justify="right", min_width=12)
             for step in FVM_STEPS + FVM_POST_STEPS:
                 total_cont += 1
                 # Only print pass/fail/skip, the rest of steps where not
@@ -1592,6 +1915,176 @@ class fvmframework:
                 if 'status' in self.results[design][step]:
                     total_stat += 1
                     status = self.results[design][step]['status']
+                    #text = Text()
+                    #text.append(status, style=style)
+                    #text.append(' ')
+                    design_step = f'{design}.{step}'
+                    #text.append(f'{design_step:<{maxlen}}')
+
+                    result_str_for_table = ""
+                    score_str =  '                '
+
+                    if step == 'lint':
+                        if self.lint_summary:
+                            lint_errors = self.lint_summary['Error']['count']
+                            lint_warnings = self.lint_summary['Warning']['count']
+                            
+                            if lint_errors != 0:
+                                result_str_for_table += f"[bold red]{lint_errors}E[/bold red]"
+                                status = 'fail'
+                            if lint_warnings != 0:
+                                result_str_for_table += " "
+                                result_str_for_table += f"[bold yellow]{lint_warnings}W[/bold yellow]"
+                            if lint_errors == 0 and lint_warnings == 0:
+                                result_str_for_table += "[bold green]okey![/bold green]"
+                        else:
+                            result_str_for_table = "N/A"
+
+                    if step == 'friendliness':
+                        if "score" in self.results[design][step]:
+                            score = self.results[design][step]["score"]
+                            score_str = f' (score: {score:.2f}%)'
+                            result_str_for_table = f'[bold green]{score:.2f}%[/bold green]'
+                        else:
+                            result_str_for_table = "N/A"
+                    #text.append(score_str)
+
+                    if step == 'rulecheck':
+                        if self.rulecheck_summary:
+                            severity_occurrences = parse_rulecheck.count_severity_occurrences(self.rulecheck_summary)
+                            rulecheck_errors = severity_occurrences['Violation']
+                            rulecheck_warnings = severity_occurrences['Caution']
+                            rulecheck_inconclusives = severity_occurrences['Inconclusive']
+                            
+                            if rulecheck_errors != 0:
+                                result_str_for_table += f"[bold red]{rulecheck_errors}V[/bold red]"
+                                status = 'fail'
+                            if rulecheck_warnings != 0:
+                                result_str_for_table += " "
+                                result_str_for_table += f"[bold yellow]{rulecheck_warnings}C[/bold yellow]"
+                            if rulecheck_inconclusives != 0:
+                                result_str_for_table += " "
+                                result_str_for_table += f"[bold white]{rulecheck_inconclusives}I[/bold white]"
+                            if rulecheck_errors == 0 and rulecheck_warnings == 0 and rulecheck_inconclusives == 0:
+                                result_str_for_table += "[bold green]okey![/bold green]"
+                        else:
+                            result_str_for_table = "N/A"
+
+                    if step == 'xverify':
+                        if self.xverify_summary:
+                            result_occurrences = parse_xverify.count_result_occurrences(self.xverify_summary)
+                            xverify_errors = result_occurrences['Corruptible']
+                            xverify_warnings = result_occurrences['Incorruptible']
+                            xverify_inconclusives = result_occurrences['Inconclusive']
+                            
+                            if xverify_errors != 0:
+                                result_str_for_table += f"[bold red]{xverify_errors}C[/bold red]"
+                                status = 'fail'
+                            if xverify_warnings != 0:
+                                result_str_for_table += " "
+                                result_str_for_table += f"[bold yellow]{xverify_warnings}I[/bold yellow]"
+                            if xverify_inconclusives != 0:
+                                result_str_for_table += " "
+                                result_str_for_table += f"[bold white]{xverify_inconclusives}I[/bold white]"
+                            if xverify_errors == 0 and xverify_warnings == 0 and xverify_inconclusives == 0:
+                                result_str_for_table += "[bold green]okey![/bold green]"
+                        else:
+                            result_str_for_table = "N/A"
+
+                    if step == 'reachability':
+                        if self.reachability_summary:
+                            score = next( (float(entry["Unreachable"].split("(")[-1].strip(" %)")) 
+                                   for entry in self.reachability_summary["data"] 
+                                   if entry.get("Coverage Type") == "Total"), 0.0)    
+                            if status == 'pass':                        
+                                result_str_for_table = f'[bold green]{score}%[/bold green]'
+                            else:
+                                result_str_for_table = f'[bold red]{score}%[/bold red]'
+                        else:
+                            result_str_for_table = "N/A"
+
+                    if step == 'fault':
+                        if self.fault_summary:
+                            fault_summary = self.fault_summary
+                            fault_total_targets = fault_summary["Targets"]["Total"]
+                            fault_total_proven = fault_summary["Targets"]["Proven"]
+                            if fault_total_targets == fault_total_proven:
+                                result_str_for_table += f"[bold green]{fault_total_proven}/{fault_total_targets}[/bold green]"
+                            else:
+                                result_str_for_table += f"[bold red]{fault_total_proven}/{fault_total_targets}[/bold red]"
+                                status = 'fail'
+                        else:
+                            result_str_for_table = "N/A"
+
+                    if step == 'resets':
+                        if self.resets_summary:
+                            resets_summary = self.resets_summary
+                            resets_violation = resets_summary["Violation"]["count"]
+                            resets_caution = resets_summary["Caution"]["count"]
+                            
+                            if resets_violation != 0:
+                                result_str_for_table += f"[bold red]{resets_violation}V[/bold red]"
+                                status = 'fail'
+                            if resets_caution != 0:
+                                result_str_for_table += " "
+                                result_str_for_table += f"[bold yellow]{resets_caution}C[/bold yellow]"
+                            if resets_violation == 0 and resets_caution == 0:
+                                result_str_for_table += "[bold green]okey![/bold green]"
+                        else:
+                            result_str_for_table = "N/A"
+            
+                    if step == 'clocks':
+                        if self.clocks_summary:
+                            clocks_summary = self.clocks_summary
+                            clocks_violation = clocks_summary["Violations"]["count"]
+                            clocks_caution = clocks_summary["Cautions"]["count"]
+                            clocks_proven = clocks_summary["Proven"]["count"]
+
+                            if clocks_violation != 0:
+                                result_str_for_table += f"[bold red]{clocks_violation}V[/bold red]"
+                                status = 'fail'
+                            if clocks_caution != 0:
+                                result_str_for_table += " "
+                                result_str_for_table += f"[bold yellow]{clocks_caution}C[/bold yellow]"
+                            if clocks_proven != 0:
+                                result_str_for_table += " "
+                                result_str_for_table += f"[bold green]{clocks_proven}P[/bold green]"
+                            if clocks_violation == 0 and clocks_caution == 0 and clocks_proven == 0:
+                                result_str_for_table += "[bold green]okey![/bold green]"
+                        else:
+                            result_str_for_table = "N/A"
+
+                    if step == 'prove.formalcover':
+                        if self.formalcover_summary:
+                            score = next( (float(entry["Covered (P)"].split("(")[-1].strip(" %)")) 
+                                   for entry in self.formalcover_summary["data"] 
+                                   if entry.get("Coverage Type") == "Total"), 0.0)   
+                            if status == 'pass':                         
+                                result_str_for_table = f'[bold green]{score}%[/bold green]'
+                            else:
+                                result_str_for_table = f'[bold red]{score}%[/bold red]'
+                        else:
+                            result_str_for_table = "N/A"
+
+                    if step == 'prove.simcover':
+                        if self.simcover_summary:
+                            score = self.simcover_summary.get("Total", {}).get("percentage", 0)
+                            if status == 'pass':
+                                result_str_for_table = f'[bold green]{score}[/bold green]'
+                            else:
+                                result_str_for_table = f'[bold red]{score}[/bold red]'
+                        else:
+                            result_str_for_table = "N/A"
+                        
+                    time_str_for_table = "N/A"
+                    if "elapsed_time" in self.results[design][step]:
+                        time = self.results[design][step]["elapsed_time"]
+                        total_time += time
+                        time_str = f' ({helpers.readable_time(time)})'
+                        time_str_for_table = helpers.readable_time(time)
+                        #text.append(time_str)
+                    #text.append(f' result={self.results[design][step]}', style='white')
+                    #summary_console.print(text)
                     if status == 'pass':
                         style = 'bold green'
                         total_pass += 1
@@ -1601,54 +2094,153 @@ class fvmframework:
                     elif status == 'skip':
                         style = 'bold yellow'
                         total_skip += 1
-                    text = Text()
-                    text.append(status, style=style)
-                    text.append(' ')
-                    design_step = f'{design}.{step}'
-                    text.append(f'{design_step:<{maxlen}}')
-
-                    score_str =  '                '
-                    if step == 'friendliness':
-                        if "score" in self.results[design][step]:
-                            score = self.results[design][step]["score"]
-                            score_str = f' (score: {score:.2f}%)'
-                    text.append(score_str)
-
-                    if "elapsed_time" in self.results[design][step]:
-                        time = self.results[design][step]["elapsed_time"]
-                        total_time += time
-                        time_str = f' ({helpers.readable_time(time)})'
-                        text.append(time_str)
-                    #text.append(f' result={self.results[design][step]}', style='white')
-                    console.print(text)
+                    elif status == 'broken':
+                        style = 'bold yellow'
+                        total_broken += 1
+                    table.add_row(f'[{style}]{status}[/{style}]',
+                                  f'{step}', result_str_for_table,
+                                  time_str_for_table)
                     #print(f'{status} {design}.{step}, result={self.results[design][step]}')
-        text_footer = Text("===========================================================")
-        console.print(text_footer)
-        text = Text()
-        text.append('pass', style='bold green')
-        text.append(f' {total_pass} of {total_cont}')
-        console.print(text)
+
+                    if step == "prove" and self.property_summary:
+                        # TODO: Change self.property_summary to self.results[design][step]["property_summary"]
+                        prop_summary = self.property_summary
+                        assumes = prop_summary.get("Assumes", {}).get("Count", 0)
+                        asserts = prop_summary.get("Asserts", {}).get("Count", 0)
+                        covers = prop_summary.get("Covers", {}).get("Count", 0)
+
+                        table.add_row("", "  Assumes", str(assumes), "")
+
+                        asserts_children = prop_summary.get("Asserts", {}).get("Children", {})
+                        failed_count = asserts_children.get("Fired", {}).get("Count", 0)
+                        inconclusive_count = asserts_children.get("Inconclusive", {}).get("Count", 0)
+                        proven_data = asserts_children.get("Proven", {}).get("Children", {})
+                        vacuous_count = proven_data.get("Vacuous", {}).get("Count", 0)
+
+                        if failed_count > 0:
+                            color_asserts = "bold red" 
+                        elif inconclusive_count > 0:
+                            color_asserts = "bold white"
+                        elif vacuous_count > 0:
+                            color_asserts = "bold yellow"
+                        else:
+                            color_asserts = "bold green"
+
+                        table.add_row("", f"  [{color_asserts}]Asserts[/{color_asserts}]", str(asserts), "")
+
+
+                        color_map_asserts = {
+                            "Proven": "bold green",
+                            "Fired": "bold red",
+                            "Inconclusive": "bold white",
+                            "Vacuous": "bold yellow",
+                            "Proven with Warning": "bold yellow",
+                            "Fired with Warning": "bold yellow",
+                            "Fired without Waveform": "bold red"
+                            }
+
+                        for key, value in asserts_children.items():
+                            count = value.get("Count", 0)
+                            formatted_str = f"{count}/{asserts}" if asserts else f"{count}/0"
+                            color_asserts_children = color_map_asserts.get(key, "bold green")
+                            table.add_row("", f"    └ {key}", f"[{color_asserts_children}]{formatted_str}[/{color_asserts_children}]", "")
+
+                            for subkey, subval in value.items():
+                                if subkey != "Count": 
+                                    subcount = subval
+                                    formatted_substr = f"{subcount}/{count}" if count else f"{subcount}/0"
+                                    color_asserts_children = color_map_asserts.get(subkey, "bold green")
+                                    table.add_row("", f"       └ {subkey}", f"[{color_asserts_children}]{formatted_substr}[/{color_asserts_children}]", "")
+
+                        covers_children = prop_summary.get("Covers", {}).get("Children", {})
+                        uncovered_count = covers_children.get("Uncoverable", {}).get("Count", 0)
+                        not_a_target_count = covers_children.get("Not a Target", {}).get("Count", 0)
+
+                        if uncovered_count > 0:
+                            color_covers = "bold red" 
+                        elif not_a_target_count > 0:
+                            color_covers = "bold white"
+                        else:
+                            color_covers = "bold green"
+
+                        color_map_covers = {
+                            "Covered": "bold green",
+                            "Uncoverable": "bold red",
+                            "Not a Target": "bold white",
+                            "Covered with Warning": "bold yellow",
+                            "Covered without Waveform": "bold yellow"
+                            }
+                        
+                        table.add_row("", f"  [{color_covers}]Covers[/{color_covers}]", str(covers), "")
+                        for key, value in covers_children.items():
+                            count = value.get("Count", 0)
+                            formatted_str = f"{count}/{covers}" if covers else f"{count}/0"
+                            color_covers_children = color_map_covers.get(key, "bold green")
+                            table.add_row("", f"    └ {key}", f"[{color_covers_children}]{formatted_str}[/{color_covers_children}]", "")
+
+                            for subkey, subval in value.items():
+                                if subkey != "Count":
+                                    subcount = subval
+                                    formatted_substr = f"{subcount}/{count}" if count else f"{subcount}/0"
+                                    color_covers_children = color_map_covers.get(subkey, "bold green")
+                                    table.add_row("", f"       └ {subkey}", f"[{color_covers_children}]{formatted_substr}[/{color_covers_children}]", "")
+            summary_console.print(table)
+
+        #text_footer = Text("===========================================================")
+        #console.print(text_footer)
+        #text = Text()
+        #text.append('pass', style='bold green')
+        #text.append(f' {total_pass} of {total_cont}')
+        #summary_console.print(text)
+        summary = f"[bold green]  pass[/bold green] {total_pass} of {total_cont}\n"
         if total_fail != 0:
-            text = Text()
-            text.append('fail', style='bold red')
-            text.append(f' {total_fail} of {total_cont}')
-            console.print(text)
+            #text = Text()
+            #text.append('fail', style='bold red')
+            #text.append(f' {total_fail} of {total_cont}')
+            #summary_console.print(text)
+            summary += f"[bold red]  fail[/bold red] {total_fail} of {total_cont}\n"
         if total_skip != 0:
-            text = Text()
-            text.append('skip', style='bold yellow')
-            text.append(f' {total_skip} of {total_cont}')
-            console.print(text)
+            #text = Text()
+            #text.append('skip', style='bold yellow')
+            #text.append(f' {total_skip} of {total_cont}')
+            #summary_console.print(text)
+            summary += f"[bold yellow]  skip[/bold yellow] {total_skip} of {total_cont}\n"
+        if total_broken != 0:
+            #text = Text()
+            #text.append('broken', style='bold yellow')
+            #text.append(f' {total_broken} of {total_cont}')
+            #summary_console.print(text)
+            summary += f"[bold yellow]  broken[/bold yellow] {total_broken} of {total_cont}\n"
         if total_stat != total_cont:
-            text = Text()
-            text.append('omit', style='bold white')
-            text.append(f' {total_cont - total_stat} of {total_cont} (not executed due to early exit)')
-            console.print(text)
-        console.print(text_footer)
-        text = Text()
-        text.append(f'Total time  : {helpers.readable_time(total_time)}\n')
-        text.append(f'Elapsed time: (not yet implemented)')
-        console.print(text)
-        console.print(text_footer)
+            #text = Text()
+            #text.append('omit', style='bold white')
+            #text.append(f' {total_cont - total_stat} of {total_cont} (not executed due to early exit)')
+            #summary_console.print(text)
+            summary += f"[bold white]  omit[/bold white] {total_cont - total_stat} of {total_cont}\n"
+        #summary_console.print(text_footer)
+        #text = Text()
+        #text.append(f'Total time  : {helpers.readable_time(total_time)}\n')
+        #text.append(f'Elapsed time: (not yet implemented)')
+        #summary_console.print(text)
+        #summary_console.print(text_footer)
+        #summary_console.print(table)
+
+        console_options = console.options
+        if table is not None:
+            table_width = Measurement.get(summary_console, console_options, table).maximum
+        else:
+            table_width = 0
+        separator_line = " "
+        separator_line += "─" * table_width
+        summary += f"{separator_line}\n"
+        summary += f"{'  Total time:'} [bold cyan]{helpers.readable_time(total_time)}[/bold cyan]\n"
+        summary_console.print(summary)
+        # If self.outdir doesn't exist, something went wrong: in that case, do
+        # not try to save the HTML summary
+        if os.path.isdir(self.outdir):
+            summary_console.save_html(f'{self.outdir}/summary.html')
+        else:
+            logger.error(f'Cannot access output directory {self.outdir}, something went wrong')
 
     def clear_directory(self, directory_path):
         try:
@@ -1760,6 +2352,35 @@ class fvmframework:
                                                             start_time=start_time, stop_time=start_time, step=step)
                 else:
                     status = 'omit'
+
+
+        import shutil
+
+        if shutil.which('allure') is not None:
+            # We normalize the path because the Popen documentation recommends
+            # to pass a fully qualified (absolute) path, and it also states
+            # that shutil.which() returns unqualified paths
+            allure_res = f'{self.outdir}/dashboard/allure-results'
+            allure_rep = f'{self.outdir}/dashboard/allure-report'
+            allure_exec = os.path.abspath(shutil.which('allure'))
+            cmd = [allure_exec, 'generate', allure_res, '-o', allure_rep]
+            logger.info(f'Generating dashboard with {cmd=}')
+            process = subprocess.Popen (cmd,
+                                        stdout  = subprocess.PIPE,
+                                        stderr  = subprocess.PIPE,
+                                        text    = True,
+                                        bufsize = 1
+                                        )
+            # Wait for the process to complete and get the return code
+            # TODO : fail if retval is not zero
+            retval = process.wait()
+        else:
+            logger.warning("""allure is not found in $(PATH), cannot generate
+            HTML reports. If you are running inside a venv and have created the
+            venv with the Makefile, you should have allure inside your venv
+            folder. If you are not using a venv, you should install allure by
+            running 'python3 install_allure.py [install_dir], and add its bin/
+            directory to your $PATH'""")
 
     # TODO: move this to a different file
     # TODO: separate functionality in at least two functions, maybe three:

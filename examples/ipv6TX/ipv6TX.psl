@@ -1,0 +1,69 @@
+vunit ipv6TX (ipv6_TX (rtl)) {
+
+    -- Default clock for PSL assertions
+    default clock is rising_edge(Clock);
+
+    assume_initial_reset: assume Reset = '1';
+
+    -- Assume the start of frame signal only happens when idle.
+    assume_in_sof_idle: assume always (In_SOF -> State = ST_IDLE) abort Reset;
+
+    -- Assumption for data visualization
+    -- assume always (Out_Ack -> (unsigned(Out_Data) /= 0)) abort Reset; 
+
+    -- Assert if there is a valid start of frame, 
+    -- there has to be an end of frame.
+    -- The difference between the two assertions is that 
+    -- before is weak, i.e., Out_EOF don't have to happen,
+    -- and before! is strong, i.e., Out_EOF has to happen.
+    assert_sof_before_eof: assert always ( (In_SOF and In_Valid) -> (Out_SOF before_ Out_EOF) ) abort Reset;
+    assert_sof_before_strong_eof: assert always ( (In_SOF and In_Valid) -> (Out_SOF before!_ Out_EOF) ) abort Reset;
+
+    assert always ( {In_SOF: In_Valid} |=> {Out_Data = x"6" & In_Meta_TrafficClass(7 downto 4)} ) abort Reset;
+
+    assert always ( {In_SOF: In_Valid; NDP_NextHop_Valid: Out_Ack} |=> 
+    {Out_Data = In_Meta_TrafficClass(3 downto 0) & In_Meta_FlowLabel(19 downto 16)} ) abort Reset;
+
+    assert always ( {In_SOF: In_Valid; NDP_NextHop_Valid: Out_Ack} |=> 
+    {(Out_Ack = '0')[*]; Out_Data = In_Meta_TrafficClass(3 downto 0) & In_Meta_FlowLabel(19 downto 16)} ) abort Reset;
+
+    assert always ( {In_SOF: In_Valid; NDP_NextHop_Valid: Out_Ack} |=> 
+    {(Out_Ack = '0')[*]; Out_Ack: Out_Data = In_Meta_TrafficClass(3 downto 0) & In_Meta_FlowLabel(19 downto 16); 
+    (Out_Ack = '0')[*]; Out_Ack: Out_Data = In_Meta_FlowLabel(15 downto 8);
+    (Out_Ack = '0')[*]; Out_Ack: Out_Data = In_Meta_FlowLabel(7 downto 0)}
+    |=> {(Out_Ack = '0')[*]; Out_Ack: Out_Data = In_Meta_Length(15 downto 8)}) abort Reset;
+
+
+    assert always ( {In_SOF: In_Valid; NDP_NextHop_Valid: Out_Ack} |=> 
+    {(Out_Ack = '0')[*]; Out_Ack: Out_Data = In_Meta_TrafficClass(3 downto 0) & In_Meta_FlowLabel(19 downto 16); 
+    (Out_Ack = '0')[*]; Out_Ack: Out_Data = In_Meta_FlowLabel(15 downto 8);
+    (Out_Ack = '0')[*]; Out_Ack: Out_Data = In_Meta_FlowLabel(7 downto 0);
+    (Out_Ack = '0')[*]; Out_Ack: Out_Data = In_Meta_Length(15 downto 8);
+    (Out_Ack = '0')[*]; Out_Ack: Out_Data = In_Meta_Length(7 downto 0);
+    (Out_Ack = '0')[*]; Out_Ack: Out_Data = In_Meta_NextHeader}
+    |=> {(Out_Ack = '0')[*]; Out_Ack: Out_Data = x"02"}) abort Reset;
+
+    assert always (NDP_NextHop_IPv6Address_Data = In_Meta_DestIPv6Address_Data);
+
+    -- Assert the input source IPv6 address is the output data when 
+    -- the output source IPv6 address is acknowledged.
+    assert always (In_Meta_SrcIPv6Address_nxt -> (Out_Data = In_Meta_SrcIPv6Address_Data)) abort Reset;
+
+    -- Assert the source IPv6 address is 128 bits long.
+    assert always ( {In_Meta_SrcIPv6Address_nxt[*16]} |=> {not In_Meta_SrcIPv6Address_nxt} ) abort Reset;
+
+    -- Assert the input destination IPv6 address is the output data when 
+    -- the output destionation IPv6 address is acknowledged.
+    assert always ( (In_Meta_DestIPv6Address_nxt and Out_Valid and (not NDP_NextHop_Valid) )
+    -> (Out_Data = In_Meta_DestIPv6Address_Data)) abort Reset;
+
+    -- Assert the destination IPv6 address is 128 bits long.
+    assert always ( {(In_Meta_DestIPv6Address_nxt and Out_Valid and (not NDP_NextHop_Valid) )[*16]} 
+    |=> {not (In_Meta_DestIPv6Address_nxt and Out_Valid and (not NDP_NextHop_Valid) )} ) abort Reset;
+
+    assert always (NDP_NextHop_Query -> prev(In_Valid and In_SOF)) abort Reset;
+
+    cover {(State = ST_SEND_DATA)[*8]};
+    cover {Out_EOF: not Reset};
+
+    }

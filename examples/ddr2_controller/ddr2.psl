@@ -1,0 +1,52 @@
+vunit ddr2 (ddr2spax_ddr(rtl)) {
+
+    -- Default clock for PSL assertions
+    default clock is rising_edge(clk_ddr);
+
+    -- Force a reset in the first clock cycle
+    assume_initial_reset: assume ddr_rst = '0';
+
+    --assume always unsigned(wbrdata) /= 0;
+
+    assert (next dr.pchpend = '0');
+
+    -- A FEW NOTES:
+
+    -- We mainly maintains the default configuration, which is quite simple. 
+    -- We reduced the DDR BITS generic because it is not really important.
+
+    -- frequest can toggle because it is an input,
+    -- but has no influence in code because ot the selected configuration.
+
+    -- Though hwidth can be '1', it has no effect because of the selected configuration.
+    -- The internal variable hwidth is always '0', so the following cover is uncoverable.
+    -- cover {dr.hwidth: ddr_rst};
+
+    --assert always vreq = prev(request,2);
+    --assert always vreqf = prev(request);
+    assert always (sdo.data(31 downto 0) = wbrdata) abort (ddr_rst = '0');
+
+    -- When rbwrite is '0', read buffer data is equal to the input data
+    assert always ( (not rbwrite) -> (rbwdata = sdi.data(31 downto 0)) ) abort (ddr_rst = '0');
+
+    -- When rbwrite is '0' and state is data, read buffer data is equal to the input data
+    assert always ( {rbwrite: dr.s = dsdata} |-> {rbwdata = sdi.data(31 downto 0)} ) abort (ddr_rst = '0');
+
+    -- When rbwrite is '1', the state is either dsdata or dsreg
+    -- So, dsreg is where rbwdata is not equal to the input data
+    assert always (rbwrite -> (dr.s = dsdata or dr.s = dsreg)) abort (ddr_rst = '0');
+
+    -- Because of the selected configuration, when reqsel is '0', 
+    -- response2 is also all zeros.
+    assert always ( {not reqsel} |=> {response2 = ddr_response_none} ) abort (ddr_rst = '0'); 
+    -- Because of the selected configuration, when reqsel is '1', 
+    -- response is equal to response2. 
+    assert always ( {reqsel} |=> {response = response2} ) abort (ddr_rst = '0'); 
+
+    cover {dr.s = dsdone: ddr_rst};
+    cover {dr.s = dsrefresh: ddr_rst};
+    cover {dr.cmds = dcon: ddr_rst};
+
+    cover {(request.hwrite = '0')[*20]; dr.s = dsdata: ddr_rst; dr.s = dsdone: ddr_rst};
+
+}
