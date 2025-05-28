@@ -658,7 +658,7 @@ class fvmframework:
         logger.trace(f'adding cutpoint: {cutpoint}')
         self.cutpoints.append(cutpoint)
 
-    def setup(self, design, config = None):
+    def setup_design(self, design, config = None):
         """Create the output directory and the scripts for a design, but do not
         run anything"""
         # Create the output directories, but do not throw an error if it already
@@ -1043,6 +1043,16 @@ class fvmframework:
         if err :
           self.exit_if_required(CHECK_FAILED)
 
+    def setup(self):
+        for design in self.toplevel:
+            if design in self.design_configs:
+                logger.trace(f'{design=} has configs: {self.design_configs}')
+                for config in self.design_configs[design]:
+                    self.setup_design(design, config)
+            else:
+                logger.trace(f'{design=} has no configs, setting up default config')
+                self.setup_design(design)
+
     def list_design(self, design, skip_setup=False):
         """List all available/selected methodology steps for a design"""
         # If configurations exist, list them all
@@ -1103,7 +1113,7 @@ class fvmframework:
         configuration"""
         # Create all necessary scripts
         if not skip_setup:
-            self.setup(design, config)
+            self.setup_design(design, config)
 
         if config is not None:
             design = f'{design}.{config["name"]}'
