@@ -1,4 +1,4 @@
-# Toolchain defintions file
+# Toolchain definitions file
 
 # Currently, only the Questa tools are supported
 
@@ -27,4 +27,30 @@ QUESTA_TOOLS = {
 TOOLS = {
         "questa" : QUESTA_TOOLS
         }
+
+default_flags = {
+        "questa" : {
+                   "lint methodology" : "ip -goal start",
+                   "autocheck verify" : "",
+                   "xcheck verify" : "",
+                   "covercheck verify" : "",
+                   "rdc generate report" : "-resetcheck",
+                   "cdc generate report" : "-clockcheck",
+                   "formal verify" : "-justify_initial_x -auto_constraint_off",
+                   }
+        }
+
+import os
+
+def get_toolchain():
+    """Get the toolchain from a specific environment variable. In the future,
+    if the environment variable is not set, we plan to auto-detect which tools
+    are available in the PATH and assign the first we find (with some
+    priority)"""
+    default = 'questa'
+    toolchain = os.getenv('FVM_TOOLCHAIN', default)
+    return toolchain
+
+def get_default_flags(toolchain):
+    return default_flags[toolchain]
 

@@ -22,6 +22,7 @@ from rich.text import Text
 from fvm import toolchains
 from fvm import logcounter
 from fvm import helpers
+from fvm.steps import steps
 from fvm import generate_test_cases
 from fvm import parse_reports
 from fvm import parse_simcover
@@ -190,7 +191,6 @@ class fvmframework:
         self.skip_list = list()
         self.allow_failure_list = list()
         self.disabled_coverage = list()
-        self.toolchain = "questa"
         self.vhdlstd = "2008"
         self.tool_flags = dict()
         self.resets = list()
@@ -215,15 +215,12 @@ class fvmframework:
         self.clocks_summary = dict()
         self.fault_summary = dict()
 
-        # Specific tool defaults for each toolchain
-        if self.toolchain == "questa":
-            self.tool_flags["lint methodology"] = "ip -goal start"
-            self.tool_flags["autocheck verify"] = ""
-            self.tool_flags["xcheck verify"] = ""
-            self.tool_flags["covercheck verify"] = ""
-            self.tool_flags["rdc generate report"] = "-resetcheck"
-            self.tool_flags["cdc generate report"] = "-clockcheck"
-            self.tool_flags["formal verify"] = "-justify_initial_x -auto_constraint_off"
+        self.steps = steps()
+
+        # Get the toolchain (questa, sby, etc) and assign sensible default
+        # options defined in the selected toolchain
+        self.toolchain = toolchains.get_toolchain()
+        self.tool_flags = toolchains.get_default_flags(self.toolchain)
 
         # Exit if args.step is unrecognized
         if args.step is not None:
@@ -2561,6 +2558,8 @@ class fvmframework:
 
         stdout_lines = list()
         stderr_lines = list()
+        # TODO : the following line fails if the Allure process was not
+        # launched
         with process.stdout as stdout, process.stderr as stderr:
             for line in iter(stdout.readline, ''):
                 # If verbose, print to console
