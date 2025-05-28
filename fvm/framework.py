@@ -24,7 +24,7 @@ from fvm import logcounter
 from fvm import helpers
 from fvm.steps import steps
 from fvm import generate_test_cases
-from fvm import formal_signoff_parse
+from fvm.parsers import parse_formal_signoff
 from fvm.parsers import parse_reachability
 from fvm.parsers import parse_reports
 from fvm.parsers import parse_simcover
@@ -1500,11 +1500,11 @@ class fvmframework:
                     with open(formal_signoff_html, 'r', encoding='utf-8') as f:
                         html_content = f.read()
 
-                    tables = formal_signoff_parse.parse_coverage_table(html_content)
-                    filtered_tables = formal_signoff_parse.filter_coverage_tables(tables)
+                    tables = parse_formal_signoff.parse_coverage_table(html_content)
+                    filtered_tables = parse_formal_signoff.filter_coverage_tables(tables)
 
                     if filtered_tables:
-                        self.formalcover_summary = formal_signoff_parse.add_total_field(filtered_tables[0])
+                        self.formalcover_summary = parse_formal_signoff.add_total_field(filtered_tables[0])
                         formalcover_summary = self.formalcover_summary
                         goal_percentages = {
                             "Branch": 0.0,
