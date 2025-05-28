@@ -19,11 +19,11 @@ from rich.console import Console
 from rich.text import Text
 
 # Our own imports
-from fvm.toolchains import toolchains
 from fvm import logcounter
 from fvm import helpers
-from fvm.steps import steps
 from fvm import generate_test_cases
+from fvm.steps import steps
+from fvm.toolchains import toolchains
 from fvm.parsers import parse_formal_signoff
 from fvm.parsers import parse_reachability
 from fvm.parsers import parse_reports
