@@ -19,7 +19,7 @@ from rich.console import Console
 from rich.text import Text
 
 # Our own imports
-from fvm import toolchains
+from fvm.toolchains import toolchains
 from fvm import logcounter
 from fvm import helpers
 from fvm.steps import steps
