@@ -1746,33 +1746,6 @@ class fvmframework:
 
             return err
 
-
-    def insert_line_before_target(self, file, target_line, line_to_insert):
-        with open(file, 'r') as f:
-            lines = f.readlines()
-
-        new_lines = []
-        for line in lines:
-            if line.strip() == target_line:
-                new_lines.append(line_to_insert + '\n')
-            new_lines.append(line)
-
-        with open(file, 'w') as f:
-            f.writelines(new_lines)
-
-    def insert_line_after_target(self, file, target_line, line_to_insert):
-        with open(file, 'r') as f:
-            lines = f.readlines()
-
-        new_lines = []
-        for line in lines:
-            new_lines.append(line)
-            if line.strip() == target_line:
-                new_lines.append(line_to_insert + '\n')
-
-        with open(file, 'w') as f:
-            f.writelines(new_lines)
-
     def logcheck(self, result, design, step, tool):
         """Check log for errors"""
 

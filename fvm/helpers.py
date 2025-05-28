@@ -20,7 +20,6 @@ def is_inside_venv():
         is_venv = True
     else:
         is_venv = False
-
     return is_venv
 
 def readable_time(seconds):
@@ -30,3 +29,30 @@ def readable_time(seconds):
     else:
         ret = precisedelta(seconds)
     return ret
+
+def insert_line_before_target(file, target_line, line_to_insert):
+    with open(file, 'r') as f:
+        lines = f.readlines()
+
+    new_lines = []
+    for line in lines:
+        if line.strip() == target_line:
+            new_lines.append(line_to_insert + '\n')
+        new_lines.append(line)
+
+    with open(file, 'w') as f:
+        f.writelines(new_lines)
+
+def insert_line_after_target(file, target_line, line_to_insert):
+    with open(file, 'r') as f:
+        lines = f.readlines()
+
+    new_lines = []
+    for line in lines:
+        new_lines.append(line)
+        if line.strip() == target_line:
+            new_lines.append(line_to_insert + '\n')
+
+    with open(file, 'w') as f:
+        f.writelines(new_lines)
+
