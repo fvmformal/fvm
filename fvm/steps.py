@@ -1,0 +1,57 @@
+# TODO : add docstrings, but with nice format, arguments, etc
+
+class steps:
+
+    def __init__(self):
+        # Dictionaries are ordered since python 3.7, so we can just insert the
+        # steps in the order in which we want it them run. For earlier python
+        # versions we could use OrderedDict, but FVM doesn't work with python <
+        # 3.8, so there's no need to support that
+        self.steps = {}
+        self.post_steps = {}
+
+    def add_step(self, step, setup, run):
+        if step in self.steps:
+            logger.error(f'{step=} already exists in {self.steps=}')
+        self.steps[step] = {}
+        self.steps[step]["setup"] = setup
+        self.steps[step]["run"] = run
+
+    # Cannot reuse add_step for post_steps because post_steps are never run if
+    # the relevant step fails, whereas steps may be run even if the previous
+    # step fails (when using the --continue flag)
+    def add_post_step(step, post_step, setup, run):
+        if step not in self.steps]:
+            logger.error(f'{step=} does not exist in {self.steps=}')
+        if post_step in self.post_steps[step]:
+            logger.error(f'{post_step=} already exists in {self.steps[step]=}')
+        self.post_steps[step][post_step] = {}
+        self.post_steps[step][post_step]["setup"] = setup
+        self.post_steps[step][post_step]["run"] = run
+
+    def append_step(self.steps, target, step, setup, run):
+        # Fail if target not in dict
+        if target not in self.steps:
+            logger.error(f'{target=} not in {self.steps=}, cannot insert step after it')
+        # Get position of target in the dict
+        pos = list(self.steps).index(target)
+        # Convert dict to list
+        l = list(self.steps.items())
+        # Add step after target
+        l.insert(pos+1, (step, {"setup": setup, "run": run}))
+        # Convert list to dict
+        self.steps = dict(l)
+
+    def prepend_step(self.steps, target, step, setup, run):
+        # Fail if target not in dict
+        if target not in self.steps:
+            logger.error(f'{target=} not in {self.steps=}, cannot insert step before it')
+        # Get position of target in the dict
+        pos = list(self.steps).index(target)
+        # Convert dict to list
+        l = list(self.steps.items())
+        # Add step before target
+        l.insert(pos, (step, {"setup": setup, "run": run}))
+        # Convert list to dict
+        self.steps = dict(l)
+
