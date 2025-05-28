@@ -223,6 +223,7 @@ class fvmframework:
         # options defined in the selected toolchain
         self.toolchain = toolchains.get_toolchain()
         self.tool_flags = toolchains.get_default_flags(self.toolchain)
+        toolchains.define_steps(self.steps, self.toolchain)
 
         # Exit if args.step is unrecognized
         if args.step is not None:
@@ -604,7 +605,7 @@ class fvmframework:
                     self.setup_design(design, config)
             else:
                 logger.trace(f'{design=} has no configs, setting up default config')
-                self.setup_design(design)
+                self.setup_design(design, None)
 
     def list_design(self, design, skip_setup=False):
         """List all available/selected methodology steps for a design"""

@@ -25,8 +25,9 @@ class steps:
     def add_post_step(self, step, post_step, setup, run):
         if step not in self.steps:
             logger.error(f'{step=} does not exist in {self.steps=}')
-        if post_step in self.post_steps[step]:
+        if post_step in self.post_steps:
             logger.error(f'{post_step=} already exists in {self.steps[step]=}')
+        self.post_steps[step] = {}
         self.post_steps[step][post_step] = {}
         self.post_steps[step][post_step]["setup"] = setup
         self.post_steps[step][post_step]["run"] = run

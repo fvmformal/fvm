@@ -33,3 +33,6 @@ def get_default_flags(toolchain):
     print(f'get_default_flags: {default_flags.get(toolchain)=}')
     return default_flags.get(toolchain)
 
+def define_steps(steps, toolchain):
+    module = importlib.import_module(f'fvm.toolchains.{toolchain}')
+    module.define_steps(steps)
