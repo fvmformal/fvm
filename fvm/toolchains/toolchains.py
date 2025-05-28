@@ -1,4 +1,6 @@
-# Toolchain definitions file
+# Toolchain interface presented to the rest of the FVM framework. It imports
+# different toolchain modules present in this same directory, which define the
+# supported FVM methodology steps
 
 import os
 import importlib
@@ -8,9 +10,11 @@ import importlib
 toolchains = ['questa']
 default_toolchain = 'questa'
 
+# TODO : not sure we actually need TOOLS
 TOOLS = {}
 default_flags = {}
 
+# TODO : not sure we actually need TOOLS
 # Programmatically import all toolchains and get the constants defined in each
 # of them
 for t in toolchains:
@@ -36,3 +40,4 @@ def get_default_flags(toolchain):
 def define_steps(steps, toolchain):
     module = importlib.import_module(f'fvm.toolchains.{toolchain}')
     module.define_steps(steps)
+

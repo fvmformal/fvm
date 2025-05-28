@@ -51,6 +51,9 @@ LOGFORMAT_SUMMARY = '<cyan>FVM</cyan> | <green>Summary</green> | <level>{level: 
 def getlogformattool(design, step, tool):
     return f'<cyan>{design}.{step}</cyan> | <green>{tool=}</green> | ' + '<level>{level: <8}</level> | <level>{message}</level>'
 
+# TODO : these two constants (FVM_STEPS and FVM_POST_STEPS) will be removed
+# when the steps are programmatically initialized
+#
 # Steps, in order of execution, of the methodology
 FVM_STEPS = [
     'lint',
@@ -217,13 +220,14 @@ class fvmframework:
         self.clocks_summary = dict()
         self.fault_summary = dict()
 
-        self.steps = steps()
-
-        # Get the toolchain (questa, sby, etc) and assign sensible default
-        # options defined in the selected toolchain
+        # Get the toolchain (questa, sby, etc), assign sensible default options
+        # defined in the selected toolchain, and define the methdology steps
+        # according to what the toolchain does actually support
         self.toolchain = toolchains.get_toolchain()
         self.tool_flags = toolchains.get_default_flags(self.toolchain)
+        self.steps = steps()
         toolchains.define_steps(self.steps, self.toolchain)
+        logger.info(f'{steps=}')
 
         # Exit if args.step is unrecognized
         if args.step is not None:
@@ -885,8 +889,6 @@ class fvmframework:
         else:
             logger.error(f'{hook=} is not callable, only functions or other callable objects can be passed as hooks')
 
-    # This has some questa-specific code but at least it has it inside an if
-    # clause
     def setup_design(self, design, config = None):
         """Create the output directory and the scripts for a design, but do not
         run anything"""
@@ -907,19 +909,10 @@ class fvmframework:
 
         os.makedirs(path, exist_ok=True)
 
-        if self.toolchain == "questa":
-            # Create .f files and .do files
-            self.create_f_file(f'{path}/design.f', self.vhdl_sources)
-            self.create_f_file(f'{path}/properties.f', self.psl_sources)
-            self.genlintscript("lint.do", path)
-            self.genfriendlinessscript("friendliness.do", path)
-            self.genrulecheckscript("rulecheck.do", path)
-            self.genxverifyscript("xverify.do", path)
-            self.genreachabilityscript("reachability.do", path)
-            self.genfaultscript("fault.do", path)
-            self.genresetscript("resets.do", path)
-            self.genclockscript("clocks.do", path)
-            self.genprovescript("prove.do", path)
+        # Run the assigned setup function for each step
+        for step in self.steps.steps :
+            #logger.trace(f'Setting up {design=}, {step=}')
+            self.steps.steps[step]["setup"](self, path)
 
     def logcheck(self, result, design, step, tool):
         """Check log for errors"""
@@ -1556,352 +1549,4 @@ class fvmframework:
         if self.toolchain == "questa":
             cmd = toolchains.TOOLS[self.toolchain]["createemptylib"] + ' ' + lib
         return cmd
-
-    # This is questa-specific
-    def create_f_file(self, filename, sources):
-        with open(filename, "w") as f:
-            for src in sources:
-                print(src, file=f)
-
-    # This is questa-specific
-    def gencompilescript(self, filename, path):
-        """Generate script to compile design sources"""
-        # TODO : we must also compile the Verilog sources, if they exist
-        # TODO : we must check for the case of only-verilog designs (no VHDL files)
-        # TODO : we must check for the case of only-VHDL designs (no verilog files)
-        library_path = f"libraries" 
-        os.makedirs(library_path, exist_ok=True) 
-        """ This is used as header for the other scripts, since we need to have
-        a compiled netlist in order to do anything"""
-        with open(path + '/' + filename, "w") as f:
-            print('onerror exit', file=f)
-            ordered_libraries = OrderedDict.fromkeys(self.libraries_from_vhdl_sources) 
-            for lib in ordered_libraries:
-                lib_dir = f"{library_path}/{lib}"  
-                print(f'if {{[file exists {lib_dir}]}} {{', file=f)
-                print(f'    vdel -lib {lib_dir} -all', file=f)
-                print('}', file=f)
-                print(f'vlib {self.get_tool_flags("vlib")} {lib_dir}', file=f)
-                print(f'vmap {self.get_tool_flags("vmap")} {lib} {lib_dir}', file=f)
-                lib_sources = [src for src, library in zip(self.vhdl_sources, self.libraries_from_vhdl_sources) if library == lib]
-                f_file_path = f'{path}/{lib}_design.f'
-                self.create_f_file(f_file_path, lib_sources)
-                print(f'vcom {self.get_tool_flags("vcom")} -{self.vhdlstd} -work {lib} -autoorder -f {f_file_path}', file=f)
-                print('', file=f)
-
-    # This is questa-specific
-    def gen_reset_config(self, filename, path):
-        with open(path+'/'+filename, "a") as f:
-            # TODO : let the user specify clock names, polarities, sync/async,
-            # clock domains and reset domains
-            # Clock trees can be both active high and low when some logic is
-            # reset when the reset is high and other logic is reset when it is
-            # low.
-            # Also, reset signals can drive trees of both synchronous and
-            # asynchronous resets
-            for reset in self.resets:
-                string = f'netlist reset {reset["name"]}'
-                if reset["module"] is not None:
-                    string += f' -module {reset["module"]}'
-                if reset["group"] is not None:
-                    string += f' -group {reset["group"]}'
-                if reset["active_low"] is True:
-                    string += ' -active_low'
-                if reset["active_high"] is True:
-                    string += ' -active_high'
-                if reset["asynchronous"] is True:
-                    string += ' -async'
-                if reset["synchronous"] is True:
-                    string += ' -sync'
-                if reset["external"] is True:
-                    string += ' -virtual'
-                if reset["remove"] is True:
-                    string += ' -remove'
-                if reset["ignore"] is True:
-                    string += ' -ignore'
-                print(string, file=f)
-
-    # This is questa-specific
-    def gen_reset_domain_config(self, filename, path):
-        with open(path+'/'+filename, "a") as f:
-            for domain in self.reset_domains:
-                for signal in domain["port_list"]:
-                    string = f'netlist port resetdomain {signal}'
-                    string += f' -reset {domain["name"]}'
-                    if domain["asynchronous"] is True:
-                        string += f' -async'
-                    if domain["synchronous"] is True:
-                        string += f' -sync'
-                    if domain["active_high"] is True:
-                        string += f' -active_high'
-                    if domain["active_low"] is True:
-                        string += f' -active_low'
-                    if domain["is_set"] is True:
-                        string += f' -set'
-                    if domain["no_reset"] is True:
-                        string += f' -no_reset'
-                    if domain["ignore"] is True:
-                        string += ' -ignore}'
-                    string += ' -add'
-                    print(string, file=f)
-
-    # This is questa-specific
-    def gen_clock_config(self, filename, path):
-        with open(path+'/'+filename, "a") as f:
-            for clock in self.clocks:
-                string = f'netlist clock {clock["name"]}'
-                if clock["module"] is not None:
-                    string += f' -module {clock["module"]}'
-                if clock["group"] is not None:
-                    string += f' -group {clock["group"]} -add'
-                if clock["period"] is not None:
-                    string += f' -period {clock["period"]}'
-                if clock["waveform"] is not None:
-                    string += f' -waveform {clock["waveform"]}'
-                if clock["external"] is True:
-                    string += ' -virtual'
-                if clock["remove"] is True:
-                    string += ' -remove'
-                if clock["ignore"] is True:
-                    string += ' -ignore'
-                print(string, file=f)
-
-    # This is questa-specific
-    def gen_clock_domain_config(self, filename, path):
-        with open(path+'/'+filename, "a") as f:
-            for domain in self.clock_domains:
-                string = f'netlist port domain'
-                for signal in domain["port_list"]:
-                    string += f' {signal}'
-                string += f' -clock {domain["name"]} -add'
-                if domain["asynchronous"] is True:
-                    string += ' -async'
-                if domain["synchronous"] is True:
-                    string += ' -sync'
-                if domain["ignore"] is True:
-                    string += ' -ignore'
-                if domain["posedge"] is True:
-                    string += ' -posedge'
-                if domain["negedge"] is True:
-                    string += ' -negedge'
-                if domain["module"] is not None:
-                    string += f' -module {domain["module"]}'
-                if domain["inout_clock_in"] is not None:
-                    string += f' -inout_clock_in {domain["inout_clock_in"]}'
-                if domain["inout_clock_out"] is not None:
-                    string += f' -inout_clock_out {domain["inout_clock_out"]}'
-                print(string, file=f)
-            #print('netlist reset rst -active_high -async', file=f)
-            #print('netlist port domain rst -clock clk', file=f)
-            #print('netlist port domain data -clock clk', file=f)
-            #print('netlist port domain empty -clock clk', file=f)
-            #print('netlist port resetdomain data -reset rst', file=f)
-            #print('netlist port resetdomain empty -reset rst', file=f)
-            #print('netlist clock clk', file=f)
-
-    # This is questa-specific
-    # TODO : set sensible defaults here and allow for user optionality too
-    # i.e., lint methodology, goal, etc
-    def genlintscript(self, filename, path):
-        """Generate script to run Lint"""
-        self.gencompilescript(filename, path)
-        with open(path+'/'+filename, "a") as f:
-            print(f'lint methodology {self.get_tool_flags("lint methodology")}', file=f)
-            print(f'lint run -d {self.current_toplevel} {self.get_tool_flags("lint run")} {self.generic_args}', file=f)
-            print('exit', file=f)
-
-    # This is questa-specific
-    # TODO : set sensible defaults here and allow for user optionality too
-    def genfriendlinessscript(self, filename, path):
-        """Generate script to compile AutoCheck, which also generates a report we
-        analyze to determine the design's formal-friendliness"""
-        self.gencompilescript(filename, path)
-        with open(path+'/'+filename, "a") as f:
-            print(f'autocheck compile {self.get_tool_flags("autocheck compile")} -d {self.current_toplevel} {self.generic_args}', file=f)
-            print('exit', file=f)
-
-    # This is questa-specific
-    # TODO : set sensible defaults here and allow for user optionality too
-    def genrulecheckscript(self, filename, path):
-        """Generate script to run AutoCheck"""
-        self.gencompilescript(filename, path)
-        with open(path+'/'+filename, "a") as f:
-            print(f'autocheck report inconclusives', file=f)
-            for line in self.init_reset:
-                print(line, file=f)
-            print(f'autocheck compile {self.get_tool_flags("autocheck compile")} -d {self.current_toplevel} {self.generic_args}', file=f)
-            print(f'autocheck verify {self.get_tool_flags("autocheck verify")}', file=f)
-            print('exit', file=f)
-
-    # This is questa-specific
-    # TODO : set sensible defaults here and allow for user optionality too
-    def genxverifyscript(self, filename, path):
-        """Generate script to run X-Check"""
-        self.gencompilescript(filename, path)
-        with open(path+'/'+filename, "a") as f:
-            for line in self.init_reset:
-                print(line, file=f)
-            print(f'xcheck compile {self.get_tool_flags("xcheck compile")} -d {self.current_toplevel} {self.generic_args}', file=f)
-            print(f'xcheck verify {self.get_tool_flags("xcheck verify")}', file=f)
-            print('exit', file=f)
-
-    # This is questa-specific
-    # TODO : set sensible defaults here and allow for user optionality too,
-    # such as allowing the user to specify the covercheck directives
-    # TODO : if a .ucdb file is specified as argument, run the post-simulation
-    # analysis instead of the pre-simulation analysis (see
-    # https://git.woden.us.es/eda/fvm/-/issues/37#note_4252)
-    def genreachabilityscript(self, filename, path):
-        """Generate a script to run CoverCheck"""
-        self.gencompilescript(filename, path)
-        with open(path+'/'+filename, "a") as f:
-            for line in self.init_reset:
-                print(line, file=f)
-            print(f'covercheck compile {self.get_tool_flags("covercheck compile")} -d {self.current_toplevel} {self.generic_args}', file=f)
-            # if .ucdb file is specified:
-            #    print('covercheck load ucdb {ucdb_file}', file=f)
-            #    print(f'covercheck verify -covered_items', file=f)
-            print(f'covercheck verify {self.get_tool_flags("covercheck verify")}', file=f)
-            print('exit', file=f)
-
-    # This is questa-specific
-    def genfaultscript(self, filename, path):
-        """Generate a script to run SLEC"""
-        self.gencompilescript(filename, path)
-        with open(path+'/'+filename, "a") as f:
-            for line in self.init_reset:
-                print(line, file=f)
-            parts = self.current_toplevel.rsplit(".", 1)
-            if len(parts) == 2:
-                lib, design = parts
-                print(f'slec configure -spec -d {design} -work {lib}', file=f)
-                print(f'slec configure -impl -d {design} -work {lib}', file=f)
-            else:
-                design = parts[0]
-                print(f'slec configure -spec -d {design}', file=f)
-                print(f'slec configure -impl -d {design}', file=f)                
-
-            for cutpoint in self.cutpoints:
-                string = f'netlist cutpoint impl.{cutpoint["signal"]}'
-                if cutpoint["module"] is not None:
-                    string += f' -module {cutpoint["module"]}'
-                if cutpoint["resetval"] is True:
-                    string += ' -reset_value'
-                if cutpoint["condition"] is not None:
-                    string += f'-cond {cutpoint["condition"]}'
-                if cutpoint["driver"] is not None:
-                    string += f'-cond {cutpoint["driver"]}'
-                if cutpoint["wildcards_dont_match_hierarchy_separators"] is True:
-                    string += '-match_local_scope'
-                print(string, file=f)
-            print(f'slec compile {self.generic_args}', file=f)
-            print(f'slec verify -auto_constraint_off -justify_initial_x', file=f)
-            print(f'slec generate report', file=f)
-            print(f'slec generate waveforms -vcd', file=f)
-            print('exit', file=f)
-
-    # This is questa-specific
-    def genresetscript(self, filename, path):
-        # We first write the header to compile the netlist  and then append
-        # (mode "a") the tool-specific instructions
-        self.gencompilescript(filename, path)
-        self.gen_clock_config(filename, path)
-        self.gen_clock_domain_config(filename, path)
-        self.gen_reset_config(filename, path)
-        self.gen_reset_domain_config(filename, path)
-        with open(path+'/'+filename, "a") as f:
-            print(f'rdc run -d {self.current_toplevel} {self.get_tool_flags("rdc run")} {self.generic_args}', file=f)
-            print(f'rdc generate report reset_report.rpt {self.get_tool_flags("rdc generate report")};', file=f)
-            print('rdc generate tree -reset reset_tree.rpt;', file=f)
-            print('exit', file=f)
-
-    # This is questa-specific
-    def genclockscript(self, filename, path):
-        """Generate script to run Clock Domain Crossing"""
-        # We first write the header to compile the netlist  and then append
-        # (mode "a") the tool-specific instructions
-        self.gencompilescript(filename, path)
-        self.gen_clock_config(filename, path)
-        self.gen_clock_domain_config(filename, path)
-        self.gen_reset_config(filename, path)
-        self.gen_reset_domain_config(filename, path)
-        with open(path+'/'+filename, "a") as f:
-            # TODO : let the user specify clock names, clock domains and reset domains
-            # TODO : also look at reconvergence, and other warnings detected
-            #print('netlist clock clk -period 50', file=f)
-
-            # Enable reconvergence to remove warning [hdl-271]
-            # TODO : add option to disable reconvergence?
-            print(f'cdc reconvergence on', file=f)
-            print(f'cdc run -d {self.current_toplevel} {self.get_tool_flags("cdc run")} {self.generic_args}', file=f)
-            print(f'cdc generate report clock_report.rpt {self.get_tool_flags("cdc generate report")}', file=f)
-            print('cdc generate tree -clock clock_tree.rpt;', file=f)
-            print('exit', file=f)
-
-    # This is questa-specific
-    # TODO : we will need arguments for the clocks, timeout, we probably need
-    # to detect compile order if vcom doesn't detect it, set the other options
-    # such as timeout... and also throw some errors if any option is not
-    # specified. This is not trivial. Also, in the future we may want to
-    # specify verilog files with vlog, etc...
-    # TODO : can we also compile the PSL files using a .f file?
-    def genprovescript(self, filename, path):
-        """Generate script to run PropCheck"""
-        self.gencompilescript(filename, path)
-        # Only add the clocks since we don't want to add any extra constraint
-        # Also, adding the clock domain make propcheck throw errors because
-        # output ports in the clock domain cannot be constrained
-        self.gen_clock_config(filename, path)
-        with open(path+'/'+filename, "a") as f:
-            print('', file=f)
-            print('## Run PropCheck', file=f)
-            #print('log_info "***** Running formal compile (compiling formal model)..."', file=f)
-            for line in self.init_reset:
-                print(line, file=f)
-
-            for blackbox in self.blackboxes:
-                print(f'netlist blackbox {blackbox}', file=f)
-
-            for blackbox_instance in self.blackbox_instances:
-                print(f'netlist blackbox instance {blackbox_instance}', file=f)
-
-            for cutpoint in self.cutpoints:
-                string = f'netlist cutpoint {cutpoint["signal"]}'
-                if cutpoint["module"] is not None:
-                    string += f' -module {cutpoint["module"]}'
-                if cutpoint["resetval"] is True:
-                    string += ' -reset_value'
-                if cutpoint["condition"] is not None:
-                    string += f'-cond {cutpoint["condition"]}'
-                if cutpoint["driver"] is not None:
-                    string += f'-driver {cutpoint["driver"]}'
-                if cutpoint["wildcards_dont_match_hierarchy_separators"] is True:
-                    string += '-match_local_scope'
-                print(string, file=f)
-
-            print('formal compile ', end='', file=f)
-            print(f'-d {self.current_toplevel} {self.generic_args} ', end='', file=f)
-            for i in self.psl_sources :
-                print(f'-pslfile {i} ', end='', file=f)
-            print('-include_code_cov ', end='', file=f)
-            print(f'{self.get_tool_flags("formal compile")}', file=f)
-
-            #print('log_info "***** Running formal verify (model checking)..."', file=f)
-            # If -cov_mode is specified without arguments, it calculates
-            # observability coverage
-            print(f'formal coverage enable -code sbceft', file=f)
-            print(f'formal verify {self.get_tool_flags("formal verify")} -cov_mode', file=f)
-            print('', file=f)
-            print('## Compute Formal Coverage', file=f)
-            #print('log_info "***** Running formal verify to get coverage..."', file=f)
-            # TODO : maybe we should run coverage collection in separate
-            # scripts so we can better capture if there have been any errors,
-            # and also to annotate if they have been skipped
-            #print('log_info "***** Running formal generate coverage..."', file=f)
-            print(f'formal generate testbenches {self.get_tool_flags("formal generate testbenches")}', file=f)
-            print('formal generate waveforms', file=f)
-            print('formal generate waveforms -vcd', file=f)
-            print('formal generate report', file=f)
-            print('', file=f)
-            print('exit', file=f)
 
