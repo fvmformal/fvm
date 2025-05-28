@@ -1,9 +1,20 @@
 import os
 import subprocess
 from datetime import datetime
+from rich.console import Console
 
+from fvm import helpers
 from fvm import generate_test_cases
+from fvm.parsers import parse_formal_signoff
+from fvm.parsers import parse_reachability
 from fvm.parsers import parse_reports
+from fvm.parsers import parse_simcover
+from fvm.parsers import parse_lint
+from fvm.parsers import parse_rulecheck
+from fvm.parsers import parse_xverify
+from fvm.parsers import parse_resets
+from fvm.parsers import parse_clocks
+from fvm.parsers import parse_fault
 
 # TODO: these constants (FVM_STEPS and FVM_POST_STEPS) are redundant and we
 # will remove them soon, but for now while we are refactoring we need them so
@@ -26,6 +37,385 @@ FVM_POST_STEPS = [
     'prove.formalcover',
     'prove.simcover'
     ]
+
+def pretty_summary(framework, logger):
+    """Prints the final summary"""
+    # TODO : use rich or a similar python package to format a table
+    # TODO : print the status for each design.step
+    # TODO : color the status
+    # TODO : print also number of warnings and errors, and all relevant
+    # information from PropCheck (number of
+    # assume/assert/fired/proven/cover/covered/uncoverable/etc. For this,
+    # we may need to post-process the prove step log
+    # TODO : print elapsed time
+    from rich.table import Table
+    from rich.measure import Measurement
+    from rich.box import ROUNDED
+
+    summary_console = Console(force_terminal=True, force_interactive=False,
+                              record=True)
+    summary_console.rule(f'[bold white]FVM Summary[/bold white]')
+
+    # Calculate maximum length of {design}.{step} so we can pad later
+    maxlen = 0
+    for design in framework.designs:
+        for step in FVM_STEPS + FVM_POST_STEPS:
+            curlen = len(f'{design}.{step}')
+            if curlen > maxlen:
+                maxlen = curlen
+
+    # Accumulators for total values
+    total_time = 0
+    total_pass = 0
+    total_fail = 0
+    total_skip = 0
+    total_broken = 0
+    total_cont = 0
+    total_stat = 0
+
+    #text_header = Text("==== Summary ==============================================")
+    #summary_console.print(text_header)
+    table = None
+    for design in framework.designs:
+        table = None
+        table = Table(title=f"[cyan]FVM Summary: {design}[/cyan]")
+        table.add_column("status", justify="left", min_width=6)
+        table.add_column("step", justify="left", min_width=25)
+        table.add_column("results", justify="right", min_width=5)
+        table.add_column("elapsed time", justify="right", min_width=12)
+        for step in FVM_STEPS + FVM_POST_STEPS:
+            total_cont += 1
+            # Only print pass/fail/skip, the rest of steps where not
+            # selected by the user so there is no need to be redundant
+            if 'status' in framework.results[design][step]:
+                total_stat += 1
+                status = framework.results[design][step]['status']
+                #text = Text()
+                #text.append(status, style=style)
+                #text.append(' ')
+                design_step = f'{design}.{step}'
+                #text.append(f'{design_step:<{maxlen}}')
+
+                result_str_for_table = ""
+                score_str =  '                '
+
+                if step == 'lint':
+                    if framework.lint_summary:
+                        lint_errors = framework.lint_summary['Error']['count']
+                        lint_warnings = framework.lint_summary['Warning']['count']
+
+                        if lint_errors != 0:
+                            result_str_for_table += f"[bold red]{lint_errors}E[/bold red]"
+                            status = 'fail'
+                        if lint_warnings != 0:
+                            result_str_for_table += " "
+                            result_str_for_table += f"[bold yellow]{lint_warnings}W[/bold yellow]"
+                        if lint_errors == 0 and lint_warnings == 0:
+                            result_str_for_table += "[bold green]okey![/bold green]"
+                    else:
+                        result_str_for_table = "N/A"
+
+                if step == 'friendliness':
+                    if "score" in framework.results[design][step]:
+                        score = framework.results[design][step]["score"]
+                        score_str = f' (score: {score:.2f}%)'
+                        result_str_for_table = f'[bold green]{score:.2f}%[/bold green]'
+                    else:
+                        result_str_for_table = "N/A"
+                #text.append(score_str)
+
+                if step == 'rulecheck':
+                    if framework.rulecheck_summary:
+                        severity_occurrences = parse_rulecheck.count_severity_occurrences(framework.rulecheck_summary)
+                        rulecheck_errors = severity_occurrences['Violation']
+                        rulecheck_warnings = severity_occurrences['Caution']
+                        rulecheck_inconclusives = severity_occurrences['Inconclusive']
+
+                        if rulecheck_errors != 0:
+                            result_str_for_table += f"[bold red]{rulecheck_errors}V[/bold red]"
+                            status = 'fail'
+                        if rulecheck_warnings != 0:
+                            result_str_for_table += " "
+                            result_str_for_table += f"[bold yellow]{rulecheck_warnings}C[/bold yellow]"
+                        if rulecheck_inconclusives != 0:
+                            result_str_for_table += " "
+                            result_str_for_table += f"[bold white]{rulecheck_inconclusives}I[/bold white]"
+                        if rulecheck_errors == 0 and rulecheck_warnings == 0 and rulecheck_inconclusives == 0:
+                            result_str_for_table += "[bold green]okey![/bold green]"
+                    else:
+                        result_str_for_table = "N/A"
+
+                if step == 'xverify':
+                    if framework.xverify_summary:
+                        result_occurrences = parse_xverify.count_result_occurrences(framework.xverify_summary)
+                        xverify_errors = result_occurrences['Corruptible']
+                        xverify_warnings = result_occurrences['Incorruptible']
+                        xverify_inconclusives = result_occurrences['Inconclusive']
+
+                        if xverify_errors != 0:
+                            result_str_for_table += f"[bold red]{xverify_errors}C[/bold red]"
+                            status = 'fail'
+                        if xverify_warnings != 0:
+                            result_str_for_table += " "
+                            result_str_for_table += f"[bold yellow]{xverify_warnings}I[/bold yellow]"
+                        if xverify_inconclusives != 0:
+                            result_str_for_table += " "
+                            result_str_for_table += f"[bold white]{xverify_inconclusives}I[/bold white]"
+                        if xverify_errors == 0 and xverify_warnings == 0 and xverify_inconclusives == 0:
+                            result_str_for_table += "[bold green]okey![/bold green]"
+                    else:
+                        result_str_for_table = "N/A"
+
+                if step == 'reachability':
+                    if framework.reachability_summary:
+                        score = next( (float(entry["Unreachable"].split("(")[-1].strip(" %)"))
+                               for entry in framework.reachability_summary["data"]
+                               if entry.get("Coverage Type") == "Total"), 0.0)
+                        if status == 'pass':
+                            result_str_for_table = f'[bold green]{score}%[/bold green]'
+                        else:
+                            result_str_for_table = f'[bold red]{score}%[/bold red]'
+                    else:
+                        result_str_for_table = "N/A"
+
+                if step == 'fault':
+                    if framework.fault_summary:
+                        fault_summary = framework.fault_summary
+                        fault_total_targets = fault_summary["Targets"]["Total"]
+                        fault_total_proven = fault_summary["Targets"]["Proven"]
+                        if fault_total_targets == fault_total_proven:
+                            result_str_for_table += f"[bold green]{fault_total_proven}/{fault_total_targets}[/bold green]"
+                        else:
+                            result_str_for_table += f"[bold red]{fault_total_proven}/{fault_total_targets}[/bold red]"
+                            status = 'fail'
+                    else:
+                        result_str_for_table = "N/A"
+
+                if step == 'resets':
+                    if framework.resets_summary:
+                        resets_summary = framework.resets_summary
+                        resets_violation = resets_summary["Violation"]["count"]
+                        resets_caution = resets_summary["Caution"]["count"]
+
+                        if resets_violation != 0:
+                            result_str_for_table += f"[bold red]{resets_violation}V[/bold red]"
+                            status = 'fail'
+                        if resets_caution != 0:
+                            result_str_for_table += " "
+                            result_str_for_table += f"[bold yellow]{resets_caution}C[/bold yellow]"
+                        if resets_violation == 0 and resets_caution == 0:
+                            result_str_for_table += "[bold green]okey![/bold green]"
+                    else:
+                        result_str_for_table = "N/A"
+
+                if step == 'clocks':
+                    if framework.clocks_summary:
+                        clocks_summary = framework.clocks_summary
+                        clocks_violation = clocks_summary["Violations"]["count"]
+                        clocks_caution = clocks_summary["Cautions"]["count"]
+                        clocks_proven = clocks_summary["Proven"]["count"]
+
+                        if clocks_violation != 0:
+                            result_str_for_table += f"[bold red]{clocks_violation}V[/bold red]"
+                            status = 'fail'
+                        if clocks_caution != 0:
+                            result_str_for_table += " "
+                            result_str_for_table += f"[bold yellow]{clocks_caution}C[/bold yellow]"
+                        if clocks_proven != 0:
+                            result_str_for_table += " "
+                            result_str_for_table += f"[bold green]{clocks_proven}P[/bold green]"
+                        if clocks_violation == 0 and clocks_caution == 0 and clocks_proven == 0:
+                            result_str_for_table += "[bold green]okey![/bold green]"
+                    else:
+                        result_str_for_table = "N/A"
+
+                if step == 'prove.formalcover':
+                    if framework.formalcover_summary:
+                        score = next( (float(entry["Covered (P)"].split("(")[-1].strip(" %)"))
+                               for entry in framework.formalcover_summary["data"]
+                               if entry.get("Coverage Type") == "Total"), 0.0)
+                        if status == 'pass':
+                            result_str_for_table = f'[bold green]{score}%[/bold green]'
+                        else:
+                            result_str_for_table = f'[bold red]{score}%[/bold red]'
+                    else:
+                        result_str_for_table = "N/A"
+
+                if step == 'prove.simcover':
+                    if framework.simcover_summary:
+                        score = framework.simcover_summary.get("Total", {}).get("percentage", 0)
+                        if status == 'pass':
+                            result_str_for_table = f'[bold green]{score}[/bold green]'
+                        else:
+                            result_str_for_table = f'[bold red]{score}[/bold red]'
+                    else:
+                        result_str_for_table = "N/A"
+
+                time_str_for_table = "N/A"
+                if "elapsed_time" in framework.results[design][step]:
+                    time = framework.results[design][step]["elapsed_time"]
+                    total_time += time
+                    time_str = f' ({helpers.readable_time(time)})'
+                    time_str_for_table = helpers.readable_time(time)
+                    #text.append(time_str)
+                #text.append(f' result={framework.results[design][step]}', style='white')
+                #summary_console.print(text)
+                if status == 'pass':
+                    style = 'bold green'
+                    total_pass += 1
+                elif status == 'fail':
+                    style = 'bold red'
+                    total_fail += 1
+                elif status == 'skip':
+                    style = 'bold yellow'
+                    total_skip += 1
+                elif status == 'broken':
+                    style = 'bold yellow'
+                    total_broken += 1
+                table.add_row(f'[{style}]{status}[/{style}]',
+                              f'{step}', result_str_for_table,
+                              time_str_for_table)
+                #print(f'{status} {design}.{step}, result={framework.results[design][step]}')
+
+                if step == "prove" and framework.property_summary:
+                    # TODO: Change framework.property_summary to framework.results[design][step]["property_summary"]
+                    prop_summary = framework.property_summary
+                    assumes = prop_summary.get("Assumes", {}).get("Count", 0)
+                    asserts = prop_summary.get("Asserts", {}).get("Count", 0)
+                    covers = prop_summary.get("Covers", {}).get("Count", 0)
+
+                    table.add_row("", "  Assumes", str(assumes), "")
+
+                    asserts_children = prop_summary.get("Asserts", {}).get("Children", {})
+                    failed_count = asserts_children.get("Fired", {}).get("Count", 0)
+                    inconclusive_count = asserts_children.get("Inconclusive", {}).get("Count", 0)
+                    proven_data = asserts_children.get("Proven", {}).get("Children", {})
+                    vacuous_count = proven_data.get("Vacuous", {}).get("Count", 0)
+
+                    if failed_count > 0:
+                        color_asserts = "bold red"
+                    elif inconclusive_count > 0:
+                        color_asserts = "bold white"
+                    elif vacuous_count > 0:
+                        color_asserts = "bold yellow"
+                    else:
+                        color_asserts = "bold green"
+
+                    table.add_row("", f"  [{color_asserts}]Asserts[/{color_asserts}]", str(asserts), "")
+
+
+                    color_map_asserts = {
+                        "Proven": "bold green",
+                        "Fired": "bold red",
+                        "Inconclusive": "bold white",
+                        "Vacuous": "bold yellow",
+                        "Proven with Warning": "bold yellow",
+                        "Fired with Warning": "bold yellow",
+                        "Fired without Waveform": "bold red"
+                        }
+
+                    for key, value in asserts_children.items():
+                        count = value.get("Count", 0)
+                        formatted_str = f"{count}/{asserts}" if asserts else f"{count}/0"
+                        color_asserts_children = color_map_asserts.get(key, "bold green")
+                        table.add_row("", f"    └ {key}", f"[{color_asserts_children}]{formatted_str}[/{color_asserts_children}]", "")
+
+                        for subkey, subval in value.items():
+                            if subkey != "Count":
+                                subcount = subval
+                                formatted_substr = f"{subcount}/{count}" if count else f"{subcount}/0"
+                                color_asserts_children = color_map_asserts.get(subkey, "bold green")
+                                table.add_row("", f"       └ {subkey}", f"[{color_asserts_children}]{formatted_substr}[/{color_asserts_children}]", "")
+
+                    covers_children = prop_summary.get("Covers", {}).get("Children", {})
+                    uncovered_count = covers_children.get("Uncoverable", {}).get("Count", 0)
+                    not_a_target_count = covers_children.get("Not a Target", {}).get("Count", 0)
+
+                    if uncovered_count > 0:
+                        color_covers = "bold red"
+                    elif not_a_target_count > 0:
+                        color_covers = "bold white"
+                    else:
+                        color_covers = "bold green"
+
+                    color_map_covers = {
+                        "Covered": "bold green",
+                        "Uncoverable": "bold red",
+                        "Not a Target": "bold white",
+                        "Covered with Warning": "bold yellow",
+                        "Covered without Waveform": "bold yellow"
+                        }
+
+                    table.add_row("", f"  [{color_covers}]Covers[/{color_covers}]", str(covers), "")
+                    for key, value in covers_children.items():
+                        count = value.get("Count", 0)
+                        formatted_str = f"{count}/{covers}" if covers else f"{count}/0"
+                        color_covers_children = color_map_covers.get(key, "bold green")
+                        table.add_row("", f"    └ {key}", f"[{color_covers_children}]{formatted_str}[/{color_covers_children}]", "")
+
+                        for subkey, subval in value.items():
+                            if subkey != "Count":
+                                subcount = subval
+                                formatted_substr = f"{subcount}/{count}" if count else f"{subcount}/0"
+                                color_covers_children = color_map_covers.get(subkey, "bold green")
+                                table.add_row("", f"       └ {subkey}", f"[{color_covers_children}]{formatted_substr}[/{color_covers_children}]", "")
+        summary_console.print(table)
+
+    #text_footer = Text("===========================================================")
+    #console.print(text_footer)
+    #text = Text()
+    #text.append('pass', style='bold green')
+    #text.append(f' {total_pass} of {total_cont}')
+    #summary_console.print(text)
+    summary = f"[bold green]  pass[/bold green] {total_pass} of {total_cont}\n"
+    if total_fail != 0:
+        #text = Text()
+        #text.append('fail', style='bold red')
+        #text.append(f' {total_fail} of {total_cont}')
+        #summary_console.print(text)
+        summary += f"[bold red]  fail[/bold red] {total_fail} of {total_cont}\n"
+    if total_skip != 0:
+        #text = Text()
+        #text.append('skip', style='bold yellow')
+        #text.append(f' {total_skip} of {total_cont}')
+        #summary_console.print(text)
+        summary += f"[bold yellow]  skip[/bold yellow] {total_skip} of {total_cont}\n"
+    if total_broken != 0:
+        #text = Text()
+        #text.append('broken', style='bold yellow')
+        #text.append(f' {total_broken} of {total_cont}')
+        #summary_console.print(text)
+        summary += f"[bold yellow]  broken[/bold yellow] {total_broken} of {total_cont}\n"
+    if total_stat != total_cont:
+        #text = Text()
+        #text.append('omit', style='bold white')
+        #text.append(f' {total_cont - total_stat} of {total_cont} (not executed due to early exit)')
+        #summary_console.print(text)
+        summary += f"[bold white]  omit[/bold white] {total_cont - total_stat} of {total_cont}\n"
+    #summary_console.print(text_footer)
+    #text = Text()
+    #text.append(f'Total time  : {helpers.readable_time(total_time)}\n')
+    #text.append(f'Elapsed time: (not yet implemented)')
+    #summary_console.print(text)
+    #summary_console.print(text_footer)
+    #summary_console.print(table)
+
+    console_options = summary_console.options
+    if table is not None:
+        table_width = Measurement.get(summary_console, console_options, table).maximum
+    else:
+        table_width = 0
+    separator_line = " "
+    separator_line += "─" * table_width
+    summary += f"{separator_line}\n"
+    summary += f"{'  Total time:'} [bold cyan]{helpers.readable_time(total_time)}[/bold cyan]\n"
+    summary_console.print(summary)
+    # If framework.outdir doesn't exist, something went wrong: in that case, do
+    # not try to save the HTML summary
+    if os.path.isdir(framework.outdir):
+        summary_console.save_html(f'{framework.outdir}/summary.html')
+    else:
+        logger.error(f'Cannot access output directory {framework.outdir}, something went wrong')
 
 # TODO: separate functionality in at least two functions, maybe three:
 #       - generate_xml_report
