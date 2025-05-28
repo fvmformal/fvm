@@ -24,17 +24,18 @@ from fvm import logcounter
 from fvm import helpers
 from fvm.steps import steps
 from fvm import generate_test_cases
-from fvm import parse_reports
-from fvm import parse_simcover
 from fvm import formal_signoff_parse
 from fvm import reachability_parse
-from fvm import parse_lint
-from fvm import parse_rulecheck
-from fvm import parse_xverify
-from fvm import parse_resets
-from fvm import parse_clocks
-from fvm import parse_fault
-from fvm.parse_design_rpt import *
+from fvm.parsers import parse_reports
+from fvm.parsers import parse_simcover
+from fvm.parsers import parse_lint
+from fvm.parsers import parse_rulecheck
+from fvm.parsers import parse_xverify
+from fvm.parsers import parse_resets
+from fvm.parsers import parse_clocks
+from fvm.parsers import parse_fault
+# TODO : why is this parser import different?
+from fvm.parsers.parse_design_rpt import *
 
 # Error codes
 BAD_VALUE    = "FVM exit condition: Bad value"
