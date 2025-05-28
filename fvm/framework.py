@@ -25,7 +25,7 @@ from fvm import helpers
 from fvm.steps import steps
 from fvm import generate_test_cases
 from fvm import formal_signoff_parse
-from fvm import reachability_parse
+from fvm.parsers import parse_reachability
 from fvm.parsers import parse_reports
 from fvm.parsers import parse_simcover
 from fvm.parsers import parse_lint
@@ -1254,8 +1254,8 @@ class fvmframework:
                             with open(reachability_html, 'r', encoding='utf-8') as f:
                                 html_content = f.read()
 
-                            tables = reachability_parse.parse_single_table(html_content)
-                            self.reachability_summary = reachability_parse.add_total_row(tables)
+                            tables = parse_reachability.parse_single_table(html_content)
+                            self.reachability_summary = parse_reachability.add_total_row(tables)
                     logfile = f'{path}/{step}.log'
                     logger.info(f'{step=}, {tool=}, finished, output written to {logfile}')
                     with open(logfile, 'w') as f :
