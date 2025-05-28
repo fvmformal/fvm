@@ -1,6 +1,8 @@
 # TODO : add docstrings, but with nice format, arguments, etc
 
 class steps:
+    """This class defines a data structure in which to store the steps and
+    provides functions to manage it (such as adding steps and post_steps)"""
 
     def __init__(self):
         # Dictionaries are ordered since python 3.7, so we can just insert the
@@ -20,8 +22,8 @@ class steps:
     # Cannot reuse add_step for post_steps because post_steps are never run if
     # the relevant step fails, whereas steps may be run even if the previous
     # step fails (when using the --continue flag)
-    def add_post_step(step, post_step, setup, run):
-        if step not in self.steps]:
+    def add_post_step(self, step, post_step, setup, run):
+        if step not in self.steps:
             logger.error(f'{step=} does not exist in {self.steps=}')
         if post_step in self.post_steps[step]:
             logger.error(f'{post_step=} already exists in {self.steps[step]=}')
@@ -29,7 +31,7 @@ class steps:
         self.post_steps[step][post_step]["setup"] = setup
         self.post_steps[step][post_step]["run"] = run
 
-    def append_step(self.steps, target, step, setup, run):
+    def append_step(self, target, step, setup, run):
         # Fail if target not in dict
         if target not in self.steps:
             logger.error(f'{target=} not in {self.steps=}, cannot insert step after it')
@@ -42,7 +44,7 @@ class steps:
         # Convert list to dict
         self.steps = dict(l)
 
-    def prepend_step(self.steps, target, step, setup, run):
+    def prepend_step(self, target, step, setup, run):
         # Fail if target not in dict
         if target not in self.steps:
             logger.error(f'{target=} not in {self.steps=}, cannot insert step before it')
