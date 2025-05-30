@@ -99,7 +99,7 @@ examplelist += countervunit
 examplelist += linearinterpolator
 examplelist += dualcounter
 examplelist += uart_tx
-examplelist += uart_rx
+#examplelist += uart_rx
 
 # List with all the concepts
 conceptlist += transactions_deprecated
