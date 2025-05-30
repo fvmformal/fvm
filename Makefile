@@ -218,6 +218,9 @@ clean:
 	rm -rf test/testlib
 	rm -f test/test.vhd test/test2.vhd test/test3.vhd
 	rm -f test/test.psl test/test2.psl test/test3.psl
+	rm -f test/drom2psl/test/multiplesignals.psl test/drom2psl/test/multiplesignals.svg
+	rm -f test/drom2psl/tutorial/*.psl test/drom2psl/tutorial/*.svg
+	rm -f drom/*.psl drom/*.svg
 	rm -rf dist
 	rm -rf doc/sphinx/source/fvm.drom2psl.rst doc/sphinx/source/fvm.rst doc/sphinx/source/modules.rst
 	rm -rf doc/sphinx/build/* doc/sphinx/undocumented_count.txt
