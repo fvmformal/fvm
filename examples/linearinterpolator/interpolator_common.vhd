@@ -30,7 +30,6 @@ package body interpolator_common is
         variable output_tran : interpolator_output_tran;
         variable infr_re, infr_im : integer;
         variable supr_re, supr_im : integer;
-        variable i : integer;
     begin
         infr_re := to_integer(input_tran.infr.re);
         infr_im := to_integer(input_tran.infr.im);
