@@ -1,4 +1,4 @@
-vunit counter (counter) {
+vunit counter_properties (counter) {
 
     -- Default clock for PSL assertions
     default clock is rising_edge(clk);

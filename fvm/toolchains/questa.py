@@ -1,3 +1,5 @@
+# Questa toolchain definition
+
 import os
 from collections import OrderedDict
 
@@ -7,6 +9,7 @@ from collections import OrderedDict
 
 # For the Questa tools, each tool is run through a wrapper which is the actual
 # command that must be run in the command-line
+# TODO : Not sure we really need this dict, although it is a nice summary
 tools = {
         # step           : ["tool",       "wrapper"],
         "lint"           : ["lint",       "qverify"],

@@ -1,22 +1,24 @@
-# Toolchain interface presented to the rest of the FVM framework. It imports
-# different toolchain modules present in this same directory, which define the
-# supported FVM methodology steps
+# Generic toolchain interface presented to the rest of the FVM framework. It
+# imports different toolchain modules present in this same directory, which
+# define the supported FVM methodology steps
 
 import os
 import importlib
 
 # To add a toolchain, add it to this list and create a file with the same name
 # and .py extension in the toolchains folder
-toolchains = ['questa']
+toolchains = ['questa', 'sby']
 default_toolchain = 'questa'
 
 # TODO : not sure we actually need TOOLS
 TOOLS = {}
 default_flags = {}
 
-# TODO : not sure we actually need TOOLS
 # Programmatically import all toolchains and get the constants defined in each
 # of them
+# TODO : not sure we actually need TOOLS
+# TODO : since we probably won't need TOOLS, let's just import the specific
+# module in get_default_flags, as we do in define_steps
 for t in toolchains:
     module = importlib.import_module(f'fvm.toolchains.{t}')
     default_flags[t] = module.default_flags

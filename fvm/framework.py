@@ -684,16 +684,35 @@ class fvmframework:
         # TODO : the run code is duplicated below, we could think of some way
         # of deduplicating it
         if self.step is None:
-            for step in FVM_STEPS:
+            logger.info(self.steps.steps)
+            # TODO : this is a quick hack so we don't lose the questa
+            # functionality, since the license has expired and we can't test
+            # with the questa tools. The desired final behavior is to just
+            # iterate on self.steps.steps, as seen in the line below
+            #for step in self.steps.steps:
+            if self.toolchain = 'questa':
+                steps_to_perform = FVM_STEPS
+            elif self.toolchain = 'sby':
+                steps_to_perform = self.steps.steps
+
+            for step in steps_to_perform  # should be self.steps.steps
                 if self.is_skipped(design, step):
                     logger.info(f'{step=} of {design=} skipped by skip() function, will not run')
                     self.results[design][step]['status'] = 'skip'
+                # TODO : we probably don't really need TOOLS, since now steps
+                # are registered by the toolchain
                 elif step in toolchains.TOOLS[self.toolchain]:
+                    # TODO : allow pre_hooks to return errors and stop the run
+                    # if they fail
                     self.run_pre_hook(design, step)
                     err = self.run_step(design, step)
                     if err:
                         self.exit_if_required(ERROR_IN_LOG)
+                    # TODO : allow post_steps to return errors and stop the run
+                    # if they fail
                     self.run_post_step(design, step)
+                    # TODO : allow post_hooks to return errors and stop the run
+                    # if they fail
                     self.run_post_hook(design, step)
                 else:
                     logger.info(f'{step=} not available in {self.toolchain=}, skipping')
@@ -768,6 +787,10 @@ class fvmframework:
             reports.generate_allure(self, logger)
             sys.exit(errorcode)
 
+    # TODO : design argument may be redundant since we have
+    # self.current_toplevel
+    # TODO : we could also put step in self.current_step so we don't have to
+    # also pass that argument
     def run_cmd(self, cmd, design, step, tool, verbose = True, cwd=None):
         """Run a specific command"""
         self.set_logformat(getlogformattool(design, step, tool))
@@ -1017,8 +1040,13 @@ class fvmframework:
         err = False
         path = self.current_path
         open_gui = False
+        # TODO : quick hack to prototype sby support since we cannot change the
+        # questa-dependent code ()
+        if self.toolchain == 'sby':
+            if step in self.steps.steps:
+                self.steps.steps[step]["run"](self, path)
         # If called with a specific step, run that specific step
-        if step in toolchains.TOOLS[self.toolchain] :
+        elif step in toolchains.TOOLS[self.toolchain] :
             tool = toolchains.TOOLS[self.toolchain][step][0]
             wrapper = toolchains.TOOLS[self.toolchain][step][1]
             #logger.info(f'{step=}, running {tool=} with {wrapper=}')
