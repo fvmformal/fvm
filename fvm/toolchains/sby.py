@@ -45,7 +45,7 @@ def get_vhdl_compilation_order(lib):
 def setup_prove(framework, path):
     print("*** sby, setup prove ***")
     filename = "prove.sby"
-    library_path = f'{framework.outdir}/libs'
+    library_path = f'{framework.outdir}/libraries'
     os.makedirs(library_path, exist_ok=True)
     with open(f'{path}/{filename}', "w") as f:
         print('[tasks]', file=f)
