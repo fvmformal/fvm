@@ -53,9 +53,14 @@ fvm: install
 #   we are managing our dependencies with python poetry
 # We must specify --no-root to poetry install: if we don't, it will install the
 # fvm too, and we want to do that separately
+# 
+# click is needed when using sby, so it is installed in the venv here for
+# convenience, but is not a dependency of FVM, so it is installed with just a
+# pip command
 $(REQS_DIR)/reqs_installed: $(VENV_DIR)/venv_created
 	$(VENV_ACTIVATE) poetry install --no-root
 	$(VENV_ACTIVATE) python3 install_allure.py $(VENV_DIR)
+	$(VENV_ACTIVATE) pip3 install click
 	echo "export PATH=\$$PATH:$(realpath $(VENV_DIR))/allure/bin" >> $(VENV_DIR)/bin/activate
 	touch $@
 
