@@ -33,10 +33,6 @@ def get_toolchain():
     return toolchain
 
 def get_default_flags(toolchain):
-    print(f'get_default_flags: {toolchain=}')
-    print(f'get_default_flags: {default_flags=}')
-    print(f'get_default_flags: {default_flags[toolchain]=}')
-    print(f'get_default_flags: {default_flags.get(toolchain)=}')
     return default_flags.get(toolchain)
 
 def define_steps(steps, toolchain):
