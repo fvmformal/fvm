@@ -101,5 +101,6 @@ def run_prove(framework, path):
     print("*** sby, running prove ***")
     path = f'{framework.outdir}/{framework.current_toplevel}'
     cmd = ['sby', '--yosys', 'yosys -m ghdl', '-f', f'{path}/prove.sby', '--prefix', f'{path}']
-    framework.run_cmd(cmd, framework.current_toplevel, 'prove', 'sby')
+    run_stdout, run_stderr = framework.run_cmd(cmd, framework.current_toplevel, 'prove', 'sby')
+    return run_stdout, run_stderr
 
