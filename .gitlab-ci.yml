@@ -57,7 +57,7 @@ test_all:
 
 # TODO : Add artifacts, when we have a clearer idea of what those would be
 # TODO : Add results.xml, when our framework generates it
-run_concepts_questa: &run_concepts
+.run_concepts_questa: &run_concepts_questa
   stage: concepts
   image: registry.woden.us.es/containers/questa:2025.1_2
   parallel:
@@ -97,6 +97,9 @@ run_concepts_questa: &run_concepts
 
 # TODO : add artifacts, and change the other jobs to have 'questa' in their
 # name and artifacts
+# TODO : maybe this job could inherit from run_concepts_questa, but for that we
+# need to have a TOOLCHAIN variable and use it to rename the tool outputs. Can
+# be done
 run_concepts_sby: &run_concepts_sby
   stage: concepts
   image: registry.gitlab.com/hgpub/fosshdl-dist
@@ -111,8 +114,8 @@ run_concepts_sby: &run_concepts_sby
   script:
     - make PYTHON="coverage run --data-file=.coverage.sby.$DESIGN" $DESIGN
 
-run_examples_questa:
-  <<: *run_concepts
+.run_examples_questa:
+  <<: *run_concepts_questa
   stage: examples
   parallel:
     matrix:
