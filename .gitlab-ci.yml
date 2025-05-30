@@ -71,13 +71,13 @@ test_all:
     - yum install -y git python39 java-1.8.0-openjdk
     # TODO : the following 6 lines don't work, we should create the file from
     # inside the python code (see issue #165)
-    - echo '{"name":"GitLab CI with runner ${CI_RUNNER_ID}","type":"gitlab","reportName":"Allure Report (without history for now)",' > executor.json
-    - echo "\"reportUrl\":\"${CI_PAGES_URL}/${CI_COMMIT_REF_NAME}/${CI_JOB_ID}/\"," >> executor.json
-    - echo "\"buildUrl\":\"${CI_PIPELINE_URL}\"," >> executor.json
-    - echo "\"buildName\":\"GitLab Job Run ${CI_JOB_ID}\",\"buildOrder\":\"${CI_JOB_ID}\"}" >> executor.json
-    - mkdir -p fvm_out/fvm_results
-    - mv executor.json fvm_out/fvm_results
-    - mkdir -p fvm_out/dashboard/allure-results
+    #- echo '{"name":"GitLab CI with runner ${CI_RUNNER_ID}","type":"gitlab","reportName":"Allure Report (without history for now)",' > executor.json
+    #- echo "\"reportUrl\":\"${CI_PAGES_URL}/${CI_COMMIT_REF_NAME}/${CI_JOB_ID}/\"," >> executor.json
+    #- echo "\"buildUrl\":\"${CI_PIPELINE_URL}\"," >> executor.json
+    #- echo "\"buildName\":\"GitLab Job Run ${CI_JOB_ID}\",\"buildOrder\":\"${CI_JOB_ID}\"}" >> executor.json
+    #- mkdir -p fvm_out/fvm_results
+    #- mv executor.json fvm_out/fvm_results
+    #- mkdir -p fvm_out/dashboard/allure-results
   script:
     - make PYTHON="coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN" $DESIGN
   after_script:
@@ -127,25 +127,28 @@ run_examples_sby:
 # it manually, for example it may get the available steps from the framework
 # and then run each of them alternated with a 'make clean' inside a for loop
 # TODO : this could be implemented more cleanly using parallel:matrix
-run_steps_independently:
+.run_steps_independently_questa:
   stage: examples
   image: registry.woden.us.es/containers/questa:2025.1_2
-  script:
+  variables:
+    TOOLCHAIN: "questa"
+  before_script:
     - unset LM_LICENSE_FILE
     - export SALT_LICENSE_SERVER=2101@baldr.us.es
     - yum install -y python39 java-1.8.0-openjdk
-    - make PYTHON="coverage run --data-file=.coverage.$DESIGN" $DESIGN
-    - source .venv/bin/activate && coverage run --data-file=.coverage.$DESIGN.lint -m examples.countervunit.formal -s lint
+  script:
+    - make PYTHON="coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN" $DESIGN
+    - source .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.lint -m examples.countervunit.formal -s lint
     - make clean
-    - source .venv/bin/activate && coverage run --data-file=.coverage.$DESIGN.rulecheck --m examples.countervunit.formal -s friendliness
+    - source .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.rulecheck --m examples.countervunit.formal -s friendliness
     - make clean
-    - source .venv/bin/activate && coverage run --data-file=.coverage.$DESIGN.reachability --m examples.countervunit.formal -s reachability
+    - source .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.reachability --m examples.countervunit.formal -s reachability
     - make clean
-    - source .venv/bin/activate && coverage run --data-file=.coverage.$DESIGN.resets --m examples.countervunit.formal -s resets
+    - source .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.resets --m examples.countervunit.formal -s resets
     - make clean
 #    - coverage run -m examples.countervunit.formal -s clocks
 #    - make clean
-    - source .venv/bin/activate && coverage run --data-file=.coverage.$DESIGN.prove --m examples.countervunit.formal -s prove
+    - source .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.prove --m examples.countervunit.formal -s prove
     - make clean
   artifacts:
     when: always
