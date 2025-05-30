@@ -4,7 +4,7 @@
 -- because parameterizing sequences is more powerful, less error prone, and
 -- less code to write
 
-vunit uart_tx(uart_tx(Behavioral)) {
+vunit uart_tx_properties(uart_tx(Behavioral)) {
 
   -- Default clock for PSL assertions
   default clock is rising_edge(clk);

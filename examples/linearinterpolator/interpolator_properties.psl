@@ -1,6 +1,6 @@
 -- If we want to be able to define processes in this file, we need to associate
 -- the vunit to a specific entity/architecture pair
-vunit interpolator (interpolator(interpolator_arch)) {
+vunit interpolator_properties (interpolator(interpolator_arch)) {
 
     -- Default clock for PSL assertions
     default clock is rising_edge(clk);

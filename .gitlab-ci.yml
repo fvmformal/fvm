@@ -57,7 +57,7 @@ test_all:
 
 # TODO : Add artifacts, when we have a clearer idea of what those would be
 # TODO : Add results.xml, when our framework generates it
-run_concepts: &run_concepts
+run_concepts_questa: &run_concepts
   stage: concepts
   image: registry.woden.us.es/containers/questa:2025.1_2
   parallel:
@@ -76,32 +76,53 @@ run_concepts: &run_concepts
     - mkdir -p fvm_out/fvm_results
     - mv executor.json fvm_out/fvm_results
     - mkdir -p fvm_out/dashboard/allure-results
-    - make PYTHON="coverage run --data-file=.coverage.$DESIGN" $DESIGN
+    - make PYTHON="coverage run --data-file=.coverage.questa.$DESIGN" $DESIGN
   after_script:
-    - mv fvm_out/fvm_report fvm_out/fvm_report.$DESIGN
-    - mv fvm_out/dashboard/allure-report fvm_out/dashboard/allure-report.$DESIGN
+    - mv fvm_out/fvm_report fvm_out/fvm_report.questa.$DESIGN
+    - mv fvm_out/dashboard/allure-report fvm_out/dashboard/allure-report.questa.$DESIGN
   artifacts:
     when: always
     paths:
-      - .coverage.$DESIGN
+      - .coverage.questa.$DESIGN
       - fvm_out/fvm_results/*.xml
       - fvm_out/fvm_results/executor.json
-      - fvm_out/fvm_report.$DESIGN
+      - fvm_out/fvm_report.questa.$DESIGN
       - fvm_out/dashboard/allure-results/*.html
       - fvm_out/dashboard/allure-results/*.json
       - fvm_out/dashboard/allure-results/*.log
-      - fvm_out/dashboard/allure-report.$DESIGN
+      - fvm_out/dashboard/allure-report.questa.$DESIGN
     reports:
       junit:
         - fvm_out/fvm_results/*.xml
 
-run_examples:
+# TODO : add artifacts, and change the other jobs to have 'questa' in their
+# name and artifacts
+run_concepts_sby: &run_concepts_sby
+  stage: concepts
+  image: registry.gitlab.com/hgpub/fosshdl-dist
+  parallel:
+    matrix:
+      #- DESIGN: [transactions_deprecated, parameterized_sequences, inheriting_vunits, inheriting_multiple_vunits, parameterized_properties, multiple_designs, symbolic_constants, user_defined_hdltypes, user_defined_hdltypes_in_package, user_defined_hdltypes_in_external_package, assert_to_assume, defining_clocks_and_resets, hooks, design_configurations, assertion_decomposition, reachability_example]
+      - DESIGN: [parameterized_sequences]
+  before_script:
+    - source /home/salas/fosshdl/env.rc
+    - export FVM_TOOLCHAIN=sby
+  script:
+    - make PYTHON="coverage run --data-file=.coverage.sby.$DESIGN" $DESIGN
+
+run_examples_questa:
   <<: *run_concepts
   stage: examples
   parallel:
     matrix:
       - DESIGN: [counter, countervunit, linearinterpolator, dualcounter, uart_tx, arbiter_prior, arbiter_rr, fifo_sync, fifo_async, axi_lite_slave, sdram, ddr2_controller, ipv6]
-  # TODO : remove this when issues with the designs are fixed
+
+run_examples_sby:
+  <<: *run_concepts_sby
+  stage: examples
+  parallel:
+    matrix:
+      - DESIGN: [counter, countervunit]
 
 # Test for #126
 # TODO : This test should be done a bit differently, so we don't have to update
