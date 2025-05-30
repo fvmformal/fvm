@@ -690,12 +690,12 @@ class fvmframework:
             # with the questa tools. The desired final behavior is to just
             # iterate on self.steps.steps, as seen in the line below
             #for step in self.steps.steps:
-            if self.toolchain = 'questa':
+            if self.toolchain == 'questa':
                 steps_to_perform = FVM_STEPS
-            elif self.toolchain = 'sby':
+            elif self.toolchain == 'sby':
                 steps_to_perform = self.steps.steps
 
-            for step in steps_to_perform  # should be self.steps.steps
+            for step in steps_to_perform:  # should be self.steps.steps
                 if self.is_skipped(design, step):
                     logger.info(f'{step=} of {design=} skipped by skip() function, will not run')
                     self.results[design][step]['status'] = 'skip'
