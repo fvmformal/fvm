@@ -62,7 +62,7 @@ def gencompilescript(framework, filename, path):
     # TODO : we must check for the case of only-verilog designs (no VHDL files)
     # TODO : we must check for the case of only-VHDL designs (no verilog files)
     # TODO : libraries folder should be inside fvm_out as per #268
-    library_path = f"libraries"
+    library_path = f"{framework.outdir}/libraries"
     os.makedirs(library_path, exist_ok=True)
 
     # TODO : probably the following call to create_f_file is not needed
