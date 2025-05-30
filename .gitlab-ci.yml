@@ -120,7 +120,7 @@ run_examples_sby:
   stage: examples
   parallel:
     matrix:
-      - DESIGN: [counter, countervunit]
+      - DESIGN: [counter, countervunit, linearinterpolator]
 
 # Test for #126
 # TODO : This test should be done a bit differently, so we don't have to update

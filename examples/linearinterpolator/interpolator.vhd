@@ -44,6 +44,8 @@ begin
     -- afterwards go again to i = 12
     comb: process(inferior, superior, valid, i)
     begin
+        estim_aux.re <= inferior.re*(12-signed(resize(i, i'length+1))) + superior.re*signed(resize(i, i'length+1));
+        estim_aux.im <= inferior.im*(12-signed(resize(i, i'length+1))) + superior.im*signed(resize(i, i'length+1));
         if i > 11 then  -- Anything that is not between 0 and 11: idle
             estim_valid <= '0';
             if valid = '1' then
@@ -54,8 +56,6 @@ begin
         else                         -- Between 0 and 11: interpolate
             n_i <= i + 1;
             estim_valid <= '1';
-            estim_aux.re <= inferior.re*(12-signed(resize(i, i'length+1))) + superior.re*signed(resize(i, i'length+1));
-            estim_aux.im <= inferior.im*(12-signed(resize(i, i'length+1))) + superior.im*signed(resize(i, i'length+1));
         end if;
     end process;
 
