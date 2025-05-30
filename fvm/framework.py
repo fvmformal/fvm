@@ -678,6 +678,8 @@ class fvmframework:
         else:
             design = design
 
+        self.current_toplevel = design
+
         # Run all available/selected steps/tools
         # Call the run_step() function for each available step
         # If a 'step' argument is specified, just run that specific step

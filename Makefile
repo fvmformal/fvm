@@ -116,7 +116,8 @@ conceptlist += assert_to_assume
 conceptlist += defining_clocks_and_resets
 conceptlist += hooks
 conceptlist += design_configurations
-#conceptlist += design_configurations_2
+conceptlist += assertion_decomposition
+conceptlist += reachability_example
 
 # examples target runs all the examples
 # concept target runs all the concepts
