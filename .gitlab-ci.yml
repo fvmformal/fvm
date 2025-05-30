@@ -60,10 +60,12 @@ test_all:
 .run_concepts_questa: &run_concepts_questa
   stage: concepts
   image: registry.woden.us.es/containers/questa:2025.1_2
+  variables:
+    TOOLCHAIN: "questa"
   parallel:
     matrix:
       - DESIGN: [transactions_deprecated, parameterized_sequences, inheriting_vunits, inheriting_multiple_vunits, parameterized_properties, multiple_designs, symbolic_constants, user_defined_hdltypes, user_defined_hdltypes_in_package, user_defined_hdltypes_in_external_package, assert_to_assume, defining_clocks_and_resets, hooks, design_configurations, assertion_decomposition, reachability_example]
-  script:
+  before_script:
     - unset LM_LICENSE_FILE
     - export SALT_LICENSE_SERVER=2101@baldr.us.es
     - yum install -y git python39 java-1.8.0-openjdk
@@ -76,43 +78,35 @@ test_all:
     - mkdir -p fvm_out/fvm_results
     - mv executor.json fvm_out/fvm_results
     - mkdir -p fvm_out/dashboard/allure-results
-    - make PYTHON="coverage run --data-file=.coverage.questa.$DESIGN" $DESIGN
+  script:
+    - make PYTHON="coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN" $DESIGN
   after_script:
-    - mv fvm_out/fvm_report fvm_out/fvm_report.questa.$DESIGN
-    - mv fvm_out/dashboard/allure-report fvm_out/dashboard/allure-report.questa.$DESIGN
+    - mv fvm_out/fvm_report fvm_out/fvm_report.$TOOLCHAIN.$DESIGN
+    - mv fvm_out/dashboard/allure-report fvm_out/dashboard/allure-report.$TOOLCHAIN.$DESIGN
   artifacts:
     when: always
     paths:
-      - .coverage.questa.$DESIGN
+      - .coverage.$TOOLCHAIN.$DESIGN
       - fvm_out/fvm_results/*.xml
       - fvm_out/fvm_results/executor.json
-      - fvm_out/fvm_report.questa.$DESIGN
+      - fvm_out/fvm_report.$TOOLCHAIN.$DESIGN
       - fvm_out/dashboard/allure-results/*.html
       - fvm_out/dashboard/allure-results/*.json
       - fvm_out/dashboard/allure-results/*.log
-      - fvm_out/dashboard/allure-report.questa.$DESIGN
+      - fvm_out/dashboard/allure-report.$TOOLCHAIN.$DESIGN
     reports:
       junit:
         - fvm_out/fvm_results/*.xml
 
-# TODO : add artifacts, and change the other jobs to have 'questa' in their
-# name and artifacts
-# TODO : maybe this job could inherit from run_concepts_questa, but for that we
-# need to have a TOOLCHAIN variable and use it to rename the tool outputs. Can
-# be done
 run_concepts_sby: &run_concepts_sby
-  stage: concepts
+  <<: *run_concepts_questa
   image: registry.gitlab.com/hgpub/fosshdl-dist
-  parallel:
-    matrix:
-      #- DESIGN: [transactions_deprecated, parameterized_sequences, inheriting_vunits, inheriting_multiple_vunits, parameterized_properties, multiple_designs, symbolic_constants, user_defined_hdltypes, user_defined_hdltypes_in_package, user_defined_hdltypes_in_external_package, assert_to_assume, defining_clocks_and_resets, hooks, design_configurations, assertion_decomposition, reachability_example]
-      - DESIGN: [parameterized_sequences]
+  variables:
+    TOOLCHAIN: "sby"
   before_script:
     - DEBIAN_FRONTEND=noninteractive apt update && apt install -y python3 python3-pip python3-venv
     - source /home/salas/fosshdl/env.rc
     - export FVM_TOOLCHAIN=sby
-  script:
-    - make PYTHON="coverage run --data-file=.coverage.sby.$DESIGN" $DESIGN
 
 .run_examples_questa:
   <<: *run_concepts_questa

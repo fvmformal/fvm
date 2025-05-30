@@ -2,7 +2,7 @@ from fvm import fvmframework
 
 fvm = fvmframework()
 fvm.add_vhdl_sources("examples/countervunit/*.vhd")
-fvm.add_psl_source("examples/countervunit/counter.psl")
+fvm.add_psl_source("examples/countervunit/counter_properties.psl")
 fvm.set_toplevel("counter")
 fvm.add_config("counter", "max_count_128", dict(MAX_COUNT=128))
 fvm.add_config("counter", "max_count_200", dict(MAX_COUNT=200))
