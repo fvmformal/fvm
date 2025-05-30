@@ -120,7 +120,8 @@ run_examples_sby:
   stage: examples
   parallel:
     matrix:
-      - DESIGN: [counter, countervunit, linearinterpolator]
+      #- DESIGN: [counter, countervunit, linearinterpolator, dualcounter, uart_tx, arbiter_prior, arbiter_rr, fifo_sync, fifo_async, axi_lite_slave, sdram, ddr2_controller, ipv6]
+      - DESIGN: [counter, countervunit, linearinterpolator, dualcounter, uart_tx, arbiter_prior, arbiter_rr, fifo_sync, axi_lite_slave]
 
 # Test for #126
 # TODO : This test should be done a bit differently, so we don't have to update

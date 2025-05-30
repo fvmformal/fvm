@@ -99,7 +99,15 @@ examplelist += countervunit
 examplelist += linearinterpolator
 examplelist += dualcounter
 examplelist += uart_tx
-#examplelist += uart_rx
+examplelist += arbiter_prior
+examplelist += arbiter_prior
+examplelist += arbiter_rr
+examplelist += fifo_sync
+examplelist += fifo_async
+examplelist += axi_lite_slave
+examplelist += sdram
+examplelist += ddr2_controller
+examplelist += ipv6
 
 # List with all the concepts
 conceptlist += transactions_deprecated

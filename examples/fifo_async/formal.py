@@ -13,6 +13,9 @@ fvm.add_psl_source("examples/fifo_async/olo_base_fifo_async.psl")
 fvm.set_toplevel("olo_base_fifo_async")
 fvm.add_config("olo_base_fifo_async", "config_width_3_depth_8", {"Width_g": 3, "Depth_g": 8})
 
+if fvm.toolchain == "sby":
+    fvm.set_tool_flags("ghdl", fvm.get_tool_flags("ghdl") + " -frelaxed")
+
 fvm.add_clock("In_Clk", period = 10)
 fvm.add_clock_domain("In_Clk", ["In_Ready", "In_Rst", "In_Data", "In_Valid"])
 fvm.add_clock("Out_Clk", period = 13.5)

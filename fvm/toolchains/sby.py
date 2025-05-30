@@ -19,12 +19,15 @@ from collections import OrderedDict
 # we should use a library to manage path operations, such as os.path or pathlib
 # (pathlib seems to be more recommended)
 
-# TODO : Not sure we really need this dict
+# TODO : Not sure we really need this dict, maybe we can just remove it after
+# the refactor
 tools = {
         "prove" : ["sby", "sby"]
         }
 
-default_flags = {}
+default_flags = {
+        "ghdl" : "--std=08",
+        }
 
 def define_steps(steps):
     steps.add_step('prove', setup_prove, run_prove)
@@ -82,7 +85,7 @@ def setup_prove(framework, path):
         workpath = library_path + "/work"
         #print(f'ghdl -i --std=08 --work=work --workdir={os.path.abspath(workpath)} --workdir={library_path}/work {prev_libs} {" ".join(abspath_psl_sources)}', file=f)
         # TODO : Looks like sby doesn't really like relative paths because it changes into its working directory, and then struggles to find the source files
-        print(f'ghdl --std=08 --work=work --workdir={os.path.abspath(workpath)} {prev_libs} {" ".join(abspath_vhdl_sources)} -e {framework.current_toplevel}', file=f)
+        print(f'ghdl {framework.get_tool_flags("ghdl")} --work=work --workdir={os.path.abspath(workpath)} {prev_libs} {" ".join(abspath_vhdl_sources)} -e {framework.current_toplevel}', file=f)
         print(f'prep -top {framework.current_toplevel}', file=f)
         print('', file=f)
         print('[files]', file=f)
@@ -99,7 +102,7 @@ def setup_prove(framework, path):
 def run_prove(framework, path):
     print("*** sby, running prove ***")
     path = f'{framework.outdir}/{framework.current_toplevel}'
-    cmd = ['sby', '--yosys', 'yosys -m ghdl', '-f', f'{path}/prove.sby', '--prefix', f'{path}']
+    cmd = ['sby', '--yosys', 'yosys -m ghdl', '-f', f'{path}/prove.sby']
     run_stdout, run_stderr = framework.run_cmd(cmd, framework.current_toplevel, 'prove', 'sby')
     return run_stdout, run_stderr
 

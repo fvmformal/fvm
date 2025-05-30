@@ -14,6 +14,9 @@ fvm.add_psl_sources("examples/fifo_sync/*.psl")
 fvm.set_toplevel("olo_base_fifo_sync")
 fvm.add_config("olo_base_fifo_sync", "config_width_3_depth_8", {"Width_g": 3, "Depth_g": 8})
 
+if fvm.toolchain == "sby":
+    fvm.set_tool_flags("ghdl", fvm.get_tool_flags("ghdl") + " -frelaxed")
+
 #fvm.skip('lint')
 #fvm.skip('friendliness')
 fvm.skip('reachability')
