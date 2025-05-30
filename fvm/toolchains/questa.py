@@ -38,6 +38,19 @@ default_flags = {
         "formal verify" : "-justify_initial_x -auto_constraint_off",
         }
 
+def define_steps(steps):
+    steps.add_step('lint', setup_lint, run_lint)
+    steps.add_step('friendliness', setup_friendliness, run_friendliness)
+    steps.add_step('rulecheck', setup_rulecheck, run_rulecheck)
+    steps.add_step('xverify', setup_xverify, run_xverify)
+    steps.add_step('reachability', setup_reachability, run_reachability)
+    steps.add_step('fault', setup_fault, run_fault)
+    steps.add_step('resets', setup_resets, run_resets)
+    steps.add_step('clocks', setup_clocks, run_clocks)
+    steps.add_step('prove', setup_prove, run_prove)
+    steps.add_post_step('prove', 'simcover', setup_prove_simcover, run_prove_simcover)
+    steps.add_post_step('prove', 'formalcover', setup_prove_formalcover, run_prove_formalcover)
+
 def create_f_file(filename, sources):
     with open(filename, "w") as f:
         for src in sources:
@@ -440,17 +453,4 @@ def setup_prove_formalcover(framework, path):
 def run_prove_formalcover():
     print("**** run prove_formalcover ****")
     pass
-
-def define_steps(steps):
-    steps.add_step('lint', setup_lint, run_lint)
-    steps.add_step('friendliness', setup_friendliness, run_friendliness)
-    steps.add_step('rulecheck', setup_rulecheck, run_rulecheck)
-    steps.add_step('xverify', setup_xverify, run_xverify)
-    steps.add_step('reachability', setup_reachability, run_reachability)
-    steps.add_step('fault', setup_fault, run_fault)
-    steps.add_step('resets', setup_resets, run_resets)
-    steps.add_step('clocks', setup_clocks, run_clocks)
-    steps.add_step('prove', setup_prove, run_prove)
-    steps.add_post_step('prove', 'simcover', setup_prove_simcover, run_prove_simcover)
-    steps.add_post_step('prove', 'formalcover', setup_prove_formalcover, run_prove_formalcover)
 
