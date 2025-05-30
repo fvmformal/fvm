@@ -105,6 +105,7 @@ run_concepts_sby: &run_concepts_sby
       #- DESIGN: [transactions_deprecated, parameterized_sequences, inheriting_vunits, inheriting_multiple_vunits, parameterized_properties, multiple_designs, symbolic_constants, user_defined_hdltypes, user_defined_hdltypes_in_package, user_defined_hdltypes_in_external_package, assert_to_assume, defining_clocks_and_resets, hooks, design_configurations, assertion_decomposition, reachability_example]
       - DESIGN: [parameterized_sequences]
   before_script:
+    - DEBIAN_FRONTEND=noninteractive apt update && apt install -y python3 python3-pip python3-venv
     - source /home/salas/fosshdl/env.rc
     - export FVM_TOOLCHAIN=sby
   script:
