@@ -85,7 +85,7 @@ def setup_prove(framework, path):
         workpath = library_path + "/work"
         #print(f'ghdl -i --std=08 --work=work --workdir={os.path.abspath(workpath)} --workdir={library_path}/work {prev_libs} {" ".join(abspath_psl_sources)}', file=f)
         # TODO : Looks like sby doesn't really like relative paths because it changes into its working directory, and then struggles to find the source files
-        print(f'ghdl {framework.get_tool_flags("ghdl")} --work=work --workdir={os.path.abspath(workpath)} {prev_libs} {" ".join(abspath_vhdl_sources)} -e {framework.current_toplevel}', file=f)
+        print(f'ghdl {framework.get_tool_flags("ghdl")} --work=work --workdir={os.path.abspath(workpath)} {prev_libs} {" ".join(abspath_vhdl_sources)} {" ".join(abspath_psl_sources)} -e {framework.current_toplevel}', file=f)
         print(f'prep -top {framework.current_toplevel}', file=f)
         print('', file=f)
         print('[files]', file=f)
