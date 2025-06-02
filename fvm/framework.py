@@ -11,6 +11,7 @@ import fnmatch
 from datetime import datetime
 from io import StringIO
 from collections import OrderedDict
+from shlex import join
 
 # Third party imports
 import argparse
@@ -800,7 +801,7 @@ class fvmframework:
             cwd_for_debug = cwd
         else:
             cwd_for_debug = self.outdir
-        logger.info(f'command: {" ".join(cmd)}, working directory: {cwd_for_debug}')
+        logger.info(f'command: {join(cmd)}, working directory: {cwd_for_debug}')
 
         timestamp = datetime.now().isoformat()
         self.results[design][step]['timestamp'] = timestamp
