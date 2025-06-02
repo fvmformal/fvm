@@ -1,4 +1,4 @@
-vunit dualcounter (dualcounter(Behavioral)) {
+vunit dualcounter_properties (dualcounter(Behavioral)) {
 
   -- Default clock
   default clock is rising_edge (clk);

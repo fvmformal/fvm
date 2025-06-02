@@ -4,7 +4,7 @@ use ieee.numeric_std.all;
 use ieee.math_real.all;
 
 entity dualcounter is
-  generic (MAX_COUNT : integer := 10_000);
+  generic (MAX_COUNT : integer := 200);
   port (
     rst      : in  std_logic;
     clk      : in  std_logic;

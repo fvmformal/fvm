@@ -1,4 +1,4 @@
-vunit counter (counter) {
+vunit counter_assert_to_assume (counter) {
     inherit counter_properties;
 
     -- Default clock for PSL assertions
