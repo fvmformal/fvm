@@ -1,4 +1,4 @@
-vunit minicalc (minicalc(minicalc_arch)) {
+vunit minicalc_properties (minicalc(minicalc_arch)) {
 
   default clock is rising_edge(clk);
 
