@@ -27,7 +27,10 @@ class steps:
             logger.error(f'{step=} does not exist in {self.steps=}')
         if post_step in self.post_steps:
             logger.error(f'{post_step=} already exists in {self.steps[step]=}')
-        self.post_steps[step] = {}
+        # Initialize the post_steps struct if it doesn't exist
+        if self.post_steps[step] is None:
+            self.post_steps[step] = {}
+        # Add the specific post_step
         self.post_steps[step][post_step] = {}
         self.post_steps[step][post_step]["setup"] = setup
         self.post_steps[step][post_step]["run"] = run
