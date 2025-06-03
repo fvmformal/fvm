@@ -1,4 +1,4 @@
-vunit sdram (sdram(arch)) {
+vunit sdram_properties (sdram(arch)) {
 
     -- Our example uses shorter wait times compared to a commercial 
     -- SDRAM to make verification easier. 
@@ -17,6 +17,10 @@ vunit sdram (sdram(arch)) {
 
     -- Force a reset in the first clock cycle
     assume_initial_reset: assume reset = '1';
+
+    -- Assumption needed for ghdl + sby, otherwise state takes value "111" in induction
+    assume always (state = INIT or state = MODE or state = IDLE or state = ACTIVE 
+                or state = READ or state = WRITE or state = REFRESH);
 
     -- This way is easier to visualize data (NOT A NECESSARY ASSUME)
     --assume always (valid = '1' -> (countones(q) /= 0) ) abort reset;
@@ -62,14 +66,14 @@ vunit sdram (sdram(arch)) {
     assert_sdram_cs_n_after_2_reset: assert always (sdram_cs_n -> prev(reset,2));
     -- This value is always 1 except from reset or a cycle after the reset
     assert_sdram_cke_after_reset:
-        assert always ( (sdram_cke = '0') -> (reset or prev(reset)) ); 
+        assert always ( {true; sdram_cke = '0'} |-> {reset or prev(reset)} ); 
 
     -- If output is valid, assert the output data is correct
     assert_q_msb_correct:
-        assert always ( valid -> (q (31 downto 16) = prev(sdram_dq,2)) ) abort reset;
+        assert always ( {true; valid} |-> {q (31 downto 16) = prev(sdram_dq,2)} ) abort reset;
     -- If output is valid, assert the output data is correct
     assert_q_lsb_correct:
-        assert always ( valid -> (q (15 downto 0) = prev(sdram_dq)) ) abort reset;
+        assert always ( {true; valid} |-> {q (15 downto 0) = prev(sdram_dq)} ) abort reset;
 
     -- Assert the sdram controller receives the correct address
     assert_sdram_ba_correct:
