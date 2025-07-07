@@ -1,4 +1,4 @@
-vunit uart_tx (uart_tx(Behavioral)) {
+vunit uart_tx_properties (uart_tx(Behavioral)) {
 
   -- Default clock
   default clock is rising_edge (clk);
@@ -6,6 +6,10 @@ vunit uart_tx (uart_tx(Behavioral)) {
   -- Assume a reset on the first clock cycle
   assume_initial_reset: assume rst = '1';
 
+  assume always (estado = reposo or estado = sampledata or estado = b_start
+              or estado = B_0 or estado = B_1 or estado = B_2 or estado = B_3
+              or estado = B_4 or estado = B_5 or estado = B_6 or estado = B_7
+              or estado = B_paridad or estado = B_stop);
   -- Assume we won't be having any resets while we are transmitting
   -- We shouldn't need this is we use 'abort rst' in the properties, and
   -- actually if we uncomment the following assertion we are overconstraining
@@ -46,12 +50,12 @@ vunit uart_tx (uart_tx(Behavioral)) {
   constant STOPBIT : std_logic := '1';
 
   sequence transmission is {
-    TX=STARTBIT[*BIT_DURATION];
-    TX=databits(0)[*BIT_DURATION]; TX=databits(1)[*BIT_DURATION];
-    TX=databits(2)[*BIT_DURATION]; TX=databits(3)[*BIT_DURATION];
-    TX=databits(4)[*BIT_DURATION]; TX=databits(5)[*BIT_DURATION];
-    TX=databits(6)[*BIT_DURATION]; TX=databits(7)[*BIT_DURATION];
-    TX=paritybit[*BIT_DURATION]; TX=STOPBIT[*BIT_DURATION]
+    TX=STARTBIT[*5];
+    TX=databits(0)[*5]; TX=databits(1)[*5];
+    TX=databits(2)[*5]; TX=databits(3)[*5];
+    TX=databits(4)[*5]; TX=databits(5)[*5];
+    TX=databits(6)[*5]; TX=databits(7)[*5];
+    TX=paritybit[*5]; TX=STOPBIT[*5]
   };
 
   -- Now we need to predict the values of databits and paritybit
@@ -130,5 +134,8 @@ vunit uart_tx (uart_tx(Behavioral)) {
   -- your cover trace
   cover_more_than_two_transmissions:
     cover {transmission_and_rest[*3]};
+
+  cover_end_of_transmission: 
+    cover {estado = b_stop; estado = reposo};
 
 }
