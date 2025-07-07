@@ -16,6 +16,7 @@ vunit counter_properties (counter) {
     -- What we write here has to be a sequence inside curly braces {}, even if
     -- we only have one element (for example, { Q = MAX_COUNT }
     cover_overflow_to_zero: cover {Q = MAX_COUNT ; Q = 0};
+    cover_overflow_to_zero_and_reset: cover {Q = MAX_COUNT ; Q = 0; [*]; rst = '1'; [*]; Q = MAX_COUNT ; Q = 0};
 
     -- Force a reset in the first clock cycle
     -- Since we don't have an 'always', this assumption only applies to the
