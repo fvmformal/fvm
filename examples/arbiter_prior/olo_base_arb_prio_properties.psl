@@ -1,0 +1,41 @@
+vunit olo_base_arb_prio (olo_base_arb_prio) {
+
+    --inherit prior_arb;
+    use work.arbiter_prior_common.all;
+
+    -- Default clock for PSL assertions
+    default clock is rising_edge(Clk);
+
+    -- Force a reset in the first clock cycle
+    assume_initial_reset: assume Rst = '1';
+  
+    -- Assert Out_Grant has maximum one bit with value 1
+    assert always {true; onehot0(Out_Grant)};
+
+    -- Assert when the input is 0, the output is 0
+    assert always {countones(In_Req) = 0} |=> {countones(Out_Grant) = 0} abort Rst;
+
+    -- Assert when the input is not 0, the output is not 0
+    assert always ({countones(In_Req) >= 1} |=> {onehot(Out_Grant)}) abort Rst;
+
+    assert always ({true} |=> {Out_Grant = priority_arbiter(prev(In_Req))}) abort Rst;
+
+    cover {rst = '0'; countones(Out_Grant) = 0; Out_Grant(0) = '1'; Out_Grant(1) = '1';
+        Out_Grant(2) = '1'; Out_Grant(3) = '1'; Out_Grant(4) = '1'; Out_Grant(5) = '1';
+        Out_Grant(6) = '1'; Out_Grant(7) = '1'; Out_Grant(8) = '1'; Out_Grant(9) = '1';
+        Out_Grant(10) = '1'; Out_Grant(11) = '1'; Out_Grant(12) = '1'; Out_Grant(13) = '1';
+        Out_Grant(14) = '1'; Out_Grant(15) = '1'; Out_Grant(16) = '1'; Out_Grant(17) = '1';
+        Out_Grant(18) = '1'; Out_Grant(19) = '1'; Out_Grant(20) = '1'; Out_Grant(21) = '1';
+        Out_Grant(22) = '1'; Out_Grant(23) = '1'; Out_Grant(24) = '1'; Out_Grant(25) = '1';
+        Out_Grant(26) = '1'; Out_Grant(27) = '1'; Out_Grant(28) = '1'; Out_Grant(29) = '1';
+        Out_Grant(30) = '1'; Out_Grant(31) = '1'; Out_Grant(32) = '1'; Out_Grant(33) = '1';
+        Out_Grant(34) = '1'; Out_Grant(35) = '1'; Out_Grant(36) = '1'; Out_Grant(37) = '1';
+        Out_Grant(38) = '1'; Out_Grant(39) = '1'; Out_Grant(40) = '1'; Out_Grant(41) = '1';
+        Out_Grant(42) = '1'; Out_Grant(43) = '1'; Out_Grant(44) = '1'; Out_Grant(45) = '1';
+        Out_Grant(46) = '1'; Out_Grant(47) = '1'; Out_Grant(48) = '1'; Out_Grant(49) = '1';
+        Out_Grant(50) = '1'; Out_Grant(51) = '1'; Out_Grant(52) = '1'; Out_Grant(53) = '1';
+        Out_Grant(54) = '1'; Out_Grant(55) = '1'; Out_Grant(56) = '1'; Out_Grant(57) = '1';
+        Out_Grant(58) = '1'; Out_Grant(59) = '1'; Out_Grant(60) = '1'; Out_Grant(61) = '1';
+        Out_Grant(62) = '1'; Out_Grant(63); rst = '1'; true};
+
+}

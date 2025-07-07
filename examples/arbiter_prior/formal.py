@@ -11,10 +11,12 @@ fvm.add_vhdl_source("open-logic/src/base/vhdl/olo_base_pkg_array.vhd")
 fvm.add_vhdl_source("open-logic/src/base/vhdl/olo_base_pkg_logic.vhd")
 fvm.add_vhdl_source("open-logic/src/base/vhdl/olo_base_pkg_math.vhd")
 
+fvm.add_vhdl_sources("examples/arbiter_prior/*.vhd")
+
 fvm.add_psl_sources("examples/arbiter_prior/*.psl")
 
 fvm.set_toplevel("olo_base_arb_prio")
-fvm.add_config("olo_base_arb_prio", "config_width_3_latency_0", {"Width_g": 3, "Latency_g": 0})
+fvm.add_config("olo_base_arb_prio", "config_width_3_latency_0", {"Width_g": 64, "Latency_g": 1})
 
 fvm.add_clock("Clk")
 fvm.add_clock_domain("Clk", ["Out_Grant", "Rst"])
