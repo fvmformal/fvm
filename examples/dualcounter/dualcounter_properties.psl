@@ -31,6 +31,9 @@ vunit dualcounter_properties (dualcounter(Behavioral)) {
   cover_counter0_overflow_param:
     cover {overflow(count0)};
 
+  cover_counter0_overflow_param_plus_reset:
+    cover {overflow(count0); [*]; rst = '1'; [*]; overflow(count0)};
+
   cover_counter1_overflow_param:
     cover {overflow(count1)};
 
