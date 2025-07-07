@@ -1,4 +1,16 @@
-vunit rr_arbiter_common {
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+package rr_arbiter_common is
+
+    function round_robin(
+        req: std_logic_vector(3 downto 0); last_grant: std_logic_vector(3 downto 0)) 
+    return std_logic_vector;
+    
+end package rr_arbiter_common;
+
+package body rr_arbiter_common is
 
 -- This function simulates the round_robin algorithm.
 -- This is not the optimal way to do the round robin function,
@@ -57,6 +69,5 @@ begin
 
     return next_grant;
 end function;
-
-
-}
+    
+end package body rr_arbiter_common;

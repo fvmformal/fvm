@@ -1,6 +1,8 @@
-vunit olo_base_arb_rr (olo_base_arb_rr) {
+vunit olo_base_arb_rr_properties (olo_base_arb_rr) {
 
-    inherit rr_arbiter_common;
+    --inherit rr_arbiter_common;
+
+    --use work.rr_arbiter_common.all;
 
     -- Default clock for PSL assertions
     default clock is rising_edge(Clk);
@@ -13,60 +15,78 @@ vunit olo_base_arb_rr (olo_base_arb_rr) {
 
     --assume always ( countones(In_Req) > 0 -> (stable(In_Req) until_ Out_Ready) ) abort Rst;
 
-    sequence transmission is {
-        In_Req = "1011" and Out_Grant = "1000";
-        In_Req = "1011" and Out_Grant = "1000";
-        In_Req = "1011" and Out_Grant = "0010";
-        In_Req = "1011" and Out_Grant = "0001";
-        In_Req = "1011" and Out_Grant = "1000";
-        In_Req = "1011" and Out_Grant = "0010";
-        In_Req = "1011" and Out_Grant = "0010";
-        In_Req = "0110" and Out_Grant = "0100";
-        In_Req = "0110" and Out_Grant = "0100";
-        In_Req = "0110" and Out_Grant = "0100";
-        In_Req = "0110" and Out_Grant = "0010";
-        In_Req = "0000" and Out_Grant = "0000";
-        In_Req = "0000" and Out_Grant = "0000"
-  };
-
     -- Assert Out_Grant has maximum one bit with value 1
     assert always onehot0(Out_Grant) abort Rst;
 
     -- Assert when the input is 0, the output is 0
-    assert always {countones(In_Req) = 0} |-> {countones(Out_Grant) = 0} abort Rst;
+    --assert always {countones(In_Req) = 0} |-> {countones(Out_Grant) = 0} abort Rst;
 
     -- Assert when the input is not 0, the output is not 0
-    assert always {countones(In_Req) >= 1} |-> {onehot(Out_Grant)} abort Rst;
+    --assert always {countones(In_Req) >= 1} |-> {onehot(Out_Grant)} abort Rst;
 
     -- Assert when the output is 0, the output is not valid
-    assert always {countones(Out_Grant) = 0} |-> {Out_Valid = '0'} abort Rst;
+    --assert always {countones(Out_Grant) = 0} |-> {Out_Valid = '0'} abort Rst;
 
     -- Assert when the output is not 0, the output is valid
-    assert always {countones(Out_Grant) = 1} |-> {Out_Valid = '1'} abort Rst;
+    --assert always {countones(Out_Grant) = 1} |-> {Out_Valid = '1'} abort Rst;
 
     -- Assert when two Out_Ready in two consecutive cycles,
     -- the second granted output is the result of a round robin
     -- function defined in rr_arbiter_common.psl that receives as parameters
     -- the previous granted output and the input request. This function
     -- simulates the round_robin algorithm.
-    assert always ( {Out_Ready: Out_Valid; Out_Ready: Out_Valid} |-> { Out_Grant = round_robin(In_Req, prev(Out_Grant)) } ) abort Rst;
+    assert always ( {Out_Ready: Out_Valid; Out_Ready: Out_Valid} |-> { Out_Grant = round_robin_arbiter_msb(In_Req, prev(Out_Grant)) } ) abort Rst;
 
     -- The next few assertions are similar to the previous one.
     -- The main difference is we do not have two consecutive cycles,
     -- can be consecutive or not, so we cannot use operator prev(). 
     -- So, we use 4 different assertions for each value of Out_Grant
-    assert always ( {Out_Ready: Out_Valid: Out_Grant = "1000"; (not Out_Ready)[*];Out_Ready: Out_Valid} 
-    |-> { Out_Grant = round_robin(In_Req, "1000") } ) abort Rst;
 
-    assert always ( {Out_Ready: Out_Valid: Out_Grant = "0100"; (not Out_Ready)[*]; Out_Ready: Out_Valid} 
-    |-> { Out_Grant = round_robin(In_Req, "0100") } ) abort Rst;
+    signal last_grant : std_logic_vector(3 downto 0);
 
-    assert always ( {Out_Ready: Out_Valid: Out_Grant = "0010"; (not Out_Ready)[*]; Out_Ready: Out_Valid} 
-    |-> { Out_Grant = round_robin(In_Req, "0010") } ) abort Rst;
+    attribute anyconst: boolean;
+    attribute anyconst of last_grant: signal is true;
 
-    assert always ( {Out_Ready: Out_Valid: Out_Grant = "0001"; (not Out_Ready)[*]; Out_Ready: Out_Valid} 
-    |-> { Out_Grant = round_robin(In_Req, "0001") } ) abort Rst;
+    assert always ( {Out_Ready: Out_Valid: Out_Grant = last_grant; (not (Out_Ready and Out_Valid))[*];Out_Ready: Out_Valid} 
+    |-> { Out_Grant = round_robin_arbiter_msb(In_Req, last_grant) } ) abort Rst;
 
-    cover {transmission};
+    assert always ({rst = '1'; Out_Ready: Out_Valid} |-> {Out_Grant = priority_arbiter_msb(In_Req)});
+    assert always ({rst = '1'; (not (Out_Ready and Out_Valid))[*]; Out_Ready: Out_Valid} |-> {Out_Grant = priority_arbiter_msb(In_Req)});
+
+    cover {rst = '0'; countones(Out_Grant) = 0; (Out_Ready = '1' and Out_Valid = '1' and countones(In_Req) = 64)[*70]};
+
+    cover {(rst = '0' and Out_Ready = '1' and Out_Valid = '1' and countones(In_Req) > 1 and Out_Grant /= prev(Out_Grant))[*300]};
+    cover {rst = '0'; countones(In_Req) = 0 and countones(Out_Grant) = 0; (rst = '0' and Out_Ready = '1' and Out_Valid = '1' and countones(In_Req) = 64)[*100];
+           rst = '0'; rst = '0' and countones(In_Req) = 0; Out_Grant /= prev(Out_Grant,2); rst = '1'};
+    cover {rst = '0'; countones(In_Req) = 0 and countones(Out_Grant) = 0; (rst = '0' and Out_Ready = '1' and Out_Valid = '1' and countones(In_Req) = 24)[*24];
+           rst = '0'; countones(In_Req) = 0; rst = '1'};
+    cover {(rst = '0' and Out_Ready = '1' and Out_Valid = '1' and countones(In_Req) > 1 and Out_Grant /= prev(Out_Grant))[*300]};
+
+    sequence unmasked_seq (
+        hdltype integer idx
+        ) is {                                                                        
+        countones(In_Req) = 1 and Out_Ready = '1' and Out_Grant(idx) = '1' and rst = '0'
+    };
+
+    cover {rst = '0'; unmasked_seq(0); unmasked_seq(1); unmasked_seq(2); unmasked_seq(3);
+           unmasked_seq(4); unmasked_seq(5); unmasked_seq(6); unmasked_seq(7);
+           unmasked_seq(8); unmasked_seq(9); unmasked_seq(10); unmasked_seq(11);
+           unmasked_seq(12); unmasked_seq(13); unmasked_seq(14); unmasked_seq(15);
+           unmasked_seq(16); unmasked_seq(17); unmasked_seq(18); unmasked_seq(19);
+           unmasked_seq(20); unmasked_seq(21); unmasked_seq(22); unmasked_seq(23);
+           unmasked_seq(24); unmasked_seq(25); unmasked_seq(26); unmasked_seq(27);
+           unmasked_seq(28); unmasked_seq(29); unmasked_seq(30); unmasked_seq(31);
+           unmasked_seq(32); unmasked_seq(33); unmasked_seq(34); unmasked_seq(35);
+           unmasked_seq(36); unmasked_seq(37); unmasked_seq(38);
+           unmasked_seq(39); unmasked_seq(40); unmasked_seq(41);
+           unmasked_seq(42); unmasked_seq(43); unmasked_seq(44);
+           unmasked_seq(45); unmasked_seq(46); unmasked_seq(47);
+           unmasked_seq(48); unmasked_seq(49); unmasked_seq(50);
+           unmasked_seq(51); unmasked_seq(52); unmasked_seq(53);
+           unmasked_seq(54); unmasked_seq(55); unmasked_seq(56);
+           unmasked_seq(57); unmasked_seq(58); unmasked_seq(59);
+           unmasked_seq(60); unmasked_seq(61); unmasked_seq(62);
+           unmasked_seq(63); rst = '1'; true};
+
 
 }

@@ -12,10 +12,11 @@ fvm.add_vhdl_source("open-logic/src/base/vhdl/olo_base_pkg_array.vhd")
 fvm.add_vhdl_source("open-logic/src/base/vhdl/olo_base_pkg_logic.vhd")
 fvm.add_vhdl_source("open-logic/src/base/vhdl/olo_base_pkg_math.vhd")
 
-fvm.add_psl_sources("examples/arbiter_rr/*.psl")
+fvm.add_vhdl_sources("examples/arbiter_rr/*.vhd")
+fvm.add_psl_sources("examples/arbiter_rr/olo_base_arb_rr.psl")
 
 fvm.set_toplevel("olo_base_arb_rr")
-fvm.add_config("olo_base_arb_rr", "config_width_4", {"Width_g": 4})
+fvm.add_config("olo_base_arb_rr", "config_width_4", {"Width_g": 64})
 
 fvm.skip("reachability")
 fvm.skip('prove.formalcover')
