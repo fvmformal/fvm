@@ -53,6 +53,9 @@ vunit interpolator_properties (interpolator(interpolator_arch)) {
     --assert_will_fire:
     --    assert always (({not valid} |=> twelve_estim_valid) abort rst);
 
+    cover {inferior.re = "1111111111": inferior.im = "1111111111": superior.re = "0000000000": superior.im = "0000000000"; twelve_estim_valid}; 
+    cover {inferior.re = "0000000000": inferior.im = "0000000000": superior.re = "1111111111": superior.im = "1111111111"; twelve_estim_valid}; 
+
     -- Parameterizable input sequence
     sequence input_seq (                                                           
         hdltype interpolator_input_tran input_tran                                                                                                   
