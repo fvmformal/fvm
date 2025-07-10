@@ -1195,6 +1195,7 @@ class fvmframework:
         # TODO : run_post_step should probably run a _single_ step, and maybe
         # we can have a run_post_steps function that calls run_post_step
         # multiple times?
+        err = False
         if self.toolchain == 'sby':
             if step in self.steps.post_steps:
                 for post_step in self.steps.post_steps[step]:
