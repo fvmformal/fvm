@@ -3,7 +3,6 @@
 License
 =======
 
-FVM is available under a FOSS license
+The FVM is available under the permissive free/open-source license `Apache
+License 2.0 <https://opensource.org/licenses/Apache-2.0>`_
 
-.. todo::
-   Update when we have decided on the specific license

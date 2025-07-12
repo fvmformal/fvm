@@ -1369,9 +1369,10 @@ class fvmframework:
                     # Modify the replay.vsim.do so:
                     #   - It dumps the waveforms into a .vcd file
                     #   - It specifies a unique test name so we don't get errors when
-                    #      merging the UCDBs, and
+                    #     merging the UCDBs, and
                     #   - It saves a UCDB file
-                    helpers.insert_line_after_target(file, "onerror {resume}", f'vcd dumpports -in -out *')
+                    vcdfilename = os.path.basename(os.path.dirname(file)) + '.vcd'
+                    helpers.insert_line_after_target(file, "onerror {resume}", f'vcd dumpports -file {vcdfilename} -in -out *')
                     helpers.insert_line_before_target(file, "quit -f;", f'coverage attribute -name TESTNAME -value {pathlib.Path(file).parent.name}')
                     helpers.insert_line_before_target(file, "quit -f;", "coverage save sim.ucdb")
                     # TODO: Maybe we need to modify the replay.scr so it exports

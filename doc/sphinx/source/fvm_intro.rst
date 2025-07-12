@@ -16,11 +16,8 @@ activity is being implemented by Universidad de Sevilla (Spain), through its
 affiliated Technology Centre AICIA (Asociación de Investicación y Cooperación
 Industrial de Andalucía).
 
-The FVM is available under the permissive/free? license **LICENSE**
-
-.. todo::
-
-   Update the license when we have decided it
+The FVM is available under the permissive free/open-source license `Apache License 2.0
+<https://opensource.org/licenses/Apache-2.0>`_
 
 Components
 ----------------------------

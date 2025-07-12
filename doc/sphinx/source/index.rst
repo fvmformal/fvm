@@ -3,13 +3,15 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+.. _index:
+
 Welcome to FVM!
 ===============
 
-FVM is a Formal Verification Methodology that aims to lower the adoption
-barriers for formal verification.
+FVM is a **Formal Verification Methodology** that aims to **lower the adoption
+barriers** for formal verification.
 
-In other words, let's make Formal Verification easier!
+In other words, **let's make Formal Verification easier!**
 
 To learn more, go to the next section: :ref:`fv_intro`
 
@@ -39,6 +41,7 @@ To learn more, go to the next section: :ref:`fv_intro`
    :caption: Examples
    :hidden:
 
+   concepts
    examples
 
 .. toctree::
@@ -50,9 +53,10 @@ To learn more, go to the next section: :ref:`fv_intro`
 
 .. toctree::
    :maxdepth: 4
-   :caption: Guidelines
+   :caption: Advanced
    :hidden:
 
+   complexityreduction
    formaltestplans
    formalfriendlydesign
 

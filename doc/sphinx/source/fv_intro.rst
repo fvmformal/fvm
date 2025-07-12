@@ -50,7 +50,7 @@ Formal Verification may struggle with:
   add more...
 
 Fortunately, there are techniques that can be used to help with these cases,
-see section :ref:`reduceproofcomplexity`
+see section :ref:`complexityreduction`
 
 Can't I just simulate?
 --------------------------
