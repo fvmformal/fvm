@@ -47,12 +47,39 @@ vunit div32 (div32(rtl)) {
     -- during the division. divo.icc is "0000" to avoid overflows,
     -- zeros or signed values.
     assert_check_divider: 
-        assert always ( ( {divi.start; (stable(divi.y) and stable(divi.op1) and stable(divi.op2))[*34]; divo.ready: divo.icc="0000"; divo.icc="0000"} |-> 
-        { unsigned(divo.result - verify_division(prev(divi.y,3), prev(divi.op1,3), prev(divi.op2,3))) < 2} ) abort (holdn = '0') ) abort (rst = '0');
+        assert always ( ( {divi.start; stable_inputs; result_ready} |-> 
+        { unsigned(divo.result - verify_division(prev(divi.y,3), prev(divi.op1,3), prev(divi.op2,3))) < 2} ) 
+        abort (holdn = '0') ) abort (rst = '0');
 
     -- Cover one division
     cover_one_division: cover{[*]; divo.ready: rst};
     -- Cover two divisions
     cover_two_divisions: cover{[*]; divo.ready: rst: holdn; [*]; divo.ready: rst: holdn};
+
+    sequence stable_inputs {                                    
+        (stable(divi.y) and stable(divi.op1) and stable(divi.op2))[*34]
+    }; 
+
+    sequence result_ready {                                    
+        divo.ready: divo.icc="0000"; divo.icc="0000"
+    }; 
+
+    sequence input (                                                           
+        hdltype std_logic_vector(32 downto 0) y;
+        hdltype std_logic_vector(32 downto 0) op1;
+        hdltype std_logic_vector(32 downto 0) op2
+        ) is {                                    
+        divi.start = '1' and          
+        divi.y = y and   
+        input_tran.supr.re = op1 and
+        input_tran.supr.im = op2 and
+        rst = '1'                                 
+    }; 
+
+    -- Cover a few specific inputs
+    cover {input("010101010101010101010101010101010", "010101010101010101010101010101010", "010101010101010101010101010101010"); rst[*35]};
+    cover {input("100111111111001000111001011011010", "000111111110001000011001110001010", "110011110101111001000111100001011"); rst[*35]};
+    cover {input("000000001111111111111111111111111", "000111111110001000011001110001010", "000000000000000000000000000000000"); rst[*35]};
+    cover {input("000000001111111111111111111111111", "000111111110001000011001110001010", "000000000000000000000000000001110"); rst[*35]};
 
 }
