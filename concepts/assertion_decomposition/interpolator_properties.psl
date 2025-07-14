@@ -62,6 +62,7 @@ vunit interpolator_properties (interpolator(interpolator_arch)) {
         valid    = '1'                                                              
     }; 
     
+    -- TODO: Parameterize index
     -- Parameterizable output sequence
     sequence output_seq_0 (                                                          
     hdltype interpolator_output_tran output_tran                                                        
@@ -321,4 +322,19 @@ vunit interpolator_properties (interpolator(interpolator_arch)) {
     -- Assert the parameterized property
     interpolator_works_correctly_11:
         assert interpolation_11(input_tran, interpolator_predict(input_tran));
+
+    sequence input (                                                           
+        hdltype signed(9 downto 0) inf_re;
+        hdltype signed(9 downto 0) inf_im;
+        hdltype signed(9 downto 0) sup_re;
+        hdltype signed(9 downto 0) sup_im
+        ) is {                                    
+        input_tran.infr.re = inf_re and          
+        input_tran.infr.im = inf_im and   
+        input_tran.supr.re = sup_re and
+        input_tran.supr.im = sup_im and                                                
+    }; 
+
+    cover {input("1111111111", "1111111111", "0000000000", "0000000000"); twelve_estim_valid}; 
+    cover {input("0000000000", "0000000000", "1111111111", "1111111111"); twelve_estim_valid}; 
 }
