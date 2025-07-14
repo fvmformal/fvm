@@ -4,70 +4,63 @@ use ieee.numeric_std.all;
 
 package rr_arbiter_common is
 
-    function round_robin(
-        req: std_logic_vector(3 downto 0); last_grant: std_logic_vector(3 downto 0)) 
-    return std_logic_vector;
-    
+    function priority_arbiter(
+        requests : std_logic_vector
+    ) return std_logic_vector;
+
+    function round_robin_arbiter(
+        req : std_logic_vector
+        last_grant : std_logic_vector
+    ) return std_logic_vector;
 end package rr_arbiter_common;
 
 package body rr_arbiter_common is
 
--- This function simulates the round_robin algorithm.
--- This is not the optimal way to do the round robin function,
--- but this way is easier to understand what the function does
-function round_robin(req: std_logic_vector(3 downto 0); last_grant: std_logic_vector(3 downto 0)) return std_logic_vector is
-    variable next_grant: std_logic_vector(3 downto 0);  
-begin
+    function priority_arbiter(
+        requests : std_logic_vector
+    ) return std_logic_vector is
+        variable grant : std_logic_vector(requests'range) := (others => '0');
+        variable i     : integer;
+    begin
+        for i in requests'left downto requests'right loop
+            if requests(i) = '1' then
+                grant(i) := '1';
+                exit;
+            end if;
+        end loop;
+        return grant;
+    end function;
 
-    if last_grant = "1000" then
-        if req(2) = '1' then
-            next_grant := "0100";  
-        elsif req(1) = '1' then
-            next_grant := "0010";  
-        elsif req(0) = '1' then
-            next_grant := "0001";  
-        elsif req(3) = '1' then
-            next_grant := "1000";  
+    function round_robin_arbiter(
+        req        : std_logic_vector;
+        last_grant : std_logic_vector
+    ) return std_logic_vector is
+        constant width : integer := req'length;
+        variable next_grant : std_logic_vector(req'range) := (others => '0');
+        variable start_idx  : integer := -1;
+        variable i          : integer;
+    begin
+        for idx in req'range loop
+            if last_grant(idx) = '1' then
+                start_idx := idx;
+                exit;
+            end if;
+        end loop;
+
+        if start_idx = -1 then
+            return next_grant;
         end if;
 
-    elsif last_grant = "0100" then
-        if req(1) = '1' then
-            next_grant := "0010";  
-        elsif req(0) = '1' then
-            next_grant := "0001";  
-        elsif req(3) = '1' then
-            next_grant := "1000";  
-        elsif req(2) = '1' then
-            next_grant := "0100"; 
-        end if;
 
-    elsif last_grant = "0010" then
-        if req(0) = '1' then
-            next_grant := "0001"; 
-        elsif req(3) = '1' then
-            next_grant := "1000"; 
-        elsif req(2) = '1' then
-            next_grant := "0100"; 
-        elsif req(1) = '1' then
-            next_grant := "0010"; 
-        end if;
+        for offset in 1 to width loop
+            i := (start_idx - offset + width) mod width;  -- MSB->LSB
+            if req(i) = '1' then
+                next_grant(i) := '1';
+                return next_grant;
+            end if;
+        end loop;
 
-    elsif last_grant = "0001" then
-        if req(3) = '1' then
-            next_grant := "1000";  
-        elsif req(2) = '1' then
-            next_grant := "0100"; 
-        elsif req(1) = '1' then
-            next_grant := "0010"; 
-        elsif req(0) = '1' then
-            next_grant := "0001";  
-        end if;
+        return next_grant;
+    end function;
 
-    else 
-        next_grant := "0000"; 
-    end if;
-
-    return next_grant;
-end function;
-    
 end package body rr_arbiter_common;
