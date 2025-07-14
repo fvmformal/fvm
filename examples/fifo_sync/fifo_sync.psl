@@ -1,185 +1,192 @@
 vunit fifo_sync (olo_base_fifo_sync(rtl)) {
 
-    --inherit fifo_sync_common;
-    
-    use work.fifo_sync_common.all;
-    -- Default clock for PSL assertions
-    default clock is rising_edge(Clk);
+  --inherit fifo_sync_common;
 
-    -- Force a reset in the first clock cycle
-    assume_initial_reset: assume Rst = '1';
+  --use work.fifo_sync_common.all;
+  -- Default clock for PSL assertions
+  default clock is rising_edge(Clk);
 
-    -- Output cannot be ready when it is not valid
-    assume always (not Out_Valid) -> (not Out_Ready);
+  -- Force a reset in the first clock cycle
+  assume_initial_reset: assume Rst = '1';
 
-    -- This way is easier to visualize data (NOT A NECESSARY ASSUME)
-    --assume always In_Valid -> not(In_Data = "000");
+  -- Output cannot be ready when it is not valid
+  --assume always (not Out_Valid) -> (not Out_Ready);
 
-    -- This way is easier to visualize data, otherwise it keeps
-    -- the same value of In_Data (NOT A NECESSARY ASSUME)
-    --assume always ( In_Valid -> (In_Data /= prev(In_Data)) ) abort Rst;
+  -- This way is easier to visualize data (NOT A NECESSARY ASSUME)
+  --assume always In_Valid -> not(In_Data = "000");
 
-    -- Assert the FIFO is never full and the input is ready
-    assert_never_full_and_in_ready: 
-        assert (never (Full and In_Ready) ) abort Rst; 
-    
-    -- Assert the FIFO is never empty and the output is valid
-    assert_never_empty_and_out_valid: 
-        assert (never (Empty = '1' and Out_Valid = '1') ) abort Rst;
+  -- This way is easier to visualize data, otherwise it keeps
+  -- the same value of In_Data (NOT A NECESSARY ASSUME)
+  --assume always ( In_Valid -> (In_Data /= prev(In_Data)) ) abort Rst;
 
-    -- Assert the FIFO is never full and empty at the same time
-    assert_never_empty_and_full: 
-        assert (never (Empty = '1' and Full = '1') ) abort Rst;
-    
-    -- Assert the FIFO level calculated on the write side is always
-    -- less than the depth of the FIFO
-    assert_in_level_within_bounds: 
-        assert always (unsigned(In_Level) <= Depth_g) abort Rst;
+  -- Assert the FIFO is never full and the input is ready
+  assert_never_full_and_in_ready:
+      assert (never (Full and In_Ready) ) abort Rst;
 
-    -- Assert the FIFO level calculated on the read side is always
-    -- less than the depth of the FIFO
-    assert_out_level_within_bounds: 
-        assert always (unsigned(Out_Level) <= Depth_g) abort Rst;
+  -- Assert the FIFO is never empty and the output is valid
+  assert_never_empty_and_out_valid:
+      assert (never (Empty = '1' and Out_Valid = '1') ) abort Rst;
 
-    -- Assert when empty the read level is 0
-    assert_empty_out_level_0: 
-        assert always (Empty = '1' -> unsigned(Out_Level) = 0) abort Rst;
+  -- Assert the FIFO is never full and empty at the same time
+  assert_never_empty_and_full:
+      assert (never (Empty = '1' and Full = '1') ) abort Rst;
 
-    -- Assert when full the write level is 8 (depth of the FIFO)
-    assert_full_in_level_8: 
-        assert always (Full = '1' -> unsigned(In_Level) = Depth_g) abort Rst;
+  -- Assert the FIFO level calculated on the write side is always
+  -- less than the depth of the FIFO
+  assert_in_level_within_bounds:
+      assert always (unsigned(In_Level) <= Depth_g) abort Rst;
 
-    -- Assert the write level is, at most, 2 plus the read level,
-    -- because latency of the RAM is 1.
-    assert (never ( (unsigned(In_Level) - unsigned(Out_Level) ) > 2) ) abort Rst;
+  -- Assert the FIFO level calculated on the read side is always
+  -- less than the depth of the FIFO
+  assert_out_level_within_bounds:
+      assert always (unsigned(Out_Level) <= Depth_g) abort Rst;
 
-    -- Assert the write level is bigger or equals to the read level
-    assert always ( unsigned(In_Level) >= unsigned(Out_Level) ) abort Rst;
+  -- Assert when empty the read level is 0
+  assert_empty_out_level_0:
+      assert always (Empty = '1' -> unsigned(Out_Level) = 0) abort Rst;
 
-    -- Assert not Out_Valid after In_Level = 0 because RAM has latency 1
-    assert_not_out_valid_after_in_level_0:
-        assert always { unsigned(In_Level) = 0 } |=> { not Out_Valid } abort Rst;
+  -- Assert when full the write level is 8 (depth of the FIFO)
+  assert_full_in_level_8:
+      assert always (Full = '1' -> unsigned(In_Level) = Depth_g) abort Rst;
 
-    sequence write_sequence(
-        hdltype input_tran_in_data input
-    ) is {    
-        In_Data = input.data:
-        In_Level = input.level:                                                                    
-        In_Valid:                                                            
-        In_Ready                                                                                                                        
-    }; 
+  -- Assert the write level is, at most, 2 plus the read level,
+  -- because latency of the RAM is 1.
+  assert (never ( (unsigned(In_Level) - unsigned(Out_Level) ) > 2) ) abort Rst;
 
-    sequence read_seq is {                                                                        
-        Out_Valid:                                                            
-        Out_Ready                                                                                                                    
-    }; 
+  -- Assert the write level is bigger or equals to the read level
+  assert always ( unsigned(In_Level) >= unsigned(Out_Level) ) abort Rst;
 
-    sequence read_seq_prev is {   
-        not Out_Ready[*];                                                                     
-        Out_Valid:                                                            
-        Out_Ready                                                                                                                    
-    }; 
+  -- Assert not Out_Valid after In_Level = 0 because RAM has latency 1
+  assert_not_out_valid_after_in_level_0:
+      assert always { unsigned(In_Level) = 0 } |=> { not Out_Valid } abort Rst;
 
-    -- If you write with FIFO level 0, 
-    -- that is the first data out always
-    property predict_level_0(
-        hdltype input_tran_in_data input_tran
-        ) is
-        always ( 
-        ( {write_sequence(input_tran):(not Out_Ready)[+]; read_seq} 
-        |-> {Out_Data = input_tran.data} ) 
-        abort rst);
+  signal in_cnt: unsigned(log2ceil(Depth_g) - 1 downto 0);
+  signal out_cnt: unsigned(log2ceil(Depth_g) - 1 downto 0);
 
-    -- If you write with FIFO level X, 
-    -- have not read in the previous cycle,
-    -- have not read in the current cycle,
-    -- that is the X + 1 data out always
-    property predict(
-        hdltype input_tran_in_data input_tran;
-        const n
-        ) is
-        always ( 
-        ( {(not Out_Ready);write_sequence(input_tran):(not Out_Ready)[+]; read_seq_prev[*n]} 
-        |-> {Out_Data = input_tran.data} ) 
-        abort rst);
+  process(clk)
+  begin
+    if rising_edge(clk) then
+      if rst = '1' then
+        in_cnt <= to_unsigned(0, in_cnt'length);
+        out_cnt <= to_unsigned(0, out_cnt'length);
+      else
 
-    -- If you write with FIFO level X,
-    -- have read in the previous cycle,
-    -- have not read in the current cycle,
-    -- that is the X data out always
-    property predict_b(
-        hdltype input_tran_in_data input_tran;
-        const n
-        ) is
-        always ( 
-        ( {read_seq;write_sequence(input_tran):(not Out_Ready)[+]; read_seq_prev[*n]} 
-        |-> {Out_Data = input_tran.data} ) 
-        abort rst);   
+        -- Accumulate valid writes
+        if In_Valid = '1' and In_Ready = '1' then
+          in_cnt <= in_cnt + 1;
+        end if;
 
-    -- If you write with FIFO level X,
-    -- have read in the previous cycle,
-    -- have read in the current cycle,
-    -- that is the X - 1 data out always
-    property predict_c(
-        hdltype input_tran_in_data input_tran;
-        const n
-        ) is
-        always ( 
-        ( {read_seq;write_sequence(input_tran):read_seq; read_seq_prev[*n]} 
-        |-> {Out_Data = input_tran.data} ) 
-        abort rst);     
+        -- Accumulate valid reads
+        if Out_Ready = '1' and Out_Valid = '1' then
+          out_cnt <= out_cnt + 1;
+        end if;
+      end if;
+    end if;
+  end process;
 
-    -- If you write with FIFO level X,
-    -- have not read in the previous cycle,
-    -- have read in the current cycle,
-    -- that is the X data out always
-    property predict_d(
-        hdltype input_tran_in_data input_tran;
-        const n
-        ) is
-        always ( 
-        ( {(not Out_Ready);write_sequence(input_tran):read_seq; read_seq_prev[*n]} 
-        |-> {Out_Data = input_tran.data} ) 
-        abort rst);    
+  signal a : std_logic_vector(Width_g-1 downto 0);
+  signal c : unsigned(log2ceil(Depth_g) - 1 downto 0);
+  --signal d : unsigned(log2ceil(Depth_g) - 1 downto 0);
+  assume always ({true} |=> {a = prev(a)}) abort Rst;
+  assume always ({true} |=> {c = prev(c)}) abort Rst;
+  --assume always ({true} |=> {d = prev(d)});
 
-    signal a : std_logic_vector(2 downto 0);
-    assume always (a = prev(a)) abort Rst;
+  --        assert always ( {In_Ready = '1' and In_Valid = '1' and In_Data = a and in_cnt = c; (out_cnt /= c)[*];
+  --                 Out_Ready = '1' and Out_Valid = '1' and out_cnt = c}
+  --                 |-> {Out_Data = a} ) abort Rst;
 
-    signal b : std_logic_vector(2 downto 0);
-    assume always (b = prev(b)) abort Rst;
+  sequence in_data_pos_j (
+      hdltype std_logic_vector(Width_g-1 downto 0) a;
+      hdltype unsigned(log2ceil(Depth_g) - 1 downto 0) j
+      ) is {                                                                        
+      write_seq: 
+      In_Data = a:
+      in_cnt = j
+   };
 
-    assume_prop: assume always ( {In_Valid: In_Ready: In_Data = a; (not In_Valid or not In_Ready)[*]; In_Valid: In_Ready} |-> {In_Data = b} ) abort Rst;
+  sequence no_pos_j (
+      hdltype unsigned(log2ceil(Depth_g) - 1 downto 0) j
+      ) is {                                                                        
+      (out_cnt /= j)[*]
+   };
 
-    assert_prop: assert always ( {Out_Valid: Out_Ready: Out_Data = a; Out_Valid: Out_Ready} |-> {Out_Data = b} ) abort Rst;
+  sequence out_valid_pos_j (
+      hdltype std_logic_vector(Width_g-1 downto 0) a;
+      hdltype unsigned(log2ceil(Depth_g) - 1 downto 0) j
+      ) is {                                                                        
+      read_seq: 
+      out_cnt = j
+   };
 
-    sequence write_FIFO is {
-        [*];
-        In_Valid and In_Ready and (not Rst);
-        In_Valid and In_Ready and (not Rst);
-        In_Valid and In_Ready and (not Rst);
-        In_Valid and In_Ready and (not Rst);
-        In_Valid and In_Ready and (not Rst);
-        In_Valid and In_Ready and (not Rst)
-    };
+  %for j in 0..7 do
+    assert always ( {in_data_pos_j(a, j); no_pos_j(j); out_valid_pos_j(j)} |-> {Out_Data = a} ) abort Rst;
+  %end
 
-    sequence read_FIFO is {
-        [*];
-        Out_Valid and Out_Ready and (not Rst);
-        Out_Valid and Out_Ready and (not Rst);
-        Out_Valid and Out_Ready and (not Rst);
-        Out_Valid and Out_Ready and (not Rst);
-        Out_Valid and Out_Ready and (not Rst);
-        Out_Valid and Out_Ready and (not Rst);
-        Out_Valid and Out_Ready and (not Rst)
-    };
+  sequence write_seq is {
+      In_Ready = '1' and In_Valid = '1'
+  };
 
-    -- Cover all the important events in a FIFO: write, read,
-    -- full, empty...
-    cover_write_and_read_FIFO: cover{rst;write_FIFO; read_FIFO;write_FIFO;[*];Full;(not Rst)[*10];Empty;unsigned(In_Level) = 0;unsigned(In_Level) = 0;unsigned(In_Level) = 0;[*];Full};
-    
-    -- Generate multiple covers with a for loop
-    --%for j in 1..10 do
-    --    cover{write_FIFO[*j]};
-    --%end
+  sequence write_seq_no_rst is {
+      write_seq: 
+      Rst = '0'
+  };
 
+  sequence read_seq is {
+      Out_Valid:
+      Out_Ready
+  };
+
+  sequence read_seq_no_rst is {
+      Out_Valid:
+      Out_Ready
+  };
+
+  sequence read_seq_prev is {
+      not Out_Ready[*];
+      Out_Valid:
+      Out_Ready
+  };
+
+  sequence write_FIFO is {
+      [*];
+      write_seq_no_rst: countones(In_Data) = 0;
+      write_seq_no_rst: countones(In_Data) = Width_g;
+      write_seq_no_rst: countones(In_Data) = 0;
+      write_seq_no_rst;
+      write_seq_no_rst;
+      write_seq_no_rst
+  };
+
+  sequence read_FIFO is {
+      [*];
+      read_seq_no_rst[*7];
+  };
+
+  -- Cover all the important events in a FIFO: write, read,
+  -- full, empty...
+  cover_write_and_read_FIFO: cover{rst; write_FIFO; read_FIFO; write_FIFO; [*]; Full; (not Rst)[*10]; Empty; [*]; Full};
+  cover{toggle_a_1};
+  cover{toggle_a_2};
+  cover{toggle_c_1};
+  cover{toggle_c_2};
+
+  sequence toggle_a_1 is {
+    countones(a) = Width_g and rst = '1'; 
+    countones(a) = 0 and rst = '0
+  };
+
+  sequence toggle_a_2 is {
+    countones(a) = 0 and rst = '1'; 
+    countones(a) = Width_g and rst = '0'
+  };
+
+  sequence toggle_c_1 is {
+    countones(c) = log2ceil(Depth_g) and rst = '1'; 
+    countones(c) = 0 and rst = '0
+  };
+  sequence toggle_c_2 is {
+    countones(c) = 0 and rst = '1'; 
+    countones(c) = log2ceil(Depth_g) and rst = '0'
+  };
+  
 }
