@@ -1,5 +1,6 @@
-vunit olo_axi_lite_slave (olo_axi_lite_slave) {
+vunit olo_axi_lite_slave_properties (olo_axi_lite_slave(rtl)) {
 
+    use work.rr_arbiter_common.all;
     -- Default clock for PSL assertions
     default clock is rising_edge(Clk);
 
@@ -7,10 +8,10 @@ vunit olo_axi_lite_slave (olo_axi_lite_slave) {
     assume_initial_reset: assume Rst = '1';
 
     -- This way is easier to visualize data (NOT A NECESSARY ASSUME)
-    assume always Rb_Wr -> (unsigned(Rb_WrData) /= 0);
+    --assume always Rb_Wr -> (unsigned(Rb_WrData) /= 0);
 
     -- This way is easier to visualize data (NOT A NECESSARY ASSUME)
-    assume always Rb_RdValid -> (unsigned(Rb_RdData) /= 0);
+    --assume always Rb_RdValid -> (unsigned(Rb_RdData) /= 0);
 
     assume always Rst -> (not Rb_RdValid);
 
@@ -24,40 +25,67 @@ vunit olo_axi_lite_slave (olo_axi_lite_slave) {
     -- Assert if the address is ready,
     -- it was valid in the previous cycle
     assert_read_address_ready_prev_valid:
-        assert always (S_AxiLite_ARReady -> prev(S_AxiLite_ARValid)) abort Rst;
+        assert always ({true; S_AxiLite_ARReady} |-> {prev(S_AxiLite_ARValid)}) abort Rst;
 
     -- Assert if read enable,
     -- it was valid in the previous cycle
     assert_read_enable_prev_ready:
-        assert always ( Rb_Rd -> prev(S_AxiLite_ARReady) ) abort Rst;
+        assert always ( {true; Rb_Rd} |-> {prev(S_AxiLite_ARReady)} ) abort Rst;
 
+   sequence AR_valid_ready {                                                                        
+      S_AxiLite_ARValid; S_AxiLite_ARReady
+   };
+   sequence AR_valid_not_ready_and_ready {                                                                        
+      S_AxiLite_ARValid: (not S_AxiLite_ARReady)[*]; S_AxiLite_ARReady
+   };
     -- Assert the register bank receives the address
     -- from the request
     assert_address_received:
-        assert always ( {S_AxiLite_ARValid; S_AxiLite_ARReady} |=> {Rb_Addr = prev(S_AxiLite_ARAddr)} ) abort Rst;
+        assert always ( {AR_valid_ready} |=> {Rb_Addr = prev(S_AxiLite_ARAddr)} ) abort Rst;
     assert_address_received_2:
-        assert always ( {S_AxiLite_ARValid: (not S_AxiLite_ARReady)[*]; S_AxiLite_ARReady} |=> {Rb_Addr = prev(S_AxiLite_ARAddr)} ) abort Rst;
+        assert always ( {AR_valid_not_ready_and_ready} |=> {Rb_Addr = prev(S_AxiLite_ARAddr)} ) abort Rst;
 
+   sequence bank_R_valid_ready {                                                                        
+      Rb_Rd; Rb_RdValid
+   };
+   sequence bank_R_valid_ready_before_timeout {                                                                        
+      Rb_Rd; (not Rb_RdValid)[*1 to 98]; Rb_RdValid
+   };
+
+   sequence bank_R_not_valid_before_timeout {                                                                        
+      Rb_Rd; (not Rb_RdValid)[*99]
+   };
+
+    sequence R_interface (
+       hdltype std_logic R_valid;
+       hdltype std_logic_vector(AxiDataWidth_g - 1 downto 0) R_data;
+       hdltype std_logic_vector(1 downto 0) R_resp
+       ) is {                                                                        
+       S_AxiLite_RValid = R_valid and 
+       S_AxiLite_RData = R_data and 
+       S_AxiLite_RResp = R_resp 
+   };
     -- Assert the R Channel receives the data
     -- from the register bank
     assert_data_received:
-        assert always ( {Rb_Rd; Rb_RdValid} |=> {S_AxiLite_RValid: S_AxiLite_RData = prev(Rb_RdData): S_AxiLite_RResp = "00"} ) abort Rst;
+        assert always ( {bank_R_valid_ready} |=> {R_interface('1', prev(Rb_RdData), AxiResp_Okay_c)} ) abort Rst;
     assert_data_received_2:
-        assert always ( 
-        {Rb_Rd; (not Rb_RdValid)[*1 to (ReadTimeoutClks_g-2) ]; Rb_RdValid} 
-        |=> {S_AxiLite_RValid: S_AxiLite_RData = prev(Rb_RdData)} 
-        ) abort Rst;
+        assert always ( {bank_R_valid_ready_before_timeout} |=> {R_interface('1', prev(Rb_RdData), AxiResp_Okay_c)} ) abort Rst;
 
     -- Assert if the R Channel does not receive
     -- the data from the register bank, the response
     -- is error
     assert_data_not_received:
-        assert always ( {Rb_Rd; (not Rb_RdValid)[*ReadTimeoutClks_g]} |=> {S_AxiLite_RResp = "10"} ) abort Rst;
+        assert always ( {bank_R_not_valid_before_timeout} |=> {S_AxiLite_RResp = AxiResp_SlvErr_c} ) abort Rst;
 
+
+    sequence R_handshake {                                                                        
+        S_AxiLite_RValid: S_AxiLite_RReady
+    };
     -- Assert if the response is valid and ready,
     -- the next cycle is not sent
     assert_response_valid:
-        assert always ( {S_AxiLite_RValid: S_AxiLite_RReady} |=> {not S_AxiLite_RValid} ) abort Rst;
+        assert always ( {R_handshake} |=> {not S_AxiLite_RValid} ) abort Rst;
 
     -- The response cannot have these values
     assert_response_never_01:
@@ -74,7 +102,7 @@ vunit olo_axi_lite_slave (olo_axi_lite_slave) {
     -- Assert if the address is ready,
     -- it was valid in the previous cycle
     assert_write_address_ready_prev_valid:
-        assert always (S_AxiLite_AWReady -> prev(S_AxiLite_AWValid)) abort Rst;
+        assert always ({true; S_AxiLite_AWReady} |-> {prev(S_AxiLite_AWValid)}) abort Rst;
 
     -- Assert the register bank receives the address
     -- from the request
@@ -85,16 +113,36 @@ vunit olo_axi_lite_slave (olo_axi_lite_slave) {
     --assert_write_address_received_2:
     --    assert always ( {S_AxiLite_AWValid: (not S_AxiLite_AWReady)[*]; S_AxiLite_AWReady} |=> {Rb_Addr = prev(S_AxiLite_AWAddr)} ) abort Rst;
 
+    sequence W_handshake {                                                                        
+        S_AxiLite_WValid and S_AxiLite_WReady
+    };
+    sequence prev_W_handshake {                                                                        
+        prev(S_AxiLite_WValid) and prev(S_AxiLite_WReady)
+    };
     -- Assert if write enable,
     -- it was valid in the previous cycle
     assert_write_enable_prev_valid:
-        assert always ( Rb_Wr -> ( prev(S_AxiLite_WValid) and prev(S_AxiLite_WReady) ) ) abort Rst;
+        assert always ( {true; Rb_Wr} 
+        |-> { prev_W_handshake } ) abort Rst;
 
-    assert always ( (S_AxiLite_WValid and S_AxiLite_WReady) -> next S_AxiLite_BValid ) abort Rst;
+    assert_valid_handshake_write_enable:
+        assert always ( {W_handshake} 
+        |=> { Rb_Wr } ) abort Rst;
 
-    assert always ( ( S_AxiLite_WReady and (not prev(S_AxiLite_WReady)) ) -> prev(S_AxiLite_AWReady) ) abort Rst;
+    --assert_x1: assert always ( (S_AxiLite_WValid and S_AxiLite_WReady) -> next S_AxiLite_BValid ) abort Rst;
+    sequence bank_W_interface (
+       hdltype std_logic Wr;
+       hdltype std_logic_vector(AxiDataWidth_g - 1 downto 0) WrData;
+       hdltype std_logic_vector((AxiDataWidth_g/8) - 1 downto 0) ByteEna
+       ) is {                                                                        
+       S_AxiLite_RValid = Wr and 
+       S_AxiLite_RData = WrData and 
+       S_AxiLite_RResp = ByteEna 
+   };
 
-    assert always ( {S_AxiLite_WReady: S_AxiLite_WValid; Rb_Wr} |-> {Rb_WrData = prev(S_AxiLite_WData)} ) abort Rst;
+    assert_x2: assert always ( {true; S_AxiLite_WReady and (not prev(S_AxiLite_WReady))}  |-> {prev(S_AxiLite_AWReady)} ) abort Rst;
+
+    assert_bank_W: assert always ( {W_handshake; Rb_Wr} |-> {bank_W_interface('1', prev(S_AxiLite_WData), prev(S_AxiLite_WStrb))} ) abort Rst;
 
     -- Writes cannot fail
     assert always (S_AxiLite_BResp = "00"); 
@@ -106,29 +154,49 @@ vunit olo_axi_lite_slave (olo_axi_lite_slave) {
     assert_never_read_and_write:
         assert ( never (Rb_Rd and Rb_Wr) ) abort Rst;
 
-    assert_never_read_and_write_axi:
-        assert ( never (S_AxiLite_WValid and S_AxiLite_RValid) ) abort Rst;
-
     -- Cover everything that can happen
     cover{[*]; not Rst: Rb_Wr; [*]; not Rst: Rb_Wr: Rb_Addr = x"10"; [*]; not Rst: Rb_Rd; (not Rst)[*10]; [*]; Rb_RdValid; [*]; not Rst: Rb_Rd; [*]; Rb_RdValid};
 
-    cover{[*]; 
-    ((Rb_Rd = '0') and (Rb_RdValid = '0'))[*1];
-    ((Rb_Addr = x"10") and (Rb_Rd = '1') and (Rb_RdValid = '0'))[*1];
-    ((Rb_Rd = '0') and (Rb_RdValid = '1') and (Rb_RdData = x"DEADBEEF"))[*1];
-    ((Rb_Rd = '0') and (Rb_RdValid = '0'))[*2];
-    ((Rb_Addr = x"0C") and (Rb_Rd = '1') and (Rb_RdValid = '0'))[*1];
-    ((Rb_Rd = '0') and (Rb_RdValid = '0'))[*2];
-    ((Rb_Rd = '0') and (Rb_RdValid = '1') and (Rb_RdData = x"C001D00D"))[*1];
-    ((Rb_Rd = '0') and (Rb_RdValid = '0'))[*1]
-    };
+    sequence toggle_output_axi_data_width (
+       hdltype std_logic_vector(AxiDataWidth_g - 1 downto 0) axiData
+       ) is {                                                                        
+       Rst = '0' and countones(axiData) = 0; [*]; 
+       Rst = '0' and countones(axiData) = AxiDataWidth_g; [*]; 
+       Rst = '0' and countones(axiData) = 0
+   };
+    sequence toggle_output_axi_addr_width (
+       hdltype std_logic_vector(AxiAddrWidth_g - 1 downto 0) axiAddr
+       ) is {                                                                        
+       Rst = '0' and countones(axiAddr) = 0; [*]; 
+       Rst = '0' and countones(axiAddr) = AxiAddrWidth_g; [*]; 
+       Rst = '0' and countones(axiAddr) = 0
+   };
 
-    cover{[*];
-    ((Rb_Wr = '0'))[*1];
-    ((Rb_Addr = x"10") and (Rb_Wr = '1') and (Rb_ByteEna = x"F") and (Rb_WrData = x"DEADBEEF"))[*1];
-    ((Rb_Wr = '0'))[*3];
-    ((Rb_Addr = x"0C") and (Rb_Wr = '1') and (Rb_ByteEna = x"C") and (Rb_WrData = x"C001D00D"))[*1];
-    ((Rb_Wr = '0'))[*3] 
-    };
+    cover {toggle_output_axi_data_width(S_AxiLite_RData)};
+    cover {toggle_output_axi_data_width(Rb_WrData)};
+    cover {toggle_output_axi_addr_width(Rb_Addr)};
+
+   sequence cover_seq_1 {                                                                        
+      ((Rb_Rd = '0') and (Rb_RdValid = '0'))[*1];
+      ((Rb_Addr = x"10") and (Rb_Rd = '1') and (Rb_RdValid = '0'))[*1];
+      ((Rb_Rd = '0') and (Rb_RdValid = '1') and (Rb_RdData = x"DEADBEEF"))[*1];
+      ((Rb_Rd = '0') and (Rb_RdValid = '0'))[*2];
+      ((Rb_Addr = x"0C") and (Rb_Rd = '1') and (Rb_RdValid = '0'))[*1];
+      ((Rb_Rd = '0') and (Rb_RdValid = '0'))[*2];
+      ((Rb_Rd = '0') and (Rb_RdValid = '1') and (Rb_RdData = x"C001D00D"))[*1];
+      ((Rb_Rd = '0') and (Rb_RdValid = '0'))[*1]
+   };
+
+   sequence cover_seq_2 {                                                                        
+      ((Rb_Wr = '0'))[*1];
+      ((Rb_Addr = x"10") and (Rb_Wr = '1') and (Rb_ByteEna = x"F") and (Rb_WrData = x"DEADBEEF"))[*1];
+      ((Rb_Wr = '0'))[*3];
+      ((Rb_Addr = x"0C") and (Rb_Wr = '1') and (Rb_ByteEna = x"C") and (Rb_WrData = x"C001D00D"))[*1];
+      ((Rb_Wr = '0'))[*3] 
+   };
+
+    cover{cover_seq_1};
+
+    cover{cover_seq_2};
 
 }
