@@ -18,10 +18,6 @@ vunit sdram_properties (sdram(arch)) {
     -- Force a reset in the first clock cycle
     assume_initial_reset: assume reset = '1';
 
-    -- Assumption needed for ghdl + sby, otherwise state takes value "111" in induction
-    assume always (state = INIT or state = MODE or state = IDLE or state = ACTIVE 
-                or state = READ or state = WRITE or state = REFRESH);
-
     -- This way is easier to visualize data (NOT A NECESSARY ASSUME)
     --assume always (valid = '1' -> (countones(q) /= 0) ) abort reset;
     -- This way is easier to visualize data (NOT A NECESSARY ASSUME)
@@ -32,17 +28,69 @@ vunit sdram_properties (sdram(arch)) {
     -- If the data is acknowledged, there was a previous request
     assert_ack_after_req: assert always (ack -> prev(req)) abort reset;
 
+    sequence command_deselect is {                                                                        
+        sdram_cs_n = '1'                                                    
+    }; 
+
+    sequence command_nop is {                                                                        
+        sdram_cs_n = '0' and                                                            
+        sdram_ras_n = '1' and                                                            
+        sdram_cas_n = '1' and
+        sdram_we_n = '1'                                                    
+    }; 
+
+    sequence command_precharge is {                                                                        
+        sdram_cs_n = '0' and                                                            
+        sdram_ras_n = '0' and                                                            
+        sdram_cas_n = '1' and
+        sdram_we_n = '0'                                                    
+    }; 
+
+    sequence command_load_mode is {                                                                        
+        sdram_cs_n = '0' and                                                            
+        sdram_ras_n = '0' and                                                            
+        sdram_cas_n = '0' and
+        sdram_we_n = '0'                                                    
+    }; 
+
+    sequence command_active is {                                                                        
+        sdram_cs_n = '0' and                                                            
+        sdram_ras_n = '0' and                                                            
+        sdram_cas_n = '1' and
+        sdram_we_n = '1'                                                    
+    }; 
+
+    sequence command_write is {                                                                        
+        sdram_cs_n = '0' and                                                            
+        sdram_ras_n = '1' and                                                            
+        sdram_cas_n = '0' and
+        sdram_we_n = '0'                                                    
+    }; 
+
+    sequence command_read is {                                                                        
+        sdram_cs_n = '0' and                                                            
+        sdram_ras_n = '1' and                                                            
+        sdram_cas_n = '0' and
+        sdram_we_n = '1'                                                    
+    }; 
+
+    sequence command_auto_refresh is {                                                                        
+        sdram_cs_n = '0' and                                                            
+        sdram_ras_n = '0' and                                                            
+        sdram_cas_n = '0' and
+        sdram_we_n = '1'                                                    
+    }; 
+
     -- If write enable is active in state ACTIVE,
     -- the next state will be WRITE
     assert_we_next_write:
-        assert always ( { we; sdram_cs_n = '0': sdram_ras_n = '0': sdram_cas_n = '1': sdram_we_n = '1' } 
-        |=> { sdram_cs_n = '0': sdram_ras_n = '1': sdram_cas_n = '0': sdram_we_n = '0' } ) abort reset;
+        assert always ( { we; command_active } |=> { command_write } ) abort reset;
 
     -- If write enable is not active in state ACTIVE,
     -- the next state will be READ
     assert_not_we_next_read:
-        assert always ( { not we; sdram_cs_n = '0': sdram_ras_n = '0': sdram_cas_n = '1': sdram_we_n = '1' } 
-        |=> { sdram_cs_n = '0': sdram_ras_n = '1': sdram_cas_n = '0': sdram_we_n = '1' } ) abort reset;
+        assert always ( { not we; command_active } 
+        |=> { command_read } ) abort reset;
 
     -- If there is a reset, it takes 7 cycles to go to IDLE.
     -- It is interesting that we use prev(reset) instead of reset,
@@ -56,7 +104,7 @@ vunit sdram_properties (sdram(arch)) {
     -- The autorefresh happens when the current state ends.
     assert_refresh:
         assert always ( {reset; (not reset)[*68]: start; not reset} |-> 
-        { sdram_cs_n = '0': sdram_ras_n = '0': sdram_cas_n = '0': sdram_we_n = '1' } );
+        { command_auto_refresh } );
 
     -- This value is always 0
     assert_sdram_dqmh_0: assert always (sdram_dqmh = '0');
@@ -75,33 +123,110 @@ vunit sdram_properties (sdram(arch)) {
     assert_q_lsb_correct:
         assert always ( {true; valid} |-> {q (15 downto 0) = prev(sdram_dq)} ) abort reset;
 
+    assert always ( {command_active; command_read; true[*3]} |-> {q (31 downto 16) = prev(sdram_dq)} ) abort reset;
+    assert always ( {command_active; command_read; true[*4]} |-> {valid} ) abort reset;
+    assert always ( {command_active; command_read; true[*4]} |-> {q (15 downto 0) = prev(sdram_dq)} ) abort reset;
+    assert always ( {command_active; command_read; true[*4]} |-> {q (31 downto 16) = prev(sdram_dq,2)} ) abort reset;
+    
+    assert always ( {prev(reset)} |-> {command_nop} ) abort reset;
+    assert always ( {prev(reset); true} |-> {command_deselect} ) abort reset; 
+    assert always ( {prev(reset); true; true} |-> {command_precharge} ) abort reset; -- [*INIT_WAIT]
+    assert always ( {prev(reset); true; true; true} |-> {command_auto_refresh} ) abort reset; -- [*INIT_WAIT+PRECHARGE_WAIT]
+    assert always ( {prev(reset); true; true; true; true} |-> {command_auto_refresh} ) abort reset; -- [*INIT_WAIT+PRECHARGE_WAIT+REFRESH_WAIT]
+    assert always ( {prev(reset); true; true; true; true; true} |-> {command_load_mode} ) abort reset; -- [*INIT_WAIT+PRECHARGE_WAIT+REFRESH_WAIT+REFRESH_WAIT]
+    assert always ( {prev(reset); true; true; true; true; true; true} |-> {command_nop} ) abort reset; -- idle [*INIT_WAIT+PRECHARGE_WAIT+REFRESH_WAIT+REFRESH_WAIT+LOAD_MODE_WAIT]
+    assert always ( {prev(reset); true; true; true; true; true; (req = '0')[*62]} |=> {command_auto_refresh} ) abort reset; -- [*REFRESH_INTERVAL-lo anterior]
+    assert always ( {prev(reset); true; true; true; true; true; req = '1'} |=> {command_active} ) abort reset; -- idle [*REFRESH_INTERVAL]
+
     -- Assert the sdram controller receives the correct address
     assert_sdram_ba_correct:
-        assert always ( { sdram_cs_n = '0': sdram_ras_n = '1': sdram_cas_n = '0': sdram_we_n = '0' } 
+        assert always ( { command_write } 
         |-> { prev(sdram_ba) = prev(addr(22 downto 21),2) } ) abort reset;
 
     -- Assert the sdram controller receives the correct address
     assert_sdram_a_correct:
-        assert always ( { sdram_cs_n = '0': sdram_ras_n = '1': sdram_cas_n = '0': sdram_we_n = '0' } 
+        assert always ( { command_write } 
         |-> { prev(sdram_a) = prev(addr(20 downto 8),2) } ) abort reset;
 
     -- Assert the sdram controller receives the correct address
     assert_sdram_a_correct_2:
-        assert always ( { sdram_cs_n = '0': sdram_ras_n = '1': sdram_cas_n = '0': sdram_we_n = '0' } 
+        assert always ( { command_write } 
         |-> { sdram_a = "0010" & prev(addr(7 downto 0),2) & '0' } ) abort reset;
 
     -- Assert the sdram controller receives the correct data
     assert_sdram_dq_correct:
-        assert always ( { sdram_cs_n = '0': sdram_ras_n = '1': sdram_cas_n = '0': sdram_we_n = '0' } 
+        assert always ( { command_write } 
         |-> { sdram_dq = prev(data(31 downto 16), 2) } ) abort reset;
 
     -- Assert the sdram controller receives the correct data
     assert_sdram_dq_correct_2:
-    assert always ( { sdram_cs_n = '0': sdram_ras_n = '1': sdram_cas_n = '0': sdram_we_n = '0' } 
-    |=> { sdram_dq = prev(data(15 downto 0), 3) } ) abort reset;
+        assert always ( { command_write } 
+        |=> { sdram_dq = prev(data(15 downto 0), 3) } ) abort reset;
 
+    sequence toggle_output_sdram_dq_1 {                                                                        
+       reset = '0' and countones(sdram_dq) = 0; 
+       countones(sdram_dq) = SDRAM_DATA_WIDTH and valid = '1' and reset = '0'; 
+       countones(sdram_dq) = 0
+   };
+    sequence toggle_output_sdram_dq_2 {                                                                        
+       countones(sdram_dq) = 0; 
+       reset = '0' and countones(sdram_dq) = SDRAM_DATA_WIDTH; 
+       countones(sdram_dq) = 0 and valid = '1' and reset = '0'
+   };
+    sequence toggle_output_sdram_addr_width (
+       hdltype std_logic_vector(SDRAM_ADDR_WIDTH - 1 downto 0) a
+       ) is {                                                                        
+       countones(a) = 0; [*]; countones(a) = SDRAM_ADDR_WIDTH; [*]; countones(a) = 0
+   };
+    sequence toggle_output_data_width (
+       hdltype std_logic_vector(DATA_WIDTH - 1 downto 0) q
+       ) is {                                                                        
+       countones(q) = 0; [*]; countones(q) = DATA_WIDTH; [*]; countones(q) = 0
+   };
+    sequence toggle_output_addr_width (
+       hdltype std_logic_vector(AxiAddrWidth_g - 1 downto 0) axiAddr
+       ) is {                                                                        
+       Rst = '0' and countones(axiAddr) = 0; [*]; 
+       Rst = '0' and countones(axiAddr) = AxiAddrWidth_g; [*]; 
+       Rst = '0' and countones(axiAddr) = 0
+   };
+    sequence start_data {                                                                        
+       countones(data) = 0; 
+       reset = '0' and start = '1'; 
+       countones(data) = DATA_WIDTH; 
+       true[*4]; 
+       countones(data) = 0
+   };
+    sequence start_addr {                                                                        
+       countones(addr) = 0; 
+       reset = '0' and start = '1'; 
+       countones(addr) = ADDR_WIDTH; 
+       true[*4]; 
+       countones(addr) = 0
+   };
+    sequence no_rst {                                                                        
+       reset = '1'; (reset = '0')[*]
+   };
+    sequence state_no_rst (
+       hdltype state_t state
+       ) is {                                                                        
+       reset = '0' and state = state
+   };
     -- Cover a few states
-    cover_mode: cover {state = MODE};
-    cover_write_valid: cover {valid: not reset};
-    cover_refresh: cover {state = REFRESH};
+    cover_read_valid: cover {toggle_output_sdram_dq_1};
+    cover_read_valid_2: cover {toggle_output_sdram_dq_2};
+    cover_read_value: cover {toggle_output_data_width(q)};
+    cover_sdram_a: cover {toggle_output_sdram_addr_width(sdram_a)};
+    cover_transition_to_refresh_1: cover {no_rst; state_no_rst(IDLE);    state_no_rst(REFRESH)};
+    cover_transition_to_refresh_2: cover {no_rst; state_no_rst(READ);    state_no_rst(REFRESH)};
+    cover_transition_to_refresh_3: cover {no_rst; state_no_rst(WRITE);   state_no_rst(REFRESH)};
+    cover_transition_to_idle_1:    cover {no_rst; state_no_rst(REFRESH); state_no_rst(IDLE)};
+    cover_transition_to_idle_2:    cover {no_rst; state_no_rst(READ);    state_no_rst(IDLE)};
+    cover_transition_to_idle_3:    cover {no_rst; state_no_rst(WRITE);   state_no_rst(IDLE)};
+    cover_transition_to_active_1:  cover {no_rst; state_no_rst(REFRESH); state_no_rst(ACTIVE)};
+    cover_transition_to_active_2:  cover {no_rst; state_no_rst(READ);    state_no_rst(ACTIVE)};
+    cover_transition_to_active_3:  cover {no_rst; state_no_rst(WRITE);   state_no_rst(ACTIVE)};
+    cover_start_data: cover {start_data};
+    cover_start_addr: cover {start_addr};
+
 }
