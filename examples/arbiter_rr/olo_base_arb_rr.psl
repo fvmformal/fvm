@@ -1,74 +1,86 @@
 vunit olo_base_arb_rr_properties (olo_base_arb_rr) {
 
-    --inherit rr_arbiter_common;
+   --inherit rr_arbiter_common;
 
-    --use work.rr_arbiter_common.all;
+   --use work.rr_arbiter_common.all;
 
-    -- Default clock for PSL assertions
-    default clock is rising_edge(Clk);
+   -- Default clock for PSL assertions
+   default clock is rising_edge(Clk);
 
-    -- Force a reset in the first clock cycle
-    assume_initial_reset: assume Rst = '1';
+   -- Force a reset in the first clock cycle
+   assume_initial_reset: assume Rst = '1';
 
-    -- Output cannot be ready when it is not valid
-    assume always (not Out_Valid) -> (not Out_Ready);
+   -- Output cannot be ready when it is not valid
+   assume always (not Out_Valid) -> (not Out_Ready);
 
-    --assume always ( countones(In_Req) > 0 -> (stable(In_Req) until_ Out_Ready) ) abort Rst;
+   --assume always ( countones(In_Req) > 0 -> (stable(In_Req) until_ Out_Ready) ) abort Rst;
 
-    -- Assert Out_Grant has maximum one bit with value 1
-    assert always onehot0(Out_Grant) abort Rst;
+   -- Assert Out_Grant has maximum one bit with value 1
+   assert always onehot0(Out_Grant) abort Rst;
 
-    -- Assert when the input is 0, the output is 0
-    --assert always {countones(In_Req) = 0} |-> {countones(Out_Grant) = 0} abort Rst;
+   -- Assert when the input is 0, the output is 0
+   assert always {countones(In_Req) = 0} |-> {countones(Out_Grant) = 0} abort Rst;
 
-    -- Assert when the input is not 0, the output is not 0
-    --assert always {countones(In_Req) >= 1} |-> {onehot(Out_Grant)} abort Rst;
+   -- Assert when the input is not 0, the output is not 0
+   assert always {countones(In_Req) >= 1} |-> {onehot(Out_Grant)} abort Rst;
 
-    -- Assert when the output is 0, the output is not valid
-    --assert always {countones(Out_Grant) = 0} |-> {Out_Valid = '0'} abort Rst;
+   -- Assert when the output is 0, the output is not valid
+   assert always {countones(Out_Grant) = 0} |-> {Out_Valid = '0'} abort Rst;
 
-    -- Assert when the output is not 0, the output is valid
-    --assert always {countones(Out_Grant) = 1} |-> {Out_Valid = '1'} abort Rst;
+   -- Assert when the output is not 0, the output is valid
+   assert always {countones(Out_Grant) = 1} |-> {Out_Valid = '1'} abort Rst;
 
-    -- Assert when two Out_Ready in two consecutive cycles,
-    -- the second granted output is the result of a round robin
-    -- function defined in rr_arbiter_common.psl that receives as parameters
-    -- the previous granted output and the input request. This function
-    -- simulates the round_robin algorithm.
-    assert always ( {Out_Ready: Out_Valid; Out_Ready: Out_Valid} |-> { Out_Grant = round_robin_arbiter_msb(In_Req, prev(Out_Grant)) } ) abort Rst;
+   sequence valid_grant {                                                                        
+      Out_Ready = '1' and Out_Valid = '1'
+   };
+   -- Assert when two Out_Ready in two consecutive cycles,
+   -- the second granted output is the result of a round robin
+   -- function defined in rr_arbiter_common.psl that receives as parameters
+   -- the previous granted output and the input request. This function
+   -- simulates the round_robin algorithm.
+   assert always ( {valid_grant; valid_grant} |-> { Out_Grant = round_robin_arbiter_msb(In_Req, prev(Out_Grant)) } ) abort Rst;
 
-    -- The next few assertions are similar to the previous one.
-    -- The main difference is we do not have two consecutive cycles,
-    -- can be consecutive or not, so we cannot use operator prev(). 
-    -- So, we use 4 different assertions for each value of Out_Grant
+   -- The next few assertions are similar to the previous one.
+   -- The main difference is we do not have two consecutive cycles,
+   -- can be consecutive or not, so we cannot use operator prev(). 
+   -- So, we use 4 different assertions for each value of Out_Grant
 
-    signal last_grant : std_logic_vector(3 downto 0);
+   signal last_grant : std_logic_vector(3 downto 0);
 
-    attribute anyconst: boolean;
-    attribute anyconst of last_grant: signal is true;
+   assume always ( {true} |=> {last_grant = Out_Grant} );
 
-    assert always ( {Out_Ready: Out_Valid: Out_Grant = last_grant; (not (Out_Ready and Out_Valid))[*];Out_Ready: Out_Valid} 
-    |-> { Out_Grant = round_robin_arbiter_msb(In_Req, last_grant) } ) abort Rst;
+   sequence last_valid_grant (
+       hdltype std_logic_vector(Width_g-1 downto 0) grant
+       ) is {                                                                        
+      valid_grant: Out_Grant = grant
+   };
 
-    assert always ({rst = '1'; Out_Ready: Out_Valid} |-> {Out_Grant = priority_arbiter_msb(In_Req)});
-    assert always ({rst = '1'; (not (Out_Ready and Out_Valid))[*]; Out_Ready: Out_Valid} |-> {Out_Grant = priority_arbiter_msb(In_Req)});
+   sequence no_grant {                                                                        
+      not (Out_Ready and Out_Valid)
+   };
 
-    cover {rst = '0'; countones(Out_Grant) = 0; (Out_Ready = '1' and Out_Valid = '1' and countones(In_Req) = 64)[*70]};
+   assert always ( {last_valid_grant(last_grant); no_grant[*]; valid_grant} 
+   |-> { Out_Grant = round_robin_arbiter_msb(In_Req, last_grant) } ) abort Rst;
 
-    cover {(rst = '0' and Out_Ready = '1' and Out_Valid = '1' and countones(In_Req) > 1 and Out_Grant /= prev(Out_Grant))[*300]};
-    cover {rst = '0'; countones(In_Req) = 0 and countones(Out_Grant) = 0; (rst = '0' and Out_Ready = '1' and Out_Valid = '1' and countones(In_Req) = 64)[*100];
-           rst = '0'; rst = '0' and countones(In_Req) = 0; Out_Grant /= prev(Out_Grant,2); rst = '1'};
-    cover {rst = '0'; countones(In_Req) = 0 and countones(Out_Grant) = 0; (rst = '0' and Out_Ready = '1' and Out_Valid = '1' and countones(In_Req) = 24)[*24];
-           rst = '0'; countones(In_Req) = 0; rst = '1'};
-    cover {(rst = '0' and Out_Ready = '1' and Out_Valid = '1' and countones(In_Req) > 1 and Out_Grant /= prev(Out_Grant))[*300]};
+   assert always ({rst = '1'; valid_grant} |-> {Out_Grant = priority_arbiter_msb(In_Req)});
+   assert always ({rst = '1'; no_grant[*]; valid_grant} |-> {Out_Grant = priority_arbiter_msb(In_Req)});
 
-    sequence unmasked_seq (
-        hdltype integer idx
-        ) is {                                                                        
-        countones(In_Req) = 1 and Out_Ready = '1' and Out_Grant(idx) = '1' and rst = '0'
-    };
+   cover {rst = '0'; countones(Out_Grant) = 0; (Out_Ready = '1' and Out_Valid = '1' and countones(In_Req) = 64)[*70]};
 
-    cover {rst = '0'; unmasked_seq(0); unmasked_seq(1); unmasked_seq(2); unmasked_seq(3);
+   cover {(rst = '0' and Out_Ready = '1' and Out_Valid = '1' and countones(In_Req) > 1 and Out_Grant /= prev(Out_Grant))[*300]};
+   cover {rst = '0'; countones(In_Req) = 0 and countones(Out_Grant) = 0; (rst = '0' and Out_Ready = '1' and Out_Valid = '1' and countones(In_Req) = 64)[*100];
+          rst = '0'; rst = '0' and countones(In_Req) = 0; Out_Grant /= prev(Out_Grant,2); rst = '1'};
+   cover {rst = '0'; countones(In_Req) = 0 and countones(Out_Grant) = 0; (rst = '0' and Out_Ready = '1' and Out_Valid = '1' and countones(In_Req) = 24)[*24];
+          rst = '0'; countones(In_Req) = 0; rst = '1'};
+   cover {(rst = '0' and Out_Ready = '1' and Out_Valid = '1' and countones(In_Req) > 1 and Out_Grant /= prev(Out_Grant))[*300]};
+
+   sequence unmasked_seq (
+       hdltype integer idx
+       ) is {                                                                        
+       countones(In_Req) = 1 and Out_Ready = '1' and Out_Grant(idx) = '1' and rst = '0'
+   };
+
+   cover {rst = '0'; unmasked_seq(0); unmasked_seq(1); unmasked_seq(2); unmasked_seq(3);
            unmasked_seq(4); unmasked_seq(5); unmasked_seq(6); unmasked_seq(7);
            unmasked_seq(8); unmasked_seq(9); unmasked_seq(10); unmasked_seq(11);
            unmasked_seq(12); unmasked_seq(13); unmasked_seq(14); unmasked_seq(15);
