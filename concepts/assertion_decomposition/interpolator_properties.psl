@@ -65,211 +65,23 @@ vunit interpolator_properties (interpolator(interpolator_arch)) {
     -- TODO: Parameterize index
     -- Parameterizable output sequence
     sequence output_seq_0 (                                                          
-    hdltype interpolator_output_tran output_tran                                                        
+    hdltype interpolator_output_tran output_tran;
+    hdltype integer idx                                                                                                                
     ) is {      
-        (abs(estim.re - output_tran.data(0).re) < 2):
-        (abs(estim.im - output_tran.data(0).im) < 2):
+        (abs(estim.re - output_tran.data(idx).re) < 4):
+        (abs(estim.im - output_tran.data(idx).im) < 4):
         estim_valid = '1'                         
     };
-
-    -- Parameterizable output sequence
-    sequence output_seq_1 (                                                          
-        hdltype interpolator_output_tran output_tran                                                        
-        ) is {      
-            (abs(estim.re - output_tran.data(1).re) < 4):
-            (abs(estim.im - output_tran.data(1).im) < 4):
-            estim_valid = '1'                         
-        };
-
-    -- Parameterizable output sequence
-    sequence output_seq_2 (                                                          
-        hdltype interpolator_output_tran output_tran                                                        
-        ) is {      
-            (abs(estim.re - output_tran.data(2).re) < 3):
-            (abs(estim.im - output_tran.data(2).im) < 3):
-            estim_valid = '1'                         
-        };
-
-    -- Parameterizable output sequence
-    sequence output_seq_3 (                                                          
-        hdltype interpolator_output_tran output_tran                                                        
-        ) is {      
-            (abs(estim.re - output_tran.data(3).re) < 3):
-            (abs(estim.im - output_tran.data(3).im) < 3):
-            estim_valid = '1'                         
-        };
-
-    -- Parameterizable output sequence
-    sequence output_seq_4 (                                                          
-        hdltype interpolator_output_tran output_tran                                                        
-        ) is {      
-            (abs(estim.re - output_tran.data(4).re) < 3):
-            (abs(estim.im - output_tran.data(4).im) < 3):
-            estim_valid = '1'                         
-        };
-    
-    -- Parameterizable output sequence
-    sequence output_seq_5 (                                                          
-        hdltype interpolator_output_tran output_tran                                                        
-        ) is {      
-            (abs(estim.re - output_tran.data(5).re) < 4):
-            (abs(estim.im - output_tran.data(5).im) < 4):
-            estim_valid = '1'                         
-        };
-
-    -- Parameterizable output sequence
-    sequence output_seq_6 (                                                          
-        hdltype interpolator_output_tran output_tran                                                        
-        ) is {      
-            (abs(estim.re - output_tran.data(6).re) < 3):
-            (abs(estim.im - output_tran.data(6).im) < 3):
-            estim_valid = '1'                         
-        };
-
-    -- Parameterizable output sequence
-    sequence output_seq_7 (                                                          
-        hdltype interpolator_output_tran output_tran                                                        
-        ) is {      
-            (abs(estim.re - output_tran.data(7).re) < 4):
-            (abs(estim.im - output_tran.data(7).im) < 4):
-            estim_valid = '1'                         
-        };
-
-    -- Parameterizable output sequence
-    sequence output_seq_8 (                                                          
-        hdltype interpolator_output_tran output_tran                                                        
-        ) is {      
-            (abs(estim.re - output_tran.data(8).re) < 3):
-            (abs(estim.im - output_tran.data(8).im) < 3):
-            estim_valid = '1'                         
-        };
-
-
-    -- Parameterizable output sequence
-    sequence output_seq_9 (                                                          
-        hdltype interpolator_output_tran output_tran                                                        
-        ) is {      
-            (abs(estim.re - output_tran.data(9).re) < 3):
-            (abs(estim.im - output_tran.data(9).im) < 3):
-            estim_valid = '1'                         
-        };
-
-
-    -- Parameterizable output sequence
-    sequence output_seq_10 (                                                          
-        hdltype interpolator_output_tran output_tran                                                        
-        ) is {      
-            (abs(estim.re - output_tran.data(10).re) < 3):
-            (abs(estim.im - output_tran.data(10).im) < 3):
-            estim_valid = '1'                         
-        };
-
-
-    -- Parameterizable output sequence
-    sequence output_seq_11 (                                                          
-        hdltype interpolator_output_tran output_tran                                                        
-        ) is {      
-            (abs(estim.re - output_tran.data(11).re) < 4):
-            (abs(estim.im - output_tran.data(11).im) < 4):
-            estim_valid = '1'                         
-        };
-
 
     -- Parameterizable property that relates the input and
     -- the output sequence
     property interpolation_0(
         hdltype interpolator_input_tran input_tran;
-        hdltype interpolator_output_tran output_tran
+        hdltype interpolator_output_tran output_tran;
+        hdltype integer idx
         ) is
-        always ((input_seq(input_tran) |=> output_seq_0(output_tran)) abort rst);
+        always (( {input_seq(input_tran); true[*idx]} |=> output_seq_0(output_tran, idx)) abort rst);
 
-    -- Parameterizable property that relates the input and
-    -- the output sequence
-    property interpolation_1(
-        hdltype interpolator_input_tran input_tran;
-        hdltype interpolator_output_tran output_tran
-        ) is
-        always (( {input_seq(input_tran);true} |=> output_seq_1(output_tran)) abort rst);
-
-    -- Parameterizable property that relates the input and
-    -- the output sequence
-    property interpolation_2(
-        hdltype interpolator_input_tran input_tran;
-        hdltype interpolator_output_tran output_tran
-        ) is
-        always (( {input_seq(input_tran);true[*2]} |=> output_seq_2(output_tran)) abort rst);
-
-    -- Parameterizable property that relates the input and
-    -- the output sequence
-    property interpolation_3(
-        hdltype interpolator_input_tran input_tran;
-        hdltype interpolator_output_tran output_tran
-        ) is
-        always (( {input_seq(input_tran);true[*3]} |=> output_seq_3(output_tran)) abort rst);
-
-    -- Parameterizable property that relates the input and
-    -- the output sequence
-    property interpolation_4(
-        hdltype interpolator_input_tran input_tran;
-        hdltype interpolator_output_tran output_tran
-        ) is
-        always (( {input_seq(input_tran);true[*4]} |=> output_seq_4(output_tran)) abort rst);
-
-    -- Parameterizable property that relates the input and
-    -- the output sequence
-    property interpolation_5(
-        hdltype interpolator_input_tran input_tran;
-        hdltype interpolator_output_tran output_tran
-        ) is
-        always (( {input_seq(input_tran);true[*5]} |=> output_seq_5(output_tran)) abort rst);
-
-    -- Parameterizable property that relates the input and
-    -- the output sequence
-    property interpolation_6(
-        hdltype interpolator_input_tran input_tran;
-        hdltype interpolator_output_tran output_tran
-        ) is
-        always (( {input_seq(input_tran);true[*6]} |=> output_seq_6(output_tran)) abort rst);
-
-    -- Parameterizable property that relates the input and
-    -- the output sequence
-    property interpolation_7(
-        hdltype interpolator_input_tran input_tran;
-        hdltype interpolator_output_tran output_tran
-        ) is
-        always (( {input_seq(input_tran);true[*7]} |=> output_seq_7(output_tran)) abort rst);
-
-    -- Parameterizable property that relates the input and
-    -- the output sequence
-    property interpolation_8(
-        hdltype interpolator_input_tran input_tran;
-        hdltype interpolator_output_tran output_tran
-        ) is
-        always (( {input_seq(input_tran);true[*8]} |=> output_seq_8(output_tran)) abort rst);
-
-    -- Parameterizable property that relates the input and
-    -- the output sequence
-    property interpolation_9(
-        hdltype interpolator_input_tran input_tran;
-        hdltype interpolator_output_tran output_tran
-        ) is
-        always (( {input_seq(input_tran);true[*9]} |=> output_seq_9(output_tran)) abort rst);
-
-    -- Parameterizable property that relates the input and
-    -- the output sequence
-    property interpolation_10(
-        hdltype interpolator_input_tran input_tran;
-        hdltype interpolator_output_tran output_tran
-        ) is
-        always (( {input_seq(input_tran);true[*10]} |=> output_seq_10(output_tran)) abort rst);
-
-    -- Parameterizable property that relates the input and
-    -- the output sequence
-    property interpolation_11(
-        hdltype interpolator_input_tran input_tran;
-        hdltype interpolator_output_tran output_tran
-        ) is
-        always (( {input_seq(input_tran);true[*11]} |=> output_seq_11(output_tran)) abort rst);
     -- Input transaction assignation
     signal input_tran : interpolator_input_tran;
     input_tran.infr <= inferior;
@@ -277,51 +89,51 @@ vunit interpolator_properties (interpolator(interpolator_arch)) {
 
     -- Assert the parameterized property
     interpolator_works_correctly_0:
-       assert interpolation_0(input_tran, interpolator_predict(input_tran));
+       assert interpolation_0(input_tran, interpolator_predict(input_tran), 0);
 
     -- Assert the parameterized property
     interpolator_works_correctly_1:
-        assert interpolation_1(input_tran, interpolator_predict(input_tran));
+        assert interpolation_1(input_tran, interpolator_predict(input_tran), 1);
 
     -- Assert the parameterized property
     interpolator_works_correctly_2:
-        assert interpolation_2(input_tran, interpolator_predict(input_tran));
+        assert interpolation_2(input_tran, interpolator_predict(input_tran), 2);
 
     -- Assert the parameterized property
     interpolator_works_correctly_3:
-        assert interpolation_3(input_tran, interpolator_predict(input_tran));
+        assert interpolation_3(input_tran, interpolator_predict(input_tran), 3);
 
     -- Assert the parameterized property
     interpolator_works_correctly_4:
-        assert interpolation_4(input_tran, interpolator_predict(input_tran));
+        assert interpolation_4(input_tran, interpolator_predict(input_tran), 4);
 
     -- Assert the parameterized property
     interpolator_works_correctly_5:
-        assert interpolation_5(input_tran, interpolator_predict(input_tran));
+        assert interpolation_5(input_tran, interpolator_predict(input_tran), 5);
 
     -- Assert the parameterized property
     interpolator_works_correctly_6:
-        assert interpolation_6(input_tran, interpolator_predict(input_tran));
+        assert interpolation_6(input_tran, interpolator_predict(input_tran), 6);
 
     -- Assert the parameterized property
     interpolator_works_correctly_7:
-        assert interpolation_7(input_tran, interpolator_predict(input_tran));
+        assert interpolation_7(input_tran, interpolator_predict(input_tran), 7);
 
     -- Assert the parameterized property
     interpolator_works_correctly_8:
-        assert interpolation_8(input_tran, interpolator_predict(input_tran));
+        assert interpolation_8(input_tran, interpolator_predict(input_tran), 8);
 
     -- Assert the parameterized property
     interpolator_works_correctly_9:
-        assert interpolation_9(input_tran, interpolator_predict(input_tran));
+        assert interpolation_9(input_tran, interpolator_predict(input_tran), 9);
 
     -- Assert the parameterized property
     interpolator_works_correctly_10:
-        assert interpolation_10(input_tran, interpolator_predict(input_tran));
+        assert interpolation_10(input_tran, interpolator_predict(input_tran), 10);
 
     -- Assert the parameterized property
     interpolator_works_correctly_11:
-        assert interpolation_11(input_tran, interpolator_predict(input_tran));
+        assert interpolation_11(input_tran, interpolator_predict(input_tran), 11);
 
     sequence input (                                                           
         hdltype signed(9 downto 0) inf_re;
