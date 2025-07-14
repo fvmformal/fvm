@@ -1,86 +1,238 @@
-vunit olo_base_fifo_async (olo_base_fifo_async) {
+vunit olo_base_fifo_async (olo_base_fifo_async(rtl)) {
 
-    -- Force a reset in the first clock cycle
-    assume_initial_reset_in: assume (In_Rst = '1') @rising_edge(In_Clk);
-    assume_initial_reset_out: assume (Out_Rst = '1') @rising_edge(Out_Clk);
+  -- Force a reset in the first clock cycle
+  assume_initial_reset_in: assume (In_Rst = '1') @rising_edge(In_Clk);
+  assume_initial_reset_out: assume (Out_Rst = '1') @rising_edge(Out_Clk);
 
-    -- This way is easier to visualize data (NOT A NECESSARY ASSUME)
-    assume always (In_Valid -> not(In_Data = "000") ) @rising_edge(In_Clk);
+  -- This way is easier to visualize data (NOT A NECESSARY ASSUME)
+  --assume always (In_Valid -> not(In_Data = "000") ) @rising_edge(In_Clk);
 
-    -- This way is easier to visualize data, otherwise it keeps
-    -- the same value of In_Data (NOT A NECESSARY ASSUME)
-    assume always ( ( In_Valid -> (In_Data /= prev(In_Data)) ) abort In_Rst) @rising_edge(In_Clk);
+  -- This way is easier to visualize data, otherwise it keeps
+  -- the same value of In_Data (NOT A NECESSARY ASSUME)
+  assume always ( ( In_Valid -> (In_Data /= prev(In_Data)) ) abort In_Rst) @rising_edge(In_Clk);
 
-    assert always  ( (unsigned(In_Level) = Depth_g) -> In_Full)  @rising_edge(In_Clk);
+  assert always  ( (unsigned(In_Level) = Depth_g) -> In_Full)  @rising_edge(In_Clk);
 
-    -- Assert the FIFO is never full and the input is ready
-    assert_never_full_and_in_ready: 
-        assert ( never (In_Full = '1' and In_Ready = '1') ) @rising_edge(In_Clk);
+  -- Assert the FIFO is never full and the input is ready
+  assert_never_full_and_in_ready:
+      assert ( never (In_Full = '1' and In_Ready = '1') ) @rising_edge(In_Clk);
 
-    -- Assert the FIFO is never full and the output is valid
-    assert_never_full_and_out_valid: 
-        assert ( (never (Out_Full = '1' and Out_Valid = '1')) abort Out_Rst) @rising_edge(Out_Clk);
+  -- Assert the FIFO is never full and the output is valid
+  assert_never_full_and_out_valid:
+      assert ( (never (Out_Full = '1' and Out_Valid = '1')) abort Out_Rst) @rising_edge(Out_Clk);
 
-    assert_always_not_full_and_in_ready: 
-        assert always ( ( (not In_Full) -> In_Ready ) abort In_Rst ) @rising_edge(In_Clk);
-    
-    -- Assert the FIFO is never full and the input is valid
-    assert_never_empty_and_out_valid: 
-        assert ( (never (Out_Empty and Out_Valid) ) abort Out_Rst ) @rising_edge(Out_Clk);
+  assert_always_not_full_and_in_ready:
+      assert always ( ( (not In_Full) -> In_Ready ) abort In_Rst ) @rising_edge(In_Clk);
 
-    assert_always_not_empty_and_out_valid: 
-        assert always ( ( (not Out_Empty) -> Out_Valid)  abort Out_Rst ) @rising_edge(Out_Clk); 
+  -- Assert the FIFO is never full and the input is valid
+  assert_never_empty_and_out_valid:
+      assert ( (never (Out_Empty and Out_Valid) ) abort Out_Rst ) @rising_edge(Out_Clk);
 
-    -- Assert the FIFO level calculated on the write side is always
-    -- less than the depth of the FIFO
-    assert_in_level_within_bounds: 
-        assert always ( (unsigned(In_Level) <= Depth_g) abort In_Rst) @rising_edge(In_Clk); 
+  assert_always_not_empty_and_out_valid:
+      assert always ( ( (not Out_Empty) -> Out_Valid)  abort Out_Rst ) @rising_edge(Out_Clk);
 
-    -- Assert the FIFO level calculated on the read side is always
-    -- less than the depth of the FIFO
-    assert_out_level_within_bounds: 
-        assert always ( (unsigned(Out_Level) <= Depth_g) abort Out_Rst) @rising_edge(Out_Clk); 
+  -- Assert the FIFO level calculated on the write side is always
+  -- less than the depth of the FIFO
+  assert_in_level_within_bounds:
+      assert always ( (unsigned(In_Level) <= Depth_g) abort In_Rst) @rising_edge(In_Clk);
 
-    -- Assert if not reset, the FIFO level only changes one unit
-    assert always  ( 
-        {not In_RstOut: not In_Rst; not In_RstOut: not In_Rst}
-        |-> {
-        (unsigned(prev(In_Level)) = unsigned(In_Level) ) or
-        (unsigned(prev(In_Level)) = unsigned(In_Level) + 1) or
-        (unsigned(prev(In_Level)) + 1 = unsigned(In_Level) )
-        }
-    ) @rising_edge(In_Clk); 
+  -- Assert the FIFO level calculated on the read side is always
+  -- less than the depth of the FIFO
+  assert_out_level_within_bounds:
+      assert always ( (unsigned(Out_Level) <= Depth_g) abort Out_Rst) @rising_edge(Out_Clk);
 
-    sequence write_FIFO is {
-        [*];
-        In_Valid and In_Ready and (not In_RstOut);
-        In_Valid and In_Ready and (not In_RstOut);
-        (not In_RstOut);
-        (not In_RstOut);
-        (not In_RstOut);
-        (not In_RstOut);
-        (not In_RstOut);
-        (not In_RstOut);
-        (not In_RstOut);
-        (not In_RstOut)
-    } @rising_edge(In_Clk);
+  -- Assert if not reset, the FIFO level only changes one unit
+  assert always  (
+      {not In_RstOut: not In_Rst; not In_RstOut: not In_Rst}
+      |-> {
+      (unsigned(prev(In_Level)) = unsigned(In_Level) ) or
+      (unsigned(prev(In_Level)) = unsigned(In_Level) + 1) or
+      (unsigned(prev(In_Level)) + 1 = unsigned(In_Level) )
+      }
+  ) @rising_edge(In_Clk);
 
-    sequence read_FIFO is {
-        [*];
-        Out_Valid and Out_Ready and (not Out_RstOut);
-        Out_Valid and Out_Ready and (not Out_RstOut);
-        Out_Valid and Out_Ready and (not Out_RstOut);
-        Out_Valid and Out_Ready and (not Out_RstOut);
-        Out_Valid and Out_Ready and (not Out_RstOut);
-        Out_Rst;
-        not Out_Rst;
-        not Out_Rst;
-        not Out_Rst;
-        not Out_Rst;
-        not Out_Rst;
-        not Out_Rst
-    } @rising_edge(Out_Clk);
+  signal in_cnt: unsigned(log2ceil(Depth_g) - 1 downto 0);
+  signal out_cnt: unsigned(log2ceil(Depth_g) - 1 downto 0);
 
-    cover{write_FIFO};
-    cover{read_FIFO};
+  signal In_Ready_out_clk, In_Valid_out_clk : std_logic;
+  signal In_Data_out_clk : std_logic_vector(Width_g - 1 downto 0);
+  signal in_cnt_out_clk : unsigned(log2ceil(Depth_g) - 1 downto 0);
+
+  signal in_rst_reg, in_rst_reg_1 : std_logic;
+  signal in_valid_reg, in_valid_reg_1 : std_logic;
+  signal in_data_reg, in_data_reg_1 : std_logic_vector(Width_g - 1 downto 0);
+  process (In_Clk)
+  begin
+      if rising_edge(In_Clk) then
+          in_rst_reg <= in_rst_reg_1;
+          in_valid_reg <= in_valid_reg_1;
+          in_data_reg <= in_data_reg_1;
+      end if;
+  end process;
+
+  assume always (In_Rst = in_rst_reg);
+  assume always (In_Valid = in_valid_reg);
+  assume always (In_Data = in_data_reg);
+
+  signal out_rst_reg, out_rst_reg_1 : std_logic;
+  signal out_ready_reg, out_ready_reg_1 : std_logic;
+  process (In_Clk)
+  begin
+      if rising_edge(In_Clk) then
+          out_rst_reg <= out_rst_reg_1;
+          out_ready_reg <= out_ready_reg_1;
+      end if;
+  end process;
+
+  assume always (Out_Rst = out_rst_reg);
+  assume always (Out_Ready = out_ready_reg);
+
+
+  process(In_clk)
+  begin
+    if rising_edge(In_clk) then
+      if In_Rst = '1' or In_RstOut = '1' then
+        in_cnt <= to_unsigned(0, in_cnt'length);
+      else
+
+        -- Accumulate valid writes
+        if In_Valid = '1' and In_Ready = '1' then
+          in_cnt <= in_cnt + 1;
+        end if;
+
+      end if;
+    end if;
+  end process;
+
+  process(Out_clk)
+  begin
+    if rising_edge(Out_clk) then
+      if Out_Rst = '1' or Out_RstOut = '1' then
+        out_cnt <= to_unsigned(0, out_cnt'length);
+      else
+
+        -- Accumulate valid reads
+        if Out_Ready = '1' and Out_Valid = '1' then
+          out_cnt <= out_cnt + 1;
+        end if;
+
+      end if;
+    end if;
+  end process;
+
+  process (Out_Clk)
+  begin
+      if rising_edge(Out_Clk) then
+        In_Ready_out_clk <= In_Ready;
+        In_Valid_out_clk <= In_Valid;
+        In_Data_out_clk <= In_Data;
+        in_cnt_out_clk <= in_cnt;
+      end if;
+  end process;
+
+  signal a : std_logic_vector(Width_g-1 downto 0);
+
+  assume always ( ( {true} |=> {a = prev(a)} ) abort In_Rst ) @rising_edge(In_Clk);
+  assume always ( ( {true} |=> {a = prev(a)} ) ) @rising_edge(Out_Clk);
+
+  sequence in_data_pos_j (
+      hdltype std_logic_vector(Width_g-1 downto 0) a;
+      hdltype unsigned(log2ceil(Depth_g) - 1 downto 0) j
+      ) is {                                                                        
+      write_seq_out_clk: 
+      In_Data_out_clk = a:
+      in_cnt_out_clk = j
+   };
+
+  sequence no_pos_j (
+      hdltype unsigned(log2ceil(Depth_g) - 1 downto 0) j
+      ) is {                                                                        
+      (out_cnt /= j)[*]
+   };
+
+  sequence out_valid_pos_j (
+      hdltype std_logic_vector(Width_g-1 downto 0) a;
+      hdltype unsigned(log2ceil(Depth_g) - 1 downto 0) j
+      ) is {                                                                        
+      read_seq: 
+      out_cnt = j
+   };
+
+  %for j in 0..7 do
+    assert always ( ( ( ( ({in_data_pos_j(a, to_unsigned(j, in_cnt_out_clk'length));
+            no_pos_j(to_unsigned(j, out_cnt'length));
+            out_valid_pos_j(to_unsigned(j, out_cnt'length))}
+            |-> {Out_Data = a} ) abort In_RstOut) abort Out_RstOut) abort In_Rst) abort Out_Rst) @rising_edge(Out_Clk);
+  %end
+
+
+  sequence write_seq is {
+      In_Ready = '1' and In_Valid = '1'
+  };
+
+  sequence write_seq_no_rst is {
+      write_seq: 
+      In_RstOut = '0'
+  };
+  
+  sequence write_seq_out_clk is {
+      In_Ready_out_clk = '1' and In_Valid_out_clk = '1'
+  };
+
+  sequence read_seq is {
+      Out_Valid:
+      Out_Ready
+  };
+
+  sequence read_seq_no_rst is {
+      read_seq:
+      Out_RstOut = '0'
+  };
+
+  sequence write_FIFO is {
+      [*];
+      write_seq_no_rst: countones(In_Data) = 0;
+      write_seq_no_rst: countones(In_Data) = Width_g;
+      write_seq_no_rst: countones(In_Data) = 0;
+      (not In_RstOut);
+      (not In_RstOut);
+      (not In_RstOut);
+      (not In_RstOut);
+      (not In_RstOut);
+      (not In_RstOut);
+      (not In_RstOut);
+      (not In_RstOut)
+  } @rising_edge(In_Clk);
+
+  sequence read_FIFO is {
+      [*];
+      read_seq_no_rst: countones(Out_Data) = 0;
+      read_seq_no_rst: countones(Out_Data) = Width_g;
+      read_seq_no_rst: countones(Out_Data) = 0;
+      read_seq_no_rst;
+      read_seq_no_rst;
+      Out_Rst;
+      not Out_Rst;
+      not Out_Rst;
+      not Out_Rst;
+      not Out_Rst;
+      not Out_Rst;
+      not Out_Rst
+  } @rising_edge(Out_Clk);
+
+  cover{write_FIFO; [*]; In_Full = '1'; true[*3]} @rising_edge(In_Clk);
+  cover{read_FIFO; [*]; Out_Full = '1'; (Out_Rst = '0' and Out_RstOut = '0')[*]; Out_Empty = '1'} @rising_edge(Out_Clk);
+  cover{Out_RstOut; (Out_RstOut = '0' and Out_Rst = '0')[+]; out_cnt = Depth_g-1; out_cnt = 0} @rising_edge(Out_Clk);
+  cover{toggle_a_1} @rising_edge(In_Clk);
+  cover{toggle_a_2} @rising_edge(In_Clk);
+
+  sequence toggle_a_1 is {
+    countones(a) = Width_g and In_Rst = '1'; 
+    countones(a) = 0 and In_Rst = '0'
+  };
+
+  sequence toggle_a_2 is {
+    countones(a) = 0 and In_Rst = '1'; 
+    countones(a) = Width_g and In_Rst = '0'
+  };
 }
