@@ -1,171 +1,311 @@
 vunit ipv6 (ipv6_Wrapper (rtl)) {
 
-    -- Default clock for PSL assertions
-    default clock is rising_edge(Clock);
+  -- Default clock for PSL assertions
+  default clock is rising_edge(Clock);
 
-    assume_initial_reset: assume Reset = '1';
+  assume_initial_reset: assume Reset = '1';
 
-    -- TX PATH: Buffer -> Mux -> TX
+  -- Data visualization assumptions
+  --assume always ({true} |=> {MAC_RX_Data /= prev(MAC_RX_Data)});
+  --assume always ({true} |=> {MAC_RX_Meta_SrcMACAddress_Data /= prev(MAC_RX_Meta_SrcMACAddress_Data)});
+  --assume always ({true} |=> {MAC_RX_Meta_DestMACAddress_Data /= prev(MAC_RX_Meta_DestMACAddress_Data)});
+  --assume always ({true} |=> {MAC_RX_Meta_EthType /= prev(MAC_RX_Meta_EthType)});
+  --assume always ({true} |=> {NDP_NextHop_MACAddress_Data /= prev(NDP_NextHop_MACAddress_Data)});
+  --assume always ({true} |=> {TX_Data /= prev(TX_Data)});
+  --assume always ({true} |=> {TX_Meta_SrcIPv6Address_Data /= prev(TX_Meta_SrcIPv6Address_Data)});
+  --assume always ({true} |=> {TX_Meta_DestIPv6Address_Data /= prev(TX_Meta_DestIPv6Address_Data)});
+  --assume always ({true} |=> {TX_Meta_TrafficClass /= prev(TX_Meta_TrafficClass)});
+  --assume always ({true} |=> {TX_Meta_FlowLabel /= prev(TX_Meta_FlowLabel)});
+  --assume always ({true} |=> {TX_Meta_Length /= prev(TX_Meta_Length)});
+  -- TX PATH: Buffer -> Mux -> TX
 
-    -- Data visualization assumptions
-    --assume always ( (TX_StmMux_Valid) -> (unsigned(TX_StmMux_Data) /= 0)) abort Reset; 
-    --assume always  (TX_Data /= prev(TX_Data)) abort Reset; 
+  -- Data visualization assumptions
+  --assume always ( (TX_StmMux_Valid) -> (unsigned(TX_StmMux_Data) /= 0)) abort Reset;
+  --assume always  (TX_Data /= prev(TX_Data)) abort Reset;
 
-    --assume always ( (TX_StmMux_Valid) -> (unsigned(TX_StmMux_SrcIPv6Address_Data) /= 0)) abort Reset; 
-    --assume always  (TX_Meta_SrcIPv6Address_Data /= prev(TX_Meta_SrcIPv6Address_Data)) abort Reset; 
+  --assume always ( (TX_StmMux_Valid) -> (unsigned(TX_StmMux_SrcIPv6Address_Data) /= 0)) abort Reset;
+  --assume always  (TX_Meta_SrcIPv6Address_Data /= prev(TX_Meta_SrcIPv6Address_Data)) abort Reset;
 
-    --assume always ( (TX_StmMux_Valid) -> (unsigned(TX_StmMux_DestIPv6Address_Data) /= 0)) abort Reset; 
-    --assume always  (TX_Meta_DestIPv6Address_Data /= prev(TX_Meta_DestIPv6Address_Data)) abort Reset; 
+  --assume always ( (TX_StmMux_Valid) -> (unsigned(TX_StmMux_DestIPv6Address_Data) /= 0)) abort Reset;
+  --assume always  (TX_Meta_DestIPv6Address_Data /= prev(TX_Meta_DestIPv6Address_Data)) abort Reset;
 
-    --assume always ( (TX_StmMux_Valid) -> (unsigned(TX_StmMux_Length) /= 0)) abort Reset; 
-    --assume always  (TX_Meta_Length /= prev(TX_Meta_Length)) abort Reset; 
+  --assume always ( (TX_StmMux_Valid) -> (unsigned(TX_StmMux_Length) /= 0)) abort Reset;
+  --assume always  (TX_Meta_Length /= prev(TX_Meta_Length)) abort Reset;
 
-    --assume always  (TX_Data /= prev(TX_Data)) abort Reset; 
+  --assume always  (TX_Data /= prev(TX_Data)) abort Reset;
 
-    -- Setting symbolic constants to be used in the assertions 
-    signal length: std_logic_vector(15 downto 0);
-    signal data: std_logic_vector(7 downto 0);
+  -- Setting symbolic constants to be used in the assertions
+  signal length: std_logic_vector(15 downto 0);
+  signal data: std_logic_vector(7 downto 0);
+  signal cnt: unsigned(4 downto 0);
 
-    assume always (length = prev(length)) abort Reset;
-    assume always (data = prev(data)) abort Reset;
+  assume always ( {true} |=> {length = prev(length)} ) abort Reset;
+  assume always ( {true} |=> {data = prev(data)} ) abort Reset;
+  assume always ( {true} |=> {cnt = prev(cnt)} ) abort Reset;
 
-    -- Version + Traffic Class Header (Constant value)
-    assert_first_header: assert always ( {MAC_TX_SOF} |-> {MAC_TX_Data = x"60"} ) abort Reset;
+  sequence start_frame is {
+      MAC_TX_SOF;
+      not MAC_TX_SOF
+  };
 
-    -- Traffic Class + Flow Label Header (Constant value)
-    assert_second_header: assert always ( {MAC_TX_SOF; not MAC_TX_SOF} |-> {MAC_TX_Data = x"00"} ) abort Reset;
+  -- Version + Traffic Class Header (Constant value)
+  assert_first_header: assert always ( {MAC_TX_SOF} |-> {MAC_TX_Data = x"60"} ) abort Reset;
 
-    -- Flow Label Header (Constant value)
-    assert_third_header: assert always ( {MAC_TX_SOF; not MAC_TX_SOF; true} |-> {MAC_TX_Data = x"00"} ) abort Reset;
+  -- Traffic Class + Flow Label Header (Constant value)
+  assert_second_header: assert always ( {start_frame} |-> {MAC_TX_Data = x"00"} ) abort Reset;
 
-    -- Flow Label Header (Constant value)
-    assert_fourth_header: assert always ( {MAC_TX_SOF; not MAC_TX_SOF; true[*2]} |-> {MAC_TX_Data = x"00"} ) abort Reset;
+  -- Flow Label Header (Constant value)
+  assert_third_header: assert always ( {start_frame; true} |-> {MAC_TX_Data = x"00"} ) abort Reset;
 
-    -- Length Header
-    assert_fifth_header: assert always ( {MAC_TX_SOF; not MAC_TX_SOF: MAC_TX_Ack: TX_SOF: TX_Valid; (MAC_TX_Ack and not TX_Valid)[*3]} 
-    |-> {MAC_TX_Data = prev(TX_Meta_Length(0)(15 downto 8),3)} ) abort Reset;
+  -- Flow Label Header (Constant value)
+  assert_fourth_header: assert always ( {start_frame; true[*2]} |-> {MAC_TX_Data = x"00"} ) abort Reset;
 
-    assert_fifth_header_2: assert always ( {MAC_TX_SOF: TX_SOF: TX_Valid; not MAC_TX_SOF: (MAC_TX_Ack and not TX_Valid)[*4]} 
-    |-> {MAC_TX_Data = prev(TX_Meta_Length(0)(15 downto 8),4)} ) abort Reset;
+  -- Length Header
+  assert_fifth_header: assert always ( {start_frame: MAC_TX_Ack: TX_SOF: TX_Valid; (MAC_TX_Ack and not TX_Valid)[*3]}
+  |-> {MAC_TX_Data = prev(TX_Meta_Length(0)(15 downto 8),3)} ) abort Reset;
 
-    assert_fifth_header_3: assert always ( ( {prev(TX_Valid): prev(TX_SOF): prev(TX_Meta_Length(0)) = length: true; true; 
-    MAC_TX_SOF; not MAC_TX_SOF: MAC_TX_Ack[=3]; MAC_TX_Ack} 
-    |-> {MAC_TX_Data = length(15 downto 8)} ) abort TX_Valid) abort Reset;
+  assert_fifth_header_2: assert always ( {TX_SOF: TX_Valid: start_frame: (MAC_TX_Ack and not TX_Valid)[*4]}
+  |-> {MAC_TX_Data = prev(TX_Meta_Length(0)(15 downto 8),4)} ) abort Reset;
 
-    -- Length Header
-    assert_sixth_header: assert always ( {MAC_TX_SOF; not MAC_TX_SOF: MAC_TX_Ack: TX_SOF: TX_Valid; (MAC_TX_Ack and not TX_Valid)[*4]} 
-    |-> {MAC_TX_Data = prev(TX_Meta_Length(0)(7 downto 0),4)} ) abort Reset;
+  assert_fifth_header_3: assert always ( ( {prev(TX_Valid): prev(TX_SOF): prev(TX_Meta_Length(0)) = length: true; true;
+  start_frame: MAC_TX_Ack[=3]; MAC_TX_Ack}
+  |-> {MAC_TX_Data = length(15 downto 8)} ) abort TX_Valid) abort Reset;
 
-    assert_sixth_header_2: assert always ( {MAC_TX_SOF: TX_SOF: TX_Valid; not MAC_TX_SOF: (MAC_TX_Ack and not TX_Valid)[*5]} 
-    |-> {MAC_TX_Data = prev(TX_Meta_Length(0)(7 downto 0),5)} ) abort Reset;
+  -- Length Header
+  assert_sixth_header: assert always ( {start_frame: MAC_TX_Ack: TX_SOF: TX_Valid; (MAC_TX_Ack and not TX_Valid)[*4]}
+  |-> {MAC_TX_Data = prev(TX_Meta_Length(0)(7 downto 0),4)} ) abort Reset;
 
-    assert_sixth_header_3: assert always ( ( {prev(TX_Valid): prev(TX_SOF): prev(TX_Meta_Length(0)) = length: true; true; 
-    MAC_TX_SOF; not MAC_TX_SOF: MAC_TX_Ack[=4]; MAC_TX_Ack} 
-    |-> {MAC_TX_Data = length(7 downto 0)} ) abort TX_Valid) abort Reset;
+  assert_sixth_header_2: assert always ( {TX_SOF: TX_Valid: start_frame: (MAC_TX_Ack and not TX_Valid)[*5]}
+  |-> {MAC_TX_Data = prev(TX_Meta_Length(0)(7 downto 0),5)} ) abort Reset;
 
-    -- Next Header Header
-    assert_seventh_header: assert always ( {MAC_TX_SOF; not MAC_TX_SOF: MAC_TX_Ack[=5]; MAC_TX_Ack} |-> {MAC_TX_Data = PACKET_TYPES(0)} ) abort Reset;
+  assert_sixth_header_3: assert always ( ( {prev(TX_Valid): prev(TX_SOF): prev(TX_Meta_Length(0)) = length: true; true;
+  start_frame: MAC_TX_Ack[=4]; MAC_TX_Ack}
+  |-> {MAC_TX_Data = length(7 downto 0)} ) abort TX_Valid) abort Reset;
 
-    -- Hop Limit Header
-    assert_eighth_header: assert always ( {MAC_TX_SOF; not MAC_TX_SOF: MAC_TX_Ack[=6]; MAC_TX_Ack} |-> {MAC_TX_Data = x"02"} ) abort Reset;
+  sequence frames_before_seventh_header is {
+      start_frame:
+      MAC_TX_Ack[=5];
+      MAC_TX_Ack
+  };
 
-    -- Assert the frame is 40 bytes long by assuring the frame takes at least 40 clock cycles
-    assert_frame_40_bytes: assert always ( {MAC_TX_SOF: MAC_TX_Valid} |=> {MAC_TX_Valid[*39]} ) abort Reset;
+  sequence frames_before_eighth_header is {
+      start_frame:
+      MAC_TX_Ack[=6];
+      MAC_TX_Ack
+  };
 
-    -- Assert the buffer is full after 32 clock cycles introducing data, this property is vacuous because
-    -- the buffer is full after enqueueing data and not dequeing it during 32 clock cycles, so it cannot 
-    -- enqueue more data.
-    assert_buffer_full_vac: assert always ( {prev(Reset): (TX_Valid and TX_Ack)[*33]} |=> {not TX_Ack} ) abort Reset;
+  sequence frames_before_source_address is {
+      start_frame:
+      MAC_TX_Ack[=7];
+      MAC_TX_Ack
+  };
 
-    -- Assert the buffer is full after enqueueing data during 32 clock cycles and not dequeing it.
-    assert_buffer_not_full: assert always ( {prev(Reset): (TX_Valid and TX_Ack)[*32]} |=> {not TX_Ack} ) abort Reset;
+  sequence frames_before_destination_address is {
+      start_frame:
+      MAC_TX_Ack[=23];
+      MAC_TX_Ack
+  };
 
-    -- Assert the data is correct. We do a previous reset to know the buffer is empty, otherwise we wouldn't
-    -- know where the buffer is pointing to, since there isn't a signal pointing to the buffer's current position.
-    -- Note that we use prev(Reset) to avoid the sequence to be vacuous because of abort Reset.
-    assert_data_correct_1: assert always ( {prev(Reset): TX_Valid: TX_Ack: TX_Data(0) = data; (not MAC_TX_SOF)[*]; 
-    MAC_TX_SOF; not MAC_TX_SOF: MAC_TX_Ack[=39]; MAC_TX_Ack} |-> {MAC_TX_Data = data} ) abort Reset;
+  -- Next Header Header
+  assert_seventh_header: assert always ( {frames_before_seventh_header} |-> {MAC_TX_Data = PACKET_TYPES(0)} ) abort Reset;
 
-    -- Assert the data is correct
-    assert_data_correct_2: assert always ( {prev(Reset): (TX_Valid and TX_Ack)[*2]: TX_Data(0) = data; 
-    (not MAC_TX_SOF)[*]; MAC_TX_SOF; not MAC_TX_SOF:MAC_TX_Ack[=39]; 
-    (MAC_TX_Ack and not MAC_TX_EOF)[*1]; MAC_TX_Ack} |-> {MAC_TX_Data = data} ) abort Reset;
+  -- Hop Limit Header
+  assert_eighth_header: assert always ( {frames_before_eighth_header} |-> {MAC_TX_Data = x"02"} ) abort Reset;
 
-    -- Assert the data is correct
-    assert_data_correct_3: assert always ( {prev(Reset): (TX_Valid and TX_Ack)[*11]: TX_Data(0) = data;
-    MAC_TX_SOF; not MAC_TX_SOF: MAC_TX_Ack[=39]; (MAC_TX_Ack and not MAC_TX_EOF)[*10]} 
-    |=> {MAC_TX_Data = data} ) abort Reset;
+  -- Assert the frame is 40 bytes long by assuring the frame takes at least 40 clock cycles
+  assert_frame_40_bytes: assert always ( {MAC_TX_SOF: MAC_TX_Valid} |=> {MAC_TX_Valid[*39]} ) abort Reset;
 
-    -- Assert the data is correct
-    assert_data_correct_4: assert always ( {prev(Reset): (TX_Valid and TX_Ack)[*32]: TX_Data(0) = data; 
-    MAC_TX_SOF; not MAC_TX_SOF: MAC_TX_Ack[=39]; (MAC_TX_Ack and not MAC_TX_EOF)[*31]} 
-    |=> {MAC_TX_Data = data} ) abort Reset;
+  -- Assert the buffer is full after 32 clock cycles introducing data, this property is vacuous because
+  -- the buffer is full after enqueueing data and not dequeing it during 32 clock cycles, so it cannot
+  -- enqueue more data.
+  assert_buffer_full_vac: assert always ( {prev(Reset): (TX_Valid and TX_Ack)[*33]} |=> {not TX_Ack} ) abort Reset;
 
-    -- Assert source address is correct
-    assert_src_addres_correct_1: assert always ( {prev(Reset): TX_Meta_SrcIPv6Address_nxt: TX_Meta_SrcIPv6Address_Data(0) = data; 
-    (not MAC_TX_SOF)[*]; MAC_TX_SOF; not MAC_TX_SOF: MAC_TX_Ack[=7]; MAC_TX_Ack} |-> {MAC_TX_Data = data} ) abort Reset;
+  -- Assert the buffer is full after enqueueing data during 32 clock cycles and not dequeing it.
+  assert_buffer_not_full: assert always ( {prev(Reset): (TX_Valid and TX_Ack)[*32]} |=> {not TX_Ack} ) abort Reset;
 
-    -- Assert source address is correct
-    assert_src_addres_correct_2: assert always ( {prev(Reset): (TX_Meta_SrcIPv6Address_nxt)[*16]: TX_Meta_SrcIPv6Address_Data(0) = data; 
-    MAC_TX_SOF; not MAC_TX_SOF: MAC_TX_Ack[=22]; MAC_TX_Ack} |-> {MAC_TX_Data = data} ) abort Reset;
+  signal tx_cnt_in: unsigned(4 downto 0);
+  signal tx_cnt_out: unsigned(4 downto 0);
 
-    -- Assert destination address is correct
-    assert_dest_addres_correct_1: assert always ( {prev(Reset): TX_Meta_DestIPv6Address_nxt: TX_Meta_DestIPv6Address_Data(0) = data; 
-    (not MAC_TX_SOF)[*]; MAC_TX_SOF; not MAC_TX_SOF: MAC_TX_Ack[=23]; MAC_TX_Ack} |-> {MAC_TX_Data = data} ) abort Reset;
+  process(Clock)
+  begin
+    if rising_edge(Clock) then
+      if Reset = '1' then
+        tx_cnt_in <= to_unsigned(0, tx_cnt_in'length);
+        tx_cnt_out <= to_unsigned(0, tx_cnt_out'length);
+      else
 
-    -- Assert destination address is correct
-    assert_dest_addres_correct_2: assert always ( {prev(Reset): (TX_Meta_DestIPv6Address_nxt)[*16]: TX_Meta_DestIPv6Address_Data(0) = data; 
-    MAC_TX_SOF; not MAC_TX_SOF: MAC_TX_Ack[=38]; MAC_TX_Ack} |-> {MAC_TX_Data = data} ) abort Reset;
+        -- Accumulate valid writes
+        if TX_Valid(0) = '1' and TX_Ack(0) = '1' then
+          tx_cnt_in <= tx_cnt_in + 1;
+        end if;
 
-    cover_one_frame: cover {MAC_TX_EOF: not Reset};
-    cover_three_frames: cover {MAC_TX_EOF: not Reset: IPv6_TX_Meta_rst; [*]; MAC_TX_EOF: not Reset: IPv6_TX_Meta_rst; [*]; MAC_TX_EOF: not Reset: IPv6_TX_Meta_rst};  
+        -- Accumulate valid reads
+        if IPv6_TX_Ack = '1' and MAC_TX_Valid = '1' and MAC_TX_Ack = '1' then
+          tx_cnt_out <= tx_cnt_out + 1;
+        end if;
+      end if;
+    end if;
+  end process;
 
-    -- RX PATH: RX -> DeMux
+  sequence frames_before_first_data is {
+      start_frame:
+      MAC_TX_Ack[=39];
+      MAC_TX_Ack
+  };
 
-    -- RX is easier, the next few assertions are just direct relationships between inputs and outputs
-    assert_data_correct: assert always RX_Data(0) = MAC_RX_Data;
-    assert_srcmac_address_correct: assert always RX_Meta_SrcMACAddress_Data(0) = MAC_RX_Meta_SrcMACAddress_Data;
-    assert_destmac_address_correct: assert always RX_Meta_DestMACAddress_Data(0) = MAC_RX_Meta_DestMACAddress_Data;
-    assert_srcmacnxt_correct: assert always MAC_RX_Meta_SrcMACAddress_nxt = RX_Meta_SrcMACAddress_nxt(0);
-    assert_destmacnxt_correct: assert always MAC_RX_Meta_DestMACAddress_nxt = RX_Meta_DestMACAddress_nxt(0);
-    assert_ethtype_correct: assert always RX_Meta_EthType(0) = MAC_RX_Meta_EthType;
-    assert_ndp_mac_correct: assert always NDP_NextHop_MACAddress_Data = MAC_TX_Meta_DestMACAddress_Data;
-    assert_ndp_macnxt_correct: assert always MAC_TX_Meta_DestMACAddress_nxt = NDP_NextHop_MACAddress_nxt;
-    assert_ndp_macrst_correct: assert always NDP_NextHop_MACAddress_rst = MAC_TX_Meta_rst;
+  sequence tx_data_in (
+      hdltype T_SLV_8 data
+      ) is {
+      TX_Valid(0) = '1' and TX_Ack(0) = '1' and TX_Data(0) = data
+  };
+  sequence tx_data_in_cnt (
+      hdltype T_SLV_8 data;
+      hdltype unsigned(5 downto 0) cnt
+      ) is {
+      tx_data_in(data):
+      tx_cnt_in = cnt
+  };
+  sequence tx_out_cnt (
+      hdltype unsigned(5 downto 0) cnt
+      ) is {
+      MAC_TX_Ack = '1' and
+      tx_cnt_out = cnt
+  };
+  sequence no_data_out_cnt (
+      hdltype unsigned(5 downto 0) cnt
+      ) is {
+      (tx_cnt_out /= cnt)[*]
+  };
 
-    -- Assert length is correct
-    assert_length_correct: assert always ( ( {prev(Reset): MAC_RX_SOF: MAC_RX_Valid: MAC_RX_Data(3 downto 0) = x"6";
-    MAC_RX_Valid[=3]; MAC_RX_Valid} |=> {RX_Meta_Length(0)(15 downto 8) = prev(MAC_RX_Data)} ) abort MAC_RX_EOF) abort Reset;
+  assert_data_correct_1_alt: assert always ( {prev(Reset): tx_data_in(data); (not MAC_TX_SOF)[*];
+  frames_before_first_data} |-> {MAC_TX_Data = data} ) abort Reset;
 
-    -- Assert length is correct
-    assert_length_correct_2: assert always ( ( {prev(RX_EOF and RX_Valid and MAC_RX_Ack): MAC_RX_SOF: MAC_RX_Valid: MAC_RX_Data(3 downto 0) = x"6";
-    MAC_RX_Valid[=3]; MAC_RX_Valid} |=> {RX_Meta_Length(0)(15 downto 8) = prev(MAC_RX_Data)} ) abort MAC_RX_EOF) abort Reset;
-    
-    -- Assert length is correct
-    assert_length_correct_3: assert always ( ( {prev(Reset): MAC_RX_SOF: MAC_RX_Valid: MAC_RX_Data(3 downto 0) = x"6";
-    MAC_RX_Valid[=4]; MAC_RX_Valid} |=> {RX_Meta_Length(0)(7 downto 0) = prev(MAC_RX_Data)} ) abort MAC_RX_EOF) abort Reset;
+  assert always ( {tx_data_in_cnt(data, cnt); no_data_out_cnt(cnt);
+                   tx_out_cnt(cnt)} |-> {MAC_TX_DATA = data} ) abort Reset;
 
-    -- Assert next header is correct
-    assert_next_header_correct: assert always ( ( {prev(Reset): MAC_RX_SOF: MAC_RX_Valid: MAC_RX_Data(3 downto 0) = x"6";
-    MAC_RX_Valid[=5]; MAC_RX_Valid} |=> {RX_Meta_NextHeader(0) = prev(MAC_RX_Data)} ) abort MAC_RX_EOF) abort Reset;
+  -- Assert the data is correct. We do a previous reset to know the buffer is empty, otherwise we wouldn't
+  -- know where the buffer is pointing to, since there isn't a signal pointing to the buffer's current position.
+  -- Note that we use prev(Reset) to avoid the sequence to be vacuous because of abort Reset.
+  assert_data_correct_1: assert always ( {prev(Reset): TX_Valid: TX_Ack: TX_Data(0) = data; (not MAC_TX_SOF)[*];
+  start_frame: MAC_TX_Ack[=39]; MAC_TX_Ack} |-> {MAC_TX_Data = data} ) abort Reset;
 
-    -- Assert source address is correct
-    assert_rx_src_address_correct: assert always ( ( ( {prev(Reset): MAC_RX_SOF: MAC_RX_Valid: MAC_RX_Data(3 downto 0) = x"6";
-    MAC_RX_Valid[=7]; MAC_RX_Valid} 
-    |=> {RX_Meta_SrcIPv6Address_Data(0) = prev(MAC_RX_Data)} ) abort RX_Meta_SrcIPv6Address_nxt(0)) abort MAC_RX_EOF) abort Reset;
+  -- Assert the data is correct
+  assert_data_correct_2: assert always ( {prev(Reset): (TX_Valid and TX_Ack)[*2]: TX_Data(0) = data;
+  (not MAC_TX_SOF)[*]; start_frame: MAC_TX_Ack[=39];
+  (MAC_TX_Ack and not MAC_TX_EOF)[*1]; MAC_TX_Ack} |-> {MAC_TX_Data = data} ) abort Reset;
 
-    -- Assert destination address is correct
-    assert_rx_dest_address_correct: assert always ( ( ( {prev(Reset): MAC_RX_SOF: MAC_RX_Valid: MAC_RX_Data(3 downto 0) = x"6";
-    MAC_RX_Valid[=23]; MAC_RX_Valid} 
-    |=> {RX_Meta_DestIPv6Address_Data(0) = prev(MAC_RX_Data)} ) abort RX_Meta_DestIPv6Address_nxt(0)) abort MAC_RX_EOF) abort Reset;
+  -- Assert the data is correct
+  assert_data_correct_3: assert always ( {prev(Reset): (TX_Valid and TX_Ack)[*11]: TX_Data(0) = data;
+  start_frame: MAC_TX_Ack[=39]; (MAC_TX_Ack and not MAC_TX_EOF)[*10]}
+  |=> {MAC_TX_Data = data} ) abort Reset;
 
-    -- Assert data is correct
-    assert_rx_data_correct: assert always ( ( {prev(Reset): MAC_RX_SOF: MAC_RX_Valid: MAC_RX_Data(3 downto 0) = x"6";
-    MAC_RX_Valid[=39]; MAC_RX_Valid} 
-    |-> {RX_SOF} ) abort MAC_RX_EOF) abort Reset;
-    
-    cover_one_rx_frame: cover {RX_EOF: not Reset};
+  -- Assert the data is correct
+  assert_data_correct_4: assert always ( {prev(Reset): (TX_Valid and TX_Ack)[*32]: TX_Data(0) = data;
+  start_frame: MAC_TX_Ack[=39]; (MAC_TX_Ack and not MAC_TX_EOF)[*31]}
+  |=> {MAC_TX_Data = data} ) abort Reset;
 
-    cover_one_rx_frame_data: cover {RX_SOF: not Reset: not RX_EOF; not RX_SOF: not Reset: RX_EOF; not RX_SOF: not Reset: RX_EOF; not RX_SOF: not Reset: RX_EOF: RX_Valid };
+  -- Assert source address is correct
+  assert_src_addres_correct_1: assert always ( {prev(Reset): TX_Meta_SrcIPv6Address_nxt: TX_Meta_SrcIPv6Address_Data(0) = data;
+  (not MAC_TX_SOF)[*]; frames_before_source_address} |-> {MAC_TX_Data = data} ) abort Reset;
 
-    }
+  -- Assert source address is correct
+  assert_src_addres_correct_2: assert always ( {prev(Reset): (TX_Meta_SrcIPv6Address_nxt)[*16]: TX_Meta_SrcIPv6Address_Data(0) = data;
+  start_frame: MAC_TX_Ack[=22]; MAC_TX_Ack} |-> {MAC_TX_Data = data} ) abort Reset;
+
+  -- Assert destination address is correct
+  assert_dest_addres_correct_1: assert always ( {prev(Reset): TX_Meta_DestIPv6Address_nxt: TX_Meta_DestIPv6Address_Data(0) = data;
+  (not MAC_TX_SOF)[*]; frames_before_destination_address} |-> {MAC_TX_Data = data} ) abort Reset;
+
+  -- Assert destination address is correct
+  assert_dest_addres_correct_2: assert always ( {prev(Reset): (TX_Meta_DestIPv6Address_nxt)[*16]: TX_Meta_DestIPv6Address_Data(0) = data;
+  start_frame: MAC_TX_Ack[=38]; MAC_TX_Ack} |-> {MAC_TX_Data = data} ) abort Reset;
+
+  cover_one_frame: cover {MAC_TX_EOF: not Reset};
+  cover_three_frames: cover {MAC_TX_EOF: not Reset: IPv6_TX_Meta_rst; [*]; MAC_TX_EOF: not Reset: IPv6_TX_Meta_rst; [*]; MAC_TX_EOF: not Reset: IPv6_TX_Meta_rst};
+  cover {toggle_output_8(MAC_TX_Data)};
+  cover {toggle_output_8(MAC_TX_Meta_DestMACAddress_Data)};
+  cover {toggle_output_8(NDP_NextHop_IPv6Address_Data)};
+  cover {toggle_output_8(TX_Data(0))};
+
+
+  -- RX PATH: RX -> DeMux
+
+  -- RX is easier, the next few assertions are just direct relationships between inputs and outputs
+  assert_data_correct: assert always RX_Data(0) = MAC_RX_Data;
+  assert_srcmac_address_correct: assert always RX_Meta_SrcMACAddress_Data(0) = MAC_RX_Meta_SrcMACAddress_Data;
+  assert_destmac_address_correct: assert always RX_Meta_DestMACAddress_Data(0) = MAC_RX_Meta_DestMACAddress_Data;
+  assert_srcmacnxt_correct: assert always MAC_RX_Meta_SrcMACAddress_nxt = RX_Meta_SrcMACAddress_nxt(0);
+  assert_destmacnxt_correct: assert always MAC_RX_Meta_DestMACAddress_nxt = RX_Meta_DestMACAddress_nxt(0);
+  assert_ethtype_correct: assert always RX_Meta_EthType(0) = MAC_RX_Meta_EthType;
+  assert_ndp_mac_correct: assert always NDP_NextHop_MACAddress_Data = MAC_TX_Meta_DestMACAddress_Data;
+  assert_ndp_macnxt_correct: assert always MAC_TX_Meta_DestMACAddress_nxt = NDP_NextHop_MACAddress_nxt;
+  assert_ndp_macrst_correct: assert always NDP_NextHop_MACAddress_rst = MAC_TX_Meta_rst;
+
+  sequence start_rx_frame is {
+      MAC_RX_SOF: 
+      MAC_RX_Valid: 
+      MAC_RX_Data(3 downto 0) = x"6"
+  };
+  -- Assert length is correct
+  assert_length_correct: assert always ( ( {prev(Reset): start_rx_frame;
+  MAC_RX_Valid[=3]; MAC_RX_Valid} |=> {RX_Meta_Length(0)(15 downto 8) = prev(MAC_RX_Data)} ) abort MAC_RX_EOF) abort Reset;
+
+  -- Assert length is correct
+  assert_length_correct_2: assert always ( ( {prev(RX_EOF and RX_Valid and MAC_RX_Ack): start_rx_frame;
+  MAC_RX_Valid[=3]; MAC_RX_Valid} |=> {RX_Meta_Length(0)(15 downto 8) = prev(MAC_RX_Data)} ) abort MAC_RX_EOF) abort Reset;
+
+  -- Assert length is correct
+  assert_length_correct_3: assert always ( ( {prev(Reset): start_rx_frame;
+  MAC_RX_Valid[=4]; MAC_RX_Valid} |=> {RX_Meta_Length(0)(7 downto 0) = prev(MAC_RX_Data)} ) abort MAC_RX_EOF) abort Reset;
+
+  -- Assert next header is correct
+  assert_next_header_correct: assert always ( ( {prev(Reset): start_rx_frame;
+  MAC_RX_Valid[=5]; MAC_RX_Valid} |=> {RX_Meta_NextHeader(0) = prev(MAC_RX_Data)} ) abort MAC_RX_EOF) abort Reset;
+
+  -- Assert source address is correct
+  assert_rx_src_address_correct: assert always ( ( ( {prev(Reset): start_rx_frame;
+  MAC_RX_Valid[=7]; MAC_RX_Valid}
+  |=> {RX_Meta_SrcIPv6Address_Data(0) = prev(MAC_RX_Data)} ) abort RX_Meta_SrcIPv6Address_nxt(0)) abort MAC_RX_EOF) abort Reset;
+
+  -- Assert destination address is correct
+  assert_rx_dest_address_correct: assert always ( ( ( {prev(Reset): start_rx_frame;
+  MAC_RX_Valid[=23]; MAC_RX_Valid}
+  |=> {RX_Meta_DestIPv6Address_Data(0) = prev(MAC_RX_Data)} ) abort RX_Meta_DestIPv6Address_nxt(0)) abort MAC_RX_EOF) abort Reset;
+
+  -- Assert data is correct
+  assert_rx_data_correct: assert always ( ( {prev(Reset): start_rx_frame;
+  MAC_RX_Valid[=39]; MAC_RX_Valid}
+  |-> {RX_SOF} ) abort MAC_RX_EOF) abort Reset;
+
+  cover_one_rx_frame: cover {RX_EOF: not Reset};
+
+  cover_one_rx_frame_data: cover {RX_SOF: not Reset: not RX_EOF; not RX_SOF: not Reset: RX_EOF; not RX_SOF: not Reset: RX_EOF; not RX_SOF: not Reset: RX_EOF: RX_Valid };
+  cover {toggle_output_8(RX_Data(0))};
+  cover {toggle_output_8(RX_Meta_SrcMACAddress_Data(0))};
+  cover {toggle_output_8(RX_Meta_DestMACAddress_Data(0))};
+  cover {toggle_output_16(RX_Meta_EthType(0))};
+  cover {toggle_output_8(RX_Meta_SrcIPv6Address_Data(0))};
+  cover {toggle_output_8(RX_Meta_DestIPv6Address_Data(0))};
+  cover {toggle_output_8(RX_Meta_TrafficClass(0))};
+  cover {toggle_output_24(RX_Meta_FlowLabel(0))};
+  cover {toggle_output_16(RX_Meta_Length(0))};
+  cover {toggle_output_8(RX_Meta_NextHeader(0))};
+
+  sequence toggle_output_8 (
+    hdltype T_SLV_8 data
+    ) is {                                                                        
+    reset = '0' and countones(data) = 0; [*]; reset = '0' and countones(data) = 8; [*]; reset = '0' and countones(data) = 0
+  };
+
+  sequence toggle_output_16 (
+    hdltype T_SLV_16 data
+    ) is {                                                                        
+    reset = '0' and countones(data) = 0; [*]; reset = '0' and countones(data) = 16; [*]; reset = '0' and countones(data) = 0
+  };
+
+  sequence toggle_output_24 (
+    hdltype T_SLV_24 data
+    ) is {                                                                        
+    reset = '0' and countones(data) = 0; [*]; reset = '0' and countones(data) = 24; [*]; reset = '0' and countones(data) = 0
+  };
+  }
