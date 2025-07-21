@@ -87,6 +87,7 @@ Explain that we just have to add a single line to our script
 
 .. code-block:: python
    :emphasize-lines: 4
+   
    from fvm import fvmframework
 
    fvm = fvmframework()
