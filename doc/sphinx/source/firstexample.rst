@@ -76,9 +76,66 @@ Writing the properties
 
 Let's write the properties!
 
+.. todo::
+  Explain the vunit
+
 .. code-block:: vhdl
 
-   ADD CODE HERE, but in multiple code blocks. ADD IT LITTLE BY LITTLE, EXPLAINING WHAT IS ADDED AND WHY IT IS ADDED between the code blocks
+   -- Default clock for PSL assertions
+   default clock is rising_edge(clk);
+
+The first step is to specify the default clock domain to use, to avoid having to 
+include the clock domain in every property. This is highly recommended for designs 
+with a single clock.
+
+.. code-block:: vhdl
+
+   -- Force a reset in the first clock cycle
+   -- Since we don't have an 'always', this assumption only applies to the
+   -- first clock cycle
+   assume_initial_reset: assume rst = '1';
+
+In formal verification, a reset is required in the first cycle to limit the number of 
+possible states to start with. Although many tools infer this, it's good practice to 
+maintain it for portability between toolchains.
+
+.. code-block:: vhdl
+
+   -- Assert we do not go over the maximum
+   never_go_over_the_maximum: assert always (Q <= MAX_COUNT);
+
+Since no assume is needed for the counter inputs, we can start directly with the assertions.
+This property asserts that the counter output will never exceed the counter's maximum 
+count, i.e. the property will fail if overflows occur and the counter does not go to 0.
+Although these types of properties do not assert the functionality of the design, they are 
+very useful for quickly finding counterexamples when there is an error in the design.
+
+.. code-block:: vhdl
+
+   -- Assert the counter is always counting up, but only:
+   -- 1) If it's not the first clock cycle
+   -- 2) If it hasn't just been reset
+   -- 3) If last value wasn't MAX_COUNT
+   always_count_up: assert always (not (rst = '1') and (not prev(rst) = '1') and (prev(Q) /= MAX_COUNT)) -> (Q-prev(Q) = 1);
+
+This property does assert the functionality of the design. It asserts that if there hasn't 
+been a reset in this or the previous cycle and the last counter output wasn't the maximum 
+count, the counter output will have increased by 1.
+
+.. code-block:: vhdl
+
+   -- Cover the overflow -> zero case
+   -- What we write here has to be a sequence inside curly braces {}, even if
+   -- we only have one element, for example, { Q = MAX_COUNT }
+   cover_overflow_to_zero: cover {Q = MAX_COUNT ; Q = 0};
+
+   -- Same as above but adding reset behavior.
+   cover_overflow_to_zero_and_reset: cover {Q = MAX_COUNT ; Q = 0; [*]; rst = '1'; [*]; Q = MAX_COUNT ; Q = 0};
+
+To complement the assertions, it's always helpful to have covers that show us a trace 
+validating the design's main use cases. In this case, covering the overflow to 0 is 
+enough; this way, we'll see how the counter reaches the maximum count without having to write 
+any testbench. Additionally, we can add how the design behaves when reset.
 
 Adding the properties to `formal.py`
 ------------------------------------
@@ -86,8 +143,8 @@ Adding the properties to `formal.py`
 Explain that we just have to add a single line to our script
 
 .. code-block:: python
-   :emphasize-lines: 4
-   
+   :emphasize-lines: 5
+
    from fvm import fvmframework
 
    fvm = fvmframework()
