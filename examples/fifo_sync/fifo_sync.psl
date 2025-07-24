@@ -95,6 +95,10 @@ vunit fifo_sync (olo_base_fifo_sync(rtl)) {
   --                 Out_Ready = '1' and Out_Valid = '1' and out_cnt = c}
   --                 |-> {Out_Data = a} ) abort Rst;
 
+  sequence write_seq is {
+      In_Ready = '1' and In_Valid = '1'
+  };
+
   sequence in_data_pos_j (
       hdltype std_logic_vector(Width_g-1 downto 0) a;
       hdltype unsigned(log2ceil(Depth_g) - 1 downto 0) j
@@ -110,8 +114,12 @@ vunit fifo_sync (olo_base_fifo_sync(rtl)) {
       (out_cnt /= j)[*]
    };
 
+  sequence read_seq is {
+      Out_Valid:
+      Out_Ready
+  };
+
   sequence out_valid_pos_j (
-      hdltype std_logic_vector(Width_g-1 downto 0) a;
       hdltype unsigned(log2ceil(Depth_g) - 1 downto 0) j
       ) is {                                                                        
       read_seq: 
@@ -119,32 +127,18 @@ vunit fifo_sync (olo_base_fifo_sync(rtl)) {
    };
 
   %for j in 0..7 do
-    assert always ( {in_data_pos_j(a, j); no_pos_j(j); out_valid_pos_j(j)} |-> {Out_Data = a} ) abort Rst;
+    assert always ( { in_data_pos_j(a, to_unsigned(j, in_cnt'length)); no_pos_j(to_unsigned(j, out_cnt'length)); 
+                      out_valid_pos_j(to_unsigned(j, out_cnt'length))} |-> {Out_Data = a} ) abort Rst;
   %end
-
-  sequence write_seq is {
-      In_Ready = '1' and In_Valid = '1'
-  };
 
   sequence write_seq_no_rst is {
       write_seq: 
       Rst = '0'
   };
 
-  sequence read_seq is {
-      Out_Valid:
-      Out_Ready
-  };
-
   sequence read_seq_no_rst is {
-      Out_Valid:
-      Out_Ready
-  };
-
-  sequence read_seq_prev is {
-      not Out_Ready[*];
-      Out_Valid:
-      Out_Ready
+      read_seq:
+      Rst = '0'
   };
 
   sequence write_FIFO is {
@@ -159,20 +153,12 @@ vunit fifo_sync (olo_base_fifo_sync(rtl)) {
 
   sequence read_FIFO is {
       [*];
-      read_seq_no_rst[*7];
+      read_seq_no_rst[*7]
   };
-
-  -- Cover all the important events in a FIFO: write, read,
-  -- full, empty...
-  cover_write_and_read_FIFO: cover{rst; write_FIFO; read_FIFO; write_FIFO; [*]; Full; (not Rst)[*10]; Empty; [*]; Full};
-  cover{toggle_a_1};
-  cover{toggle_a_2};
-  cover{toggle_c_1};
-  cover{toggle_c_2};
 
   sequence toggle_a_1 is {
     countones(a) = Width_g and rst = '1'; 
-    countones(a) = 0 and rst = '0
+    countones(a) = 0 and rst = '0'
   };
 
   sequence toggle_a_2 is {
@@ -182,11 +168,18 @@ vunit fifo_sync (olo_base_fifo_sync(rtl)) {
 
   sequence toggle_c_1 is {
     countones(c) = log2ceil(Depth_g) and rst = '1'; 
-    countones(c) = 0 and rst = '0
+    countones(c) = 0 and rst = '0'
   };
   sequence toggle_c_2 is {
     countones(c) = 0 and rst = '1'; 
     countones(c) = log2ceil(Depth_g) and rst = '0'
   };
+  -- Cover all the important events in a FIFO: write, read,
+  -- full, empty...
+  cover_write_and_read_FIFO: cover{rst; write_FIFO; read_FIFO; write_FIFO; [*]; Full; (not Rst)[*10]; Empty; [*]; Full};
+  cover{toggle_a_1};
+  cover{toggle_a_2};
+  cover{toggle_c_1};
+  cover{toggle_c_2};
   
 }
