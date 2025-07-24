@@ -66,7 +66,7 @@ vunit interpolator_properties (interpolator(interpolator_arch)) {
     -- Parameterizable output sequence
     sequence output_seq_0 (                                                          
     hdltype interpolator_output_tran output_tran;
-    hdltype integer idx                                                                                                                
+    const idx
     ) is {      
         (abs(estim.re - output_tran.data(idx).re) < 4):
         (abs(estim.im - output_tran.data(idx).im) < 4):
@@ -78,7 +78,7 @@ vunit interpolator_properties (interpolator(interpolator_arch)) {
     property interpolation_0(
         hdltype interpolator_input_tran input_tran;
         hdltype interpolator_output_tran output_tran;
-        hdltype integer idx
+        const idx
         ) is
         always (( {input_seq(input_tran); true[*idx]} |=> output_seq_0(output_tran, idx)) abort rst);
 
@@ -93,47 +93,47 @@ vunit interpolator_properties (interpolator(interpolator_arch)) {
 
     -- Assert the parameterized property
     interpolator_works_correctly_1:
-        assert interpolation_1(input_tran, interpolator_predict(input_tran), 1);
+        assert interpolation_0(input_tran, interpolator_predict(input_tran), 1);
 
     -- Assert the parameterized property
     interpolator_works_correctly_2:
-        assert interpolation_2(input_tran, interpolator_predict(input_tran), 2);
+        assert interpolation_0(input_tran, interpolator_predict(input_tran), 2);
 
     -- Assert the parameterized property
     interpolator_works_correctly_3:
-        assert interpolation_3(input_tran, interpolator_predict(input_tran), 3);
+        assert interpolation_0(input_tran, interpolator_predict(input_tran), 3);
 
     -- Assert the parameterized property
     interpolator_works_correctly_4:
-        assert interpolation_4(input_tran, interpolator_predict(input_tran), 4);
+        assert interpolation_0(input_tran, interpolator_predict(input_tran), 4);
 
     -- Assert the parameterized property
     interpolator_works_correctly_5:
-        assert interpolation_5(input_tran, interpolator_predict(input_tran), 5);
+        assert interpolation_0(input_tran, interpolator_predict(input_tran), 5);
 
     -- Assert the parameterized property
     interpolator_works_correctly_6:
-        assert interpolation_6(input_tran, interpolator_predict(input_tran), 6);
+        assert interpolation_0(input_tran, interpolator_predict(input_tran), 6);
 
     -- Assert the parameterized property
     interpolator_works_correctly_7:
-        assert interpolation_7(input_tran, interpolator_predict(input_tran), 7);
+        assert interpolation_0(input_tran, interpolator_predict(input_tran), 7);
 
     -- Assert the parameterized property
     interpolator_works_correctly_8:
-        assert interpolation_8(input_tran, interpolator_predict(input_tran), 8);
+        assert interpolation_0(input_tran, interpolator_predict(input_tran), 8);
 
     -- Assert the parameterized property
     interpolator_works_correctly_9:
-        assert interpolation_9(input_tran, interpolator_predict(input_tran), 9);
+        assert interpolation_0(input_tran, interpolator_predict(input_tran), 9);
 
     -- Assert the parameterized property
     interpolator_works_correctly_10:
-        assert interpolation_10(input_tran, interpolator_predict(input_tran), 10);
+        assert interpolation_0(input_tran, interpolator_predict(input_tran), 10);
 
     -- Assert the parameterized property
     interpolator_works_correctly_11:
-        assert interpolation_11(input_tran, interpolator_predict(input_tran), 11);
+        assert interpolation_0(input_tran, interpolator_predict(input_tran), 11);
 
     sequence input (                                                           
         hdltype signed(9 downto 0) inf_re;
@@ -144,7 +144,7 @@ vunit interpolator_properties (interpolator(interpolator_arch)) {
         input_tran.infr.re = inf_re and          
         input_tran.infr.im = inf_im and   
         input_tran.supr.re = sup_re and
-        input_tran.supr.im = sup_im and                                                
+        input_tran.supr.im = sup_im                                                
     }; 
 
     cover {input("1111111111", "1111111111", "0000000000", "0000000000"); twelve_estim_valid}; 

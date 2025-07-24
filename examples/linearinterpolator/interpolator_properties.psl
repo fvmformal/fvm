@@ -130,7 +130,7 @@ vunit interpolator_properties (interpolator(interpolator_arch)) {
         input_tran.infr.re = inf_re and          
         input_tran.infr.im = inf_im and   
         input_tran.supr.re = sup_re and
-        input_tran.supr.im = sup_im and                                                
+        input_tran.supr.im = sup_im                                                
     }; 
     
     cover {input("1111111111", "1111111111", "0000000000", "0000000000"); twelve_estim_valid}; 
