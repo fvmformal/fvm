@@ -6,10 +6,6 @@ vunit uart_tx_properties (uart_tx(Behavioral)) {
   -- Assume a reset on the first clock cycle
   assume_initial_reset: assume rst = '1';
 
-  assume always (estado = reposo or estado = sampledata or estado = b_start
-              or estado = B_0 or estado = B_1 or estado = B_2 or estado = B_3
-              or estado = B_4 or estado = B_5 or estado = B_6 or estado = B_7
-              or estado = B_paridad or estado = B_stop);
   -- Assume we won't be having any resets while we are transmitting
   -- We shouldn't need this is we use 'abort rst' in the properties, and
   -- actually if we uncomment the following assertion we are overconstraining
