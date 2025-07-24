@@ -160,19 +160,19 @@ vunit ipv6 (ipv6_Wrapper (rtl)) {
   };
   sequence tx_data_in_cnt (
       hdltype T_SLV_8 data;
-      hdltype unsigned(5 downto 0) cnt
+      hdltype unsigned(4 downto 0) cnt
       ) is {
       tx_data_in(data):
       tx_cnt_in = cnt
   };
   sequence tx_out_cnt (
-      hdltype unsigned(5 downto 0) cnt
+      hdltype unsigned(4 downto 0) cnt
       ) is {
       MAC_TX_Ack = '1' and
       tx_cnt_out = cnt
   };
   sequence no_data_out_cnt (
-      hdltype unsigned(5 downto 0) cnt
+      hdltype unsigned(4 downto 0) cnt
       ) is {
       (tx_cnt_out /= cnt)[*]
   };
@@ -220,6 +220,24 @@ vunit ipv6 (ipv6_Wrapper (rtl)) {
   assert_dest_addres_correct_2: assert always ( {prev(Reset): (TX_Meta_DestIPv6Address_nxt)[*16]: TX_Meta_DestIPv6Address_Data(0) = data;
   start_frame: MAC_TX_Ack[=38]; MAC_TX_Ack} |-> {MAC_TX_Data = data} ) abort Reset;
 
+
+  sequence toggle_output_8 (
+    hdltype T_SLV_8 data
+    ) is {                                                                        
+    reset = '0' and countones(data) = 0; [*]; reset = '0' and countones(data) = 8; [*]; reset = '0' and countones(data) = 0
+  };
+
+  sequence toggle_output_16 (
+    hdltype T_SLV_16 data
+    ) is {                                                                        
+    reset = '0' and countones(data) = 0; [*]; reset = '0' and countones(data) = 16; [*]; reset = '0' and countones(data) = 0
+  };
+
+  sequence toggle_output_24 (
+    hdltype T_SLV_24 data
+    ) is {                                                                        
+    reset = '0' and countones(data) = 0; [*]; reset = '0' and countones(data) = 24; [*]; reset = '0' and countones(data) = 0
+  };
   cover_one_frame: cover {MAC_TX_EOF: not Reset};
   cover_three_frames: cover {MAC_TX_EOF: not Reset: IPv6_TX_Meta_rst; [*]; MAC_TX_EOF: not Reset: IPv6_TX_Meta_rst; [*]; MAC_TX_EOF: not Reset: IPv6_TX_Meta_rst};
   cover {toggle_output_8(MAC_TX_Data)};
@@ -291,21 +309,4 @@ vunit ipv6 (ipv6_Wrapper (rtl)) {
   cover {toggle_output_16(RX_Meta_Length(0))};
   cover {toggle_output_8(RX_Meta_NextHeader(0))};
 
-  sequence toggle_output_8 (
-    hdltype T_SLV_8 data
-    ) is {                                                                        
-    reset = '0' and countones(data) = 0; [*]; reset = '0' and countones(data) = 8; [*]; reset = '0' and countones(data) = 0
-  };
-
-  sequence toggle_output_16 (
-    hdltype T_SLV_16 data
-    ) is {                                                                        
-    reset = '0' and countones(data) = 0; [*]; reset = '0' and countones(data) = 16; [*]; reset = '0' and countones(data) = 0
-  };
-
-  sequence toggle_output_24 (
-    hdltype T_SLV_24 data
-    ) is {                                                                        
-    reset = '0' and countones(data) = 0; [*]; reset = '0' and countones(data) = 24; [*]; reset = '0' and countones(data) = 0
-  };
   }
