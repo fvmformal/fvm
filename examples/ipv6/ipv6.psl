@@ -169,6 +169,7 @@ vunit ipv6 (ipv6_Wrapper (rtl)) {
       hdltype unsigned(4 downto 0) cnt
       ) is {
       MAC_TX_Ack = '1' and
+      MAC_TX_Valid = '1' and
       tx_cnt_out = cnt
   };
   sequence no_data_out_cnt (
