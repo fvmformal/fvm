@@ -1,6 +1,5 @@
 vunit olo_axi_lite_slave_properties (olo_axi_lite_slave(rtl)) {
 
-    use work.rr_arbiter_common.all;
     -- Default clock for PSL assertions
     default clock is rising_edge(Clk);
 
@@ -32,10 +31,10 @@ vunit olo_axi_lite_slave_properties (olo_axi_lite_slave(rtl)) {
     assert_read_enable_prev_ready:
         assert always ( {true; Rb_Rd} |-> {prev(S_AxiLite_ARReady)} ) abort Rst;
 
-   sequence AR_valid_ready {                                                                        
+   sequence AR_valid_ready is {                                                                        
       S_AxiLite_ARValid; S_AxiLite_ARReady
    };
-   sequence AR_valid_not_ready_and_ready {                                                                        
+   sequence AR_valid_not_ready_and_ready is {                                                                        
       S_AxiLite_ARValid: (not S_AxiLite_ARReady)[*]; S_AxiLite_ARReady
    };
     -- Assert the register bank receives the address
@@ -45,15 +44,15 @@ vunit olo_axi_lite_slave_properties (olo_axi_lite_slave(rtl)) {
     assert_address_received_2:
         assert always ( {AR_valid_not_ready_and_ready} |=> {Rb_Addr = prev(S_AxiLite_ARAddr)} ) abort Rst;
 
-   sequence bank_R_valid_ready {                                                                        
+   sequence bank_R_valid_ready is {                                                                        
       Rb_Rd; Rb_RdValid
    };
-   sequence bank_R_valid_ready_before_timeout {                                                                        
-      Rb_Rd; (not Rb_RdValid)[*1 to 98]; Rb_RdValid
+   sequence bank_R_valid_ready_before_timeout is {                                                                        
+      Rb_Rd; (not Rb_RdValid)[*1 to ReadTimeoutClks_g-3]; Rb_RdValid
    };
 
-   sequence bank_R_not_valid_before_timeout {                                                                        
-      Rb_Rd; (not Rb_RdValid)[*99]
+   sequence bank_R_not_valid_before_timeout is {                                                                        
+      Rb_Rd; (not Rb_RdValid)[*ReadTimeoutClks_g-1]
    };
 
     sequence R_interface (
@@ -61,9 +60,9 @@ vunit olo_axi_lite_slave_properties (olo_axi_lite_slave(rtl)) {
        hdltype std_logic_vector(AxiDataWidth_g - 1 downto 0) R_data;
        hdltype std_logic_vector(1 downto 0) R_resp
        ) is {                                                                        
-       S_AxiLite_RValid = R_valid and 
-       S_AxiLite_RData = R_data and 
-       S_AxiLite_RResp = R_resp 
+       S_AxiLite_RValid = R_valid and
+       S_AxiLite_RData = R_data and
+       S_AxiLite_RResp = R_resp
    };
     -- Assert the R Channel receives the data
     -- from the register bank
@@ -79,7 +78,7 @@ vunit olo_axi_lite_slave_properties (olo_axi_lite_slave(rtl)) {
         assert always ( {bank_R_not_valid_before_timeout} |=> {S_AxiLite_RResp = AxiResp_SlvErr_c} ) abort Rst;
 
 
-    sequence R_handshake {                                                                        
+    sequence R_handshake is {                                                                        
         S_AxiLite_RValid: S_AxiLite_RReady
     };
     -- Assert if the response is valid and ready,
@@ -113,10 +112,10 @@ vunit olo_axi_lite_slave_properties (olo_axi_lite_slave(rtl)) {
     --assert_write_address_received_2:
     --    assert always ( {S_AxiLite_AWValid: (not S_AxiLite_AWReady)[*]; S_AxiLite_AWReady} |=> {Rb_Addr = prev(S_AxiLite_AWAddr)} ) abort Rst;
 
-    sequence W_handshake {                                                                        
+    sequence W_handshake is {                                                                        
         S_AxiLite_WValid and S_AxiLite_WReady
     };
-    sequence prev_W_handshake {                                                                        
+    sequence prev_W_handshake is {
         prev(S_AxiLite_WValid) and prev(S_AxiLite_WReady)
     };
     -- Assert if write enable,
@@ -135,14 +134,14 @@ vunit olo_axi_lite_slave_properties (olo_axi_lite_slave(rtl)) {
        hdltype std_logic_vector(AxiDataWidth_g - 1 downto 0) WrData;
        hdltype std_logic_vector((AxiDataWidth_g/8) - 1 downto 0) ByteEna
        ) is {                                                                        
-       S_AxiLite_RValid = Wr and 
-       S_AxiLite_RData = WrData and 
-       S_AxiLite_RResp = ByteEna 
+       Rb_Wr = Wr and 
+       Rb_WrData = WrData and 
+       Rb_ByteEna = ByteEna 
    };
 
     assert_x2: assert always ( {true; S_AxiLite_WReady and (not prev(S_AxiLite_WReady))}  |-> {prev(S_AxiLite_AWReady)} ) abort Rst;
 
-    assert_bank_W: assert always ( {W_handshake; Rb_Wr} |-> {bank_W_interface('1', prev(S_AxiLite_WData), prev(S_AxiLite_WStrb))} ) abort Rst;
+    assert_bank_W: assert always ( {W_handshake} |=> {bank_W_interface('1', prev(S_AxiLite_WData), prev(S_AxiLite_WStrb))} ) abort Rst;
 
     -- Writes cannot fail
     assert always (S_AxiLite_BResp = "00"); 
@@ -176,7 +175,7 @@ vunit olo_axi_lite_slave_properties (olo_axi_lite_slave(rtl)) {
     cover {toggle_output_axi_data_width(Rb_WrData)};
     cover {toggle_output_axi_addr_width(Rb_Addr)};
 
-   sequence cover_seq_1 {                                                                        
+   sequence cover_seq_1 is {                                                                        
       ((Rb_Rd = '0') and (Rb_RdValid = '0'))[*1];
       ((Rb_Addr = x"10") and (Rb_Rd = '1') and (Rb_RdValid = '0'))[*1];
       ((Rb_Rd = '0') and (Rb_RdValid = '1') and (Rb_RdData = x"DEADBEEF"))[*1];
@@ -187,7 +186,7 @@ vunit olo_axi_lite_slave_properties (olo_axi_lite_slave(rtl)) {
       ((Rb_Rd = '0') and (Rb_RdValid = '0'))[*1]
    };
 
-   sequence cover_seq_2 {                                                                        
+   sequence cover_seq_2 is {                                                                        
       ((Rb_Wr = '0'))[*1];
       ((Rb_Addr = x"10") and (Rb_Wr = '1') and (Rb_ByteEna = x"F") and (Rb_WrData = x"DEADBEEF"))[*1];
       ((Rb_Wr = '0'))[*3];
