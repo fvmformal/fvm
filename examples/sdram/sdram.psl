@@ -163,18 +163,18 @@ vunit sdram_properties (sdram(arch)) {
         assert always ( { command_write } 
         |=> { sdram_dq = prev(data(15 downto 0), 3) } ) abort reset;
 
-    sequence toggle_output_sdram_dq_1 {                                                                        
+    sequence toggle_output_sdram_dq_1 is {                                                                        
        reset = '0' and countones(sdram_dq) = 0; 
        countones(sdram_dq) = SDRAM_DATA_WIDTH and valid = '1' and reset = '0'; 
        countones(sdram_dq) = 0
    };
-    sequence toggle_output_sdram_dq_2 {                                                                        
+    sequence toggle_output_sdram_dq_2 is {                                                                        
        countones(sdram_dq) = 0; 
        reset = '0' and countones(sdram_dq) = SDRAM_DATA_WIDTH; 
        countones(sdram_dq) = 0 and valid = '1' and reset = '0'
    };
     sequence toggle_output_sdram_addr_width (
-       hdltype std_logic_vector(SDRAM_ADDR_WIDTH - 1 downto 0) a
+       hdltype unsigned(SDRAM_ADDR_WIDTH - 1 downto 0) a
        ) is {                                                                        
        countones(a) = 0; [*]; countones(a) = SDRAM_ADDR_WIDTH; [*]; countones(a) = 0
    };
@@ -183,28 +183,21 @@ vunit sdram_properties (sdram(arch)) {
        ) is {                                                                        
        countones(q) = 0; [*]; countones(q) = DATA_WIDTH; [*]; countones(q) = 0
    };
-    sequence toggle_output_addr_width (
-       hdltype std_logic_vector(AxiAddrWidth_g - 1 downto 0) axiAddr
-       ) is {                                                                        
-       Rst = '0' and countones(axiAddr) = 0; [*]; 
-       Rst = '0' and countones(axiAddr) = AxiAddrWidth_g; [*]; 
-       Rst = '0' and countones(axiAddr) = 0
-   };
-    sequence start_data {                                                                        
+    sequence start_data is {                                                                        
        countones(data) = 0; 
        reset = '0' and start = '1'; 
        countones(data) = DATA_WIDTH; 
        true[*4]; 
        countones(data) = 0
    };
-    sequence start_addr {                                                                        
+    sequence start_addr is {                                                                        
        countones(addr) = 0; 
        reset = '0' and start = '1'; 
        countones(addr) = ADDR_WIDTH; 
        true[*4]; 
        countones(addr) = 0
    };
-    sequence no_rst {                                                                        
+    sequence no_rst is {                                                                        
        reset = '1'; (reset = '0')[*]
    };
     sequence state_no_rst (
