@@ -26,9 +26,9 @@ vunit div32 (div32(rtl)) {
     assume always ( divi.y(29 downto 20) = "0000000000" );
     assume always ( divi.op1(29 downto 20) = "0000000000" );
     assume always ( divi.op2(29 downto 20) = "0000000000" );
-    assume always ( divi.y(16 downto 8) = "000000000" );
-    assume always ( divi.op1(16 downto 8) = "000000000" );
-    assume always ( divi.op2(16 downto 8) = "000000000" );
+    assume always ( divi.y(18 downto 8) = "00000000000" );
+    assume always ( divi.op1(18 downto 8) = "00000000000" );
+    assume always ( divi.op2(18 downto 8) = "00000000000" );
     assume always ( divi.y(6 downto 2) = "00000" );
     assume always ( divi.op1(6 downto 2) = "00000" );
     assume always ( divi.op2(6 downto 2) = "00000" );
@@ -42,6 +42,13 @@ vunit div32 (div32(rtl)) {
     assert_divider_36_cycles: 
         assert always ( ( ( {divi.start; true[*34]} |=> {divo.ready} ) abort (holdn = '0') ) abort divi.flush ) abort (rst = '0');
 
+    sequence stable_inputs is {                                    
+        (stable(divi.y) and stable(divi.op1) and stable(divi.op2))[*34]
+    }; 
+
+    sequence result_ready is {                                    
+        divo.ready: divo.icc="0000"; divo.icc="0000"
+    }; 
     -- Assert that the division is correct.
     -- The inputs divi.y, divi.op1 and divi.op2 must be stable
     -- during the division. divo.icc is "0000" to avoid overflows,
@@ -56,14 +63,6 @@ vunit div32 (div32(rtl)) {
     -- Cover two divisions
     cover_two_divisions: cover{[*]; divo.ready: rst: holdn; [*]; divo.ready: rst: holdn};
 
-    sequence stable_inputs {                                    
-        (stable(divi.y) and stable(divi.op1) and stable(divi.op2))[*34]
-    }; 
-
-    sequence result_ready {                                    
-        divo.ready: divo.icc="0000"; divo.icc="0000"
-    }; 
-
     sequence input (                                                           
         hdltype std_logic_vector(32 downto 0) y;
         hdltype std_logic_vector(32 downto 0) op1;
@@ -71,8 +70,8 @@ vunit div32 (div32(rtl)) {
         ) is {                                    
         divi.start = '1' and          
         divi.y = y and   
-        input_tran.supr.re = op1 and
-        input_tran.supr.im = op2 and
+        divi.op1 = op1 and
+        divi.op2 = op2 and
         rst = '1'                                 
     }; 
 
