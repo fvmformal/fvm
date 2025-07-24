@@ -57,7 +57,7 @@ test_all:
 
 # TODO : Add artifacts, when we have a clearer idea of what those would be
 # TODO : Add results.xml, when our framework generates it
-.run_concepts_questa: &run_concepts_questa
+run_concepts_questa: &run_concepts_questa
   stage: concepts
   image: registry.woden.us.es/containers/questa:2025.1_2
   variables:
@@ -98,7 +98,7 @@ test_all:
       junit:
         - fvm_out/fvm_results/*.xml
 
-run_concepts_sby: &run_concepts_sby
+.run_concepts_sby: &run_concepts_sby
   <<: *run_concepts_questa
   image: registry.gitlab.com/hgpub/fosshdl-dist
   variables:
@@ -108,14 +108,14 @@ run_concepts_sby: &run_concepts_sby
     - source /home/salas/fosshdl/env.rc
     - export FVM_TOOLCHAIN=sby
 
-.run_examples_questa:
+run_examples_questa:
   <<: *run_concepts_questa
   stage: examples
   parallel:
     matrix:
       - DESIGN: [counter, countervunit, linearinterpolator, dualcounter, uart_tx, arbiter_prior, arbiter_rr, fifo_sync, fifo_async, axi_lite_slave, sdram, ddr2_controller, ipv6]
 
-run_examples_sby:
+.run_examples_sby:
   <<: *run_concepts_sby
   stage: examples
   parallel:
