@@ -135,6 +135,15 @@ vunit olo_base_fifo_async (olo_base_fifo_async(rtl)) {
   assume always ( ( {true} |=> {a = prev(a)} ) abort In_Rst ) @rising_edge(In_Clk);
   assume always ( ( {true} |=> {a = prev(a)} ) ) @rising_edge(Out_Clk);
 
+  sequence write_seq_out_clk is {
+      In_Ready_out_clk = '1' and In_Valid_out_clk = '1'
+  };
+
+  sequence read_seq is {
+      Out_Valid:
+      Out_Ready
+  };
+
   sequence in_data_pos_j (
       hdltype std_logic_vector(Width_g-1 downto 0) a;
       hdltype unsigned(log2ceil(Depth_g) - 1 downto 0) j
@@ -151,7 +160,6 @@ vunit olo_base_fifo_async (olo_base_fifo_async(rtl)) {
    };
 
   sequence out_valid_pos_j (
-      hdltype std_logic_vector(Width_g-1 downto 0) a;
       hdltype unsigned(log2ceil(Depth_g) - 1 downto 0) j
       ) is {                                                                        
       read_seq: 
@@ -173,15 +181,6 @@ vunit olo_base_fifo_async (olo_base_fifo_async(rtl)) {
   sequence write_seq_no_rst is {
       write_seq: 
       In_RstOut = '0'
-  };
-  
-  sequence write_seq_out_clk is {
-      In_Ready_out_clk = '1' and In_Valid_out_clk = '1'
-  };
-
-  sequence read_seq is {
-      Out_Valid:
-      Out_Ready
   };
 
   sequence read_seq_no_rst is {
@@ -220,12 +219,6 @@ vunit olo_base_fifo_async (olo_base_fifo_async(rtl)) {
       not Out_Rst
   } @rising_edge(Out_Clk);
 
-  cover{write_FIFO; [*]; In_Full = '1'; true[*3]} @rising_edge(In_Clk);
-  cover{read_FIFO; [*]; Out_Full = '1'; (Out_Rst = '0' and Out_RstOut = '0')[*]; Out_Empty = '1'} @rising_edge(Out_Clk);
-  cover{Out_RstOut; (Out_RstOut = '0' and Out_Rst = '0')[+]; out_cnt = Depth_g-1; out_cnt = 0} @rising_edge(Out_Clk);
-  cover{toggle_a_1} @rising_edge(In_Clk);
-  cover{toggle_a_2} @rising_edge(In_Clk);
-
   sequence toggle_a_1 is {
     countones(a) = Width_g and In_Rst = '1'; 
     countones(a) = 0 and In_Rst = '0'
@@ -235,4 +228,11 @@ vunit olo_base_fifo_async (olo_base_fifo_async(rtl)) {
     countones(a) = 0 and In_Rst = '1'; 
     countones(a) = Width_g and In_Rst = '0'
   };
+
+  cover{write_FIFO; [*]; In_Full = '1'; true[*3]} @rising_edge(In_Clk);
+  cover{read_FIFO; [*]; Out_Full = '1'; (Out_Rst = '0' and Out_RstOut = '0')[*]; Out_Empty = '1'} @rising_edge(Out_Clk);
+  cover{Out_RstOut; (Out_RstOut = '0' and Out_Rst = '0')[+]; out_cnt = Depth_g-1; out_cnt = 0} @rising_edge(Out_Clk);
+  cover{toggle_a_1} @rising_edge(In_Clk);
+  cover{toggle_a_2} @rising_edge(In_Clk);
+
 }
