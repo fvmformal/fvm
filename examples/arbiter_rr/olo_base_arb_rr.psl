@@ -2,7 +2,7 @@ vunit olo_base_arb_rr_properties (olo_base_arb_rr) {
 
    --inherit rr_arbiter_common;
 
-   --use work.rr_arbiter_common.all;
+   use work.rr_arbiter_common.all;
 
    -- Default clock for PSL assertions
    default clock is rising_edge(Clk);
@@ -30,7 +30,7 @@ vunit olo_base_arb_rr_properties (olo_base_arb_rr) {
    -- Assert when the output is not 0, the output is valid
    assert always {countones(Out_Grant) = 1} |-> {Out_Valid = '1'} abort Rst;
 
-   sequence valid_grant {                                                                        
+   sequence valid_grant is {                                                                        
       Out_Ready = '1' and Out_Valid = '1'
    };
    -- Assert when two Out_Ready in two consecutive cycles,
@@ -38,16 +38,16 @@ vunit olo_base_arb_rr_properties (olo_base_arb_rr) {
    -- function defined in rr_arbiter_common.psl that receives as parameters
    -- the previous granted output and the input request. This function
    -- simulates the round_robin algorithm.
-   assert always ( {valid_grant; valid_grant} |-> { Out_Grant = round_robin_arbiter_msb(In_Req, prev(Out_Grant)) } ) abort Rst;
+   assert always ( {valid_grant; valid_grant} |-> { Out_Grant = round_robin_arbiter(In_Req, prev(Out_Grant)) } ) abort Rst;
 
    -- The next few assertions are similar to the previous one.
    -- The main difference is we do not have two consecutive cycles,
    -- can be consecutive or not, so we cannot use operator prev(). 
    -- So, we use 4 different assertions for each value of Out_Grant
 
-   signal last_grant : std_logic_vector(3 downto 0);
+   --signal last_grant : std_logic_vector(Width_g-1 downto 0);
 
-   assume always ( {true} |=> {last_grant = Out_Grant} );
+   --assume always ( {true} |=> {last_grant = prev(last_grant)} );
 
    sequence last_valid_grant (
        hdltype std_logic_vector(Width_g-1 downto 0) grant
@@ -55,15 +55,15 @@ vunit olo_base_arb_rr_properties (olo_base_arb_rr) {
       valid_grant: Out_Grant = grant
    };
 
-   sequence no_grant {                                                                        
+   sequence no_grant is {                                                                        
       not (Out_Ready and Out_Valid)
    };
 
-   assert always ( {last_valid_grant(last_grant); no_grant[*]; valid_grant} 
-   |-> { Out_Grant = round_robin_arbiter_msb(In_Req, last_grant) } ) abort Rst;
+   --assert always ( {last_valid_grant(last_grant); no_grant[*]; valid_grant} 
+   --|-> { Out_Grant = round_robin_arbiter(In_Req, last_grant) } ) abort Rst;
 
-   assert always ({rst = '1'; valid_grant} |-> {Out_Grant = priority_arbiter_msb(In_Req)});
-   assert always ({rst = '1'; no_grant[*]; valid_grant} |-> {Out_Grant = priority_arbiter_msb(In_Req)});
+   assert always ({rst = '1'; valid_grant} |-> {Out_Grant = priority_arbiter(In_Req)});
+   assert always ({rst = '1'; no_grant[*]; valid_grant} |-> {Out_Grant = priority_arbiter(In_Req)});
 
    cover {rst = '0'; countones(Out_Grant) = 0; (Out_Ready = '1' and Out_Valid = '1' and countones(In_Req) = 64)[*70]};
 

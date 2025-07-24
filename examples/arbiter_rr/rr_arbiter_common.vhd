@@ -9,7 +9,7 @@ package rr_arbiter_common is
     ) return std_logic_vector;
 
     function round_robin_arbiter(
-        req : std_logic_vector
+        req : std_logic_vector;
         last_grant : std_logic_vector
     ) return std_logic_vector;
 end package rr_arbiter_common;
