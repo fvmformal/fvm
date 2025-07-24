@@ -88,7 +88,6 @@ vunit fifo_sync (olo_base_fifo_sync(rtl)) {
   signal c : unsigned(log2ceil(Depth_g) - 1 downto 0);
   --signal d : unsigned(log2ceil(Depth_g) - 1 downto 0);
   assume always ({true} |=> {a = prev(a)}) abort Rst;
-  assume always ({true} |=> {c = prev(c)}) abort Rst;
   --assume always ({true} |=> {d = prev(d)});
 
   --        assert always ( {In_Ready = '1' and In_Valid = '1' and In_Data = a and in_cnt = c; (out_cnt /= c)[*];
