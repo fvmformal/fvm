@@ -1,0 +1,23 @@
+vunit properties(wishbone) {
+
+  inherit wishbone_classic_read;
+
+  default clock is rising_edge(clk);
+
+  assume_initial_reset: assume rst = '1';
+
+  signal addr, data : std_ulogic_vector(31 downto 0);
+
+  signal m2s_addr, s2m_data : std_ulogic_vector(31 downto 0);
+
+  assume_correct_read_module_A:
+    assume wishbone_classic_read(addr, data);
+
+  assert_correct_read_module_B:
+    assert wishbone_classic_read(m2s_addr, s2m_data)
+    abort rst;
+
+  cover_read_from_specific_address:
+    cover wishbone_classic_read_Master(x"90000000");
+
+}
