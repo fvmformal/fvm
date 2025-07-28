@@ -131,6 +131,9 @@ class fvmframework:
         self.cont = args.cont
         self.gui = args.gui
         self.guinorun = args.guinorun
+        self.flexlm_logdir = os.path.join(self.outdir, ".flexlm.log")
+        self.env = os.environ.copy()
+        self.env["FLEXLM_DIAGNOSTICS_PATH"] = self.flexlm_logdir
 
         # Make loglevel an instance variable
         if self.verbose :
@@ -813,7 +816,8 @@ class fvmframework:
                   stdout  = subprocess.PIPE,
                   stderr  = subprocess.PIPE,
                   text    = True,
-                  bufsize = 1
+                  bufsize = 1,
+                  env     = self.env
                   )
 
         # Initialize variables where to store command stdout/stderr
@@ -921,6 +925,7 @@ class fvmframework:
         # Create the output directories, but do not throw an error if it already
         # exists
         os.makedirs(self.outdir, exist_ok=True)
+        os.makedirs(self.flexlm_logdir, exist_ok=True)
         self.current_toplevel = design
 
         if config is not None:
