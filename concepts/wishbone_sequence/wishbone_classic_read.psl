@@ -30,6 +30,6 @@ vunit wishbone_classic_read {
     hdltype std_ulogic_vector(31 downto 0) addr;
     hdltype std_ulogic_vector(31 downto 0) data
   ) is
-    always (wishbone_classic_read_Master(addr) and wishbone_classic_read_Slave(data));
+    always { {wishbone_classic_read_Master(addr)} && {wishbone_classic_read_Slave(data)} };
 
 }
