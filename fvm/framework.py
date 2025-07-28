@@ -1069,6 +1069,19 @@ class fvmframework:
                 elif self.guinorun == True :
                     logger.info(f'{self.guinorun=}, will not run {step=} with {tool=}')
                 else :
+                    # If we are in the prove step, move outdir.qsim_tb
+                    # directory out of the way, if it exists. If we don't do
+                    # this
+                    if step == 'prove':
+                        qsim_tb_dir = os.path.join(self.outdir, design, "qsim_tb")
+                        archive_dir = qsim_tb_dir+".old"
+                        if os.path.exists(qsim_tb_dir):
+                            if not os.path.exists(qsim_tb_dir+".old"):
+                                os.makedirs(archive_dir)
+                            timestamp = datetime.now().isoformat()
+                            target_dir = os.path.join(archive_dir, "qsim_tb_" + timestamp)
+                            shutil.move(qsim_tb_dir, target_dir)
+
                     logger.trace(f'command: {" ".join(cmd)=}')
                     cmd_stdout, cmd_stderr = self.run_cmd(cmd, design, step, tool, self.verbose)
                     stdout_err = self.logcheck(cmd_stdout, design, step, tool)
