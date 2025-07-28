@@ -1071,7 +1071,9 @@ class fvmframework:
                 else :
                     # If we are in the prove step, move outdir.qsim_tb
                     # directory out of the way, if it exists. If we don't do
-                    # this
+                    # this, we may get errors due to the .vcd files already
+                    # existing, or worse, we could try to run simulations of
+                    # properties that no longer exist
                     if step == 'prove':
                         qsim_tb_dir = os.path.join(self.outdir, design, "qsim_tb")
                         archive_dir = qsim_tb_dir+".old"
