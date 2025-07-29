@@ -26,17 +26,10 @@ from fvm import generate_test_cases
 from fvm import reports
 from fvm.steps import steps
 from fvm.toolchains import toolchains
-from fvm.parsers import parse_formal_signoff
-from fvm.parsers import parse_reachability
-from fvm.parsers import parse_reports
-from fvm.parsers import parse_simcover
-from fvm.parsers import parse_lint
-from fvm.parsers import parse_rulecheck
-from fvm.parsers import parse_xverify
-from fvm.parsers import parse_resets
-from fvm.parsers import parse_clocks
-from fvm.parsers import parse_fault
+
 # TODO : why is this parser import different?
+# TODO : this one was written by Hipolito, he will check it to change it to the
+# other way of importing
 from fvm.parsers.parse_design_rpt import *
 
 # Error codes
@@ -120,7 +113,8 @@ class fvmframework:
         else:
             args = parser.parse_args(sys.argv[1:])
 
-        logger.trace(f'{args=}')
+        self.logger = logger
+        self.logger.trace(f'{args=}')
         self.verbose = args.verbose
         self.list = args.list
         self.outdir = args.outdir
@@ -145,28 +139,28 @@ class fvmframework:
         self.log_counter = logcounter.logcounter()
 
         # Clean logger format and handlers
-        logger.remove()
+        self.logger.remove()
 
         # Add log_counter as custom handler so log messages are counted
         # include all message types (from level 0 onwards) so they get recorded
         # even if they are not printed
-        logger.add(self.log_counter, level=0)
+        self.logger.add(self.log_counter, level=0)
 
         # Get log messages also in stderr. Only print format
-        logger.add(sys.stderr, level=self.loglevel, format=LOGFORMAT)
+        self.logger.add(sys.stderr, level=self.loglevel, format=LOGFORMAT)
 
         # Log the creation of the framework object
-        logger.trace(f'Creating {self}')
+        self.logger.trace(f'Creating {self}')
 
         # Are we being called from inside a script or from stdin?
         self.is_interactive = helpers.is_interactive()
         if self.is_interactive:
-            logger.info('Running interactively')
+            self.logger.info('Running interactively')
         else:
-            logger.info('Running from within a script')
+            self.logger.info('Running from within a script')
 
         self.scriptname = helpers.getscriptname()
-        logger.info(f'{self.scriptname=}')
+        self.logger.info(f'{self.scriptname=}')
 
         # Let's define a prefix for our test results, in case the user wants to
         # run different formal.py files and create a report that includes all
@@ -182,10 +176,10 @@ class fvmframework:
         # Users can also set a prefix using fvmframwork.set_prefix(prefix)
         if self.is_interactive:
             self.prefix = os.path.basename(self.scriptname)+'_interactive'
-            logger.info(f'Running interactively, {self.prefix=}')
+            self.logger.info(f'Running interactively, {self.prefix=}')
         else:
             self.prefix = os.path.basename(os.path.dirname(self.scriptname))
-            logger.info(f'Running inside a script, {self.prefix=}')
+            self.logger.info(f'Running inside a script, {self.prefix=}')
 
         # Rest of instance variables
         # TODO : this is getting a bit big, we could consider restructuring
@@ -228,22 +222,27 @@ class fvmframework:
         # defined in the selected toolchain, and define the methdology steps
         # according to what the toolchain does actually support
         self.toolchain = toolchains.get_toolchain()
+        self.logger.info(f'{self.toolchain=}')
+        if self.toolchain not in toolchains.toolchains :
+            self.logger.error(f'{self.toolchain=} not supported')
+            self.exit_if_required(BAD_VALUE)
         self.tool_flags = toolchains.get_default_flags(self.toolchain)
+        self.logger.info(f'{self.tool_flags=}')
         self.steps = steps()
         toolchains.define_steps(self.steps, self.toolchain)
-        logger.info(f'{steps=}')
+        self.logger.info(f'{steps=}')
 
         # Exit if args.step is unrecognized
         if args.step is not None:
-            if args.step not in toolchains.TOOLS[self.toolchain]:
-                logger.error(f'step {args.step} not available in {self.toolchain}. Available steps are: {list(toolchains.TOOLS[self.toolchain].keys())}')
+            if args.step not in self.steps.steps:
+                self.logger.error(f'step {args.step} not available in {self.toolchain}. Available steps are: {list(self.steps.steps.keys())}')
                 self.exit_if_required(BAD_VALUE)
 
     def set_toolchain(self, toolchain) :
         """Allows to override the FVM_TOOLCHAIN environment variable and set a
         different toolchain"""
-        if toolchain not in toolchains.TOOLS :
-            logger.error(f'{toolchain=} not supported')
+        if toolchain not in toolchains.toolchains :
+            self.logger.error(f'{toolchain=} not supported')
             self.exit_if_required(BAD_VALUE)
         else :
             self.toolchain = toolchain
@@ -252,56 +251,56 @@ class fvmframework:
         """Execute a system command and handle errors."""
         try:
             result = subprocess.run(command, shell=True, check=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            logger.info(f'Command succeeded: {command}')
-            logger.debug(f'STDOUT: {result.stdout.strip()}')
+            self.logger.info(f'Command succeeded: {command}')
+            self.logger.debug(f'STDOUT: {result.stdout.strip()}')
             if result.stderr.strip():
-                logger.debug(f'STDERR: {result.stderr.strip()}')
+                self.logger.debug(f'STDERR: {result.stderr.strip()}')
             return result.stdout.strip()
         except subprocess.CalledProcessError as e:
-            logger.error(f'Command failed: {command}')
-            logger.error(f'Error: {e.stderr.strip()}')
+            self.logger.error(f'Command failed: {command}')
+            self.logger.error(f'Error: {e.stderr.strip()}')
             raise
 
     def add_vhdl_source(self, src, library="work"):
         """Add a single VHDL source"""
-        logger.info(f'Adding VHDL source: {src}')
+        self.logger.info(f'Adding VHDL source: {src}')
         if not os.path.exists(src) :
-            logger.error(f'VHDL source not found: {src}')
+            self.logger.error(f'VHDL source not found: {src}')
             self.exit_if_required(BAD_VALUE)
         extension = pathlib.Path(src).suffix
         if extension not in ['.vhd', '.VHD', '.vhdl', '.VHDL'] :
-            logger.warning(f'VHDL source {src=} does not have a typical VHDL extension, instead it has {extension=}')
+            self.logger.warning(f'VHDL source {src=} does not have a typical VHDL extension, instead it has {extension=}')
         self.vhdl_sources.append(src)
         self.libraries_from_vhdl_sources.append(library)
-        logger.debug(f'{self.vhdl_sources=}')
+        self.logger.debug(f'{self.vhdl_sources=}')
 
     def clear_vhdl_sources(self):
         """Removes all VHDL sources from the project"""
-        logger.info(f'Removing all VHDL sources')
+        self.logger.info(f'Removing all VHDL sources')
         self.vhdl_sources = []
 
     def add_psl_source(self, src):
         """Add a single PSL source"""
-        logger.info(f'Adding PSL source: {src}')
+        self.logger.info(f'Adding PSL source: {src}')
         if not os.path.exists(src) :
-            logger.error(f'PSL source not found: {src}')
+            self.logger.error(f'PSL source not found: {src}')
             self.exit_if_required(BAD_VALUE)
         extension = pathlib.Path(src).suffix
         if extension not in ['.psl', '.PSL'] :
-            logger.warning(f'PSL source {src=} does not have a typical PSL extension extension, instead it has {extension=}')
+            self.logger.warning(f'PSL source {src=} does not have a typical PSL extension extension, instead it has {extension=}')
         self.psl_sources.append(src)
-        logger.debug(f'{self.psl_sources=}')
+        self.logger.debug(f'{self.psl_sources=}')
 
     def clear_psl_sources(self):
         """Removes all PSL sources from the project"""
-        logger.info(f'Removing all PSL sources')
+        self.logger.info(f'Removing all PSL sources')
         self.psl_sources = []
 
     def add_vhdl_sources(self, globstr, library="work"):
         """Add multiple VHDL sources by globbing a pattern"""
         sources = glob.glob(globstr)
         if len(sources) == 0 :
-            logger.error(f'No files found for pattern {globstr}')
+            self.logger.error(f'No files found for pattern {globstr}')
             self.exit_if_required(BAD_VALUE)
         for source in sources:
             self.add_vhdl_source(source, library)
@@ -310,18 +309,18 @@ class fvmframework:
         """Add multiple PSL sources by globbing a pattern"""
         sources = glob.glob(globstr)
         if len(sources) == 0 :
-            logger.error(f'No files found for pattern {globstr}')
+            self.logger.error(f'No files found for pattern {globstr}')
             self.exit_if_required(BAD_VALUE)
         for source in glob.glob(globstr):
             self.add_psl_source(source)
 
     def list_vhdl_sources(self):
         """List VHDL sources"""
-        logger.info(f'{self.vhdl_sources=}')
+        self.logger.info(f'{self.vhdl_sources=}')
 
     def list_psl_sources(self):
         """List PSL sources"""
-        logger.info(f'{self.psl_sources=}')
+        self.logger.info(f'{self.psl_sources=}')
 
     def list_sources(self):
         """List all sources"""
@@ -334,10 +333,10 @@ class fvmframework:
         @param toolname: name of executable to look for in PATH"""
         path = shutil.which(tool)
         if path is None :
-            logger.warning(f'{tool=} not found in PATH')
+            self.logger.warning(f'{tool=} not found in PATH')
             ret = False
         else :
-            logger.success(f'{tool=} found at {path=}')
+            self.logger.success(f'{tool=} found at {path=}')
             ret = True
         return ret
 
@@ -357,7 +356,7 @@ class fvmframework:
             # Check for duplicates and throw an error if a toplevel is
             # specified more than once
             if len(toplevel) != len(set(toplevel)):
-                logger.error(f'Duplicates exist in {toplevel=}')
+                self.logger.error(f'Duplicates exist in {toplevel=}')
                 sys.exit(BAD_VALUE)
             else:
                 self.toplevel = toplevel
@@ -367,7 +366,7 @@ class fvmframework:
         # will not be necessary because there won't be any clashes with fvm_*
         # directories
         if 'fvm_dashboard' in toplevel or 'fvm_reports' in toplevel:
-            logger.error("toplevels can not have the following reserved names: fvm_dashboard, fvm_reports")
+            self.logger.error("toplevels can not have the following reserved names: fvm_dashboard, fvm_reports")
             sys.exit(BAD_VALUE)
 
         # If a design was specified, just run that design
@@ -375,7 +374,7 @@ class fvmframework:
             if self.design in self.toplevel:
                 self.toplevel = [self.design]
             else:
-                logger.error(f'Specified {args.design=} not in {self.toplevel=}, did you add it with set_toplevel()?')
+                self.logger.error(f'Specified {args.design=} not in {self.toplevel=}, did you add it with set_toplevel()?')
 
     def init_results(self):
         # TODO: this must be initialized per design configuration, but to do
@@ -405,7 +404,7 @@ class fvmframework:
 
         # Check that the configuration is for a valid design
         if design not in self.toplevel:
-            logger.error(f'Specified {design=} not in {self.toplevel=}')
+            self.logger.error(f'Specified {design=} not in {self.toplevel=}')
 
         # Initialize the design configurations list if it doesn't exist
         if design not in self.design_configs:
@@ -417,7 +416,7 @@ class fvmframework:
         config["name"] = name
         config["generics"] = generics
         self.design_configs[design].append(config)
-        logger.trace(f'Added configuration {self.design_configs} to {design=}')
+        self.logger.trace(f'Added configuration {self.design_configs} to {design=}')
 
     # TODO : we could make this function accept also a list, but not sure if it
     # is worth it since the user could just call it inside a loop
@@ -457,15 +456,15 @@ class fvmframework:
         # TODO : maybe we will just remove some of these loglevels as valid
         # options if we end up using those log levels to indicate normal
         # operation of our framework
-        logger.remove()
+        self.logger.remove()
         self.loglevel = loglevel
-        logger.add(self.log_counter, level=0)
-        logger.add(sys.stderr, level=self.loglevel, format=LOGFORMAT)
+        self.logger.add(self.log_counter, level=0)
+        self.logger.add(sys.stderr, level=self.loglevel, format=LOGFORMAT)
 
     def set_logformat(self, logformat):
-        logger.remove()
-        logger.add(self.log_counter, level=0)
-        logger.add(sys.stderr, level=self.loglevel, format=logformat)
+        self.logger.remove()
+        self.logger.add(self.log_counter, level=0)
+        self.logger.add(sys.stderr, level=self.loglevel, format=logformat)
 
     def get_log_counts(self) :
         return self.log_counter.get_counts()
@@ -477,7 +476,7 @@ class fvmframework:
         # we call logger.info, logger.warning, etc.)
         # getattr gets the method by name from the specified class (in this
         # case, logger)
-        logfunction = getattr(logger, severity.lower())
+        logfunction = getattr(self.logger, severity.lower())
         logfunction(string)
 
     def check_errors(self) :
@@ -488,36 +487,36 @@ class fvmframework:
         #print(f'{msg_counts=}')
 
         # Use a different format for summary messages
-        logger.remove()
-        logger.add(sys.stderr, level=self.loglevel, format=LOGFORMAT_SUMMARY)
+        self.logger.remove()
+        self.logger.add(sys.stderr, level=self.loglevel, format=LOGFORMAT_SUMMARY)
 
-        logger.info(f'Got {msg_counts["TRACE"]=} trace messages')
-        logger.info(f'Got {msg_counts["DEBUG"]=} debug messages')
-        logger.info(f'Got {msg_counts["INFO"]=} info messages')
+        self.logger.info(f'Got {msg_counts["TRACE"]=} trace messages')
+        self.logger.info(f'Got {msg_counts["DEBUG"]=} debug messages')
+        self.logger.info(f'Got {msg_counts["INFO"]=} info messages')
         if msg_counts['SUCCESS'] > 0 :
-            logger.success(f'Got {msg_counts["SUCCESS"]=} success messages')
+            self.logger.success(f'Got {msg_counts["SUCCESS"]=} success messages')
         else :
-            logger.info(f'Got {msg_counts["SUCCESS"]=} success messages')
+            self.logger.info(f'Got {msg_counts["SUCCESS"]=} success messages')
         if msg_counts['WARNING'] > 0 :
-            logger.warning(f'Got {msg_counts["WARNING"]=} warning messages')
+            self.logger.warning(f'Got {msg_counts["WARNING"]=} warning messages')
         else :
-            logger.success(f'Got {msg_counts["WARNING"]=} warning messages')
+            self.logger.success(f'Got {msg_counts["WARNING"]=} warning messages')
         if msg_counts['ERROR'] > 0 :
-            logger.error(f'Got {msg_counts["ERROR"]=} error messages')
+            self.logger.error(f'Got {msg_counts["ERROR"]=} error messages')
             ret = True
         else :
-            logger.success(f'Got {msg_counts["ERROR"]=} error messages')
+            self.logger.success(f'Got {msg_counts["ERROR"]=} error messages')
         if msg_counts['CRITICAL'] > 0 :
-            logger.critical(f'Got {msg_counts["CRITICAL"]=} critical messages')
+            self.logger.critical(f'Got {msg_counts["CRITICAL"]=} critical messages')
             ret = True
         else :
-            logger.success(f'Got {msg_counts["CRITICAL"]=} critical messages')
+            self.logger.success(f'Got {msg_counts["CRITICAL"]=} critical messages')
 
 
         # Restore the original log format and loglevel
-        logger.remove()
-        logger.add(self.log_counter, level=0)
-        logger.add(sys.stderr, level=self.loglevel, format=LOGFORMAT)
+        self.logger.remove()
+        self.logger.add(self.log_counter, level=0)
+        self.logger.add(sys.stderr, level=self.loglevel, format=LOGFORMAT)
 
         if ret :
           self.exit_if_required(CHECK_FAILED)
@@ -530,7 +529,7 @@ class fvmframework:
                          negedge=None, module=None, inout_clock_in=None,
                          inout_clock_out=None):
         domain = {key: value for key, value in locals().items() if key != 'self'}
-        logger.trace(f'adding clock domain: {domain}')
+        self.logger.trace(f'adding clock domain: {domain}')
         self.clock_domains.append(domain)
 
     # TODO : check that port_list must be an actual list()
@@ -538,7 +537,7 @@ class fvmframework:
                          synchronous=None, active_high=None, active_low=None,
                          is_set=None, no_reset=None, module=None, ignore=None):
         domain = {key: value for key, value in locals().items() if key != 'self'}
-        logger.trace(f'adding reset domain: {domain}')
+        self.logger.trace(f'adding reset domain: {domain}')
         self.reset_domains.append(domain)
 
     def add_reset(self, name, module=None, group=None, active_low=None,
@@ -548,7 +547,7 @@ class fvmframework:
         pattern, such as rst*."""
         # Copy all arguments to a dict, excepting self
         reset = {key: value for key, value in locals().items() if key != 'self'}
-        logger.trace(f'adding reset: {reset}')
+        self.logger.trace(f'adding reset: {reset}')
         self.resets.append(reset)
 
     def add_clock(self, name, module=None, group=None, period=None,
@@ -556,21 +555,21 @@ class fvmframework:
         """Adds a clock to the design. 'name' can be a signal/port name or a
         pattern, such as clk*."""
         clock = {key: value for key, value in locals().items() if key != 'self'}
-        logger.trace(f'adding clock: {clock}')
+        self.logger.trace(f'adding clock: {clock}')
         self.clocks.append(clock)
 
     # TODO : consider what happens when we have multiple toplevels, maybe we
     # should have the arguments (self, design/toplevel, entity)
     def blackbox(self, entity):
         """Blackboxes all instances of an entity/module"""
-        logger.trace(f'blackboxing entity: {entity}')
+        self.logger.trace(f'blackboxing entity: {entity}')
         self.blackboxes.append(entity)
 
     # TODO : consider what happens when we have multiple toplevels, maybe we
     # should have the arguments (self, design/toplevel, instance)
     def blackbox_instance(self, instance):
         """Blackboxes a specific instance of an entity/module"""
-        logger.trace(f'blackboxing instance: {instance}')
+        self.logger.trace(f'blackboxing instance: {instance}')
         self.blackbox_instances.append(instance)
 
     # TODO : consider what happens when we have multiple toplevels, maybe we
@@ -579,7 +578,7 @@ class fvmframework:
                  driver=None, wildcards_dont_match_hierarchy_separators=False):
         """Sets a specifig signal as a cutpoint"""
         cutpoint = {key: value for key, value in locals().items() if key != 'self'}
-        logger.trace(f'adding cutpoint: {cutpoint}')
+        self.logger.trace(f'adding cutpoint: {cutpoint}')
         self.cutpoints.append(cutpoint)
 
     def run(self, skip_setup=False):
@@ -590,17 +589,17 @@ class fvmframework:
         # TODO: correctly manage self.list here (self.list is True if -l or
         # --list was provided as a command-line argument)
 
-        logger.info(f'Designs: {self.toplevel}')
+        self.logger.info(f'Designs: {self.toplevel}')
         for design in self.toplevel:
-            logger.info(f'Running {design=}')
+            self.logger.info(f'Running {design=}')
             if self.list:
                 self.list_design(design)
             else:
                 self.run_design(design, skip_setup)
 
-        reports.pretty_summary(self, logger)
-        reports.generate_reports(self, logger)
-        reports.generate_allure(self, logger)
+        reports.pretty_summary(self, self.logger)
+        reports.generate_reports(self, self.logger)
+        reports.generate_allure(self, self.logger)
         err = self.check_errors()
         if err :
           self.exit_if_required(CHECK_FAILED)
@@ -608,35 +607,35 @@ class fvmframework:
     def setup(self):
         for design in self.toplevel:
             if design in self.design_configs:
-                logger.trace(f'{design=} has configs: {self.design_configs}')
+                self.logger.trace(f'{design=} has configs: {self.design_configs}')
                 for config in self.design_configs[design]:
                     self.setup_design(design, config)
             else:
-                logger.trace(f'{design=} has no configs, setting up default config')
+                self.logger.trace(f'{design=} has no configs, setting up default config')
                 self.setup_design(design, None)
 
     def list_design(self, design, skip_setup=False):
         """List all available/selected methodology steps for a design"""
         # If configurations exist, list them all
-        logger.info(f'Listing {design=} with configs: {self.design_configs}')
+        self.logger.info(f'Listing {design=} with configs: {self.design_configs}')
         if design in self.design_configs:
-            logger.trace(f'{design=} has configs: {self.design_configs}')
+            self.logger.trace(f'{design=} has configs: {self.design_configs}')
             for config in self.design_configs[design]:
                 self.list_configuration(design, config)
         else:
-            logger.trace(f'{design=} has no configs, running default config')
+            self.logger.trace(f'{design=} has no configs, running default config')
             self.list_configuration(design, None)
 
     def run_design(self, design, skip_setup=False):
         """Run all available/selected methodology steps for a design"""
         # If configurations exist, run them all
-        logger.info(f'Running {design=} with configs: {self.design_configs}')
+        self.logger.info(f'Running {design=} with configs: {self.design_configs}')
         if design in self.design_configs:
-            logger.trace(f'{design=} has configs: {self.design_configs}')
+            self.logger.trace(f'{design=} has configs: {self.design_configs}')
             for config in self.design_configs[design]:
                 self.run_configuration(design, config, skip_setup)
         else:
-            logger.trace(f'{design=} has no configs, running default config')
+            self.logger.trace(f'{design=} has no configs, running default config')
             self.run_configuration(design, None, skip_setup)
 
     def list_configuration(self, design, config=None):
@@ -656,18 +655,18 @@ class fvmframework:
         if self.step is None:
             for step in FVM_STEPS:
                 if self.is_skipped(design, step):
-                    logger.trace(f'{step=} of {design=} skipped by skip() function, will not list')
+                    self.logger.trace(f'{step=} of {design=} skipped by skip() function, will not list')
                     self.results[design][step]['status'] = 'skip'
-                elif step in toolchains.TOOLS[self.toolchain]:
+                elif step in self.steps.steps:
                     self.list_step(design, step)
                 else:
-                    logger.trace(f'{step=} not available in {self.toolchain=}, skipping')
+                    self.logger.trace(f'{step=} not available in {self.toolchain=}, skipping')
                     self.results[design][step]['status'] = 'skip'
         else:
             self.list_step(design, self.step)
 
     def list_step(self, design, step):
-        logger.trace(f'{design}.{step}')
+        self.logger.trace(f'{design}.{step}')
         self.results[design][step]['status'] = 'skip'
 
     def run_configuration(self, design, config=None, skip_setup=False):
@@ -690,7 +689,7 @@ class fvmframework:
         # TODO : the run code is duplicated below, we could think of some way
         # of deduplicating it
         if self.step is None:
-            logger.info(self.steps.steps)
+            self.logger.info(self.steps.steps)
             # TODO : this is a quick hack so we don't lose the questa
             # functionality, since the license has expired and we can't test
             # with the questa tools. The desired final behavior is to just
@@ -703,11 +702,9 @@ class fvmframework:
 
             for step in steps_to_perform:  # should be self.steps.steps
                 if self.is_skipped(design, step):
-                    logger.info(f'{step=} of {design=} skipped by skip() function, will not run')
+                    self.logger.info(f'{step=} of {design=} skipped by skip() function, will not run')
                     self.results[design][step]['status'] = 'skip'
-                # TODO : we probably don't really need TOOLS, since now steps
-                # are registered by the toolchain
-                elif step in toolchains.TOOLS[self.toolchain]:
+                elif step in self.steps.steps:
                     # TODO : allow pre_hooks to return errors and stop the run
                     # if they fail
                     self.run_pre_hook(design, step)
@@ -721,7 +718,7 @@ class fvmframework:
                     # if they fail
                     self.run_post_hook(design, step)
                 else:
-                    logger.info(f'{step=} not available in {self.toolchain=}, skipping')
+                    self.logger.info(f'{step=} not available in {self.toolchain=}, skipping')
                     self.results[design][step]['status'] = 'skip'
         else:
             self.run_pre_hook(design, self.step)
@@ -788,9 +785,9 @@ class fvmframework:
         if self.cont:
             pass
         else:
-            reports.pretty_summary(self, logger)
-            reports.generate_reports(self, logger)
-            reports.generate_allure(self, logger)
+            reports.pretty_summary(self, self.logger)
+            reports.generate_reports(self, self.logger)
+            reports.generate_allure(self, self.logger)
             sys.exit(errorcode)
 
     # TODO : design argument may be redundant since we have
@@ -804,7 +801,7 @@ class fvmframework:
             cwd_for_debug = cwd
         else:
             cwd_for_debug = self.outdir
-        logger.info(f'command: {join(cmd)}, working directory: {cwd_for_debug}')
+        self.logger.info(f'command: {join(cmd)}, working directory: {cwd_for_debug}')
 
         timestamp = datetime.now().isoformat()
         self.results[design][step]['timestamp'] = timestamp
@@ -834,13 +831,13 @@ class fvmframework:
                 if verbose:
                     err, warn, success = self.linecheck(line)
                     if err:
-                        logger.error(line.rstrip())
+                        self.logger.error(line.rstrip())
                     elif warn:
-                        logger.warning(line.rstrip())
+                        self.logger.warning(line.rstrip())
                     elif success:
-                        logger.success(line.rstrip())
+                        self.logger.success(line.rstrip())
                     else:
-                        logger.trace(line.rstrip())
+                        self.logger.trace(line.rstrip())
                 # If not verbose, print dots
                 else:
                     print('.', end='', flush=True)
@@ -851,13 +848,13 @@ class fvmframework:
                 if verbose:
                     err, warn, success = self.linecheck(line)
                     if err:
-                        logger.error(line.rstrip())
+                        self.logger.error(line.rstrip())
                     elif warn:
-                        logger.warning(line.rstrip())
+                        self.logger.warning(line.rstrip())
                     elif success:
-                        logger.success(line.rstrip())
+                        self.logger.success(line.rstrip())
                     else:
-                        logger.trace(line.rstrip())
+                        self.logger.trace(line.rstrip())
                 # If not verbose, print dots
                 else:
                     print('.', end='', flush=True)
@@ -917,7 +914,7 @@ class fvmframework:
         if callable(hook):
             return hook(step, design)
         else:
-            logger.error(f'{hook=} is not callable, only functions or other callable objects can be passed as hooks')
+            self.logger.error(f'{hook=} is not callable, only functions or other callable objects can be passed as hooks')
 
     def setup_design(self, design, config = None):
         """Create the output directory and the scripts for a design, but do not
@@ -942,7 +939,7 @@ class fvmframework:
 
         # Run the assigned setup function for each step
         for step in self.steps.steps :
-            #logger.trace(f'Setting up {design=}, {step=}')
+            #self.logger.trace(f'Setting up {design=}, {step=}')
             self.steps.steps[step]["setup"](self, path)
 
     def logcheck(self, result, design, step, tool):
@@ -953,7 +950,7 @@ class fvmframework:
 
         # Temporarily add a handler to capture logs
         log_stream = StringIO()
-        handler_id = logger.add(log_stream, format="{time} {level} {message}")
+        handler_id = self.logger.add(log_stream, format="{time} {level} {message}")
 
         err_in_log = False
         for line in result.splitlines() :
@@ -966,20 +963,20 @@ class fvmframework:
             # warnings / etc. but do not duplicate the messages
             if err :
                 if not self.verbose:
-                    logger.error(f'ERROR detected in {step=}, {tool=}, {line=}')
+                    self.logger.error(f'ERROR detected in {step=}, {tool=}, {line=}')
                 err_in_log = True
             elif warn :
                 if not self.verbose:
-                    logger.warning(f'WARNING detected in {step=}, {tool=}, {line=}')
+                    self.logger.warning(f'WARNING detected in {step=}, {tool=}, {line=}')
             elif success :
                 if not self.verbose:
-                    logger.success(f'SUCCESS detected in {step=}, {tool=}, {line=}')
+                    self.logger.success(f'SUCCESS detected in {step=}, {tool=}, {line=}')
 
         # Capture the messages into the results
         self.results[design][step]['message'] += log_stream.getvalue()
 
         # Remove the handler to stop capturing messages
-        logger.remove(handler_id)
+        self.logger.remove(handler_id)
         log_stream.close()
 
         # Restore the previous log format
@@ -1028,168 +1025,23 @@ class fvmframework:
             success = True
         return err, warn, success
 
-    # ******************************************************************* #
-    # ******************************************************************* #
-    # From now on, these are (or should be!) the functions that are
-    # toolchain-dependent (meaning that they have tool-specific code)
-    # ******************************************************************* #
-    # ******************************************************************* #
-
-    # The first two functions, run_step and run_post_step, have a mix of
-    # generic and questa-specific code
-
-    # This is part generic and part questa-specific
-    # TODO : we have some duplicated code in the way we run commands, becase
-    # the code sort of repeats for the GUI invocations. We must see how we can
-    # deduplicate this so this function does not get unwieldy
     def run_step(self, design, step):
         """Run a specific step of the methodology"""
         console.rule(f'[bold white]{design}.{step}[/bold white]')
         err = False
         path = self.current_path
         open_gui = False
-        # TODO : quick hack to prototype sby support since we cannot change the
-        # questa-dependent code (well we can, but we have no way of checking if
-        # we broke it since our license is expired)
-        if self.toolchain == 'sby':
-            if step in self.steps.steps:
-                run_stdout, run_stderr = self.steps.steps[step]["run"](self, path)
-                logfile = f'{path}/{step}.log'
-                logger.info(f'{step=}, finished, output written to {logfile}')
-                with open(logfile, 'w') as f :
-                    f.write(run_stdout)
-                    f.write(run_stderr)
-        # If called with a specific step, run that specific step
-        # TODO : questa code should also register its run functions with the
-        # steps class
-        elif step in toolchains.TOOLS[self.toolchain] :
-            tool = toolchains.TOOLS[self.toolchain][step][0]
-            wrapper = toolchains.TOOLS[self.toolchain][step][1]
-            #logger.info(f'{step=}, running {tool=} with {wrapper=}')
-            logger.debug(f'Running {tool=} with {wrapper=}')
-            if self.toolchain == "questa":
-                cmd = [wrapper, '-c', '-od', path, '-do', f'{path}/{step}.do']
-                if self.list == True :
-                    logger.info(f'Available step: {step}. Tool: {tool}, command = {" ".join(cmd)}')
-                elif self.guinorun == True :
-                    logger.info(f'{self.guinorun=}, will not run {step=} with {tool=}')
-                else :
-                    # If we are in the prove step, move outdir.qsim_tb
-                    # directory out of the way, if it exists. If we don't do
-                    # this, we may get errors due to the .vcd files already
-                    # existing, or worse, we could try to run simulations of
-                    # properties that no longer exist
-                    if step == 'prove':
-                        qsim_tb_dir = os.path.join(self.outdir, design, "qsim_tb")
-                        archive_dir = qsim_tb_dir+".old"
-                        if os.path.exists(qsim_tb_dir):
-                            if not os.path.exists(qsim_tb_dir+".old"):
-                                os.makedirs(archive_dir)
-                            timestamp = datetime.now().isoformat()
-                            target_dir = os.path.join(archive_dir, "qsim_tb_" + timestamp)
-                            shutil.move(qsim_tb_dir, target_dir)
 
-                    logger.trace(f'command: {" ".join(cmd)=}')
-                    cmd_stdout, cmd_stderr = self.run_cmd(cmd, design, step, tool, self.verbose)
-                    stdout_err = self.logcheck(cmd_stdout, design, step, tool)
-                    stderr_err = self.logcheck(cmd_stderr, design, step, tool)
-
-                    # Parse lint summary here,
-                    # maybe we shouldn't do it here
-                    if step == 'lint' :
-                        lint_rpt_path = f'{self.outdir}/{design}/lint.rpt'
-                        if os.path.exists(lint_rpt_path):
-                            self.lint_summary = parse_lint.parse_check_summary(lint_rpt_path)
-                    # Parse rulecheck summary here,
-                    # maybe we shouldn't do it here
-                    if step == 'rulecheck' :
-                        rulecheck_rpt_path = f'{self.outdir}/{design}/autocheck_verify.rpt'
-                        if os.path.exists(rulecheck_rpt_path):
-                            self.rulecheck_summary = parse_rulecheck.parse_type_and_severity(rulecheck_rpt_path)
-                    # Parse xverify summary here,
-                    # maybe we shouldn't do it here
-                    if step == 'xverify' :
-                        xverify_rpt_path = f'{self.outdir}/{design}/xcheck_verify.rpt'
-                        if os.path.exists(xverify_rpt_path):
-                            self.xverify_summary = parse_xverify.parse_type_and_result(xverify_rpt_path)
-                    # Parse fault summary here,
-                    # maybe we shouldn't do it here
-                    if step == 'fault' :
-                        fault_rpt_path = f'{self.outdir}/{design}/slec_verify.rpt'
-                        if os.path.exists(fault_rpt_path):
-                            self.fault_summary = parse_fault.parse_fault_summary(fault_rpt_path)
-                    # Parse resets summary here,
-                    # maybe we shouldn't do it here
-                    if step == 'resets' :
-                        resets_rpt_path = f'{self.outdir}/{design}/rdc.rpt'
-                        if os.path.exists(resets_rpt_path):
-                            self.resets_summary = parse_resets.parse_resets_results(resets_rpt_path)
-                    # Parse clocks summary here,
-                    # maybe we shouldn't do it here
-                    if step == 'clocks' :
-                        clocks_rpt_path = f'{self.outdir}/{design}/cdc.rpt'
-                        if os.path.exists(clocks_rpt_path):
-                            self.clocks_summary = parse_clocks.parse_clocks_results(clocks_rpt_path)
-                    # Parse property summary here,
-                    # maybe we shouldn't do it here
-                    if step == 'prove' :
-                        prove_rpt_path = f'{self.outdir}/{design}/formal_verify.rpt'
-                        if os.path.exists(prove_rpt_path):
-                            self.property_summary = generate_test_cases.property_summary(prove_rpt_path)
-
-                    # Parse reachability summary here,
-                    # maybe we shouldn't do it here.
-                    # Maybe we should delete previous covercheck_verify.rpt?
-                    if step == 'reachability':
-                        reachability_rpt_path = f'{self.outdir}/{design}/covercheck_verify.rpt'
-                        reachability_html_path = f'{self.outdir}/{design}/reachability.html'
-                        if os.path.exists(reachability_rpt_path):
-                            parse_reports.parse_reachability_report_to_html(reachability_rpt_path, reachability_html_path)
-                            reachability_html = reachability_html_path
-                        else:
-                            reachability_html = None 
-                        if reachability_html is not None:
-                            with open(reachability_html, 'r', encoding='utf-8') as f:
-                                html_content = f.read()
-
-                            tables = parse_reachability.parse_single_table(html_content)
-                            self.reachability_summary = parse_reachability.add_total_row(tables)
-                    logfile = f'{path}/{step}.log'
-                    logger.info(f'{step=}, {tool=}, finished, output written to {logfile}')
-                    with open(logfile, 'w') as f :
-                        f.write(cmd_stdout)
-                        f.write(cmd_stderr)
-                    # We cannot exit here immediately because then we wouldn't
-                    # be able to open the GUI if there is any error, but we can
-                    # record the error and propagate it outside the function
-                    if stdout_err or stderr_err:
-                        if self.is_failure_allowed(design, step) == False:
-                            err = True
-                    if stdout_err or stderr_err:
-                        if self.is_failure_allowed(design, step) == False:
-                            self.results[design][step]['status'] = 'fail'
-                        else:
-                            self.results[design][step]['status'] = 'broken'
-                    else:
-                        self.results[design][step]['status'] = 'pass'
-                    if self.gui :
-                        open_gui = True
-                if self.guinorun and self.list == False :
-                    open_gui = True
-                # TODO : maybe check for errors also in the GUI?
-                # TODO : maybe run the GUI processes without blocking
-                # the rest of the steps? For that we would probably
-                # need to pass another option to run_cmd
-                # TODO : code here can be deduplicated by having the database
-                # names (.db) in a dictionary -> just open {tool}.db
-                if open_gui:
-                    logger.info(f'{step=}, {tool=}, opening results with GUI')
-                    cmd = [wrapper, f'{path}/{tool}.db']
-                    logger.trace(f'command: {" ".join(cmd)=}')
-                    self.run_cmd(cmd, design, step, tool, self.verbose)
+        if step in self.steps.steps:
+            run_stdout, run_stderr = self.steps.steps[step]["run"](self, path)
+            logfile = f'{path}/{step}.log'
+            self.logger.info(f'{step=}, finished, output written to {logfile}')
+            with open(logfile, 'w') as f :
+                f.write(run_stdout)
+                f.write(run_stderr)
 
         else :
-            logger.error(f'No tool available for {step=} in {self.toolchain=}')
+            self.logger.error(f'No tool available for {step=} in {self.toolchain=}')
             self.exit_if_required(BAD_VALUE)
 
         # TODO : return output values
@@ -1199,6 +1051,13 @@ class fvmframework:
 
         return err
 
+    # ******************************************************************* #
+    # ******************************************************************* #
+    # From now on, these are (or should be!) the functions that are
+    # toolchain-dependent (meaning that they have tool-specific code)
+    # ******************************************************************* #
+    # ******************************************************************* #
+
     # This is part generic and part questa-specific
     # TODO : sometimes we use design, sometime we use self.current_toplevel. I
     # think maybe we don't need self.current_toplevel and can use design
@@ -1207,7 +1066,7 @@ class fvmframework:
         """Run post processing for a specific step of the methodology"""
         # Currently we only do post-processing after the friendliness and prove
         # steps
-        logger.trace(f'run_post_step, {design=}, {step=})')
+        self.logger.trace(f'run_post_step, {design=}, {step=})')
         path = self.current_path
         # TODO : quick hack to prototype sby support since we cannot change the
         # questa-dependent code (well we can, but we have no way of checking if
@@ -1221,7 +1080,7 @@ class fvmframework:
                 for post_step in self.steps.post_steps[step]:
                     run_stdout, run_stderr = self.steps.steps[step]["run"](self, path)
                     logfile = f'{path}/{step}.log'
-                    logger.info(f'{step}.{post_step}, finished, output written to {logfile}')
+                    self.logger.info(f'{step}.{post_step}, finished, output written to {logfile}')
                     with open(logfile, 'w') as f :
                         f.write(run_stdout)
                         f.write(run_stderr)
@@ -1230,6 +1089,17 @@ class fvmframework:
         # TODO : questa code should also register the setup/run functions with
         # the steps class and use the same loop as sby
         elif self.toolchain == 'questa':
+
+            # TODO : the following lines are a patch but we will remove
+            # them when we move the post_steps to questa.py
+            import importlib
+            from fvm.parsers import parse_reports
+            from fvm.parsers import parse_formal_signoff
+            from fvm.parsers import parse_simcover
+            module = importlib.import_module(f'fvm.toolchains.{self.toolchain}')
+            tools = module.tools
+
+
             if step == 'friendliness':
                 rpt = path+'/autocheck_design.rpt'
                 data = data_from_design_summary(rpt)
@@ -1257,21 +1127,21 @@ class fvmframework:
                         print('formal generate coverage -detail_all -cov_mode s', file=f)
                     print('', file=f)
                     print('exit', file=f)
-                tool = toolchains.TOOLS[self.toolchain][step][0]
-                wrapper = toolchains.TOOLS[self.toolchain][step][1]
-                logger.info(f'prove.simcover, running {tool=} with {wrapper=}')
-                logger.debug(f'Running {tool=} with {wrapper=}')
+                tool = tools[step][0]
+                wrapper = tools[step][1]
+                self.logger.info(f'prove.simcover, running {tool=} with {wrapper=}')
+                self.logger.debug(f'Running {tool=} with {wrapper=}')
                 if self.toolchain == "questa":
                     cmd = [wrapper, '-c', '-od', path, '-do', f'{path}/prove_formalcover.do']
                     if self.list == True :
-                        logger.info(f'Available step: prove.formalcover. Tool: {tool}, command = {" ".join(cmd)}')
+                        self.logger.info(f'Available step: prove.formalcover. Tool: {tool}, command = {" ".join(cmd)}')
                     else :
-                        logger.trace(f'command: {" ".join(cmd)=}')
+                        self.logger.trace(f'command: {" ".join(cmd)=}')
                         cmd_stdout, cmd_stderr = self.run_cmd(cmd, design, 'prove.formalcover', tool, self.verbose)
                         stdout_err = self.logcheck(cmd_stdout, design, 'prove.formalcover', tool)
                         stderr_err = self.logcheck(cmd_stderr, design, 'prove.formalcover', tool)
                         logfile = f'{path}/prove_formalcover.log'
-                        logger.info(f'prove.formalcover, {tool=}, finished, output written to {logfile}')
+                        self.logger.info(f'prove.formalcover, {tool=}, finished, output written to {logfile}')
                         with open(logfile, 'w') as f :
                             f.write(cmd_stdout)
                             f.write(cmd_stderr)
@@ -1381,7 +1251,7 @@ class fvmframework:
                 stdout_err = 0
                 stderr_err = 0
                 replay_files = glob.glob(self.outdir+'/'+design+'/qsim_tb/*/replay.vsim.do')
-                logger.trace(f'{replay_files=}')
+                self.logger.trace(f'{replay_files=}')
                 ucdb_files = list()
                 elapsed_time = 0
                 timestamp = None
@@ -1414,7 +1284,7 @@ class fvmframework:
                 path = None
                 cmd = ['vcover', 'merge', '-out', f'{self.outdir}/{design}/simcover.ucdb']
                 cmd = cmd + ucdb_files
-                logger.info(f'{cmd=}, {path=}')
+                self.logger.info(f'{cmd=}, {path=}')
                 cmd_stdout, cmd_stderr = self.run_cmd(cmd, design, f'{step}.simcover', 'vcover merge', self.verbose, path)
                 elapsed_time += self.results[design][f'{step}.simcover']['elapsed_time']
                 if timestamp is None:
@@ -1568,39 +1438,39 @@ class fvmframework:
     # This is questa-specific
     def add_external_library(self, name, src):
         """Add an external library"""
-        logger.info(f'Adding the external library: {name} from {src}')
+        self.logger.info(f'Adding the external library: {name} from {src}')
         if not os.path.exists(src) :
-            logger.error(f'External library not found: {name} from {src}')
+            self.logger.error(f'External library not found: {name} from {src}')
             self.exit_if_required(BAD_VALUE)
         try:
-            logger.info(f'Compiling library {name} from {src}')
+            self.logger.info(f'Compiling library {name} from {src}')
             self.run_command(f'vlib {name}')
             self.run_command(f'vmap {name} {name}')
             vhdl_files = [os.path.join(root, file) 
                         for root, _, files in os.walk(src) 
                         for file in files if file.endswith(('.vhd', '.VHD', '.vhdl', '.VHDL'))]
             if vhdl_files:
-                logger.info(f'Compiling VHDL files for external library {name}')
+                self.logger.info(f'Compiling VHDL files for external library {name}')
                 self.run_command(f'vcom -work {name} -{self.vhdlstd} -autoorder {" ".join(vhdl_files)}')
         except Exception as e:
-            logger.error(f'Error compiling library {name}: {e}')
+            self.logger.error(f'Error compiling library {name}: {e}')
             self.exit_if_required(BAD_VALUE)
-        logger.info(f'Successfully added and mapped library {name}')
+        self.logger.info(f'Successfully added and mapped library {name}')
 
     # This is questa-specific
     def add_precompiled_library(self, name, path):
         """Add a precompiled external library"""
-        logger.info(f'Adding precompiled library: {name} from {path}')
+        self.logger.info(f'Adding precompiled library: {name} from {path}')
         if not os.path.exists(path):
-            logger.error(f'Precompiled library path not found: {path}')
+            self.logger.error(f'Precompiled library path not found: {path}')
             self.exit_if_required(BAD_VALUE)
         try:
-            logger.info(f'Mapping precompiled library {name} to {path}')
+            self.logger.info(f'Mapping precompiled library {name} to {path}')
             self.run_command(f'vmap {name} {path}')
         except Exception as e:
-            logger.error(f'Error mapping precompiled library {name}: {e}')
+            self.logger.error(f'Error mapping precompiled library {name}: {e}')
             self.exit_if_required(BAD_VALUE)
-        logger.info(f'Successfully mapped precompiled library {name}')
+        self.logger.info(f'Successfully mapped precompiled library {name}')
 
     # This is questa-specific
     def formal_initialize_rst(self, rst, active_high=True, cycles=1):
@@ -1618,7 +1488,7 @@ class fvmframework:
     def check_library_exists(self, path) :
         if self.toolchain == "questa" :
             expectedfile = path + "_info"
-        logger.debug(f'checking if {expectedfile=} exists')
+        self.logger.debug(f'checking if {expectedfile=} exists')
         if os.path.exists(path) :
             ret = True
         else :
@@ -1628,6 +1498,6 @@ class fvmframework:
     # This is questa-specific
     def cmd_create_library(self, lib):
         if self.toolchain == "questa":
-            cmd = toolchains.TOOLS[self.toolchain]["createemptylib"] + ' ' + lib
+            cmd = tools["createemptylib"] + ' ' + lib
         return cmd
 

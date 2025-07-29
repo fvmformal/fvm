@@ -10,19 +10,7 @@ import importlib
 toolchains = ['questa', 'sby']
 default_toolchain = 'questa'
 
-# TODO : not sure we actually need TOOLS
-TOOLS = {}
 default_flags = {}
-
-# Programmatically import all toolchains and get the constants defined in each
-# of them
-# TODO : not sure we actually need TOOLS
-# TODO : since we probably won't need TOOLS, let's just import the specific
-# module in get_default_flags, as we do in define_steps
-for t in toolchains:
-    module = importlib.import_module(f'fvm.toolchains.{t}')
-    default_flags[t] = module.default_flags
-    TOOLS[t] = module.tools
 
 def get_toolchain():
     """Get the toolchain from a specific environment variable. In the future,
@@ -33,7 +21,12 @@ def get_toolchain():
     return toolchain
 
 def get_default_flags(toolchain):
-    return default_flags.get(toolchain)
+    """Returns sensible tool flags for a specific toolchain"""
+    module = importlib.import_module(f'fvm.toolchains.{toolchain}')
+    default_flags = module.default_flags
+    print(f'***** {module=}')
+    print(f'***** {default_flags=}')
+    return default_flags
 
 def define_steps(steps, toolchain):
     module = importlib.import_module(f'fvm.toolchains.{toolchain}')

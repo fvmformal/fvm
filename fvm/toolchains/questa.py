@@ -2,6 +2,22 @@
 
 import os
 from collections import OrderedDict
+from datetime import datetime
+import shutil
+
+# TODO : are this parsers questa-specific or could they be made configurable?
+# should they be moved to someplace like toolchains/questa/parsers?
+from fvm.parsers import parse_formal_signoff
+from fvm.parsers import parse_reachability
+from fvm.parsers import parse_reports
+from fvm.parsers import parse_simcover
+from fvm.parsers import parse_lint
+from fvm.parsers import parse_rulecheck
+from fvm.parsers import parse_xverify
+from fvm.parsers import parse_resets
+from fvm.parsers import parse_clocks
+from fvm.parsers import parse_fault
+from fvm import generate_test_cases
 
 # TODO : For all this file: probably forward slashes (/) are not portable and
 # we should use a library to manage path operations, such as os.path or pathlib
@@ -56,6 +72,10 @@ def create_f_file(filename, sources):
         for src in sources:
             print(src, file=f)
 
+# TODO : probably all these functions do not need to receive path as argument
+# and can instead use framework.current_path, but we have to make sure that the
+# fvmframework is correctly setting the path (it should be!)
+
 def gencompilescript(framework, filename, path):
     """Generate script to compile design sources"""
     # TODO : we must also compile the Verilog sources, if they exist
@@ -87,6 +107,83 @@ def gencompilescript(framework, filename, path):
             print(f'vcom {framework.get_tool_flags("vcom")} -{framework.vhdlstd} -work {lib} -autoorder -f {f_file_path}', file=f)
             print('', file=f)
 
+# TODO: this function is too big, it can and must be simplified a bit
+def run_qverify_step(framework, design, step):
+    """Run a specific step with the Questa formal toolchain. A single function
+    can be reused for multiple steps since the tools share the same interface
+    through the qverify command line tool/wrapper"""
+    # If called with a specific step, run that specific step
+    # TODO : questa code should also register its run functions with the
+    # steps class
+    path = framework.current_path
+    tool = tools[step][0]
+    wrapper = tools[step][1]
+    framework.logger.debug(f'Running {tool=} with {wrapper=}')
+    cmd = [wrapper, '-c', '-od', path, '-do', f'{path}/{step}.do']
+    open_gui = False
+
+    if framework.list == True :
+        framework.logger.info(f'Available step: {step}. Tool: {tool}, command = {" ".join(cmd)}')
+    elif framework.guinorun == True :
+        framework.logger.info(f'{framework.guinorun=}, will not run {step=} with {tool=}')
+    else :
+        # TODO : move this to run_prove
+        # If we are in the prove step, move outdir.qsim_tb
+        # directory out of the way, if it exists. If we don't do
+        # this, we may get errors due to the .vcd files already
+        # existing, or worse, we could try to run simulations of
+        # properties that no longer exist
+        if step == 'prove':
+            qsim_tb_dir = os.path.join(framework.outdir, design, "qsim_tb")
+            archive_dir = qsim_tb_dir+".old"
+            if os.path.exists(qsim_tb_dir):
+                if not os.path.exists(qsim_tb_dir+".old"):
+                    os.makedirs(archive_dir)
+                timestamp = datetime.now().isoformat()
+                target_dir = os.path.join(archive_dir, "qsim_tb_" + timestamp)
+                shutil.move(qsim_tb_dir, target_dir)
+
+        framework.logger.trace(f'command: {" ".join(cmd)=}')
+        cmd_stdout, cmd_stderr = framework.run_cmd(cmd, design, step, tool, framework.verbose)
+        stdout_err = framework.logcheck(cmd_stdout, design, step, tool)
+        stderr_err = framework.logcheck(cmd_stderr, design, step, tool)
+
+        logfile = f'{path}/{step}.log'
+        framework.logger.info(f'{step=}, {tool=}, finished, output written to {logfile}')
+        with open(logfile, 'w') as f :
+            f.write(cmd_stdout)
+            f.write(cmd_stderr)
+        # We cannot exit here immediately because then we wouldn't
+        # be able to open the GUI if there is any error, but we can
+        # record the error and propagate it outside the function
+        if stdout_err or stderr_err:
+            if framework.is_failure_allowed(design, step) == False:
+                err = True
+        if stdout_err or stderr_err:
+            if framework.is_failure_allowed(design, step) == False:
+                framework.results[design][step]['status'] = 'fail'
+            else:
+                framework.results[design][step]['status'] = 'broken'
+        else:
+            framework.results[design][step]['status'] = 'pass'
+        if framework.gui :
+            open_gui = True
+    if framework.guinorun and framework.list == False :
+        open_gui = True
+    # TODO : maybe check for errors also in the GUI?
+    # TODO : maybe run the GUI processes without blocking
+    # the rest of the steps? For that we would probably
+    # need to pass another option to run_cmd
+    # TODO : code here can be deduplicated by having the database
+    # names (.db) in a dictionary -> just open {tool}.db
+    if open_gui:
+        framework.logger.info(f'{step=}, {tool=}, opening results with GUI')
+        cmd = [wrapper, f'{path}/{tool}.db']
+        framework.logger.trace(f'command: {" ".join(cmd)=}')
+        framework.run_cmd(cmd, design, step, tool, framework.verbose)
+
+    return cmd_stdout, cmd_stderr
+
 def setup_lint(framework, path):
     """Generate script to run Lint"""
     print("**** setup lint ****")
@@ -97,9 +194,14 @@ def setup_lint(framework, path):
         print(f'lint run -d {framework.current_toplevel} {framework.get_tool_flags("lint run")} {framework.generic_args}', file=f)
         print('exit', file=f)
 
-def run_lint():
+def run_lint(framework, path):
     print("**** run lint ****")
-    pass
+    run_stdout, run_stderr = run_qverify_step(framework, framework.current_toplevel, 'lint')
+    lint_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/lint.rpt'
+    if os.path.exists(lint_rpt_path):
+        framework.lint_summary = parse_lint.parse_check_summary(lint_rpt_path)
+
+    return run_stdout, run_stderr
 
 def setup_friendliness(framework, path):
     print("**** setup friendliness ****")
@@ -111,9 +213,10 @@ def setup_friendliness(framework, path):
         print(f'autocheck compile {framework.get_tool_flags("autocheck compile")} -d {framework.current_toplevel} {framework.generic_args}', file=f)
         print('exit', file=f)
 
-def run_friendliness():
+def run_friendliness(framework, path):
     print("**** run friendliness ****")
-    pass
+    run_stdout, run_stderr = run_qverify_step(framework, framework.current_toplevel, 'friendliness')
+    return run_stdout, run_stderr
 
 def setup_rulecheck(framework, path):
     print("**** setup rulecheck ****")
@@ -128,9 +231,14 @@ def setup_rulecheck(framework, path):
         print(f'autocheck verify {framework.get_tool_flags("autocheck verify")}', file=f)
         print('exit', file=f)
 
-def run_rulecheck():
+def run_rulecheck(framework, path):
     print("**** run rulecheck ****")
-    pass
+    run_stdout, run_stderr = run_qverify_step(framework, framework.current_toplevel, 'rulecheck')
+    rulecheck_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/autocheck_verify.rpt'
+    if os.path.exists(rulecheck_rpt_path):
+        framework.rulecheck_summary = parse_rulecheck.parse_type_and_severity(rulecheck_rpt_path)
+
+    return run_stdout, run_stderr
 
 def setup_xverify(framework, path):
     print("**** setup xverify ****")
@@ -144,9 +252,14 @@ def setup_xverify(framework, path):
         print(f'xcheck verify {framework.get_tool_flags("xcheck verify")}', file=f)
         print('exit', file=f)
 
-def run_xverify():
+def run_xverify(framework, path):
     print("**** run xverify ****")
-    pass
+    run_stdout, run_stderr = run_qverify_step(framework, framework.current_toplevel, 'xverify')
+    xverify_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/xcheck_verify.rpt'
+    if os.path.exists(xverify_rpt_path):
+        framework.xverify_summary = parse_xverify.parse_type_and_result(xverify_rpt_path)
+
+    return run_stdout, run_stderr
 
 def setup_reachability(framework, path):
     print("**** setup reachability ****")
@@ -166,9 +279,24 @@ def setup_reachability(framework, path):
         print(f'covercheck verify {framework.get_tool_flags("covercheck verify")}', file=f)
         print('exit', file=f)
 
-def run_reachability():
+def run_reachability(framework, path):
     print("**** run reachability ****")
-    pass
+    run_stdout, run_stderr = run_qverify_step(framework, framework.current_toplevel, 'reachability')
+    reachability_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/covercheck_verify.rpt'
+    reachability_html_path = f'{framework.outdir}/{framework.current_toplevel}/reachability.html'
+    if os.path.exists(reachability_rpt_path):
+        parse_reports.parse_reachability_report_to_html(reachability_rpt_path, reachability_html_path)
+        reachability_html = reachability_html_path
+    else:
+        reachability_html = None
+    if reachability_html is not None:
+        with open(reachability_html, 'r', encoding='utf-8') as f:
+            html_content = f.read()
+
+        tables = parse_reachability.parse_single_table(html_content)
+        framework.reachability_summary = parse_reachability.add_total_row(tables)
+
+    return run_stdout, run_stderr
 
 def setup_fault(framework, path):
     print("**** setup fault ****")
@@ -207,9 +335,14 @@ def setup_fault(framework, path):
         print(f'slec generate waveforms -vcd', file=f)
         print('exit', file=f)
 
-def run_fault():
+def run_fault(framework, path):
     print("**** run fault ****")
-    pass
+    run_stdout, run_stderr = run_qverify_step(framework, framework.current_toplevel, 'fault')
+    fault_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/slec_verify.rpt'
+    if os.path.exists(fault_rpt_path):
+        framework.fault_summary = parse_fault.parse_fault_summary(fault_rpt_path)
+
+    return run_stdout, run_stderr
 
 def gen_reset_config(framework, filename, path):
     with open(path+'/'+filename, "a") as f:
@@ -334,9 +467,14 @@ def setup_resets(framework, path):
         print('rdc generate tree -reset reset_tree.rpt;', file=f)
         print('exit', file=f)
 
-def run_resets():
+def run_resets(framework, path):
     print("**** run resets ****")
-    pass
+    run_stdout, run_stderr = run_qverify_step(framework, framework.current_toplevel, 'resets')
+    resets_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/rdc.rpt'
+    if os.path.exists(resets_rpt_path):
+        framework.resets_summary = parse_resets.parse_resets_results(resets_rpt_path)
+
+    return run_stdout, run_stderr
 
 def setup_clocks(framework, path):
     print("**** setup clocks ****")
@@ -362,9 +500,14 @@ def setup_clocks(framework, path):
         print('cdc generate tree -clock clock_tree.rpt;', file=f)
         print('exit', file=f)
 
-def run_clocks():
+def run_clocks(framework, path):
     print("**** run clocks ****")
-    pass
+    run_stdout, run_stderr = run_qverify_step(framework, framework.current_toplevel, 'clocks')
+    clocks_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/cdc.rpt'
+    if os.path.exists(clocks_rpt_path):
+        framework.clocks_summary = parse_clocks.parse_clocks_results(clocks_rpt_path)
+
+    return run_stdout, run_stderr
 
 def setup_prove(framework, path):
     print("**** setup prove ****")
@@ -434,9 +577,14 @@ def setup_prove(framework, path):
         print('', file=f)
         print('exit', file=f)
 
-def run_prove():
+def run_prove(framework, path):
     print("**** run prove ****")
-    pass
+    run_stdout, run_stderr = run_qverify_step(framework, framework.current_toplevel, 'prove')
+    prove_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/formal_verify.rpt'
+    if os.path.exists(prove_rpt_path):
+        framework.property_summary = generate_test_cases.property_summary(prove_rpt_path)
+
+    return run_stdout, run_stderr
 
 def setup_prove_simcover(framework, path):
     print("**** setup prove_simcover ****")
