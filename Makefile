@@ -228,6 +228,7 @@ clean:
 	rm -f test/test.psl test/test2.psl test/test3.psl
 	rm -f test/drom2psl/test/multiplesignals.psl test/drom2psl/test/multiplesignals.svg
 	rm -f test/drom2psl/tutorial/*.psl test/drom2psl/tutorial/*.svg
+	rm -f test/drom2psl/*.psl
 	rm -f drom/*.psl drom/*.svg
 	rm -rf dist
 	rm -rf doc/sphinx/source/fvm.drom2psl.rst doc/sphinx/source/fvm.rst doc/sphinx/source/modules.rst
@@ -236,3 +237,4 @@ clean:
 # Remove venv and generated files
 realclean: clean
 	rm -rf .venv
+	rm -rf PoC grlib-gpl-2024.4-b4295 grlib-gpl-2024.4-b4295.tar.gz

@@ -1,7 +1,7 @@
 -- Automatically created by drom2psl
 -- Input file: /home/hipolito/devel/eda/fvm-refactor/drom/wishbone_classic_read.json
 -- These sequences and/or properties can be reused from other PSL files by doing:
--- inherit wishbone_classic_read
+-- inherit wishbone_classic_read;
 
 vunit wishbone_classic_read {
 

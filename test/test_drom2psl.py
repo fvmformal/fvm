@@ -1,4 +1,7 @@
 import pytest
+import os
+import filecmp
+from pathlib import Path
 
 from fvm.drom2psl.generator import generator
 
@@ -32,9 +35,24 @@ examples_and_retvals = [
     (["drom/uart_tx.json"], False),
   ]
 
+inputs_and_expected_outputs = [
+    ("drom/wishbone_classic_read.json", "concepts/wishbone_sequence/wishbone_classic_read.psl"),
+  ]
 
 @pytest.mark.parametrize("file,expected", examples_and_retvals)
 
 def test_retval(file, expected):
     retval = generator(file)
     assert retval == expected
+
+@pytest.mark.parametrize("file,expected", inputs_and_expected_outputs)
+
+def test_output_matches_expected(file, expected):
+    # retval should be False if the generator found no errors
+    # filecmp.cmp should return True if actual and expected outputs are equal
+    outdir = os.path.join(os.getcwd(), "test", "drom2psl")
+    actual = os.path.join(outdir, os.path.basename(Path(file).with_suffix('.psl')))
+    retval = generator(file, outdir = outdir)
+    assert retval == False
+    assert filecmp.cmp(actual, expected) == True
+
