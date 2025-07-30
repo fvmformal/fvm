@@ -1034,7 +1034,7 @@ class fvmframework:
 
         if step in self.steps.steps:
             run_stdout, run_stderr = self.steps.steps[step]["run"](self, path)
-            logfile = f'{path}/{step}.log'
+            logfile = f'{path}/{step}/{step}.log'
             self.logger.info(f'{step=}, finished, output written to {logfile}')
             with open(logfile, 'w') as f :
                 f.write(run_stdout)
@@ -1101,19 +1101,20 @@ class fvmframework:
 
 
             if step == 'friendliness':
-                rpt = path+'/autocheck_design.rpt'
+                rpt = path+f'/{step}/autocheck_design.rpt'
                 data = data_from_design_summary(rpt)
                 self.results[design][step]['data'] = data
                 self.results[design][step]['score'] = friendliness_score(data)
             if step == 'prove' and self.is_skipped(design, 'prove.formalcover'):
                 self.results[design]['prove.formalcover']['status'] = 'skip'
             if step == 'prove' and not self.is_skipped(design, 'prove.formalcover'):
+                report_path = path + '/prove.formalcover'
                 console.rule(f'[bold white]{design}.prove.formalcover[/bold white]')
-                property_summary = generate_test_cases.parse_property_summary(f'{path}/prove.log')
+                property_summary = generate_test_cases.parse_property_summary(f'{path}/prove/prove.log')
                 inconclusives = property_summary.get('Assertions', {}).get('Inconclusive', 0)
                 with open(f"{path}/prove_formalcover.do", "w") as f:
                     print('onerror exit', file=f)
-                    print(f"formal load db {path}/propcheck.db",file=f)
+                    print(f"formal load db {path}/prove/propcheck.db",file=f)
                     if not self.is_disabled('observability'):
                         print('formal generate coverage -detail_all -cov_mode o', file=f)
                     if not self.is_disabled('reachability'):
@@ -1132,7 +1133,7 @@ class fvmframework:
                 self.logger.info(f'prove.simcover, running {tool=} with {wrapper=}')
                 self.logger.debug(f'Running {tool=} with {wrapper=}')
                 if self.toolchain == "questa":
-                    cmd = [wrapper, '-c', '-od', path, '-do', f'{path}/prove_formalcover.do']
+                    cmd = [wrapper, '-c', '-od', report_path, '-do', f'{path}/prove_formalcover.do']
                     if self.list == True :
                         self.logger.info(f'Available step: prove.formalcover. Tool: {tool}, command = {" ".join(cmd)}')
                     else :
@@ -1140,7 +1141,7 @@ class fvmframework:
                         cmd_stdout, cmd_stderr = self.run_cmd(cmd, design, 'prove.formalcover', tool, self.verbose)
                         stdout_err = self.logcheck(cmd_stdout, design, 'prove.formalcover', tool)
                         stderr_err = self.logcheck(cmd_stderr, design, 'prove.formalcover', tool)
-                        logfile = f'{path}/prove_formalcover.log'
+                        logfile = f'{report_path}/prove_formalcover.log'
                         self.logger.info(f'prove.formalcover, {tool=}, finished, output written to {logfile}')
                         with open(logfile, 'w') as f :
                             f.write(cmd_stdout)
@@ -1157,8 +1158,8 @@ class fvmframework:
                             self.results[design]['prove.formalcover']['status'] = 'pass'
 
                 if not self.is_disabled('signoff'):
-                    formal_signoff_rpt_path = f'{path}/formal_signoff.rpt'
-                    formal_signoff_html_path = f'{path}/formal_signoff.html'
+                    formal_signoff_rpt_path = f'{report_path}/formal_signoff.rpt'
+                    formal_signoff_html_path = f'{report_path}/formal_signoff.html'
                     if os.path.exists(formal_signoff_rpt_path):
                         parse_reports.parse_formal_signoff_report_to_html(formal_signoff_rpt_path, formal_signoff_html_path)
                         formal_signoff_html = formal_signoff_html_path
@@ -1250,7 +1251,7 @@ class fvmframework:
                 # the reports, and not only the last log (vcover report)
                 stdout_err = 0
                 stderr_err = 0
-                replay_files = glob.glob(self.outdir+'/'+design+'/qsim_tb/*/replay.vsim.do')
+                replay_files = glob.glob(self.outdir+'/'+design+'/prove/qsim_tb/*/replay.vsim.do')
                 self.logger.trace(f'{replay_files=}')
                 ucdb_files = list()
                 elapsed_time = 0
@@ -1282,7 +1283,11 @@ class fvmframework:
                     ucdb_files.append(f'{path}/sim.ucdb')
                 # Merge all simulation code coverage
                 path = None
-                cmd = ['vcover', 'merge', '-out', f'{self.outdir}/{design}/simcover.ucdb']
+
+                simcover_path = f"{self.outdir}/{design}/prove.simcover"
+                os.makedirs(simcover_path, exist_ok=True)
+
+                cmd = ['vcover', 'merge', '-out', f'{simcover_path}/simcover.ucdb']
                 cmd = cmd + ucdb_files
                 self.logger.info(f'{cmd=}, {path=}')
                 cmd_stdout, cmd_stderr = self.run_cmd(cmd, design, f'{step}.simcover', 'vcover merge', self.verbose, path)
@@ -1306,7 +1311,7 @@ class fvmframework:
                         self.results[design][f'{step}.simcover']['status'] = 'broken'
 
                 # Generate simcover summary
-                path = f'{self.outdir}/{design}'
+                path = f'{self.outdir}/{design}/prove.simcover'
                 cmd = ['vcover', 'report', '-csv', '-hierarchical', 'simcover.ucdb',
                        '-output', 'simulation_coverage.log']
                 cmd_stdout, cmd_stderr = self.run_cmd(cmd, design, f'{step}.simcover', 'vcover report', self.verbose, path)
@@ -1334,7 +1339,7 @@ class fvmframework:
                 self.simcover_summary = parse_simcover.sum_coverage_data(coverage_data)
 
                 # Generate an html report
-                path = f'{self.outdir}/{design}'
+                path = f'{self.outdir}/{design}/prove.simcover'
                 cmd = ['vcover', 'report', '-html', '-annotate', '-details',
                        '-testdetails', '-codeAll', '-multibitverbose', '-out',
                        'simcover', 'simcover.ucdb']

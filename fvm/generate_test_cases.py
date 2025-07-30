@@ -16,7 +16,7 @@ def generate_test_case(design_name, step, status="passed", start_time=None, stop
     history_id = str(uuid.uuid4()) 
     test_case_id = str(uuid.uuid4()) 
 
-    full_name = f"fvm_out/{design_name}/{step}.log"
+    full_name = f"fvm_out/{design_name}/{step}/{step}.log"
     name = f"{design_name}.{step}"
 
     description=f"This is the step {step} of FVM"
@@ -107,7 +107,7 @@ def generate_test_case(design_name, step, status="passed", start_time=None, stop
         if step != "prove.simcover" and step != "prove.formalcover":
             try:
                 output_attachment_file = f"fvm_out/dashboard/allure-results/{attachment_uuid}-attachment.log"
-                original_file = f"fvm_out/{design_name}/{step}.log" 
+                original_file = f"fvm_out/{design_name}/{step}/{step}.log" 
                 shutil.copy(original_file, output_attachment_file)
             except FileNotFoundError:
                 return

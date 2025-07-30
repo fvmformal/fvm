@@ -116,10 +116,11 @@ def run_qverify_step(framework, design, step):
     # TODO : questa code should also register its run functions with the
     # steps class
     path = framework.current_path
+    report_path = f'{path}/{step}'
     tool = tools[step][0]
     wrapper = tools[step][1]
     framework.logger.debug(f'Running {tool=} with {wrapper=}')
-    cmd = [wrapper, '-c', '-od', path, '-do', f'{path}/{step}.do']
+    cmd = [wrapper, '-c', '-od', report_path, '-do', f'{path}/{step}.do']
     open_gui = False
 
     if framework.list == True :
@@ -148,7 +149,7 @@ def run_qverify_step(framework, design, step):
         stdout_err = framework.logcheck(cmd_stdout, design, step, tool)
         stderr_err = framework.logcheck(cmd_stderr, design, step, tool)
 
-        logfile = f'{path}/{step}.log'
+        logfile = f'{report_path}/{step}.log'
         framework.logger.info(f'{step=}, {tool=}, finished, output written to {logfile}')
         with open(logfile, 'w') as f :
             f.write(cmd_stdout)
@@ -178,7 +179,7 @@ def run_qverify_step(framework, design, step):
     # names (.db) in a dictionary -> just open {tool}.db
     if open_gui:
         framework.logger.info(f'{step=}, {tool=}, opening results with GUI')
-        cmd = [wrapper, f'{path}/{tool}.db']
+        cmd = [wrapper, f'{report_path}/{tool}.db']
         framework.logger.trace(f'command: {" ".join(cmd)=}')
         framework.run_cmd(cmd, design, step, tool, framework.verbose)
 
@@ -197,7 +198,7 @@ def setup_lint(framework, path):
 def run_lint(framework, path):
     print("**** run lint ****")
     run_stdout, run_stderr = run_qverify_step(framework, framework.current_toplevel, 'lint')
-    lint_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/lint.rpt'
+    lint_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/lint/lint.rpt'
     if os.path.exists(lint_rpt_path):
         framework.lint_summary = parse_lint.parse_check_summary(lint_rpt_path)
 
@@ -228,13 +229,13 @@ def setup_rulecheck(framework, path):
         for line in framework.init_reset:
             print(line, file=f)
         print(f'autocheck compile {framework.get_tool_flags("autocheck compile")} -d {framework.current_toplevel} {framework.generic_args}', file=f)
-        print(f'autocheck verify {framework.get_tool_flags("autocheck verify")}', file=f)
+        print(f'autocheck verify {default_flags["autocheck verify"]}', file=f)
         print('exit', file=f)
 
 def run_rulecheck(framework, path):
     print("**** run rulecheck ****")
     run_stdout, run_stderr = run_qverify_step(framework, framework.current_toplevel, 'rulecheck')
-    rulecheck_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/autocheck_verify.rpt'
+    rulecheck_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/rulecheck/autocheck_verify.rpt'
     if os.path.exists(rulecheck_rpt_path):
         framework.rulecheck_summary = parse_rulecheck.parse_type_and_severity(rulecheck_rpt_path)
 
@@ -255,7 +256,7 @@ def setup_xverify(framework, path):
 def run_xverify(framework, path):
     print("**** run xverify ****")
     run_stdout, run_stderr = run_qverify_step(framework, framework.current_toplevel, 'xverify')
-    xverify_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/xcheck_verify.rpt'
+    xverify_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/xverify/xcheck_verify.rpt'
     if os.path.exists(xverify_rpt_path):
         framework.xverify_summary = parse_xverify.parse_type_and_result(xverify_rpt_path)
 
@@ -282,8 +283,8 @@ def setup_reachability(framework, path):
 def run_reachability(framework, path):
     print("**** run reachability ****")
     run_stdout, run_stderr = run_qverify_step(framework, framework.current_toplevel, 'reachability')
-    reachability_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/covercheck_verify.rpt'
-    reachability_html_path = f'{framework.outdir}/{framework.current_toplevel}/reachability.html'
+    reachability_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/reachability/covercheck_verify.rpt'
+    reachability_html_path = f'{framework.outdir}/{framework.current_toplevel}/reachability/reachability.html'
     if os.path.exists(reachability_rpt_path):
         parse_reports.parse_reachability_report_to_html(reachability_rpt_path, reachability_html_path)
         reachability_html = reachability_html_path
@@ -338,7 +339,7 @@ def setup_fault(framework, path):
 def run_fault(framework, path):
     print("**** run fault ****")
     run_stdout, run_stderr = run_qverify_step(framework, framework.current_toplevel, 'fault')
-    fault_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/slec_verify.rpt'
+    fault_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/fault/slec_verify.rpt'
     if os.path.exists(fault_rpt_path):
         framework.fault_summary = parse_fault.parse_fault_summary(fault_rpt_path)
 
@@ -470,7 +471,7 @@ def setup_resets(framework, path):
 def run_resets(framework, path):
     print("**** run resets ****")
     run_stdout, run_stderr = run_qverify_step(framework, framework.current_toplevel, 'resets')
-    resets_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/rdc.rpt'
+    resets_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/resets/rdc.rpt'
     if os.path.exists(resets_rpt_path):
         framework.resets_summary = parse_resets.parse_resets_results(resets_rpt_path)
 
@@ -503,7 +504,7 @@ def setup_clocks(framework, path):
 def run_clocks(framework, path):
     print("**** run clocks ****")
     run_stdout, run_stderr = run_qverify_step(framework, framework.current_toplevel, 'clocks')
-    clocks_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/cdc.rpt'
+    clocks_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/clocks/cdc.rpt'
     if os.path.exists(clocks_rpt_path):
         framework.clocks_summary = parse_clocks.parse_clocks_results(clocks_rpt_path)
 
@@ -580,7 +581,7 @@ def setup_prove(framework, path):
 def run_prove(framework, path):
     print("**** run prove ****")
     run_stdout, run_stderr = run_qverify_step(framework, framework.current_toplevel, 'prove')
-    prove_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/formal_verify.rpt'
+    prove_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/prove/formal_verify.rpt'
     if os.path.exists(prove_rpt_path):
         framework.property_summary = generate_test_cases.property_summary(prove_rpt_path)
 

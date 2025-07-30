@@ -473,7 +473,7 @@ def generate_reports(framework, logger):
                                 category = step,
                                 file = framework.scriptname,
                                 line = None,
-                                log = f'{framework.outdir}/{design}/{step}.log',
+                                log = f'{framework.outdir}/{design}/{step}/{step}.log',
                                 url = None
                                 )
 
@@ -664,8 +664,8 @@ def generate_allure(framework, logger):
                 if 'stdout' in framework.results[design][step]:
                     stdout = framework.results[design][step]['stdout']
                 if step == 'reachability':
-                    reachability_rpt_path = f'{framework.outdir}/{design}/covercheck_verify.rpt'
-                    reachability_html_path = f'{framework.outdir}/{design}/reachability.html'
+                    reachability_rpt_path = f'{framework.outdir}/{design}/{step}/covercheck_verify.rpt'
+                    reachability_html_path = f'{framework.outdir}/{design}/{step}/reachability.html'
                     if os.path.exists(reachability_rpt_path):
                         parse_reports.parse_reachability_report_to_html(reachability_rpt_path, reachability_html_path)
                         reachability_html = reachability_html_path
@@ -683,29 +683,29 @@ def generate_allure(framework, logger):
                 properties = None
                 property_summary = None
                 if step == 'prove':
-                    properties = generate_test_cases.parse_log_to_json(f'{framework.outdir}/{design}/{step}.log')
-                    property_summary = generate_test_cases.parse_property_summary(f'{framework.outdir}/{design}/{step}.log')
+                    properties = generate_test_cases.parse_log_to_json(f'{framework.outdir}/{design}/{step}/{step}.log')
+                    property_summary = generate_test_cases.parse_property_summary(f'{framework.outdir}/{design}/{step}/{step}.log')
                 if step == 'prove.formalcover':
                     formal_signoff_html = None
                     if not framework.is_disabled('observability'):
-                        observability_rpt_path = f'{framework.outdir}/{design}/formal_observability.rpt'
-                        observability_html_path = f'{framework.outdir}/{design}/formal_observability.html'
+                        observability_rpt_path = f'{framework.outdir}/{design}/{step}/formal_observability.rpt'
+                        observability_html_path = f'{framework.outdir}/{design}/{step}/formal_observability.html'
                         if os.path.exists(observability_rpt_path):
                             parse_reports.parse_formal_observability_report_to_html(observability_rpt_path, observability_html_path)
                             observability_html = observability_html_path
                         else:
                             observability_html = None
                     if not framework.is_disabled('reachability'):
-                        formal_reachability_rpt_path = f'{framework.outdir}/{design}/formal_reachability.rpt'
-                        formal_reachability_html_path = f'{framework.outdir}/{design}/formal_reachability.html'
+                        formal_reachability_rpt_path = f'{framework.outdir}/{design}/{step}/formal_reachability.rpt'
+                        formal_reachability_html_path = f'{framework.outdir}/{design}/{step}/formal_reachability.html'
                         if os.path.exists(formal_reachability_rpt_path):
                             parse_reports.parse_formal_reachability_report_to_html(formal_reachability_rpt_path, formal_reachability_html_path)
                             formal_reachability_html = formal_reachability_html_path
                         else:
                             formal_reachability_html = None
                     if not framework.is_disabled('signoff'):
-                        formal_signoff_rpt_path = f'{framework.outdir}/{design}/formal_signoff.rpt'
-                        formal_signoff_html_path = f'{framework.outdir}/{design}/formal_signoff.html'
+                        formal_signoff_rpt_path = f'{framework.outdir}/{design}/{step}/formal_signoff.rpt'
+                        formal_signoff_html_path = f'{framework.outdir}/{design}/{step}/formal_signoff.html'
                         if os.path.exists(formal_signoff_rpt_path):
                             parse_reports.parse_formal_signoff_report_to_html(formal_signoff_rpt_path, formal_signoff_html_path)
                             formal_signoff_html = formal_signoff_html_path
