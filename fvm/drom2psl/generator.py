@@ -243,7 +243,11 @@ def generator(FILES, outdir = None, verbose = True, debug = False):
         ic("Creating a psl vunit")
 
         vunit_name = full_filename.stem
-        output_file = Path(full_filename).with_suffix('.psl')
+
+        if outdir is not None:
+            output_file = os.path.join(outdir, os.path.basename(Path(full_filename).with_suffix('.psl')))
+        else:
+            output_file = Path(full_filename).with_suffix('.psl')
 
         # TODO : add arguments to drom2psl and timestamp of file creation
         vunit = ''
