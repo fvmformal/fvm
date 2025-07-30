@@ -15,8 +15,13 @@ test/test3.vhd
 test/test.psl
 test/test2.psl
 test/test3.psl
+test/drom2psl/*.psl
 test/drom2psl/test/*.psl
 test/drom2psl/test/*.svg
 test/drom2psl/tutorial/*.psl
 test/drom2psl/tutorial/*.svg
+test/testlib/_info
+results.xml
+.coverage
+
 
