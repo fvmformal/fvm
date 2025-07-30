@@ -40,13 +40,27 @@ inputs_and_expected_outputs = [
   ]
 
 @pytest.mark.parametrize("file,expected", examples_and_retvals)
-
 def test_retval(file, expected):
     retval = generator(file)
     assert retval == expected
 
-@pytest.mark.parametrize("file,expected", inputs_and_expected_outputs)
+def remove_comments(file, comment_string = "--"):
+    comments_removed = []
 
+    with open(file, 'r') as f:
+        for line in f:
+            if not line.strip().startswith(comment_string):
+                comments_removed.append(line)
+
+    return comments_removed
+
+def compare_files_ignoring_comments(file1, file2, comment_string = "--"):
+    # We need this function because in the CI, the input path that appears in
+    # the comment of generated .psl files will be in a subdirectory of /build,
+    # which will not match our expected output files
+    return remove_comments(file1) == remove_comments(file2)
+
+@pytest.mark.parametrize("file,expected", inputs_and_expected_outputs)
 def test_output_matches_expected(file, expected):
     # retval should be False if the generator found no errors
     # filecmp.cmp should return True if actual and expected outputs are equal
@@ -54,5 +68,5 @@ def test_output_matches_expected(file, expected):
     actual = os.path.join(outdir, os.path.basename(Path(file).with_suffix('.psl')))
     retval = generator(file, outdir = outdir)
     assert retval == False
-    assert filecmp.cmp(actual, expected) == True
+    assert compare_files_ignoring_comments(actual, expected) == True
 
