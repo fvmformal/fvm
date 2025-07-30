@@ -28,11 +28,6 @@ from fvm.steps import steps
 from fvm.toolchains import toolchains
 from fvm.drom2psl.generator import generator
 
-# TODO : why is this parser import different?
-# TODO : this one was written by Hipolito, he will check it to change it to the
-# other way of importing
-from fvm.parsers.parse_design_rpt import *
-
 # Error codes
 BAD_VALUE    = "FVM exit condition: Bad value"
 ERROR_IN_LOG = "FVM exit condition: Error in tool log"
@@ -1143,6 +1138,7 @@ class fvmframework:
                         f.write(run_stderr)
             # TODO : correctly process errors
             err = False
+
         # TODO : questa code should also register the setup/run functions with
         # the steps class and use the same loop as sby
         elif self.toolchain == 'questa':
@@ -1157,11 +1153,6 @@ class fvmframework:
             tools = module.tools
 
 
-            if step == 'friendliness':
-                rpt = path+f'/{step}/autocheck_design.rpt'
-                data = data_from_design_summary(rpt)
-                self.results[design][step]['data'] = data
-                self.results[design][step]['score'] = friendliness_score(data)
             if step == 'prove' and self.is_skipped(design, 'prove.formalcover'):
                 self.results[design]['prove.formalcover']['status'] = 'skip'
             if step == 'prove' and not self.is_skipped(design, 'prove.formalcover'):

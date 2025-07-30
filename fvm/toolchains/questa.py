@@ -17,11 +17,13 @@ from fvm.parsers import parse_xverify
 from fvm.parsers import parse_resets
 from fvm.parsers import parse_clocks
 from fvm.parsers import parse_fault
+from fvm.parsers import parse_design_rpt
 from fvm import generate_test_cases
 
 # TODO : For all this file: probably forward slashes (/) are not portable and
 # we should use a library to manage path operations, such as os.path or pathlib
-# (pathlib seems to be more recommended)
+# (pathlib seems to be more recommended). In run_friendliness we use
+# os.path.join
 
 # For the Questa tools, each tool is run through a wrapper which is the actual
 # command that must be run in the command-line
@@ -218,6 +220,10 @@ def setup_friendliness(framework, path):
 def run_friendliness(framework, path):
     print("**** run friendliness ****")
     run_stdout, run_stderr, err = run_qverify_step(framework, framework.current_toplevel, 'friendliness')
+    rpt = os.path.join(path, 'friendliness', 'autocheck_design.rpt')
+    data = parse_design_rpt.data_from_design_summary(rpt)
+    framework.results[framework.current_toplevel]['friendliness']['data'] = data
+    framework.results[framework.current_toplevel]['friendliness']['score'] = parse_design_rpt.friendliness_score(data)
     return run_stdout, run_stderr, err
 
 def setup_rulecheck(framework, path):
