@@ -403,8 +403,7 @@ def generator(FILES, outdir = None, verbose = True, debug = False):
             # appropriate?
             group0_args = format_group_arguments_in_call(get_group_arguments(groups[0], flattened_signal))
             group1_args = format_group_arguments_in_call(get_group_arguments(groups[1], flattened_signal))
-            vunit += f'    always (({vunit_name}_{groups[0]}{group0_args} && {vunit_name}_{groups[1]}{group1_args}) abort fvm_rst);\n'
-            #vunit += '  }\n'
+            vunit += f'    always {{ {{{vunit_name}_{groups[0]}{group0_args}}} && {{{vunit_name}_{groups[1]}{group1_args}}} }};\n'
             vunit += '\n'
 
 
