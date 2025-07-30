@@ -1033,7 +1033,7 @@ class fvmframework:
         open_gui = False
 
         if step in self.steps.steps:
-            run_stdout, run_stderr = self.steps.steps[step]["run"](self, path)
+            run_stdout, run_stderr, err = self.steps.steps[step]["run"](self, path)
             logfile = f'{path}/{step}/{step}.log'
             self.logger.info(f'{step=}, finished, output written to {logfile}')
             with open(logfile, 'w') as f :

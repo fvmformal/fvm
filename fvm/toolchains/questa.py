@@ -122,6 +122,7 @@ def run_qverify_step(framework, design, step):
     framework.logger.debug(f'Running {tool=} with {wrapper=}')
     cmd = [wrapper, '-c', '-od', report_path, '-do', f'{path}/{step}.do']
     open_gui = False
+    err = False
 
     if framework.list == True :
         framework.logger.info(f'Available step: {step}. Tool: {tool}, command = {" ".join(cmd)}')
@@ -183,7 +184,7 @@ def run_qverify_step(framework, design, step):
         framework.logger.trace(f'command: {" ".join(cmd)=}')
         framework.run_cmd(cmd, design, step, tool, framework.verbose)
 
-    return cmd_stdout, cmd_stderr
+    return cmd_stdout, cmd_stderr, err
 
 def setup_lint(framework, path):
     """Generate script to run Lint"""
@@ -197,12 +198,12 @@ def setup_lint(framework, path):
 
 def run_lint(framework, path):
     print("**** run lint ****")
-    run_stdout, run_stderr = run_qverify_step(framework, framework.current_toplevel, 'lint')
+    run_stdout, run_stderr, err = run_qverify_step(framework, framework.current_toplevel, 'lint')
     lint_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/lint/lint.rpt'
     if os.path.exists(lint_rpt_path):
         framework.lint_summary = parse_lint.parse_check_summary(lint_rpt_path)
 
-    return run_stdout, run_stderr
+    return run_stdout, run_stderr, err
 
 def setup_friendliness(framework, path):
     print("**** setup friendliness ****")
@@ -216,8 +217,8 @@ def setup_friendliness(framework, path):
 
 def run_friendliness(framework, path):
     print("**** run friendliness ****")
-    run_stdout, run_stderr = run_qverify_step(framework, framework.current_toplevel, 'friendliness')
-    return run_stdout, run_stderr
+    run_stdout, run_stderr, err = run_qverify_step(framework, framework.current_toplevel, 'friendliness')
+    return run_stdout, run_stderr, err
 
 def setup_rulecheck(framework, path):
     print("**** setup rulecheck ****")
@@ -234,12 +235,12 @@ def setup_rulecheck(framework, path):
 
 def run_rulecheck(framework, path):
     print("**** run rulecheck ****")
-    run_stdout, run_stderr = run_qverify_step(framework, framework.current_toplevel, 'rulecheck')
+    run_stdout, run_stderr, err = run_qverify_step(framework, framework.current_toplevel, 'rulecheck')
     rulecheck_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/rulecheck/autocheck_verify.rpt'
     if os.path.exists(rulecheck_rpt_path):
         framework.rulecheck_summary = parse_rulecheck.parse_type_and_severity(rulecheck_rpt_path)
 
-    return run_stdout, run_stderr
+    return run_stdout, run_stderr, err
 
 def setup_xverify(framework, path):
     print("**** setup xverify ****")
@@ -255,12 +256,12 @@ def setup_xverify(framework, path):
 
 def run_xverify(framework, path):
     print("**** run xverify ****")
-    run_stdout, run_stderr = run_qverify_step(framework, framework.current_toplevel, 'xverify')
+    run_stdout, run_stderr, err = run_qverify_step(framework, framework.current_toplevel, 'xverify')
     xverify_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/xverify/xcheck_verify.rpt'
     if os.path.exists(xverify_rpt_path):
         framework.xverify_summary = parse_xverify.parse_type_and_result(xverify_rpt_path)
 
-    return run_stdout, run_stderr
+    return run_stdout, run_stderr, err
 
 def setup_reachability(framework, path):
     print("**** setup reachability ****")
@@ -282,7 +283,7 @@ def setup_reachability(framework, path):
 
 def run_reachability(framework, path):
     print("**** run reachability ****")
-    run_stdout, run_stderr = run_qverify_step(framework, framework.current_toplevel, 'reachability')
+    run_stdout, run_stderr, err = run_qverify_step(framework, framework.current_toplevel, 'reachability')
     reachability_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/reachability/covercheck_verify.rpt'
     reachability_html_path = f'{framework.outdir}/{framework.current_toplevel}/reachability/reachability.html'
     if os.path.exists(reachability_rpt_path):
@@ -297,7 +298,7 @@ def run_reachability(framework, path):
         tables = parse_reachability.parse_single_table(html_content)
         framework.reachability_summary = parse_reachability.add_total_row(tables)
 
-    return run_stdout, run_stderr
+    return run_stdout, run_stderr, err
 
 def setup_fault(framework, path):
     print("**** setup fault ****")
@@ -338,12 +339,12 @@ def setup_fault(framework, path):
 
 def run_fault(framework, path):
     print("**** run fault ****")
-    run_stdout, run_stderr = run_qverify_step(framework, framework.current_toplevel, 'fault')
+    run_stdout, run_stderr, err = run_qverify_step(framework, framework.current_toplevel, 'fault')
     fault_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/fault/slec_verify.rpt'
     if os.path.exists(fault_rpt_path):
         framework.fault_summary = parse_fault.parse_fault_summary(fault_rpt_path)
 
-    return run_stdout, run_stderr
+    return run_stdout, run_stderr, err
 
 def gen_reset_config(framework, filename, path):
     with open(path+'/'+filename, "a") as f:
@@ -470,12 +471,12 @@ def setup_resets(framework, path):
 
 def run_resets(framework, path):
     print("**** run resets ****")
-    run_stdout, run_stderr = run_qverify_step(framework, framework.current_toplevel, 'resets')
+    run_stdout, run_stderr, err = run_qverify_step(framework, framework.current_toplevel, 'resets')
     resets_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/resets/rdc.rpt'
     if os.path.exists(resets_rpt_path):
         framework.resets_summary = parse_resets.parse_resets_results(resets_rpt_path)
 
-    return run_stdout, run_stderr
+    return run_stdout, run_stderr, err
 
 def setup_clocks(framework, path):
     print("**** setup clocks ****")
@@ -503,12 +504,12 @@ def setup_clocks(framework, path):
 
 def run_clocks(framework, path):
     print("**** run clocks ****")
-    run_stdout, run_stderr = run_qverify_step(framework, framework.current_toplevel, 'clocks')
+    run_stdout, run_stderr, err = run_qverify_step(framework, framework.current_toplevel, 'clocks')
     clocks_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/clocks/cdc.rpt'
     if os.path.exists(clocks_rpt_path):
         framework.clocks_summary = parse_clocks.parse_clocks_results(clocks_rpt_path)
 
-    return run_stdout, run_stderr
+    return run_stdout, run_stderr, err
 
 def setup_prove(framework, path):
     print("**** setup prove ****")
@@ -580,12 +581,12 @@ def setup_prove(framework, path):
 
 def run_prove(framework, path):
     print("**** run prove ****")
-    run_stdout, run_stderr = run_qverify_step(framework, framework.current_toplevel, 'prove')
+    run_stdout, run_stderr, err = run_qverify_step(framework, framework.current_toplevel, 'prove')
     prove_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/prove/formal_verify.rpt'
     if os.path.exists(prove_rpt_path):
         framework.property_summary = generate_test_cases.property_summary(prove_rpt_path)
 
-    return run_stdout, run_stderr
+    return run_stdout, run_stderr, err
 
 def setup_prove_simcover(framework, path):
     print("**** setup prove_simcover ****")
