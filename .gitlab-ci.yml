@@ -42,6 +42,7 @@ test_all:
   artifacts:
     when: always
     paths:
+      - test/drom2psl/*.psl
       - .coverage.pytest
       - results.xml
     reports:

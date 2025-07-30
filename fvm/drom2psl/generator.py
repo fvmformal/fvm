@@ -249,6 +249,8 @@ def generator(FILES, outdir = None, verbose = True, debug = False):
         else:
             output_file = Path(full_filename).with_suffix('.psl')
 
+        ic(output_file)
+
         # TODO : add arguments to drom2psl and timestamp of file creation
         vunit = ''
         vunit +=  '-- Automatically created by drom2psl\n'
