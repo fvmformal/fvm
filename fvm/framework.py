@@ -26,6 +26,7 @@ from fvm import generate_test_cases
 from fvm import reports
 from fvm.steps import steps
 from fvm.toolchains import toolchains
+from fvm.drom2psl.generator import generator
 
 # TODO : why is this parser import different?
 # TODO : this one was written by Hipolito, he will check it to change it to the
@@ -191,6 +192,8 @@ class fvmframework:
         self.vhdl_sources = list()
         self.libraries_from_vhdl_sources = list()
         self.psl_sources = list()
+        self.drom_sources = list()
+        self.drom_generated_psl = list()
         self.skip_list = list()
         self.allow_failure_list = list()
         self.disabled_coverage = list()
@@ -296,6 +299,23 @@ class fvmframework:
         self.logger.info(f'Removing all PSL sources')
         self.psl_sources = []
 
+    def add_drom_source(self, src, library="work"):
+        """Add a single wavedrom source"""
+        self.logger.info(f'Adding wavedrom source: {src}')
+        if not os.path.exists(src) :
+            self.logger.error(f'wavedrom source not found: {src}')
+            self.exit_if_required(BAD_VALUE)
+        extension = pathlib.Path(src).suffix
+        if extension not in ['.json', '.JSON', '.drom', '.wavedrom'] :
+            self.logger.warning(f'wavedrom source {src=} does not have a typical wavedrom extension, instead it has {extension=}')
+        self.drom_sources.append(src)
+        self.logger.debug(f'{self.drom_sources=}')
+
+    def clear_drom_sources(self):
+        """Removes all wavedrom sources from the project"""
+        self.logger.info(f'Removing all wavedrom sources')
+        self.drom_sources = []
+
     def add_vhdl_sources(self, globstr, library="work"):
         """Add multiple VHDL sources by globbing a pattern"""
         sources = glob.glob(globstr)
@@ -314,6 +334,15 @@ class fvmframework:
         for source in glob.glob(globstr):
             self.add_psl_source(source)
 
+    def add_drom_sources(self, globstr, library="work"):
+        """Add multiple wavedrom sources by globbing a pattern"""
+        sources = glob.glob(globstr)
+        if len(sources) == 0 :
+            self.logger.error(f'No files found for pattern {globstr}')
+            self.exit_if_required(BAD_VALUE)
+        for source in sources:
+            self.add_drom_source(source, library)
+
     def list_vhdl_sources(self):
         """List VHDL sources"""
         self.logger.info(f'{self.vhdl_sources=}')
@@ -322,10 +351,15 @@ class fvmframework:
         """List PSL sources"""
         self.logger.info(f'{self.psl_sources=}')
 
+    def list_drom_sources(self):
+        """List wavedrom sources"""
+        self.logger.info(f'{self.drom_sources=}')
+
     def list_sources(self):
         """List all sources"""
         self.list_vhdl_sources()
         self.list_psl_sources()
+        self.list_drom_sources()
 
     def check_tool(self, tool):
         """Checks if toolname exists in PATH
@@ -930,14 +964,23 @@ class fvmframework:
         else:
             self.logger.error(f'{hook=} is not callable, only functions or other callable objects can be passed as hooks')
 
+    def generate_psl_from_drom_sources(self, path):
+        self.logger.info(f'{self.drom_sources=}')
+        if self.drom_sources:
+            drom2psl_outdir = os.path.join(self.outdir, path)
+            os.makedirs(drom2psl_outdir, exist_ok=True)
+            generator(self.drom_sources, outdir=drom2psl_outdir)
+            self.drom_generated_psl = [pathlib.Path(src).with_suffix('.psl') for src in self.drom_sources]
+
     def setup_design(self, design, config = None):
         """Create the output directory and the scripts for a design, but do not
         run anything"""
-        # Create the output directories, but do not throw an error if it already
-        # exists
+        # Create the output directories, but do not throw an error if they
+        # already exist
         os.makedirs(self.outdir, exist_ok=True)
         os.makedirs(self.flexlm_logdir, exist_ok=True)
         self.current_toplevel = design
+        self.generate_psl_from_drom_sources(os.path.join(self.current_toplevel, 'drom2psl'))
 
         if config is not None:
             extra_path = f'.{config["name"]}'

@@ -557,6 +557,8 @@ def setup_prove(framework, path):
         print(f'-d {framework.current_toplevel} {framework.generic_args} ', end='', file=f)
         for i in framework.psl_sources :
             print(f'-pslfile {i} ', end='', file=f)
+        for i in framework.drom_generated_psl :
+            print(f'-pslfile {i} ', end='', file=f)
         print('-include_code_cov ', end='', file=f)
         print(f'{framework.get_tool_flags("formal compile")}', file=f)
 
@@ -615,3 +617,4 @@ def set_timeout(framework, step, timeout):
         framework.tool_flags["covercheck verify"] += timeout_value
     elif step == "prove":
         framework.tool_flags["formal verify"] += timeout_value
+
