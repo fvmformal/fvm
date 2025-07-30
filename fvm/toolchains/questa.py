@@ -135,7 +135,7 @@ def run_qverify_step(framework, design, step):
         # existing, or worse, we could try to run simulations of
         # properties that no longer exist
         if step == 'prove':
-            qsim_tb_dir = os.path.join(framework.outdir, design, "qsim_tb")
+            qsim_tb_dir = os.path.join(framework.outdir, design, step, "qsim_tb")
             archive_dir = qsim_tb_dir+".old"
             if os.path.exists(qsim_tb_dir):
                 if not os.path.exists(qsim_tb_dir+".old"):
