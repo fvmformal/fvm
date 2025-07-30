@@ -250,7 +250,7 @@ def generator(FILES, outdir = None, verbose = True, debug = False):
         vunit +=  '-- Automatically created by drom2psl\n'
         vunit += f'-- Input file: {full_filename}\n'
         vunit +=  '-- These sequences and/or properties can be reused from other PSL files by doing:\n'
-        vunit += f'-- inherit {vunit_name}\n\n'
+        vunit += f'-- inherit {vunit_name};\n\n'
         vunit += f'vunit {vunit_name} ' + '{\n\n'
 
         # TODO : We are assuming a number of things to make this usable:
@@ -337,10 +337,15 @@ def generator(FILES, outdir = None, verbose = True, debug = False):
                 #   2. Write the current line, except the cycles
                 #   3. The actual current line will be the next prev_line
                 if line != prev_line:
-                    prev_cycles_text = gen_sere_repetition(prev_cycles,
-                                                           prev_or_more)
                     if prev_line != '':
-                        vunit += prev_cycles_text + ';\n'
+                        add_semicolon = True
+                    else:
+                        add_semicolon = False
+
+                    prev_cycles_text = gen_sere_repetition(prev_cycles,
+                                                           prev_or_more,
+                                                           add_semicolon)
+                    vunit += prev_cycles_text + '\n'
 
                     vunit += line
                     prev_line = line
@@ -361,7 +366,8 @@ def generator(FILES, outdir = None, verbose = True, debug = False):
 
             # After the for loop finishes, we will have the last cycles to
             # write, so let's write them:
-            prev_cycles_text = gen_sere_repetition(prev_cycles, prev_or_more)
+            prev_cycles_text = gen_sere_repetition(prev_cycles, prev_or_more,
+                                                   False)
             if prev_line != '':
                 vunit += prev_cycles_text + '\n'
 

@@ -289,11 +289,13 @@ def is_pipe(wavelane, cycle):
         pipe = False
     return pipe
 
-def gen_sere_repetition(num_cycles, or_more, comments = True):
+def gen_sere_repetition(num_cycles, or_more, add_semicolon = False, comments = True):
     """Generates the SERE repetition operator according to the number of cycles
     received and if N 'or more' cycles can be matched"""
     if or_more == False:
         text = f'[*{num_cycles}]'  # Exactly num_cycles
+        if add_semicolon:
+            text += ';'
         if comments:
             text += f'  -- {num_cycles} cycle'
             if num_cycles != 1:
@@ -301,14 +303,20 @@ def gen_sere_repetition(num_cycles, or_more, comments = True):
     elif or_more == True:
         if num_cycles == 0:
             text = '[*]'  # Zero or more
+            if add_semicolon:
+                text += ';'
             if comments:
                 text += '  -- 0 or more cycles'
         elif num_cycles == 1:
             text = '[+]'  # One or more. Could also be [*1:inf]
+            if add_semicolon:
+                text += ';'
             if comments:
                 text += '  -- 1 or more cycles'
         else:
             text = f'[*{num_cycles}:inf]'  # N or more
+            if add_semicolon:
+                text += ';'
             if comments:
                 text += f'  -- {num_cycles} or more cycles'
     return text
