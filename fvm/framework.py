@@ -1441,18 +1441,10 @@ class fvmframework:
             string += f'-g {i}={generics[i]} '
         return string
 
-    # This is questa-specific
-    def timeout(self, step, timeout):
+    # This is NOT questa-specific
+    def set_timeout(self, step, timeout):
         """Set the timeout for a specific step"""
-        timeout_value = f" -timeout {timeout} "
-        if step == "rulecheck":
-            self.tool_flags["autocheck verify"] += timeout_value
-        elif step == "xverify":
-            self.tool_flags["xcheck verify"] += timeout_value
-        elif step == "reachability":
-            self.tool_flags["covercheck verify"] += timeout_value
-        elif step == "prove":
-            self.tool_flags["formal verify"] += timeout_value
+        toolchains.set_timeout(self, self.toolchain, step, timeout)
 
     # This is questa-specific
     def add_external_library(self, name, src):

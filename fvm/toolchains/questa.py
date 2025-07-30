@@ -604,3 +604,14 @@ def run_prove_formalcover():
     print("**** run prove_formalcover ****")
     pass
 
+def set_timeout(framework, step, timeout):
+    """Set the timeout for a specific step"""
+    timeout_value = f" -timeout {timeout} "
+    if step == "rulecheck":
+        framework.tool_flags["autocheck verify"] += timeout_value
+    elif step == "xverify":
+        framework.tool_flags["xcheck verify"] += timeout_value
+    elif step == "reachability":
+        framework.tool_flags["covercheck verify"] += timeout_value
+    elif step == "prove":
+        framework.tool_flags["formal verify"] += timeout_value

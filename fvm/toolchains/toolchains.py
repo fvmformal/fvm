@@ -32,3 +32,6 @@ def define_steps(steps, toolchain):
     module = importlib.import_module(f'fvm.toolchains.{toolchain}')
     module.define_steps(steps)
 
+def set_timeout(framework, toolchain, step, timeout):
+    module = importlib.import_module(f'fvm.toolchains.{toolchain}')
+    module.set_timeout(framework, step, timeout)
