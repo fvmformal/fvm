@@ -683,7 +683,7 @@ class fvmframework:
             if not os.path.exists(archive_dir):
                 os.makedirs(archive_dir)
             timestamp = datetime.now().isoformat()
-            target_dir = os.path.join(archive_dir, design + timestamp)
+            target_dir = os.path.join(archive_dir, f'{design}_{timestamp}')
             shutil.move(current_dir, target_dir)
 
         # Create all necessary scripts
