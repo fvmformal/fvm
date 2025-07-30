@@ -338,14 +338,10 @@ def generator(FILES, outdir = None, verbose = True, debug = False):
                 #   3. The actual current line will be the next prev_line
                 if line != prev_line:
                     if prev_line != '':
-                        add_semicolon = True
-                    else:
-                        add_semicolon = False
-
-                    prev_cycles_text = gen_sere_repetition(prev_cycles,
-                                                           prev_or_more,
-                                                           add_semicolon)
-                    vunit += prev_cycles_text + '\n'
+                        prev_cycles_text = gen_sere_repetition(prev_cycles,
+                                                               prev_or_more,
+                                                               True)
+                        vunit += prev_cycles_text + '\n'
 
                     vunit += line
                     prev_line = line
@@ -389,10 +385,6 @@ def generator(FILES, outdir = None, verbose = True, debug = False):
                 group_arguments = get_group_arguments(groupname, flattened_signal)
                 ic(group_arguments)
                 vunit += format_group_arguments(group_arguments)
-            # Add a last argument, rst, as argument for abort
-            # TODO : change the rst name if there is already an fvm_rst signal
-            # in the waveform
-            vunit += format_group_arguments([['fvm_rst', 'std_ulogic']])
             # Again, remove the unneded semicolon and restore the deleted \n
             if vunit[-2:] == ";\n":
                 vunit = vunit[:-2]
