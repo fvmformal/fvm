@@ -486,8 +486,8 @@ def generate_reports(framework, logger):
     import shutil
     if os.path.isdir(framework.resultsdir):
         timestamp = datetime.now().isoformat()
-        logger.info(f'Results directory already exists, moving it from {framework.resultsdir} to {framework.resultsdir}_{timestamp}')
-        shutil.move(framework.resultsdir, f'{framework.resultsdir}_{timestamp}')
+        logger.info(f'Results directory already exists, moving it from {framework.resultsdir} to {framework.outdir}/fvm_history/{timestamp}')
+        shutil.move(framework.resultsdir, f'{framework.outdir}/fvm_history/{timestamp}')
         os.makedirs(framework.resultsdir, exist_ok=True)
         historydir = f'{framework.reportdir}/history'
         if os.path.isdir(historydir):
