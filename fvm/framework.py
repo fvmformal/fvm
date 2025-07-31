@@ -469,6 +469,10 @@ class fvmframework:
         assert covtype in allowed_covtypes, f'Specified {covtype=} not in {allowed_covtypes=}'
         self.disabled_coverage.append(f'{design}.prove.{covtype}')
 
+    def set_timeout(self, step, timeout):
+        """Set the timeout for a specific step"""
+        toolchains.set_timeout(self, self.toolchain, step, timeout)
+
     def set_pre_hook(self, hook, step, design='*'):
         self.pre_hooks[design] = dict()
         self.pre_hooks[design][step] = hook
@@ -1474,11 +1478,6 @@ class fvmframework:
         for i in generics:
             string += f'-g {i}={generics[i]} '
         return string
-
-    # This is NOT questa-specific
-    def set_timeout(self, step, timeout):
-        """Set the timeout for a specific step"""
-        toolchains.set_timeout(self, self.toolchain, step, timeout)
 
     # This is questa-specific
     def add_external_library(self, name, src):
