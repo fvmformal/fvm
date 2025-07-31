@@ -26,6 +26,7 @@ from fvm.parsers import parse_fault
 from fvm.parsers import parse_design_rpt
 from fvm import generate_test_cases
 from fvm import helpers
+from fvm.toolchains import toolchains
 
 # TODO : For all this file: probably forward slashes (/) are not portable and
 # we should use a library to manage path operations, such as os.path or pathlib
@@ -211,7 +212,8 @@ def run_lint(framework, path):
     lint_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/lint/lint.rpt'
     if os.path.exists(lint_rpt_path):
         framework.lint_summary = parse_lint.parse_check_summary(lint_rpt_path)
-
+        toolchains.show_step_summary(framework.lint_summary, "Error", "Warning", 
+                                     outdir=f'{framework.outdir}/{framework.current_toplevel}/lint', step="lint")
     return run_stdout, run_stderr, err
 
 def setup_friendliness(framework, path):
@@ -251,8 +253,9 @@ def run_rulecheck(framework, path):
     run_stdout, run_stderr, err = run_qverify_step(framework, framework.current_toplevel, 'rulecheck')
     rulecheck_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/rulecheck/autocheck_verify.rpt'
     if os.path.exists(rulecheck_rpt_path):
-        framework.rulecheck_summary = parse_rulecheck.parse_type_and_severity(rulecheck_rpt_path)
-
+        framework.rulecheck_summary = parse_rulecheck.group_by_severity(parse_rulecheck.parse_type_and_severity(rulecheck_rpt_path))
+        toolchains.show_step_summary(framework.rulecheck_summary, "Violation", "Caution", "Inconclusive",
+                                     outdir=f'{framework.outdir}/{framework.current_toplevel}/rulecheck', step="rulecheck")
     return run_stdout, run_stderr, err
 
 def setup_xverify(framework, path):
@@ -272,8 +275,9 @@ def run_xverify(framework, path):
     run_stdout, run_stderr, err = run_qverify_step(framework, framework.current_toplevel, 'xverify')
     xverify_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/xverify/xcheck_verify.rpt'
     if os.path.exists(xverify_rpt_path):
-        framework.xverify_summary = parse_xverify.parse_type_and_result(xverify_rpt_path)
-
+        framework.xverify_summary = parse_xverify.group_by_result(parse_xverify.parse_type_and_result(xverify_rpt_path))
+        toolchains.show_step_summary(framework.xverify_summary, "Corruptible", "Incorruptible", "Inconclusive",
+                                     outdir=f'{framework.outdir}/{framework.current_toplevel}/xverify', step="xverify")
     return run_stdout, run_stderr, err
 
 def setup_reachability(framework, path):
@@ -488,7 +492,8 @@ def run_resets(framework, path):
     resets_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/resets/rdc.rpt'
     if os.path.exists(resets_rpt_path):
         framework.resets_summary = parse_resets.parse_resets_results(resets_rpt_path)
-
+        toolchains.show_step_summary(framework.resets_summary, "Violation", "Caution",
+                                     outdir=f'{framework.outdir}/{framework.current_toplevel}/resets', step="resets")
     return run_stdout, run_stderr, err
 
 def setup_clocks(framework, path):
@@ -521,7 +526,8 @@ def run_clocks(framework, path):
     clocks_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/clocks/cdc.rpt'
     if os.path.exists(clocks_rpt_path):
         framework.clocks_summary = parse_clocks.parse_clocks_results(clocks_rpt_path)
-
+        toolchains.show_step_summary(framework.clocks_summary, "Violations", "Cautions", proven="Proven",
+                                     outdir=f'{framework.outdir}/{framework.current_toplevel}/clocks', step="clocks")
     return run_stdout, run_stderr, err
 
 def setup_prove(framework, path):

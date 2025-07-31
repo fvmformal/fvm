@@ -98,75 +98,51 @@ def pretty_summary(framework, logger):
 
                 result_str_for_table = ""
                 score_str =  '                '
+                step_summary = getattr(framework, f"{step}_summary", {})
+                if step_summary and ("Error" in step_summary or "Violation" in step_summary or 
+                                        "Violations" in step_summary or "Corruptible" in step_summary):
+                    step_errors = step_summary.get('Error', {}).get('count', 0)
+                    step_warnings = step_summary.get('Warning', {}).get('count', 0)
+                    step_violation = step_summary.get('Violation', {}).get('count', 0)
+                    step_caution = step_summary.get('Caution', {}).get('count', 0)
+                    step_inconclusives = step_summary.get('Inconclusive', {}).get('count', 0)
+                    step_violations = step_summary.get('Violations', {}).get('count', 0)
+                    step_cautions = step_summary.get('Cautions', {}).get('count', 0)
+                    step_proven = step_summary.get('Proven', {}).get('count', 0)
+                    step_corruptibles = step_summary.get('Corruptible', {}).get('count', 0)
+                    step_incorruptibles = step_summary.get('Incorruptible', {}).get('count', 0)
 
-                if step == 'lint':
-                    if framework.lint_summary:
-                        lint_errors = framework.lint_summary['Error']['count']
-                        lint_warnings = framework.lint_summary['Warning']['count']
-
-                        if lint_errors != 0:
-                            result_str_for_table += f"[bold red]{lint_errors}E[/bold red]"
-                            status = 'fail'
-                        if lint_warnings != 0:
-                            result_str_for_table += " "
-                            result_str_for_table += f"[bold yellow]{lint_warnings}W[/bold yellow]"
-                        if lint_errors == 0 and lint_warnings == 0:
-                            result_str_for_table += "[bold green]okey![/bold green]"
-                    else:
-                        result_str_for_table = "N/A"
-
-                if step == 'friendliness':
-                    if "score" in framework.results[design][step]:
-                        score = framework.results[design][step]["score"]
-                        score_str = f' (score: {score:.2f}%)'
-                        result_str_for_table = f'[bold green]{score:.2f}%[/bold green]'
-                    else:
-                        result_str_for_table = "N/A"
-                #text.append(score_str)
-
-                if step == 'rulecheck':
-                    if framework.rulecheck_summary:
-                        severity_occurrences = parse_rulecheck.count_severity_occurrences(framework.rulecheck_summary)
-                        rulecheck_errors = severity_occurrences['Violation']
-                        rulecheck_warnings = severity_occurrences['Caution']
-                        rulecheck_inconclusives = severity_occurrences['Inconclusive']
-
-                        if rulecheck_errors != 0:
-                            result_str_for_table += f"[bold red]{rulecheck_errors}V[/bold red]"
-                            status = 'fail'
-                        if rulecheck_warnings != 0:
-                            result_str_for_table += " "
-                            result_str_for_table += f"[bold yellow]{rulecheck_warnings}C[/bold yellow]"
-                        if rulecheck_inconclusives != 0:
-                            result_str_for_table += " "
-                            result_str_for_table += f"[bold white]{rulecheck_inconclusives}I[/bold white]"
-                        if rulecheck_errors == 0 and rulecheck_warnings == 0 and rulecheck_inconclusives == 0:
-                            result_str_for_table += "[bold green]okey![/bold green]"
-                    else:
-                        result_str_for_table = "N/A"
-
-                if step == 'xverify':
-                    if framework.xverify_summary:
-                        result_occurrences = parse_xverify.count_result_occurrences(framework.xverify_summary)
-                        xverify_errors = result_occurrences['Corruptible']
-                        xverify_warnings = result_occurrences['Incorruptible']
-                        xverify_inconclusives = result_occurrences['Inconclusive']
-
-                        if xverify_errors != 0:
-                            result_str_for_table += f"[bold red]{xverify_errors}C[/bold red]"
-                            status = 'fail'
-                        if xverify_warnings != 0:
-                            result_str_for_table += " "
-                            result_str_for_table += f"[bold yellow]{xverify_warnings}I[/bold yellow]"
-                        if xverify_inconclusives != 0:
-                            result_str_for_table += " "
-                            result_str_for_table += f"[bold white]{xverify_inconclusives}I[/bold white]"
-                        if xverify_errors == 0 and xverify_warnings == 0 and xverify_inconclusives == 0:
-                            result_str_for_table += "[bold green]okey![/bold green]"
-                    else:
-                        result_str_for_table = "N/A"
-
-                if step == 'reachability':
+                    if step_errors != 0:
+                        result_str_for_table += f"[bold red]{step_errors}E[/bold red]"
+                        status = 'fail'
+                    if step_violation != 0:
+                        result_str_for_table += f"[bold red]{step_violation}V[/bold red]"
+                        status = 'fail'
+                    if step_violations != 0:
+                        result_str_for_table += f"[bold red]{step_violations}V[/bold red]"
+                        status = 'fail'
+                    if step_corruptibles != 0:
+                        result_str_for_table += f"[bold red]{step_corruptibles}C[/bold red]"
+                        status = 'fail'
+                    if step_warnings != 0:
+                        result_str_for_table += f"[bold yellow] {step_warnings}W[/bold yellow]"
+                    if step_caution != 0:
+                        result_str_for_table += f"[bold yellow] {step_caution}C[/bold yellow]"
+                    if step_cautions != 0:
+                        result_str_for_table += f"[bold yellow] {step_cautions}C[/bold yellow]"
+                    if step_incorruptibles != 0:
+                        result_str_for_table += f"[bold yellow] {step_incorruptibles}I[/bold yellow]"
+                    if step_inconclusives != 0:
+                        result_str_for_table += f"[bold white] {step_inconclusives}I[/bold white]"
+                    if step_proven != 0:
+                        result_str_for_table += f"[bold green] {step_proven}P[/bold green]"
+                    if (step_errors == 0 and step_warnings == 0 and step_violation == 0 and step_caution == 0 and 
+                        step_inconclusives == 0 and step_violations == 0 and step_cautions == 0 and step_proven == 0 and
+                        step_corruptibles == 0 and step_incorruptibles == 0):
+                        result_str_for_table += "[bold green]okey![/bold green]"
+                elif "score" in framework.results[design][step]:
+                        result_str_for_table += f"[bold green]{framework.results[design][step]['score']:.2f}%[/bold green]"
+                elif step == 'reachability':
                     if framework.reachability_summary:
                         score = next( (float(entry["Unreachable"].split("(")[-1].strip(" %)"))
                                for entry in framework.reachability_summary["data"]
@@ -177,8 +153,7 @@ def pretty_summary(framework, logger):
                             result_str_for_table = f'[bold red]{score}%[/bold red]'
                     else:
                         result_str_for_table = "N/A"
-
-                if step == 'fault':
+                elif step == 'fault':
                     if framework.fault_summary:
                         fault_summary = framework.fault_summary
                         fault_total_targets = fault_summary["Targets"]["Total"]
@@ -190,46 +165,7 @@ def pretty_summary(framework, logger):
                             status = 'fail'
                     else:
                         result_str_for_table = "N/A"
-
-                if step == 'resets':
-                    if framework.resets_summary:
-                        resets_summary = framework.resets_summary
-                        resets_violation = resets_summary["Violation"]["count"]
-                        resets_caution = resets_summary["Caution"]["count"]
-
-                        if resets_violation != 0:
-                            result_str_for_table += f"[bold red]{resets_violation}V[/bold red]"
-                            status = 'fail'
-                        if resets_caution != 0:
-                            result_str_for_table += " "
-                            result_str_for_table += f"[bold yellow]{resets_caution}C[/bold yellow]"
-                        if resets_violation == 0 and resets_caution == 0:
-                            result_str_for_table += "[bold green]okey![/bold green]"
-                    else:
-                        result_str_for_table = "N/A"
-
-                if step == 'clocks':
-                    if framework.clocks_summary:
-                        clocks_summary = framework.clocks_summary
-                        clocks_violation = clocks_summary["Violations"]["count"]
-                        clocks_caution = clocks_summary["Cautions"]["count"]
-                        clocks_proven = clocks_summary["Proven"]["count"]
-
-                        if clocks_violation != 0:
-                            result_str_for_table += f"[bold red]{clocks_violation}V[/bold red]"
-                            status = 'fail'
-                        if clocks_caution != 0:
-                            result_str_for_table += " "
-                            result_str_for_table += f"[bold yellow]{clocks_caution}C[/bold yellow]"
-                        if clocks_proven != 0:
-                            result_str_for_table += " "
-                            result_str_for_table += f"[bold green]{clocks_proven}P[/bold green]"
-                        if clocks_violation == 0 and clocks_caution == 0 and clocks_proven == 0:
-                            result_str_for_table += "[bold green]okey![/bold green]"
-                    else:
-                        result_str_for_table = "N/A"
-
-                if step == 'prove.formalcover':
+                elif step == 'prove.formalcover':
                     if framework.formalcover_summary:
                         score = next( (float(entry["Covered (P)"].split("(")[-1].strip(" %)"))
                                for entry in framework.formalcover_summary["data"]
@@ -240,8 +176,7 @@ def pretty_summary(framework, logger):
                             result_str_for_table = f'[bold red]{score}%[/bold red]'
                     else:
                         result_str_for_table = "N/A"
-
-                if step == 'prove.simcover':
+                elif step == 'prove.simcover':
                     if framework.simcover_summary:
                         score = framework.simcover_summary.get("Total", {}).get("percentage", 0)
                         if status == 'pass':
@@ -250,6 +185,8 @@ def pretty_summary(framework, logger):
                             result_str_for_table = f'[bold red]{score}[/bold red]'
                     else:
                         result_str_for_table = "N/A"
+                elif step != 'prove':
+                    result_str_for_table = "N/A"
 
                 time_str_for_table = "N/A"
                 if "elapsed_time" in framework.results[design][step]:
