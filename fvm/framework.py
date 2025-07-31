@@ -711,13 +711,17 @@ class fvmframework:
         # If the design directory already exists, move it to a subdirectory
         # called "previous_executions" and append a timestamp to the directory
         # name, so we don't lose the previous results
-        current_dir = os.path.join(self.outdir, design)
+        if config is not None:
+            previous_design = f"{design}.{config['name']}"
+        else:
+            previous_design = design
+        current_dir = os.path.join(self.outdir, previous_design)
         archive_dir = os.path.join(self.outdir, "previous_executions")
         if os.path.exists(current_dir):
             if not os.path.exists(archive_dir):
                 os.makedirs(archive_dir)
             timestamp = datetime.now().isoformat()
-            target_dir = os.path.join(archive_dir, f'{design}_{timestamp}')
+            target_dir = os.path.join(archive_dir, f'{previous_design}_{timestamp}')
             shutil.move(current_dir, target_dir)
 
         # Create all necessary scripts
