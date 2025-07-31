@@ -4,6 +4,12 @@ import os
 from collections import OrderedDict
 from datetime import datetime
 import shutil
+import glob
+import pathlib
+
+from rich.console import Console
+from rich.table import Table
+from rich.text import Text
 
 # TODO : are this parsers questa-specific or could they be made configurable?
 # should they be moved to someplace like toolchains/questa/parsers?
@@ -19,6 +25,7 @@ from fvm.parsers import parse_clocks
 from fvm.parsers import parse_fault
 from fvm.parsers import parse_design_rpt
 from fvm import generate_test_cases
+from fvm import helpers
 
 # TODO : For all this file: probably forward slashes (/) are not portable and
 # we should use a library to manage path operations, such as os.path or pathlib
@@ -600,17 +607,332 @@ def setup_prove_simcover(framework, path):
     print("**** setup prove_simcover ****")
     pass
 
-def run_prove_simcover():
+def run_prove_simcover(framework, path):
     print("**** run prove_simcover ****")
-    pass
+    # TODO: check errors in every call instead of summing everything
+    # and just checking at the end (hopefully without copying the code
+    # in three different places)
+    # TODO: try to deduplicate some of the code
+    # TODO: append all the logs to the same message so it appears in
+    # the reports, and not only the last log (vcover report)
+    stdout_err = 0
+    stderr_err = 0
+    replay_files = glob.glob(framework.outdir+'/'+framework.current_toplevel+'/prove/qsim_tb/*/replay.vsim.do')
+    framework.logger.trace(f'{replay_files=}')
+    ucdb_files = list()
+    elapsed_time = 0
+    timestamp = None
+    design = framework.current_toplevel
+    for file in replay_files:
+        # Modify the replay.vsim.do so:
+        #   - It dumps the waveforms into a .vcd file
+        #   - It specifies a unique test name so we don't get errors when
+        #     merging the UCDBs, and
+        #   - It saves a UCDB file
+        vcdfilename = os.path.basename(os.path.dirname(file)) + '.vcd'
+        helpers.insert_line_after_target(file, "onerror {resume}", f'vcd dumpports -file {vcdfilename} -in -out *')
+        helpers.insert_line_before_target(file, "quit -f;", f'coverage attribute -name TESTNAME -value {pathlib.Path(file).parent.name}')
+        helpers.insert_line_before_target(file, "quit -f;", "coverage save sim.ucdb")
+        # TODO: Maybe we need to modify the replay.scr so it exports
+        # more types of code coverage, we will know that when we try
+        # bigger circuits
+        # Run the replay script
+        path = pathlib.Path(file).parent
+        cmd = ['./replay.scr']
+        cmd_stdout, cmd_stderr = framework.run_cmd(cmd,
+                                                   framework.current_toplevel,
+                                                   'prove.simcover', 'vsim',
+                                                   framework.verbose, path)
+        elapsed_time += framework.results[design]['prove.simcover']['elapsed_time']
+        if timestamp is None:
+            timestamp = framework.results[design]['prove.simcover']['timestamp']
+        # TODO : maybe check for errors here?
+        tool = 'vsim'
+        stdout_err += framework.logcheck(cmd_stdout, design, 'prove.simcover', tool)
+        stderr_err += framework.logcheck(cmd_stderr, design, 'prove.simcover', tool)
+        ucdb_files.append(f'{path}/sim.ucdb')
+    # Merge all simulation code coverage
+    path = None
+
+    simcover_path = f"{framework.outdir}/{framework.current_toplevel}/prove.simcover"
+    os.makedirs(simcover_path, exist_ok=True)
+
+    cmd = ['vcover', 'merge', '-out', f'{simcover_path}/simcover.ucdb']
+    cmd = cmd + ucdb_files
+    framework.logger.info(f'{cmd=}, {path=}')
+    cmd_stdout, cmd_stderr = framework.run_cmd(cmd, design, 'prove.simcover',
+                                               'vcover merge', framework.verbose, path)
+    elapsed_time += framework.results[design]['prove.simcover']['elapsed_time']
+    if timestamp is None:
+        timestamp = framework.results[design]['prove.simcover']['timestamp']
+    # TODO : maybe check for errors here?
+    tool = 'vcover'
+    stdout_err += framework.logcheck(cmd_stdout, design, 'prove.simcover', tool)
+    stderr_err += framework.logcheck(cmd_stderr, design, 'prove.simcover', tool)
+
+    # Check for errors
+    err = False
+    if stdout_err or stderr_err:
+        if framework.is_failure_allowed(design, 'prove.simcover') == False:
+            err = True
+    if stdout_err or stderr_err:
+        if framework.is_failure_allowed(design, 'prove.simcover') == False:
+            framework.results[design]['prove.simcover']['status'] = 'fail'
+        else:
+            framework.results[design]['prove.simcover']['status'] = 'broken'
+
+    # Generate simcover summary
+    path = f'{framework.outdir}/{framework.current_toplevel}/prove.simcover'
+    cmd = ['vcover', 'report', '-csv', '-hierarchical', 'simcover.ucdb',
+           '-output', 'simulation_coverage.log']
+    cmd_stdout, cmd_stderr = framework.run_cmd(cmd, design, 'prove.simcover',
+                                               'vcover report', framework.verbose, path)
+    elapsed_time += framework.results[design]['prove.simcover']['elapsed_time']
+    framework.results[design]['prove.simcover']['timestamp'] = timestamp
+    framework.results[design]['prove.simcover']['elapsed_time'] = elapsed_time
+    tool = 'vcover'
+    stdout_err += framework.logcheck(cmd_stdout, design, 'prove.simcover', tool)
+    stderr_err += framework.logcheck(cmd_stderr, design, 'prove.simcover', tool)
+
+    # Check for errors
+    err = False
+    if stdout_err or stderr_err:
+        if framework.is_failure_allowed(design, 'prove.simcover') == False:
+            err = True
+    if stdout_err or stderr_err:
+        if framework.is_failure_allowed(design, 'prove.simcover') == False:
+            framework.results[design]['prove.simcover']['status'] = 'fail'
+        else:
+            framework.results[design]['prove.simcover']['status'] = 'broken'
+    else:
+        framework.results[design]['prove.simcover']['status'] = 'pass'
+
+    coverage_data = parse_simcover.parse_coverage_report(f'{path}/simulation_coverage.log')
+    framework.simcover_summary = parse_simcover.sum_coverage_data(coverage_data)
+
+    # Generate an html report
+    path = f'{framework.outdir}/{framework.current_toplevel}/prove.simcover'
+    cmd = ['vcover', 'report', '-html', '-annotate', '-details',
+           '-testdetails', '-codeAll', '-multibitverbose', '-out',
+           'simcover', 'simcover.ucdb']
+    cmd_stdout, cmd_stderr = framework.run_cmd(cmd, design, 'prove.simcover',
+                                               'vcover report', framework.verbose, path)
+    elapsed_time += framework.results[design]['prove.simcover']['elapsed_time']
+    framework.results[design]['prove.simcover']['timestamp'] = timestamp
+    framework.results[design]['prove.simcover']['elapsed_time'] = elapsed_time
+    # TODO : maybe check for errors here?
+    tool = 'vcover'
+    stdout_err += framework.logcheck(cmd_stdout, design, 'prove.simcover', tool)
+    stderr_err += framework.logcheck(cmd_stderr, design, 'prove.simcover', tool)
+    # TODO : maybe create also a text report, as #141 suggests?
+
+    # Check for errors
+    err = False
+    if stdout_err or stderr_err:
+        if framework.is_failure_allowed(design, 'prove.simcover') == False:
+            err = True
+    if stdout_err or stderr_err:
+        if framework.is_failure_allowed(design, 'prove.simcover') == False:
+            framework.results[design]['prove.simcover']['status'] = 'fail'
+        else:
+            framework.results[design]['prove.simcover']['status'] = 'broken'
+    else:
+        framework.results[design]['prove.simcover']['status'] = 'pass'
+
+    if framework.simcover_summary is not None:
+        simcover_summary = framework.simcover_summary
+        goal_percentages = {
+            "Branches": 0.0,
+            "Conditions": 0.0,
+            "Statments": 0.0,
+            "Toggles": 0.0,
+            "Total": 0.0,
+        }
+
+        simcover_console = Console(force_terminal=True, force_interactive=False,
+                                record=True)
+        table = Table(title=f"[cyan]Simulation Coverage Summary for Design: {framework.current_toplevel} [/cyan]")
+
+        table.add_column("Status", style="bold")
+        table.add_column("Coverage Type", style="cyan")
+        table.add_column("Covered", justify="right")
+        table.add_column("Total", justify="right")
+        table.add_column("Percentage", justify="right")
+        table.add_column("Goal (%)", justify="right")
+
+        fail_found = False
+
+        for coverage_type, values in simcover_summary.items():
+            covered = values["covered"]
+            total = values["total"]
+            percentage_text = values["percentage"].strip("%")
+            covered_percentage = float(percentage_text)
+            goal = goal_percentages.get(coverage_type, 0.0)
+
+            if covered_percentage >= goal:
+                status = "[green]pass[/green]"
+                percentage_display = f"[bold green]{values['percentage']}[/bold green]"
+            else:
+                status = "[red]fail[/red]"
+                percentage_display = f"[bold red]{values['percentage']}[/bold red]"
+                fail_found = True
+
+            table.add_row(
+                status,
+                coverage_type,
+                str(covered),
+                str(total),
+                percentage_display,
+                f"{goal:.1f}%",
+            )
+
+        framework.results[design]['prove.simcover']['status'] = "fail" if fail_found else "pass"
+        simcover_console.print(table)
+    return err
 
 def setup_prove_formalcover(framework, path):
     print("**** setup prove_formalcover ****")
     pass
 
-def run_prove_formalcover():
+# TODO: this function is really big, we should review it and see if we can
+# simplify or divide it
+# TODO: should we return 'err' here? Or some other thing?
+def run_prove_formalcover(framework, path):
     print("**** run prove_formalcover ****")
-    pass
+    err = False
+    report_path = path + '/prove.formalcover'
+    property_summary = generate_test_cases.parse_property_summary(f'{path}/prove/prove.log')
+    inconclusives = property_summary.get('Assertions', {}).get('Inconclusive', 0)
+    with open(f"{path}/prove_formalcover.do", "w") as f:
+        print('onerror exit', file=f)
+        print(f"formal load db {path}/prove/propcheck.db",file=f)
+        if not framework.is_disabled('observability'):
+            print('formal generate coverage -detail_all -cov_mode o', file=f)
+        if not framework.is_disabled('reachability'):
+            print(f'formal verify {framework.get_tool_flags("formal verify")} -cov_mode reachability', file=f)
+            print('formal generate coverage -detail_all -cov_mode r', file=f)
+        if not framework.is_disabled('bounded_reachability') and inconclusives != 0:
+            print(f'formal verify {framework.get_tool_flags("formal verify")} -cov_mode bounded_reachability', file=f)
+            print('formal generate coverage -detail_all -cov_mode b', file=f)
+        if not framework.is_disabled('signoff'):
+            print(f'formal verify {framework.get_tool_flags("formal verify")} -cov_mode signoff', file=f)
+            print('formal generate coverage -detail_all -cov_mode s', file=f)
+        print('', file=f)
+        print('exit', file=f)
+    tool = tools['prove'][0]
+    wrapper = tools['prove'][1]
+    framework.logger.info(f'prove.simcover, running {tool=} with {wrapper=}')
+    framework.logger.debug(f'Running {tool=} with {wrapper=}')
+    if framework.toolchain == "questa":
+        cmd = [wrapper, '-c', '-od', report_path, '-do', f'{path}/prove_formalcover.do']
+        if framework.list == True :
+            framework.logger.info(f'Available step: prove.formalcover. Tool: {tool}, command = {" ".join(cmd)}')
+        else :
+            framework.logger.trace(f'command: {" ".join(cmd)=}')
+            cmd_stdout, cmd_stderr = framework.run_cmd(cmd,
+                                                       framework.current_toplevel,
+                                                       'prove.formalcover',
+                                                       tool, framework.verbose)
+            stdout_err = framework.logcheck(cmd_stdout,
+                                            framework.current_toplevel,
+                                            'prove.formalcover', tool)
+            stderr_err = framework.logcheck(cmd_stderr,
+                                            framework.current_toplevel,
+                                            'prove.formalcover', tool)
+            logfile = f'{report_path}/prove_formalcover.log'
+            framework.logger.info(f'prove.formalcover, {tool=}, finished, output written to {logfile}')
+            with open(logfile, 'w') as f :
+                f.write(cmd_stdout)
+                f.write(cmd_stderr)
+            if stdout_err or stderr_err:
+                if framework.is_failure_allowed(framework.current_toplevel, 'prove.formalcover') == False:
+                    err = True
+            if stdout_err or stderr_err:
+                if framework.is_failure_allowed(framework.current_toplevel, 'prove.formalcover') == False:
+                    framework.results[framework.current_toplevel]['prove.formalcover']['status'] = 'fail'
+                else:
+                    framework.results[framework.current_toplevel]['prove.formalcover']['status'] = 'broken'
+            else:
+                framework.results[framework.current_toplevel]['prove.formalcover']['status'] = 'pass'
+
+    if not framework.is_disabled('signoff'):
+        formal_signoff_rpt_path = f'{report_path}/formal_signoff.rpt'
+        formal_signoff_html_path = f'{report_path}/formal_signoff.html'
+        if os.path.exists(formal_signoff_rpt_path):
+            parse_reports.parse_formal_signoff_report_to_html(formal_signoff_rpt_path, formal_signoff_html_path)
+            formal_signoff_html = formal_signoff_html_path
+        else:
+            formal_signoff_html = None
+        if formal_signoff_html is not None:
+            with open(formal_signoff_html, 'r', encoding='utf-8') as f:
+                html_content = f.read()
+
+            tables = parse_formal_signoff.parse_coverage_table(html_content)
+            filtered_tables = parse_formal_signoff.filter_coverage_tables(tables)
+
+            if filtered_tables:
+                framework.formalcover_summary = parse_formal_signoff.add_total_field(filtered_tables[0])
+                formalcover_summary = framework.formalcover_summary
+                goal_percentages = {
+                    "Branch": 0.0,
+                    "Condition": 0.0,
+                    "Expression": 0.0,
+                    "FSM State": 0.0,
+                    "FSM Transition": 0.0,
+                    "Statement": 0.0,
+                    "Toggle": 0.0,
+                    "Covergroup Bin": 0.0,
+                    "Total": 0.0,
+                }
+
+                formalcover_console = Console(force_terminal=True, force_interactive=False,
+                                        record=True)
+                table = Table(title=f"[cyan]{formalcover_summary['title']}[/cyan]")
+
+                table.add_column("Status", style="bold")
+                table.add_column("Coverage Type", style="cyan")
+                table.add_column("Total", justify="right")
+                table.add_column("Uncovered", justify="right")
+                table.add_column("Excluded", justify="right")
+                table.add_column("Covered (P)", justify="right")
+                table.add_column("Goal (%)", justify="right")
+
+                fail_found = False
+
+                for entry in formalcover_summary["data"]:
+                    coverage_type = entry["Coverage Type"]
+                    covered_text = entry["Covered (P)"].split("(")[-1].strip(" %)")
+
+                    if covered_text == "N/A":
+                        status = "[white]omit[/white]"
+                        covered_display = f"[bold white]{entry['Covered (P)']}[/bold white]"
+                        covered_percentage = 0.0
+                        goal = 0.0
+                    else:
+                        covered_percentage = float(covered_text)
+                        goal = goal_percentages.get(coverage_type, 0.0)
+
+                        if covered_percentage >= goal:
+                            status = "[green]pass[/green]"
+                            covered_display = f"[bold green]{entry['Covered (P)']}[/bold green]"
+                        else:
+                            status = "[red]fail[/red]"
+                            covered_display = f"[bold red]{entry['Covered (P)']}[/bold red]"
+                            fail_found = True
+
+                    table.add_row(
+                        status,
+                        coverage_type,
+                        str(entry.get("Total","0")),
+                        str(entry.get("Uncovered","0")),
+                        str(entry.get("Excluded", "0")),
+                        covered_display,
+                        f"{goal:.1f}%",
+                    )
+
+                framework.results[framework.current_toplevel]['prove.formalcover']['status'] = "fail" if fail_found else "pass"
+                formalcover_console.print(table)
+    return err
 
 def set_timeout(framework, step, timeout):
     """Set the timeout for a specific step"""
