@@ -139,7 +139,7 @@ def pretty_summary(framework, logger):
                     if (step_errors == 0 and step_warnings == 0 and step_violation == 0 and step_caution == 0 and 
                         step_inconclusives == 0 and step_violations == 0 and step_cautions == 0 and step_proven == 0 and
                         step_corruptibles == 0 and step_incorruptibles == 0):
-                        result_str_for_table += "[bold green]okey![/bold green]"
+                        result_str_for_table += "[bold green]ok[/bold green]"
                 elif "score" in framework.results[design][step]:
                         result_str_for_table += f"[bold green]{framework.results[design][step]['score']:.2f}%[/bold green]"
                 elif step == 'reachability':
