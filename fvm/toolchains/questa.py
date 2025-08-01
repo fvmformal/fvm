@@ -74,8 +74,8 @@ def define_steps(steps):
     steps.add_step('resets', setup_resets, run_resets)
     steps.add_step('clocks', setup_clocks, run_clocks)
     steps.add_step('prove', setup_prove, run_prove)
-    steps.add_post_step('prove', 'simcover', setup_prove_simcover, run_prove_simcover)
     steps.add_post_step('prove', 'formalcover', setup_prove_formalcover, run_prove_formalcover)
+    steps.add_post_step('prove', 'simcover', setup_prove_simcover, run_prove_simcover)
 
 def create_f_file(filename, sources):
     with open(filename, "w") as f:
