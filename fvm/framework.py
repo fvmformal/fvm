@@ -474,6 +474,22 @@ class fvmframework:
         """Set the timeout for a specific step"""
         toolchains.set_timeout(self, self.toolchain, step, timeout)
 
+    def generics_to_args(self, generics):
+        """Converts a dict with generic:value pairs to the argument we have to
+        pass to the tools"""
+        return toolchains.generics_to_args(self.toolchain, generics)
+
+    def formal_initialize_rst(self, rst, active_high=True, cycles=1):
+        """
+        Initialize reset for formal steps.
+        """
+        if active_high:
+            line = f'formal init {{{rst}=1;##{cycles+1};{rst}=0}}'
+            self.init_reset.append(line)
+        else:
+            line = f'formal init {{{rst}=0;##{cycles+1};{rst}=1}}'
+            self.init_reset.append(line)
+
     def set_pre_hook(self, hook, step, design='*'):
         self.pre_hooks[design] = dict()
         self.pre_hooks[design][step] = hook
@@ -1154,14 +1170,8 @@ class fvmframework:
     # ******************************************************************* #
     # ******************************************************************* #
 
-    # This is questa-specific
-    def generics_to_args(self, generics):
-        """Converts a dict with generic:value pairs to the argument we have to
-        pass to the tools"""
-        string = ''
-        for i in generics:
-            string += f'-g {i}={generics[i]} '
-        return string
+    # TODO: are we really using these functions? I don't see them being called
+    # neither in concepts/ nor in examples/
 
     # This is questa-specific
     def add_external_library(self, name, src):
@@ -1199,16 +1209,4 @@ class fvmframework:
             self.logger.error(f'Error mapping precompiled library {name}: {e}')
             self.exit_if_required(BAD_VALUE)
         self.logger.info(f'Successfully mapped precompiled library {name}')
-
-    # This is questa-specific
-    def formal_initialize_rst(self, rst, active_high=True, cycles=1):
-        """
-        Initialize reset for formal steps.
-        """
-        if active_high:
-            line = f'formal init {{{rst}=1;##{cycles+1};{rst}=0}}'
-            self.init_reset.append(line)
-        else:
-            line = f'formal init {{{rst}=0;##{cycles+1};{rst}=1}}'
-            self.init_reset.append(line)
 

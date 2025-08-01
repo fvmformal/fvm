@@ -36,6 +36,14 @@ def set_timeout(framework, toolchain, step, timeout):
     module = importlib.import_module(f'fvm.toolchains.{toolchain}')
     module.set_timeout(framework, step, timeout)
 
+def generics_to_args(toolchain, generics):
+    module = importlib.import_module(f'fvm.toolchains.{toolchain}')
+    return module.generics_to_args(generics)
+
+def formal_initialize_rst(framework, rst, active_high=True, cycles=1):
+    module = importlib.import_module(f'{framework.toolchain}')
+    module.formal_initialize_rst(framework, rst, active_high=True, cycles=1)
+
 
 ## TODO: Decide where to put this function
 from rich.table import Table
@@ -126,3 +134,4 @@ def show_step_summary(step_summary, error, warning, inconclusive=None, proven=No
 
     step_summary_console.print(table)
     step_summary_console.save_html(f"{outdir}/{step}_summary.html")
+

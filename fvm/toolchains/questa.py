@@ -952,3 +952,22 @@ def set_timeout(framework, step, timeout):
     elif step == "prove":
         framework.tool_flags["formal verify"] += timeout_value
 
+def generics_to_args(generics):
+    """Converts a dict with generic:value pairs to the argument we have to
+    pass to the tools"""
+    string = ''
+    for i in generics:
+        string += f'-g {i}={generics[i]} '
+    return string
+
+def formal_initialize_rst(framework, rst, active_high=True, cycles=1):
+    """
+    Initialize reset for formal steps.
+    """
+    if active_high:
+        line = f'formal init {{{rst}=1;##{cycles+1};{rst}=0}}'
+        framework.init_reset.append(line)
+    else:
+        line = f'formal init {{{rst}=0;##{cycles+1};{rst}=1}}'
+        framework.init_reset.append(line)
+
