@@ -76,17 +76,17 @@ def check_if_tools_exist() :
     fvm.check_tool("qverify")
     fvm.check_tool("notfoundtool")
 
-def test_check_library_exists_false() :
-    fvm = fvmframework()
-    exists = fvm.check_library_exists("librarythatdoesntexist")
-    assert exists == False
+#def test_check_library_exists_false() :
+#    fvm = fvmframework()
+#    exists = fvm.check_library_exists("librarythatdoesntexist")
+#    assert exists == False
 
-def test_check_library_exists_true() :
-    fvm = fvmframework()
-    os.makedirs('test/testlib', exist_ok=True)
-    Path('test/testlib/_info').touch()
-    exists = fvm.check_library_exists("test/testlib")
-    assert exists == True
+#def test_check_library_exists_true() :
+#    fvm = fvmframework()
+#    os.makedirs('test/testlib', exist_ok=True)
+#    Path('test/testlib/_info').touch()
+#    exists = fvm.check_library_exists("test/testlib")
+#    assert exists == True
 
 #def test_cmd_create_library() :
 #    fvm = fvmframework()

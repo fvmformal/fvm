@@ -1212,20 +1212,3 @@ class fvmframework:
             line = f'formal init {{{rst}=0;##{cycles+1};{rst}=1}}'
             self.init_reset.append(line)
 
-    # This is questa-specific
-    def check_library_exists(self, path) :
-        if self.toolchain == "questa" :
-            expectedfile = path + "_info"
-        self.logger.debug(f'checking if {expectedfile=} exists')
-        if os.path.exists(path) :
-            ret = True
-        else :
-            ret = False
-        return ret
-
-    # This is questa-specific
-    def cmd_create_library(self, lib):
-        if self.toolchain == "questa":
-            cmd = tools["createemptylib"] + ' ' + lib
-        return cmd
-
