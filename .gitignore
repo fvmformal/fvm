@@ -23,5 +23,6 @@ test/drom2psl/tutorial/*.svg
 test/testlib/_info
 results.xml
 .coverage
-
+modelsim.ini
+vish_stacktrace.vstf
 
