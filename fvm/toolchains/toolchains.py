@@ -140,7 +140,7 @@ def show_friendliness_score(score):
         friendliness_console = Console()
 
         table = Table(show_header=True)
-        table.add_column("Friendliness", justify="center", style="bold green")
-        table.add_row(f"{score:.2f}%")
+        table.add_column("Friendliness", justify="center")
+        table.add_row(f"{score:.2f}%", style="bold green")
 
         friendliness_console.print(table)
