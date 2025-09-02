@@ -135,3 +135,12 @@ def show_step_summary(step_summary, error, warning, inconclusive=None, proven=No
     step_summary_console.print(table)
     step_summary_console.save_html(f"{outdir}/{step}_summary.html")
 
+## TODO: Decide where to put this function
+def show_friendliness_score(score):
+        friendliness_console = Console()
+
+        table = Table(show_header=True)
+        table.add_column("Friendliness", justify="center", style="bold green")
+        table.add_row(f"{score:.2f}%")
+
+        friendliness_console.print(table)

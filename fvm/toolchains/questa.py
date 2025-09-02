@@ -233,6 +233,9 @@ def run_friendliness(framework, path):
     data = parse_design_rpt.data_from_design_summary(rpt)
     framework.results[framework.current_toplevel]['friendliness']['data'] = data
     framework.results[framework.current_toplevel]['friendliness']['score'] = parse_design_rpt.friendliness_score(data)
+    if framework.results[framework.current_toplevel]['friendliness']['score'] is not None:
+        toolchains.show_friendliness_score(framework.results[framework.current_toplevel]['friendliness']['score'])
+
     return run_stdout, run_stderr, err
 
 def setup_rulecheck(framework, path):
