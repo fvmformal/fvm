@@ -46,6 +46,67 @@ def add_total_row(table):
     table['data'].append(total_row)
     return table
 
+def unified_format_table(table):
+    """Converts the table into a unified format."""
+
+    cleaned = []
+    for row in table['data']:
+        new_row = {}
+        for k, v in row.items():
+
+            if isinstance(v, str) and '(' in v and ')' in v:
+                match = re.search(r'\(\s*(.*?)\s*\)', v)
+                if match:
+                    new_row[k] = v.split('(')[0].strip()  
+                    new_row['Percentage'] = match.group(1) 
+                    continue
+            new_row[k] = v
+        if 'Percentage' not in new_row:
+            new_row['Percentage'] = 'N/A'
+        cleaned.append(new_row)
+
+    new_cleaned = []
+    for row in cleaned:
+        new_row = {}
+        new_row['Coverage Type'] = row['Coverage Type']
+        new_row['Active'] = int(row['Active'])
+        new_row['Inconclusive'] = int(row['Inconclusive'])
+        new_row['Reachable'] = int(row['Witness'])
+
+        if new_row['Active'] > 0:
+            new_row['Percentage'] = f"{new_row['Reachable'] / new_row['Active'] * 100:.1f}%"
+        else:
+            new_row['Percentage'] = "N/A"
+
+        new_cleaned.append(new_row)
+
+    ## TODO: Enable set_goal() function
+    goal = 90.0
+
+    for row in new_cleaned:
+        perc_str = row['Percentage']
+        if perc_str == "N/A":
+            row['Status'] = "omit"
+        else:
+            perc_value = float(perc_str.strip('%'))
+            row['Status'] = "pass" if perc_value >= goal else "fail"
+        row['Goal'] = f"{goal:.1f}%" 
+
+    final_data = []
+    for row in new_cleaned:
+        new_row = {
+            "Status": row["Status"],
+            "Coverage Type": row["Coverage Type"],
+            "Active": row["Active"],
+            "Inconclusive": row["Inconclusive"],
+            "Reachable": row["Reachable"],
+            "Percentage": row["Percentage"],
+            "Goal": row["Goal"]
+        }
+        final_data.append(new_row)
+
+    return final_data
+
 def print_table(table):
     """Prints the table in a well-formatted manner."""
     headers = table['data'][0].keys()

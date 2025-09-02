@@ -144,13 +144,19 @@ def pretty_summary(framework, logger):
                         result_str_for_table += f"[bold green]{framework.results[design][step]['score']:.2f}%[/bold green]"
                 elif step == 'reachability':
                     if framework.reachability_summary:
-                        score = next( (float(entry["Unreachable"].split("(")[-1].strip(" %)"))
-                               for entry in framework.reachability_summary["data"]
-                               if entry.get("Coverage Type") == "Total"), 0.0)
-                        if status == 'pass':
-                            result_str_for_table = f'[bold green]{score}%[/bold green]'
-                        else:
-                            result_str_for_table = f'[bold red]{score}%[/bold red]'
+                        ## TODO: change status to follow this?
+                        any_fail = any(row.get("Status") == "fail" for row in framework.reachability_summary)
+
+                        for row in framework.reachability_summary:
+                            if row.get("Coverage Type") == "Total":
+                                percentage = row.get("Percentage", "N/A")
+
+                                if any_fail:
+                                    result_str_for_table = f"[bold red]{percentage}[/bold red]"
+                                else:
+                                    result_str_for_table = f"[bold green]{percentage}[/bold green]"
+
+                                break
                     else:
                         result_str_for_table = "N/A"
                 elif step == 'fault':

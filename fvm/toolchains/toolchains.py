@@ -145,3 +145,53 @@ def show_friendliness_score(score):
         table.add_row(f"{score:.2f}%", style="bold green")
 
         friendliness_console.print(table)
+
+## TODO: Decide where to put this function
+def print_coverage_table_rich(data, title="xxx"):
+    console = Console(force_terminal=True, force_interactive=False,
+                        record=True)
+    table = Table(title=f"[cyan]{title}[/cyan]", show_header=True, header_style="bold")
+
+    if not data:
+        console.print("No data to display")
+        return
+
+    # Fixed columns
+    table.add_column("Status", justify="center")
+    table.add_column("Coverage Type", justify="left", style="cyan")
+
+    # Intermediate columns
+    excluded = {"Status", "Coverage Type", "Percentage", "Goal"}
+    intermediate_cols = [k for k in data[0].keys() if k not in excluded]
+    for col in intermediate_cols:
+        table.add_column(col, justify="right")
+
+    # Final columns
+    table.add_column("Percentage", justify="right")
+    table.add_column("Goal", justify="right")
+
+    for row in data:
+        # Color Status and Percentage
+        status = row.get("Status", "omit")
+        if status == "pass":
+            status_str = f"[bold green]{status}[/bold green]"
+            perc_str = f"[bold green]{row['Percentage']}[/bold green]"
+        elif status == "fail":
+            status_str = f"[bold red]{status}[/bold red]"
+            perc_str = f"[bold red]{row['Percentage']}[/bold red]"
+        else:
+            status_str = f"[bold white]{status}[/bold white]"
+            perc_str = f"[bold white]{row['Percentage']}[/bold white]"
+
+        # Intermediate column values in order
+        intermediate_vals = [str(row[col]) for col in intermediate_cols]
+
+        table.add_row(
+            status_str,
+            row["Coverage Type"],
+            *intermediate_vals,
+            perc_str,
+            row["Goal"]
+        )
+
+    console.print(table)

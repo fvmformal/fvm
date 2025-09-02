@@ -316,8 +316,9 @@ def run_reachability(framework, path):
             html_content = f.read()
 
         tables = parse_reachability.parse_single_table(html_content)
-        framework.reachability_summary = parse_reachability.add_total_row(tables)
-
+        framework.reachability_summary = parse_reachability.unified_format_table(parse_reachability.add_total_row(tables))
+        toolchains.print_coverage_table_rich(framework.reachability_summary,
+                                             title=f"Reachability Summary for Design: {framework.current_toplevel}")
     return run_stdout, run_stderr, err
 
 def setup_fault(framework, path):
