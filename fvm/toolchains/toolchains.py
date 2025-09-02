@@ -137,8 +137,9 @@ def show_step_summary(step_summary, error, warning, inconclusive=None, proven=No
 
 ## TODO: Decide where to put this function
 def show_friendliness_score(score):
-        friendliness_console = Console()
-
+        friendliness_console = Console(force_terminal=True, force_interactive=False,
+                                    record=True)
+        
         table = Table(show_header=True)
         table.add_column("Friendliness", justify="center")
         table.add_row(f"{score:.2f}%", style="bold green")
