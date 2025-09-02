@@ -192,6 +192,8 @@ def run_qverify_step(framework, design, step):
         framework.logger.info(f'{step=}, {tool=}, opening results with GUI')
         cmd = [wrapper, f'{report_path}/{tool}.db']
         framework.logger.trace(f'command: {" ".join(cmd)=}')
+        # TODO: Previous executions are now stored in fvm_out/previous_executions/design-timestamp
+        # so now the guinorun does not work. We have to change it
         framework.run_cmd(cmd, design, step, tool, framework.verbose)
 
     return cmd_stdout, cmd_stderr, err
