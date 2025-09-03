@@ -719,9 +719,6 @@ def run_prove_simcover(framework, path):
     else:
         framework.results[design]['prove.simcover']['status'] = 'pass'
 
-    coverage_data = parse_simcover.parse_coverage_report(f'{path}/simulation_coverage.log')
-    framework.simcover_summary = parse_simcover.sum_coverage_data(coverage_data)
-
     # Generate an html report
     path = f'{framework.outdir}/{framework.current_toplevel}/prove.simcover'
     cmd = ['vcover', 'report', '-html', '-annotate', '-details',
@@ -752,54 +749,11 @@ def run_prove_simcover(framework, path):
         framework.results[design]['prove.simcover']['status'] = 'pass'
 
     if framework.simcover_summary is not None:
-        simcover_summary = framework.simcover_summary
-        goal_percentages = {
-            "Branches": 0.0,
-            "Conditions": 0.0,
-            "Statments": 0.0,
-            "Toggles": 0.0,
-            "Total": 0.0,
-        }
+        coverage_data = parse_simcover.parse_coverage_report(f'{path}/simulation_coverage.log')
+        framework.simcover_summary = parse_simcover.unified_format_table(parse_simcover.sum_coverage_data(coverage_data))
+        toolchains.print_coverage_table_rich(framework.simcover_summary,
+                                             title=f"Simulation Coverage Summary for Design: {framework.current_toplevel}")
 
-        simcover_console = Console(force_terminal=True, force_interactive=False,
-                                record=True)
-        table = Table(title=f"[cyan]Simulation Coverage Summary for Design: {framework.current_toplevel} [/cyan]")
-
-        table.add_column("Status", style="bold")
-        table.add_column("Coverage Type", style="cyan")
-        table.add_column("Covered", justify="right")
-        table.add_column("Total", justify="right")
-        table.add_column("Percentage", justify="right")
-        table.add_column("Goal (%)", justify="right")
-
-        fail_found = False
-
-        for coverage_type, values in simcover_summary.items():
-            covered = values["covered"]
-            total = values["total"]
-            percentage_text = values["percentage"].strip("%")
-            covered_percentage = float(percentage_text)
-            goal = goal_percentages.get(coverage_type, 0.0)
-
-            if covered_percentage >= goal:
-                status = "[green]pass[/green]"
-                percentage_display = f"[bold green]{values['percentage']}[/bold green]"
-            else:
-                status = "[red]fail[/red]"
-                percentage_display = f"[bold red]{values['percentage']}[/bold red]"
-                fail_found = True
-
-            table.add_row(
-                status,
-                coverage_type,
-                str(covered),
-                str(total),
-                percentage_display,
-                f"{goal:.1f}%",
-            )
-
-        framework.results[design]['prove.simcover']['status'] = "fail" if fail_found else "pass"
-        simcover_console.print(table)
     return err
 
 def setup_prove_formalcover(framework, path):

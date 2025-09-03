@@ -190,11 +190,19 @@ def pretty_summary(framework, logger):
                         result_str_for_table = "N/A"
                 elif step == 'prove.simcover':
                     if framework.simcover_summary:
-                        score = framework.simcover_summary.get("Total", {}).get("percentage", 0)
-                        if status == 'pass':
-                            result_str_for_table = f'[bold green]{score}[/bold green]'
-                        else:
-                            result_str_for_table = f'[bold red]{score}[/bold red]'
+                        ## TODO: change status to follow this?
+                        any_fail = any(row.get("Status") == "fail" for row in framework.simcover_summary)
+
+                        for row in framework.simcover_summary:
+                            if row.get("Coverage Type") == "Total":
+                                percentage = row.get("Percentage", "N/A")
+
+                                if any_fail:
+                                    result_str_for_table = f"[bold red]{percentage}[/bold red]"
+                                else:
+                                    result_str_for_table = f"[bold green]{percentage}[/bold green]"
+
+                                break
                     else:
                         result_str_for_table = "N/A"
                 elif step != 'prove':

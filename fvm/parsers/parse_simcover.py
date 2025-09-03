@@ -101,3 +101,33 @@ def sum_coverage_data(coverage_results):
     sorted_totals = {k: sum_totals[k] for k in sorted(sum_totals)}
 
     return sorted_totals
+
+def unified_format_table(table, goal=90.0):
+    """Convierte el diccionario de cobertura en una lista normalizada."""
+    final_data = []
+
+    for cov_type, values in table.items():
+        total = int(values.get("total", 0))
+        covered = int(values.get("covered", 0))
+        perc_str = values.get("percentage", "N/A")
+
+        # normalización del porcentaje
+        if total == 0:
+            percentage = "N/A"
+            status = "omit"
+        else:
+            perc_value = float(re.sub(r'%', '', perc_str))
+            percentage = f"{perc_value:.1f}%"
+            status = "pass" if perc_value >= goal else "fail"
+
+        new_row = {
+            "Status": status,
+            "Coverage Type": cov_type,
+            "Covered": covered,
+            "Total": total,
+            "Percentage": percentage,
+            "Goal": f"{goal:.1f}%"
+        }
+        final_data.append(new_row)
+
+    return final_data
