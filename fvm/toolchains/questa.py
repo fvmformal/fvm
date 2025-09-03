@@ -213,8 +213,8 @@ def run_lint(framework, path):
     run_stdout, run_stderr, err = run_qverify_step(framework, framework.current_toplevel, 'lint')
     lint_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/lint/lint.rpt'
     if os.path.exists(lint_rpt_path):
-        framework.lint_summary = parse_lint.parse_check_summary(lint_rpt_path)
-        toolchains.show_step_summary(framework.lint_summary, "Error", "Warning", 
+        framework.results[framework.current_toplevel]['lint']['summary'] = parse_lint.parse_check_summary(lint_rpt_path)
+        toolchains.show_step_summary(framework.results[framework.current_toplevel]['lint']['summary'], "Error", "Warning",
                                      outdir=f'{framework.outdir}/{framework.current_toplevel}/lint', step="lint")
     return run_stdout, run_stderr, err
 
@@ -258,8 +258,8 @@ def run_rulecheck(framework, path):
     run_stdout, run_stderr, err = run_qverify_step(framework, framework.current_toplevel, 'rulecheck')
     rulecheck_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/rulecheck/autocheck_verify.rpt'
     if os.path.exists(rulecheck_rpt_path):
-        framework.rulecheck_summary = parse_rulecheck.group_by_severity(parse_rulecheck.parse_type_and_severity(rulecheck_rpt_path))
-        toolchains.show_step_summary(framework.rulecheck_summary, "Violation", "Caution", "Inconclusive",
+        framework.results[framework.current_toplevel]['rulecheck']['summary'] = parse_rulecheck.group_by_severity(parse_rulecheck.parse_type_and_severity(rulecheck_rpt_path))
+        toolchains.show_step_summary(framework.results[framework.current_toplevel]['rulecheck']['summary'], "Violation", "Caution", "Inconclusive",
                                      outdir=f'{framework.outdir}/{framework.current_toplevel}/rulecheck', step="rulecheck")
     return run_stdout, run_stderr, err
 
@@ -280,8 +280,8 @@ def run_xverify(framework, path):
     run_stdout, run_stderr, err = run_qverify_step(framework, framework.current_toplevel, 'xverify')
     xverify_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/xverify/xcheck_verify.rpt'
     if os.path.exists(xverify_rpt_path):
-        framework.xverify_summary = parse_xverify.group_by_result(parse_xverify.parse_type_and_result(xverify_rpt_path))
-        toolchains.show_step_summary(framework.xverify_summary, "Corruptible", "Incorruptible", "Inconclusive",
+        framework.results[framework.current_toplevel]['xverify']['summary'] = parse_xverify.group_by_result(parse_xverify.parse_type_and_result(xverify_rpt_path))
+        toolchains.show_step_summary(framework.results[framework.current_toplevel]['xverify']['summary'], "Corruptible", "Incorruptible", "Inconclusive",
                                      outdir=f'{framework.outdir}/{framework.current_toplevel}/xverify', step="xverify")
     return run_stdout, run_stderr, err
 
@@ -318,8 +318,8 @@ def run_reachability(framework, path):
             html_content = f.read()
 
         tables = parse_reachability.parse_single_table(html_content)
-        framework.reachability_summary = parse_reachability.unified_format_table(parse_reachability.add_total_row(tables))
-        toolchains.print_coverage_table_rich(framework.reachability_summary,
+        framework.results[framework.current_toplevel]['reachability']['summary'] = parse_reachability.unified_format_table(parse_reachability.add_total_row(tables))
+        toolchains.show_coverage_summary(framework.results[framework.current_toplevel]['reachability']['summary'],
                                              title=f"Reachability Summary for Design: {framework.current_toplevel}")
     return run_stdout, run_stderr, err
 
@@ -365,7 +365,7 @@ def run_fault(framework, path):
     run_stdout, run_stderr, err = run_qverify_step(framework, framework.current_toplevel, 'fault')
     fault_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/fault/slec_verify.rpt'
     if os.path.exists(fault_rpt_path):
-        framework.fault_summary = parse_fault.parse_fault_summary(fault_rpt_path)
+        framework.results[framework.current_toplevel]['fault']['summary'] = parse_fault.parse_fault_summary(fault_rpt_path)
 
     return run_stdout, run_stderr, err
 
@@ -497,8 +497,8 @@ def run_resets(framework, path):
     run_stdout, run_stderr, err = run_qverify_step(framework, framework.current_toplevel, 'resets')
     resets_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/resets/rdc.rpt'
     if os.path.exists(resets_rpt_path):
-        framework.resets_summary = parse_resets.parse_resets_results(resets_rpt_path)
-        toolchains.show_step_summary(framework.resets_summary, "Violation", "Caution",
+        framework.results[framework.current_toplevel]['resets']['summary'] = parse_resets.parse_resets_results(resets_rpt_path)
+        toolchains.show_step_summary(framework.results[framework.current_toplevel]['resets']['summary'], "Violation", "Caution",
                                      outdir=f'{framework.outdir}/{framework.current_toplevel}/resets', step="resets")
     return run_stdout, run_stderr, err
 
@@ -531,8 +531,8 @@ def run_clocks(framework, path):
     run_stdout, run_stderr, err = run_qverify_step(framework, framework.current_toplevel, 'clocks')
     clocks_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/clocks/cdc.rpt'
     if os.path.exists(clocks_rpt_path):
-        framework.clocks_summary = parse_clocks.parse_clocks_results(clocks_rpt_path)
-        toolchains.show_step_summary(framework.clocks_summary, "Violations", "Cautions", proven="Proven",
+        framework.results[framework.current_toplevel]['clocks']['summary'] = parse_clocks.parse_clocks_results(clocks_rpt_path)
+        toolchains.show_step_summary(framework.results[framework.current_toplevel]['clocks']['summary'], "Violations", "Cautions", proven="Proven",
                                      outdir=f'{framework.outdir}/{framework.current_toplevel}/clocks', step="clocks")
     return run_stdout, run_stderr, err
 
@@ -611,7 +611,7 @@ def run_prove(framework, path):
     run_stdout, run_stderr, err = run_qverify_step(framework, framework.current_toplevel, 'prove')
     prove_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/prove/formal_verify.rpt'
     if os.path.exists(prove_rpt_path):
-        framework.property_summary = generate_test_cases.property_summary(prove_rpt_path)
+        framework.results[framework.current_toplevel]['prove']['summary'] = generate_test_cases.property_summary(prove_rpt_path)
 
     return run_stdout, run_stderr, err
 
@@ -748,10 +748,10 @@ def run_prove_simcover(framework, path):
     else:
         framework.results[design]['prove.simcover']['status'] = 'pass'
 
-    if framework.simcover_summary is not None:
+    if framework.results[design]['prove.simcover']['summary'] is not None:
         coverage_data = parse_simcover.parse_coverage_report(f'{path}/simulation_coverage.log')
-        framework.simcover_summary = parse_simcover.unified_format_table(parse_simcover.sum_coverage_data(coverage_data))
-        toolchains.print_coverage_table_rich(framework.simcover_summary,
+        framework.results[design]['prove.simcover']['summary'] = parse_simcover.unified_format_table(parse_simcover.sum_coverage_data(coverage_data))
+        toolchains.show_coverage_summary(framework.results[design]['prove.simcover']['summary'],
                                              title=f"Simulation Coverage Summary for Design: {framework.current_toplevel}")
 
     return err
@@ -837,10 +837,10 @@ def run_prove_formalcover(framework, path):
             filtered_tables = parse_formal_signoff.filter_coverage_tables(tables)
 
             if filtered_tables:
-                framework.formalcover_summary = parse_formal_signoff.unified_format_table(
+                framework.results[framework.current_toplevel]['prove.formalcover']['summary'] = parse_formal_signoff.unified_format_table(
                                                 parse_formal_signoff.add_total_field(filtered_tables[0]))
 
-                toolchains.print_coverage_table_rich(framework.formalcover_summary,
+                toolchains.show_coverage_summary(framework.results[framework.current_toplevel]['prove.formalcover']['summary'],
                                                     title=f"Formal Coverage Summary for Design: {framework.current_toplevel}")
     return err
 

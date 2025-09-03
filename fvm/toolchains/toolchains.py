@@ -147,7 +147,7 @@ def show_friendliness_score(score):
         friendliness_console.print(table)
 
 ## TODO: Decide where to put this function
-def print_coverage_table_rich(data, title="xxx"):
+def show_coverage_summary(data, title="xxx"):
     console = Console(force_terminal=True, force_interactive=False,
                         record=True)
     table = Table(title=f"[cyan]{title}[/cyan]", show_header=True, header_style="bold")

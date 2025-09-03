@@ -98,7 +98,8 @@ def pretty_summary(framework, logger):
 
                 result_str_for_table = ""
                 score_str =  '                '
-                step_summary = getattr(framework, f"{step}_summary", {})
+                step_summary = framework.results[design][step].get('summary', None)
+                # Error/Warning summaries
                 if step_summary and ("Error" in step_summary or "Violation" in step_summary or 
                                         "Violations" in step_summary or "Corruptible" in step_summary):
                     step_errors = step_summary.get('Error', {}).get('count', 0)
@@ -140,14 +141,16 @@ def pretty_summary(framework, logger):
                         step_inconclusives == 0 and step_violations == 0 and step_cautions == 0 and step_proven == 0 and
                         step_corruptibles == 0 and step_incorruptibles == 0):
                         result_str_for_table += "[bold green]ok[/bold green]"
+                # Friendliness summary
                 elif "score" in framework.results[design][step]:
                         result_str_for_table += f"[bold green]{framework.results[design][step]['score']:.2f}%[/bold green]"
-                elif step == 'reachability':
-                    if framework.reachability_summary:
+                # Coverage summaries
+                elif isinstance(step_summary, list): 
+                    if step_summary and "Coverage Type" in step_summary[0]:
                         ## TODO: change status to follow this?
-                        any_fail = any(row.get("Status") == "fail" for row in framework.reachability_summary)
+                        any_fail = any(row.get("Status") == "fail" for row in step_summary)
 
-                        for row in framework.reachability_summary:
+                        for row in step_summary:
                             if row.get("Coverage Type") == "Total":
                                 percentage = row.get("Percentage", "N/A")
 
@@ -159,9 +162,10 @@ def pretty_summary(framework, logger):
                                 break
                     else:
                         result_str_for_table = "N/A"
+                ## TODO: Maybe delete fault from this branch?
                 elif step == 'fault':
-                    if framework.fault_summary:
-                        fault_summary = framework.fault_summary
+                    if step_summary:
+                        fault_summary = step_summary
                         fault_total_targets = fault_summary["Targets"]["Total"]
                         fault_total_proven = fault_summary["Targets"]["Proven"]
                         if fault_total_targets == fault_total_proven:
@@ -169,40 +173,6 @@ def pretty_summary(framework, logger):
                         else:
                             result_str_for_table += f"[bold red]{fault_total_proven}/{fault_total_targets}[/bold red]"
                             status = 'fail'
-                    else:
-                        result_str_for_table = "N/A"
-                elif step == 'prove.formalcover':
-                    if framework.formalcover_summary:
-                        ## TODO: change status to follow this?
-                        any_fail = any(row.get("Status") == "fail" for row in framework.formalcover_summary)
-
-                        for row in framework.formalcover_summary:
-                            if row.get("Coverage Type") == "Total":
-                                percentage = row.get("Percentage", "N/A")
-
-                                if any_fail:
-                                    result_str_for_table = f"[bold red]{percentage}[/bold red]"
-                                else:
-                                    result_str_for_table = f"[bold green]{percentage}[/bold green]"
-
-                                break
-                    else:
-                        result_str_for_table = "N/A"
-                elif step == 'prove.simcover':
-                    if framework.simcover_summary:
-                        ## TODO: change status to follow this?
-                        any_fail = any(row.get("Status") == "fail" for row in framework.simcover_summary)
-
-                        for row in framework.simcover_summary:
-                            if row.get("Coverage Type") == "Total":
-                                percentage = row.get("Percentage", "N/A")
-
-                                if any_fail:
-                                    result_str_for_table = f"[bold red]{percentage}[/bold red]"
-                                else:
-                                    result_str_for_table = f"[bold green]{percentage}[/bold green]"
-
-                                break
                     else:
                         result_str_for_table = "N/A"
                 elif step != 'prove':
@@ -234,9 +204,9 @@ def pretty_summary(framework, logger):
                               time_str_for_table)
                 #print(f'{status} {design}.{step}, result={framework.results[design][step]}')
 
-                if step == "prove" and framework.property_summary:
+                if step == "prove" and step_summary:
                     # TODO: Change framework.property_summary to framework.results[design][step]["property_summary"]
-                    prop_summary = framework.property_summary
+                    prop_summary = step_summary
                     assumes = prop_summary.get("Assumes", {}).get("Count", 0)
                     asserts = prop_summary.get("Asserts", {}).get("Count", 0)
                     covers = prop_summary.get("Covers", {}).get("Count", 0)

@@ -206,16 +206,6 @@ class fvmframework:
         self.post_hooks = dict()
         self.designs = list()
         self.design_configs = dict()
-        self.reachability_summary = dict()
-        self.property_summary = dict()
-        self.formalcover_summary = dict()
-        self.simcover_summary = dict()
-        self.lint_summary = dict()
-        self.rulecheck_summary = dict()
-        self.xverify_summary = dict()
-        self.resets_summary = dict()
-        self.clocks_summary = dict()
-        self.fault_summary = dict()
 
         # Get the toolchain (questa, sby, etc), assign sensible default options
         # defined in the selected toolchain, and define the methdology steps
@@ -425,6 +415,7 @@ class fvmframework:
                 self.results[design][step]['message'] = ''
                 self.results[design][step]['stdout'] = ''
                 self.results[design][step]['stderr'] = ''
+                self.results[design][step]['summary'] = {}
 
     def add_config(self, design, name, generics):
         """Adds a design configuration. The design configuration has a name and
