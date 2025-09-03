@@ -62,6 +62,49 @@ def add_total_field(table):
     table['data'].append(total_row)
     return table
 
+def unified_format_table(table, goal=90.0):
+    """Convert coverage summary table into unified format."""
+    final_data = []
+
+    for row in table["data"]:
+        new_row = {}
+
+        new_row["Coverage Type"] = row.get("Coverage Type", "Total")
+
+        total = int(row.get("Total", 0))
+        uncovered = int(row.get("Uncovered", 0))
+        excluded = int(row.get("Excluded", 0))
+
+        covered = total - uncovered - excluded
+        if covered < 0:
+            covered = 0  
+
+        if total == 0:
+            percentage = "N/A"
+        else:
+            perc_value = (covered / (total - excluded)) * 100 if (total - excluded) > 0 else 0.0
+            percentage = f"{perc_value:.1f}%"
+
+        if percentage == "N/A":
+            status = "omit"
+        else:
+            perc_num = float(percentage.strip("%"))
+            status = "pass" if perc_num >= goal else "fail"
+
+        new_row.update({
+            "Status": status,
+            "Total": total,
+            "Uncovered": uncovered,
+            "Excluded": excluded,
+            "Covered": covered,
+            "Percentage": percentage,
+            "Goal": f"{goal:.1f}%"
+        })
+
+        final_data.append(new_row)
+
+    return final_data
+
 
 def print_table(table):
     headers = list(table['data'][0].keys())

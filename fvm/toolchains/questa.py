@@ -883,67 +883,11 @@ def run_prove_formalcover(framework, path):
             filtered_tables = parse_formal_signoff.filter_coverage_tables(tables)
 
             if filtered_tables:
-                framework.formalcover_summary = parse_formal_signoff.add_total_field(filtered_tables[0])
-                formalcover_summary = framework.formalcover_summary
-                goal_percentages = {
-                    "Branch": 0.0,
-                    "Condition": 0.0,
-                    "Expression": 0.0,
-                    "FSM State": 0.0,
-                    "FSM Transition": 0.0,
-                    "Statement": 0.0,
-                    "Toggle": 0.0,
-                    "Covergroup Bin": 0.0,
-                    "Total": 0.0,
-                }
+                framework.formalcover_summary = parse_formal_signoff.unified_format_table(
+                                                parse_formal_signoff.add_total_field(filtered_tables[0]))
 
-                formalcover_console = Console(force_terminal=True, force_interactive=False,
-                                        record=True)
-                table = Table(title=f"[cyan]{formalcover_summary['title']}[/cyan]")
-
-                table.add_column("Status", style="bold")
-                table.add_column("Coverage Type", style="cyan")
-                table.add_column("Total", justify="right")
-                table.add_column("Uncovered", justify="right")
-                table.add_column("Excluded", justify="right")
-                table.add_column("Covered (P)", justify="right")
-                table.add_column("Goal (%)", justify="right")
-
-                fail_found = False
-
-                for entry in formalcover_summary["data"]:
-                    coverage_type = entry["Coverage Type"]
-                    covered_text = entry["Covered (P)"].split("(")[-1].strip(" %)")
-
-                    if covered_text == "N/A":
-                        status = "[white]omit[/white]"
-                        covered_display = f"[bold white]{entry['Covered (P)']}[/bold white]"
-                        covered_percentage = 0.0
-                        goal = 0.0
-                    else:
-                        covered_percentage = float(covered_text)
-                        goal = goal_percentages.get(coverage_type, 0.0)
-
-                        if covered_percentage >= goal:
-                            status = "[green]pass[/green]"
-                            covered_display = f"[bold green]{entry['Covered (P)']}[/bold green]"
-                        else:
-                            status = "[red]fail[/red]"
-                            covered_display = f"[bold red]{entry['Covered (P)']}[/bold red]"
-                            fail_found = True
-
-                    table.add_row(
-                        status,
-                        coverage_type,
-                        str(entry.get("Total","0")),
-                        str(entry.get("Uncovered","0")),
-                        str(entry.get("Excluded", "0")),
-                        covered_display,
-                        f"{goal:.1f}%",
-                    )
-
-                framework.results[framework.current_toplevel]['prove.formalcover']['status'] = "fail" if fail_found else "pass"
-                formalcover_console.print(table)
+                toolchains.print_coverage_table_rich(framework.formalcover_summary,
+                                                    title=f"Formal Coverage Summary for Design: {framework.current_toplevel}")
     return err
 
 def set_timeout(framework, step, timeout):
