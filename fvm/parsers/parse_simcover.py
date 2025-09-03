@@ -111,7 +111,6 @@ def unified_format_table(table, goal=90.0):
         covered = int(values.get("covered", 0))
         perc_str = values.get("percentage", "N/A")
 
-        # normalización del porcentaje
         if total == 0:
             percentage = "N/A"
             status = "omit"
