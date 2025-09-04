@@ -182,6 +182,10 @@ def run_qverify_step(framework, design, step):
             open_gui = True
     if framework.guinorun and framework.list == False :
         open_gui = True
+        # TODO : This is provisional because the function returns
+        # cmd_stdout and cmd_stderr. It may be ok because in 
+        # guinorun mode we don't care about those values
+        cmd_stdout, cmd_stderr = "", ""
     # TODO : maybe check for errors also in the GUI?
     # TODO : maybe run the GUI processes without blocking
     # the rest of the steps? For that we would probably
@@ -190,11 +194,13 @@ def run_qverify_step(framework, design, step):
     # names (.db) in a dictionary -> just open {tool}.db
     if open_gui:
         framework.logger.info(f'{step=}, {tool=}, opening results with GUI')
-        cmd = [wrapper, f'{report_path}/{tool}.db']
-        framework.logger.trace(f'command: {" ".join(cmd)=}')
-        # TODO: Previous executions are now stored in fvm_out/previous_executions/design-timestamp
-        # so now the guinorun does not work. We have to change it
-        framework.run_cmd(cmd, design, step, tool, framework.verbose)
+        db_file = f'{report_path}/{tool}.db'
+        cmd = [wrapper, db_file]
+        if not os.path.exists(db_file):
+            framework.logger.error(f"The database file does not exist: {db_file}")
+        else:
+            framework.logger.trace(f'command: {" ".join(cmd)=}')
+            framework.run_cmd(cmd, design, step, tool, framework.verbose)
 
     return cmd_stdout, cmd_stderr, err
 

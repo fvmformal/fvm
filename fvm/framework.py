@@ -717,19 +717,22 @@ class fvmframework:
         # Archive previous executions of the design
         # If the design directory already exists, move it to a subdirectory
         # called "previous_executions" and append a timestamp to the directory
-        # name, so we don't lose the previous results
-        if config is not None:
-            previous_design = f"{design}.{config['name']}"
-        else:
-            previous_design = design
-        current_dir = os.path.join(self.outdir, previous_design)
-        archive_dir = os.path.join(self.outdir, "previous_executions")
-        if os.path.exists(current_dir):
-            if not os.path.exists(archive_dir):
-                os.makedirs(archive_dir)
-            timestamp = datetime.now().isoformat()
-            target_dir = os.path.join(archive_dir, f'{previous_design}_{timestamp}')
-            shutil.move(current_dir, target_dir)
+        # name, so we don't lose the previous results.
+        # If GUINORUN is set, we are just showing previous results, so
+        # don't archive anything
+        if not self.guinorun:
+            if config is not None:
+                previous_design = f"{design}.{config['name']}"
+            else:
+                previous_design = design
+            current_dir = os.path.join(self.outdir, previous_design)
+            archive_dir = os.path.join(self.outdir, "previous_executions")
+            if os.path.exists(current_dir):
+                if not os.path.exists(archive_dir):
+                    os.makedirs(archive_dir)
+                timestamp = datetime.now().isoformat()
+                target_dir = os.path.join(archive_dir, f'{previous_design}_{timestamp}')
+                shutil.move(current_dir, target_dir)
 
         # Create all necessary scripts
         if not skip_setup:
@@ -868,13 +871,24 @@ class fvmframework:
         start_time = time.perf_counter()
         process = subprocess.Popen (
                   cmd,
-                  cwd     = cwd,
-                  stdout  = subprocess.PIPE,
-                  stderr  = subprocess.PIPE,
-                  text    = True,
-                  bufsize = 1,
-                  env     = self.env
-                  )
+                  cwd        = cwd,
+                  stdout     = subprocess.PIPE,
+                  stderr     = subprocess.PIPE,
+                  text       = True,
+                  bufsize    = 1,
+                  env        = self.env,
+                  preexec_fn = os.setsid
+                )
+
+        import signal
+        ctrl_c_pressed = [False]
+
+        def handle_sigint(signum, frame):
+            self.logger.error("Ctrl+C detected")
+            ctrl_c_pressed[0] = True
+            os.killpg(os.getpgid(process.pid), signal.SIGINT)
+
+        signal.signal(signal.SIGINT, handle_sigint)
 
         # Initialize variables where to store command stdout/stderr
         stdout_lines = list()
@@ -939,7 +953,7 @@ class fvmframework:
         self.results[design][step]['stderr'] += captured_stderr
 
         # Raise an exception if the return code is non-zero
-        if retval != 0:
+        if retval != 0 and ctrl_c_pressed[0] is False:
             raise subprocess.CalledProcessError(retval, cmd, output=captured_stdout, stderr=captured_stderr)
 
         self.set_logformat(LOGFORMAT)
