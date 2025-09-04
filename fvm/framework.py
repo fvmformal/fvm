@@ -871,24 +871,13 @@ class fvmframework:
         start_time = time.perf_counter()
         process = subprocess.Popen (
                   cmd,
-                  cwd        = cwd,
-                  stdout     = subprocess.PIPE,
-                  stderr     = subprocess.PIPE,
-                  text       = True,
-                  bufsize    = 1,
-                  env        = self.env,
-                  preexec_fn = os.setsid
-                )
-
-        import signal
-        ctrl_c_pressed = [False]
-
-        def handle_sigint(signum, frame):
-            self.logger.error("Ctrl+C detected")
-            ctrl_c_pressed[0] = True
-            os.killpg(os.getpgid(process.pid), signal.SIGINT)
-
-        signal.signal(signal.SIGINT, handle_sigint)
+                  cwd     = cwd,
+                  stdout  = subprocess.PIPE,
+                  stderr  = subprocess.PIPE,
+                  text    = True,
+                  bufsize = 1,
+                  env     = self.env
+                  )
 
         # Initialize variables where to store command stdout/stderr
         stdout_lines = list()
@@ -953,7 +942,7 @@ class fvmframework:
         self.results[design][step]['stderr'] += captured_stderr
 
         # Raise an exception if the return code is non-zero
-        if retval != 0 and ctrl_c_pressed[0] is False:
+        if retval != 0:
             raise subprocess.CalledProcessError(retval, cmd, output=captured_stdout, stderr=captured_stderr)
 
         self.set_logformat(LOGFORMAT)
