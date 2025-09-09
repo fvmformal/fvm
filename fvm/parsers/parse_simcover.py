@@ -103,7 +103,7 @@ def sum_coverage_data(coverage_results):
     return sorted_totals
 
 def unified_format_table(table, goal=90.0):
-    """Convierte el diccionario de cobertura en una lista normalizada."""
+    """Convert coverage summary table into unified format."""
     final_data = []
 
     for cov_type, values in table.items():
@@ -122,8 +122,9 @@ def unified_format_table(table, goal=90.0):
         new_row = {
             "Status": status,
             "Coverage Type": cov_type,
-            "Covered": covered,
             "Total": total,
+            "Misses": total - covered,
+            "Hits": covered,
             "Percentage": percentage,
             "Goal": f"{goal:.1f}%"
         }
