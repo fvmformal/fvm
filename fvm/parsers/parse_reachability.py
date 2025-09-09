@@ -69,12 +69,13 @@ def unified_format_table(table):
     for row in cleaned:
         new_row = {}
         new_row['Coverage Type'] = row['Coverage Type']
-        new_row['Active'] = int(row['Active'])
+        new_row['Total'] = int(row['Active'])
+        new_row['Unreachable'] = int(row['Unreachable'])
         new_row['Inconclusive'] = int(row['Inconclusive'])
         new_row['Reachable'] = int(row['Witness'])
 
-        if new_row['Active'] > 0:
-            new_row['Percentage'] = f"{new_row['Reachable'] / new_row['Active'] * 100:.1f}%"
+        if new_row['Total'] > 0:
+            new_row['Percentage'] = f"{new_row['Reachable'] / new_row['Total'] * 100:.1f}%"
         else:
             new_row['Percentage'] = "N/A"
 
@@ -97,7 +98,8 @@ def unified_format_table(table):
         new_row = {
             "Status": row["Status"],
             "Coverage Type": row["Coverage Type"],
-            "Active": row["Active"],
+            "Total": row["Total"],
+            "Unreachable": row["Unreachable"],
             "Inconclusive": row["Inconclusive"],
             "Reachable": row["Reachable"],
             "Percentage": row["Percentage"],
