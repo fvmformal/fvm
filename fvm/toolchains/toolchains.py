@@ -195,3 +195,42 @@ def show_coverage_summary(data, title="xxx"):
         )
 
     console.print(table)
+
+## TODO: Decide where to put this function
+def show_prove_summary(data, title="Property Summary"):
+    console = Console(force_terminal=True, force_interactive=False,
+                        record=True)
+    table = Table(title=f"[cyan]{title}[/cyan]", show_header=True, header_style="bold")
+
+    # TODO: Check if there are more categories
+    category_colors = {
+        "Proven": "bold green",
+        "Vacuous": "bold yellow",
+        "Fired": "bold red",
+        "Fired with Warning": "bold red",
+        "Covered": "bold green",
+        "Covered with Warning": "bold yellow",
+        "Uncoverable": "bold red",
+        "Inconclusive": "bold white"
+    }
+
+    has_items = any(info['items'] for cat, info in data.items() if cat not in ["Proven", "Covered"])
+
+    table.add_column("Result", max_width=12)
+    table.add_column("Count", justify="right")
+    if has_items:
+        table.add_column("Names", max_width=50)
+
+    for category, info in data.items():
+        count = str(info['count'])
+        items = "-"
+        if category not in ["Proven", "Covered"] and has_items:
+            items = ", ".join(info['items']) if info['items'] else "-"
+        
+        style = category_colors.get(category, "")
+        if has_items:
+            table.add_row(category, count, items, style=style)
+        else:
+            table.add_row(category, count, style=style)
+
+    console.print(table)

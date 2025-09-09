@@ -22,6 +22,7 @@ from fvm.parsers import parse_rulecheck
 from fvm.parsers import parse_xverify
 from fvm.parsers import parse_resets
 from fvm.parsers import parse_clocks
+from fvm.parsers import parse_prove
 from fvm.parsers import parse_fault
 from fvm.parsers import parse_design_rpt
 from fvm import generate_test_cases
@@ -618,7 +619,8 @@ def run_prove(framework, path):
     prove_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/prove/formal_verify.rpt'
     if os.path.exists(prove_rpt_path):
         framework.results[framework.current_toplevel]['prove']['summary'] = generate_test_cases.property_summary(prove_rpt_path)
-
+        properties = parse_prove.normalize_sections(parse_prove.parse_targets_report(prove_rpt_path))
+        toolchains.show_prove_summary(properties)
     return run_stdout, run_stderr, err
 
 def setup_prove_simcover(framework, path):
