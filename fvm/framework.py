@@ -8,6 +8,7 @@ import time
 import subprocess
 import pathlib
 import fnmatch
+import signal
 from datetime import datetime
 from io import StringIO
 from collections import OrderedDict
@@ -33,6 +34,7 @@ from fvm.drom2psl.generator import generator
 BAD_VALUE    = "FVM exit condition: Bad value"
 ERROR_IN_LOG = "FVM exit condition: Error in tool log"
 CHECK_FAILED = "FVM exit condition: check_for_errors failed"
+KEYBOARD_INTERRUPT = "FVM exit condition: Keyboard interrupt"
 
 # Log formats
 LOGFORMAT = '<cyan>FVM</cyan> | <green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>'
@@ -206,6 +208,7 @@ class fvmframework:
         self.post_hooks = dict()
         self.designs = list()
         self.design_configs = dict()
+        self.ctrl_c_pressed = False
 
         # Get the toolchain (questa, sby, etc), assign sensible default options
         # defined in the selected toolchain, and define the methdology steps
@@ -871,13 +874,21 @@ class fvmframework:
         start_time = time.perf_counter()
         process = subprocess.Popen (
                   cmd,
-                  cwd     = cwd,
-                  stdout  = subprocess.PIPE,
-                  stderr  = subprocess.PIPE,
-                  text    = True,
-                  bufsize = 1,
-                  env     = self.env
-                  )
+                  cwd        = cwd,
+                  stdout     = subprocess.PIPE,
+                  stderr     = subprocess.PIPE,
+                  text       = True,
+                  bufsize    = 1,
+                  env        = self.env,
+                  preexec_fn = os.setsid
+                )
+        
+        def handle_sigint(signum, frame):
+            self.logger.error("Ctrl+C detected")
+            self.ctrl_c_pressed = True
+            os.killpg(os.getpgid(process.pid), signal.SIGINT)
+
+        signal.signal(signal.SIGINT, handle_sigint)
 
         # Initialize variables where to store command stdout/stderr
         stdout_lines = list()
@@ -941,8 +952,9 @@ class fvmframework:
         self.results[design][step]['stdout'] += captured_stdout
         self.results[design][step]['stderr'] += captured_stderr
 
-        # Raise an exception if the return code is non-zero
-        if retval != 0:
+        # Raise an exception if the return code is non-zero and Ctrl+C was
+        # not pressed
+        if retval != 0 and self.ctrl_c_pressed is False:
             raise subprocess.CalledProcessError(retval, cmd, output=captured_stdout, stderr=captured_stderr)
 
         self.set_logformat(LOGFORMAT)
@@ -1115,6 +1127,8 @@ class fvmframework:
             self.logger.error(f'No tool available for {step=} in {self.toolchain=}')
             self.exit_if_required(BAD_VALUE)
 
+        if self.ctrl_c_pressed is True:
+            self.exit_if_required(KEYBOARD_INTERRUPT)
         # TODO : return output values
         # pass / fail / skipped / disabled, and also warnings, errors,
         # successes, and for prove the number of asserts, proven, fired,
@@ -1151,6 +1165,11 @@ class fvmframework:
                     #    f.write(run_stderr)
                 else:
                     self.results[design][f'{step}.{post_step}']['status'] = 'skip'
+
+                # Check for keyboard interrupt after each post step
+                if self.ctrl_c_pressed is True:
+                    self.exit_if_required(KEYBOARD_INTERRUPT)
+
         # TODO : correctly process errors
 
         return err
