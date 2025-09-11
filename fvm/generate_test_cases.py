@@ -469,29 +469,3 @@ def property_summary(file_path):
         i += 1
 
     return log_data
-
-
-def generate_property_summary(property_summary):
-    """
-    Generates a summary from the property summary.
-
-    :param property_summary: A dictionary containing the property summary.
-    :return: A string containing the formatted summary.
-    """
-    summary = []
-
-    for key, value in property_summary.items():
-        count = value['Count']
-        summary.append(f"{key}: {count}")
-
-        if 'Children' in value:
-            for child_key, child_value in value['Children'].items():
-                child_count = child_value['Count']
-                summary.append(f" \_ {child_key}: {child_count}/{count}")
-
-                # Iterate over all keys in child_value that are not 'Count'
-                for sub_key, sub_value in child_value.items():
-                    if sub_key != 'Count':
-                        summary.append(f"    \_ {sub_key}: {sub_value}/{child_count}")
-
-    return "\n".join(summary)
