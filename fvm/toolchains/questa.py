@@ -6,6 +6,7 @@ from datetime import datetime
 import shutil
 import glob
 import pathlib
+import time
 
 from rich.console import Console
 from rich.table import Table
@@ -48,6 +49,7 @@ tools = {
         "resets"         : ["rdc",        "qverify"],
         "clocks"         : ["cdc",        "qverify"],
         "prove"          : ["propcheck",  "qverify"],
+        "prove.formalcover"          : ["propcheck",  "qverify"],
 #        "simulate"       : ["vsim", "vsim"],
 #        "createemptylib" : ["vlib", "vlib"],
 #        "compilevhdl"    : ["vcom", "vcom"],
@@ -750,20 +752,13 @@ def run_prove_simcover(framework, path):
 
 def setup_prove_formalcover(framework, path):
     print("**** setup prove_formalcover ****")
-    pass
-
-# TODO: this function is really big, we should review it and see if we can
-# simplify or divide it
-# TODO: should we return 'err' here? Or some other thing?
-def run_prove_formalcover(framework, path):
-    print("**** run prove_formalcover ****")
-    err = False
-    report_path = path + '/prove.formalcover'
+    filename = "prove.formalcover.do"
     property_summary = generate_test_cases.parse_property_summary(f'{path}/prove/prove.log')
     inconclusives = property_summary.get('Assertions', {}).get('Inconclusive', 0)
-    with open(f"{path}/prove_formalcover.do", "w") as f:
+    with open(f"{path}/{filename}", "a") as f:
         print('onerror exit', file=f)
         print(f"formal load db {path}/prove/propcheck.db",file=f)
+        # TODO: Delete is_disabled
         if not framework.is_disabled('observability'):
             print('formal generate coverage -detail_all -cov_mode o', file=f)
         if not framework.is_disabled('reachability'):
@@ -777,42 +772,12 @@ def run_prove_formalcover(framework, path):
             print('formal generate coverage -detail_all -cov_mode s', file=f)
         print('', file=f)
         print('exit', file=f)
-    tool = tools['prove'][0]
-    wrapper = tools['prove'][1]
-    framework.logger.info(f'prove.simcover, running {tool=} with {wrapper=}')
-    framework.logger.debug(f'Running {tool=} with {wrapper=}')
-    if framework.toolchain == "questa":
-        cmd = [wrapper, '-c', '-od', report_path, '-do', f'{path}/prove_formalcover.do']
-        if framework.list == True :
-            framework.logger.info(f'Available step: prove.formalcover. Tool: {tool}, command = {" ".join(cmd)}')
-        else :
-            framework.logger.trace(f'command: {" ".join(cmd)=}')
-            cmd_stdout, cmd_stderr = framework.run_cmd(cmd,
-                                                       framework.current_toplevel,
-                                                       'prove.formalcover',
-                                                       tool, framework.verbose)
-            stdout_err = framework.logcheck(cmd_stdout,
-                                            framework.current_toplevel,
-                                            'prove.formalcover', tool)
-            stderr_err = framework.logcheck(cmd_stderr,
-                                            framework.current_toplevel,
-                                            'prove.formalcover', tool)
-            logfile = f'{report_path}/prove_formalcover.log'
-            framework.logger.info(f'prove.formalcover, {tool=}, finished, output written to {logfile}')
-            with open(logfile, 'w') as f :
-                f.write(cmd_stdout)
-                f.write(cmd_stderr)
-            if stdout_err or stderr_err:
-                if framework.is_failure_allowed(framework.current_toplevel, 'prove.formalcover') == False:
-                    err = True
-            if stdout_err or stderr_err:
-                if framework.is_failure_allowed(framework.current_toplevel, 'prove.formalcover') == False:
-                    framework.results[framework.current_toplevel]['prove.formalcover']['status'] = 'fail'
-                else:
-                    framework.results[framework.current_toplevel]['prove.formalcover']['status'] = 'broken'
-            else:
-                framework.results[framework.current_toplevel]['prove.formalcover']['status'] = 'pass'
 
+# TODO: Decide what to return. Maybe stdout, stderr, and status?
+def run_prove_formalcover(framework, path):
+    print("**** run prove_formalcover ****")
+    run_stdout, run_stderr, err = run_qverify_step(framework, framework.current_toplevel, 'prove.formalcover')
+    report_path = path + '/prove.formalcover'
     if not framework.is_disabled('signoff'):
         formal_signoff_rpt_path = f'{report_path}/formal_signoff.rpt'
         formal_signoff_html_path = f'{report_path}/formal_signoff.html'

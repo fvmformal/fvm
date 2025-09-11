@@ -1129,6 +1129,10 @@ class fvmframework:
 
         if self.ctrl_c_pressed is True:
             self.exit_if_required(KEYBOARD_INTERRUPT)
+
+        if err == False and step in self.steps.post_steps:
+            for post_step in self.steps.post_steps[step]:
+                self.steps.post_steps[step][post_step]["setup"](self, path)
         # TODO : return output values
         # pass / fail / skipped / disabled, and also warnings, errors,
         # successes, and for prove the number of asserts, proven, fired,
