@@ -49,7 +49,7 @@ tools = {
         "resets"         : ["rdc",        "qverify"],
         "clocks"         : ["cdc",        "qverify"],
         "prove"          : ["propcheck",  "qverify"],
-        "prove.formalcover"          : ["propcheck",  "qverify"],
+        "prove.formalcover"          : ["propcheck",  "qverify"], # TODO : Decide if this is OK
 #        "simulate"       : ["vsim", "vsim"],
 #        "createemptylib" : ["vlib", "vlib"],
 #        "compilevhdl"    : ["vcom", "vcom"],
@@ -191,6 +191,18 @@ def run_qverify_step(framework, design, step):
 
     return cmd_stdout, cmd_stderr, err
 
+def get_linecheck_common():
+    return {
+        "ignore": [
+            "Errors: 0",
+            "Error (0)",
+            "Warning (0)",
+        ],
+        "error": ["error", "fatal", "errors"],
+        "warning": ["warning", "warnings"],
+        "success": [],
+    }
+
 def setup_lint(framework, path):
     """Generate script to run Lint"""
     print("**** setup lint ****")
@@ -210,6 +222,14 @@ def run_lint(framework, path):
         toolchains.show_step_summary(framework.results[framework.current_toplevel]['lint']['summary'], "Error", "Warning",
                                      outdir=f'{framework.outdir}/{framework.current_toplevel}/lint', step="lint")
     return run_stdout, run_stderr, err
+
+def get_linecheck_lint():
+    patterns = get_linecheck_common()
+
+    # Make a copy to avoid modifying the original dict
+    patterns = {k: v.copy() for k, v in patterns.items()}
+
+    return patterns
 
 def setup_friendliness(framework, path):
     print("**** setup friendliness ****")
@@ -232,6 +252,14 @@ def run_friendliness(framework, path):
         toolchains.show_friendliness_score(framework.results[framework.current_toplevel]['friendliness']['score'])
 
     return run_stdout, run_stderr, err
+
+def get_linecheck_friendliness():
+    patterns = get_linecheck_common()
+
+    # Make a copy to avoid modifying the original dict
+    patterns = {k: v.copy() for k, v in patterns.items()}
+
+    return patterns
 
 def setup_rulecheck(framework, path):
     print("**** setup rulecheck ****")
@@ -256,6 +284,17 @@ def run_rulecheck(framework, path):
                                      outdir=f'{framework.outdir}/{framework.current_toplevel}/rulecheck', step="rulecheck")
     return run_stdout, run_stderr, err
 
+def get_linecheck_rulecheck():
+    patterns = get_linecheck_common()
+
+    # Make a copy to avoid modifying the original dict
+    patterns = {k: v.copy() for k, v in patterns.items()}
+
+    patterns["ignore"] += ["Check                     Evaluations         Found Inconclusives        Waived"]
+    patterns["error"] += ["violation", "violations"]
+    patterns["warning"] += ["caution", "cautions", "inconclusive", "inconclusives"]
+    return patterns
+
 def setup_xverify(framework, path):
     print("**** setup xverify ****")
     filename = "xverify.do"
@@ -277,6 +316,17 @@ def run_xverify(framework, path):
         toolchains.show_step_summary(framework.results[framework.current_toplevel]['xverify']['summary'], "Corruptible", "Incorruptible", "Inconclusive",
                                      outdir=f'{framework.outdir}/{framework.current_toplevel}/xverify', step="xverify")
     return run_stdout, run_stderr, err
+
+def get_linecheck_xverify():
+    patterns = get_linecheck_common()
+
+    # Make a copy to avoid modifying the original dict
+    patterns = {k: v.copy() for k, v in patterns.items()}
+
+    patterns["ignore"] += ["Check                    Active     Corruptible   Incorruptible    Inconclusive"]
+    patterns["error"] += ["corruptible", "corruptibles"]
+    patterns["warning"] += ["incorruptible", "incorruptibles", "inconclusive", "inconclusives"]
+    return patterns
 
 def setup_reachability(framework, path):
     print("**** setup reachability ****")
@@ -315,6 +365,20 @@ def run_reachability(framework, path):
         toolchains.show_coverage_summary(framework.results[framework.current_toplevel]['reachability']['summary'],
                                              title=f"Reachability Summary for Design: {framework.current_toplevel}")
     return run_stdout, run_stderr, err
+
+# TODO : We have to consider if Uncoverable is an error or a warning or nothing.
+# If we consider it an error, then reachability will fail in most designs.
+# Also, in big designs, if we show these logs, the user won't be able to see
+# anything else
+def get_linecheck_reachability():
+    patterns = get_linecheck_common()
+
+    # Make a copy to avoid modifying the original dict
+    patterns = {k: v.copy() for k, v in patterns.items()}
+
+    patterns["ignore"] += ["Coverage Type           Active        Witness   Inconclusive    Unreachable"]
+    patterns["warning"] += ["inconclusive", "inconclusives"]
+    return patterns
 
 def setup_fault(framework, path):
     print("**** setup fault ****")
@@ -495,6 +559,15 @@ def run_resets(framework, path):
                                      outdir=f'{framework.outdir}/{framework.current_toplevel}/resets', step="resets")
     return run_stdout, run_stderr, err
 
+def get_linecheck_resets():
+    patterns = get_linecheck_common()
+
+    # Make a copy to avoid modifying the original dict
+    patterns = {k: v.copy() for k, v in patterns.items()}
+
+    patterns["warning"] += ["inconclusive", "inconclusives"]
+    return patterns
+
 def setup_clocks(framework, path):
     print("**** setup clocks ****")
     filename = "clocks.do"
@@ -528,6 +601,16 @@ def run_clocks(framework, path):
         toolchains.show_step_summary(framework.results[framework.current_toplevel]['clocks']['summary'], "Violations", "Cautions", proven="Proven",
                                      outdir=f'{framework.outdir}/{framework.current_toplevel}/clocks', step="clocks")
     return run_stdout, run_stderr, err
+
+def get_linecheck_clocks():
+    patterns = get_linecheck_common()
+
+    # Make a copy to avoid modifying the original dict
+    patterns = {k: v.copy() for k, v in patterns.items()}
+
+    patterns["ignore"] += ["Proven (0)"]
+    patterns["warning"] += ["inconclusive", "inconclusives"]
+    return patterns
 
 def setup_prove(framework, path):
     print("**** setup prove ****")
@@ -608,6 +691,18 @@ def run_prove(framework, path):
         properties = parse_prove.normalize_sections(parse_prove.parse_targets_report(prove_rpt_path))
         toolchains.show_prove_summary(properties)
     return run_stdout, run_stderr, err
+
+def get_linecheck_prove():
+    patterns = get_linecheck_common()
+
+    # Make a copy to avoid modifying the original dict
+    patterns = {k: v.copy() for k, v in patterns.items()}
+
+    patterns["error"] += ["fired", "uncoverable"]
+    patterns["warning"] += ["inconclusives", "vacuous", r"^(?!Proven:).*inconclusive"] # inconclusive only if not in "Proven:" line"
+    patterns["success"] += ["covered"]
+
+    return patterns
 
 def setup_prove_simcover(framework, path):
     print("**** setup prove_simcover ****")
@@ -750,6 +845,17 @@ def run_prove_simcover(framework, path):
 
     return err
 
+def get_linecheck_prove_simcover():
+    patterns = get_linecheck_common()
+
+    # Make a copy to avoid modifying the original dict
+    patterns = {k: v.copy() for k, v in patterns.items()}
+
+    patterns["ignore"] += ["Note: (vsim-12126) Error and warning message counts have been restored"]
+    patterns["warning"] += ["inconclusive", "inconclusives"]
+
+    return patterns
+
 def setup_prove_formalcover(framework, path):
     print("**** setup prove_formalcover ****")
     filename = "prove.formalcover.do"
@@ -800,6 +906,17 @@ def run_prove_formalcover(framework, path):
                 toolchains.show_coverage_summary(framework.results[framework.current_toplevel]['prove.formalcover']['summary'],
                                                     title=f"Formal Coverage Summary for Design: {framework.current_toplevel}")
     return err
+
+def get_linecheck_prove_formalcover():
+    patterns = get_linecheck_common()
+
+    # Make a copy to avoid modifying the original dict
+    patterns = {k: v.copy() for k, v in patterns.items()}
+
+    patterns["ignore"] += ["Cover Type               Total    Unreachable   Inconclusive      Reachable"]
+    patterns["warning"] += ["inconclusive", "inconclusives"]
+
+    return patterns
 
 def set_timeout(framework, step, timeout):
     """Set the timeout for a specific step"""

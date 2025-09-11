@@ -44,6 +44,22 @@ def formal_initialize_rst(framework, rst, active_high=True, cycles=1):
     module = importlib.import_module(f'{framework.toolchain}')
     module.formal_initialize_rst(framework, rst, active_high=True, cycles=1)
 
+def get_linecheck_patterns(framework, step=None):
+    """
+    Import the corresponding toolchain module and call its
+    get_linecheck_{step} function to obtain patterns.
+    """
+    if step is None:
+        return {}
+
+    module = importlib.import_module(f'fvm.toolchains.{framework.toolchain}')
+    func_name = f"get_linecheck_{step.replace('.', '_')}"
+    get_patterns_func = getattr(module, func_name, None)
+    
+    if get_patterns_func is None:
+        return {}
+
+    return get_patterns_func()
 
 ## TODO: Decide where to put this function
 from rich.table import Table

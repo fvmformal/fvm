@@ -902,7 +902,7 @@ class fvmframework:
             for line in iter(stdout.readline, ''):
                 # If verbose, print to console
                 if verbose:
-                    err, warn, success = self.linecheck(line)
+                    err, warn, success = self.linecheck(line, step)
                     if err:
                         self.logger.error(line.rstrip())
                     elif warn:
@@ -919,7 +919,7 @@ class fvmframework:
             for line in iter(stderr.readline, ''):
                 # If verbose, print to console
                 if verbose:
-                    err, warn, success = self.linecheck(line)
+                    err, warn, success = self.linecheck(line, step)
                     if err:
                         self.logger.error(line.rstrip())
                     elif warn:
@@ -1037,7 +1037,7 @@ class fvmframework:
 
         err_in_log = False
         for line in result.splitlines() :
-            err, warn, success = self.linecheck(line)
+            err, warn, success = self.linecheck(line, step)
 
             if self.is_failure_allowed(design, step) == True and err:
                 warn = True
@@ -1070,42 +1070,30 @@ class fvmframework:
     # methodology step/tool. We should have a list of pass/clear (strings that
     # look like errors/warnings but are not, such as error summaries), error
     # and warning strings, and look for those in that order
-    def linecheck(self, line):
-        """Check for errors and warnings in log lines. Use casefold() for
-        robust case-insensitive comparison"""
+    def linecheck(self, line, step=None):
+        """Check for errors and warnings in log lines"""
         err = False
         warn = False
         success = False
-        if 'Errors: 0' in line:
-            pass  # Avoid signalling an error on tool error summaries without errors
-        elif 'Error (0)' in line:
-            pass  # Avoid signalling an error on tool error summaries without errors
-        elif 'Command : onerror' in line:
-            pass  # Avoid signalling an error when the tool log echoes our "onerror exit"
-        elif 'Note: (vsim-12126) Error and warning message counts have been restored' in line:
-            pass  # Avoid signalling an error on this note from vsim
-        elif 'error'.casefold() in line.casefold():
-            err = True
-        elif 'fatal'.casefold() in line.casefold():
-            err = True
-        elif 'Warning (0)'.casefold() in line.casefold():
-            pass # Avoid signalling a warning on tool warning summaries without warnings
-        elif 'warning'.casefold() in line.casefold():
-            warn = True
-        elif 'Cover Type' in line:
-            pass # Avoid signalling a warning on the header of the summary table
-        elif 'Fired' in line:
-            err = True
-        elif 'Proven' in line:
-            success = True
-        elif 'Vacuous' in line:
-            warn = True
-        elif 'Inconclusive' in line:
-            warn = True
-        elif 'Uncoverable' in line:
-            err = True
-        elif 'Covered' in line:
-            success = True
+        patterns = toolchains.get_linecheck_patterns(self, step)
+        if patterns:
+            for keyword in patterns.get("ignore", []):
+                if keyword.casefold() in line.casefold():
+                    return err, warn, success
+
+            for category, keywords in patterns.items():
+                if category == "ignore":
+                    continue
+                for keyword in keywords:
+                    regex = re.compile(rf"\b{re.escape(keyword)}\b", re.IGNORECASE)
+                    if regex.search(line):
+                        if category == "error":
+                            err = True
+                        elif category == "warning":
+                            warn = True
+                        elif category == "success":
+                            success = True
+        
         return err, warn, success
 
     def run_step(self, design, step):
