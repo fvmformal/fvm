@@ -40,29 +40,16 @@ FVM_POST_STEPS = [
 
 def pretty_summary(framework, logger):
     """Prints the final summary"""
-    # TODO : use rich or a similar python package to format a table
-    # TODO : print the status for each design.step
-    # TODO : color the status
-    # TODO : print also number of warnings and errors, and all relevant
-    # information from PropCheck (number of
-    # assume/assert/fired/proven/cover/covered/uncoverable/etc. For this,
-    # we may need to post-process the prove step log
-    # TODO : print elapsed time
     from rich.table import Table
     from rich.measure import Measurement
     from rich.box import ROUNDED
 
+    console = Console(force_terminal=True, force_interactive=False,
+                              record=True)
+    console.rule(f'[bold white]FVM Summary[/bold white]')
+
     summary_console = Console(force_terminal=True, force_interactive=False,
                               record=True)
-    summary_console.rule(f'[bold white]FVM Summary[/bold white]')
-
-    # Calculate maximum length of {design}.{step} so we can pad later
-    maxlen = 0
-    for design in framework.designs:
-        for step in FVM_STEPS + FVM_POST_STEPS:
-            curlen = len(f'{design}.{step}')
-            if curlen > maxlen:
-                maxlen = curlen
 
     # Accumulators for total values
     total_time = 0
@@ -73,8 +60,6 @@ def pretty_summary(framework, logger):
     total_cont = 0
     total_stat = 0
 
-    #text_header = Text("==== Summary ==============================================")
-    #summary_console.print(text_header)
     table = None
     for design in framework.designs:
         table = None
@@ -90,14 +75,8 @@ def pretty_summary(framework, logger):
             if 'status' in framework.results[design][step]:
                 total_stat += 1
                 status = framework.results[design][step]['status']
-                #text = Text()
-                #text.append(status, style=style)
-                #text.append(' ')
-                design_step = f'{design}.{step}'
-                #text.append(f'{design_step:<{maxlen}}')
 
                 result_str_for_table = ""
-                score_str =  '                '
                 step_summary = framework.results[design][step].get('summary', None)
                 # Error/Warning summaries
                 if step_summary and ("Error" in step_summary or "Violation" in step_summary or 
@@ -184,9 +163,7 @@ def pretty_summary(framework, logger):
                     total_time += time
                     time_str = f' ({helpers.readable_time(time)})'
                     time_str_for_table = helpers.readable_time(time)
-                    #text.append(time_str)
-                #text.append(f' result={framework.results[design][step]}', style='white')
-                #summary_console.print(text)
+
                 if status == 'pass':
                     style = 'bold green'
                     total_pass += 1
@@ -202,10 +179,8 @@ def pretty_summary(framework, logger):
                 table.add_row(f'[{style}]{status}[/{style}]',
                               f'{step}', result_str_for_table,
                               time_str_for_table)
-                #print(f'{status} {design}.{step}, result={framework.results[design][step]}')
 
                 if step == "prove" and step_summary:
-                    # TODO: Change framework.property_summary to framework.results[design][step]["property_summary"]
                     prop_summary = step_summary
                     assumes = prop_summary.get("Assumes", {}).get("Count", 0)
                     asserts = prop_summary.get("Asserts", {}).get("Count", 0)
@@ -288,44 +263,15 @@ def pretty_summary(framework, logger):
                                 table.add_row("", f"       └ {subkey}", f"[{color_covers_children}]{formatted_substr}[/{color_covers_children}]", "")
         summary_console.print(table)
 
-    #text_footer = Text("===========================================================")
-    #console.print(text_footer)
-    #text = Text()
-    #text.append('pass', style='bold green')
-    #text.append(f' {total_pass} of {total_cont}')
-    #summary_console.print(text)
     summary = f"[bold green]  pass[/bold green] {total_pass} of {total_cont}\n"
     if total_fail != 0:
-        #text = Text()
-        #text.append('fail', style='bold red')
-        #text.append(f' {total_fail} of {total_cont}')
-        #summary_console.print(text)
         summary += f"[bold red]  fail[/bold red] {total_fail} of {total_cont}\n"
     if total_skip != 0:
-        #text = Text()
-        #text.append('skip', style='bold yellow')
-        #text.append(f' {total_skip} of {total_cont}')
-        #summary_console.print(text)
         summary += f"[bold yellow]  skip[/bold yellow] {total_skip} of {total_cont}\n"
     if total_broken != 0:
-        #text = Text()
-        #text.append('broken', style='bold yellow')
-        #text.append(f' {total_broken} of {total_cont}')
-        #summary_console.print(text)
         summary += f"[bold yellow]  broken[/bold yellow] {total_broken} of {total_cont}\n"
     if total_stat != total_cont:
-        #text = Text()
-        #text.append('omit', style='bold white')
-        #text.append(f' {total_cont - total_stat} of {total_cont} (not executed due to early exit)')
-        #summary_console.print(text)
         summary += f"[bold white]  omit[/bold white] {total_cont - total_stat} of {total_cont}\n"
-    #summary_console.print(text_footer)
-    #text = Text()
-    #text.append(f'Total time  : {helpers.readable_time(total_time)}\n')
-    #text.append(f'Elapsed time: (not yet implemented)')
-    #summary_console.print(text)
-    #summary_console.print(text_footer)
-    #summary_console.print(table)
 
     console_options = summary_console.options
     if table is not None:
