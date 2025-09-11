@@ -245,10 +245,10 @@ def run_friendliness(framework, path):
     print("**** run friendliness ****")
     run_stdout, run_stderr, err = run_qverify_step(framework, framework.current_toplevel, 'friendliness')
     rpt = os.path.join(path, 'friendliness', 'autocheck_design.rpt')
-    data = parse_design_rpt.data_from_design_summary(rpt)
-    framework.results[framework.current_toplevel]['friendliness']['data'] = data
-    framework.results[framework.current_toplevel]['friendliness']['score'] = parse_design_rpt.friendliness_score(data)
-    if framework.results[framework.current_toplevel]['friendliness']['score'] is not None:
+    if os.path.exists(rpt):
+        data = parse_design_rpt.data_from_design_summary(rpt)
+        framework.results[framework.current_toplevel]['friendliness']['data'] = data
+        framework.results[framework.current_toplevel]['friendliness']['score'] = parse_design_rpt.friendliness_score(data)
         toolchains.show_friendliness_score(framework.results[framework.current_toplevel]['friendliness']['score'])
 
     return run_stdout, run_stderr, err
