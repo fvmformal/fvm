@@ -231,11 +231,12 @@ def pretty_summary(framework, logger):
 
                     covers_children = prop_summary.get("Covers", {}).get("Children", {})
                     uncovered_count = covers_children.get("Uncoverable", {}).get("Count", 0)
+                    inconclusive_count = covers_children.get("Inconclusive", {}).get("Count", 0)
                     not_a_target_count = covers_children.get("Not a Target", {}).get("Count", 0)
 
                     if uncovered_count > 0:
                         color_covers = "bold red"
-                    elif not_a_target_count > 0:
+                    elif not_a_target_count > 0 or inconclusive_count > 0:
                         color_covers = "bold white"
                     else:
                         color_covers = "bold green"
@@ -244,6 +245,7 @@ def pretty_summary(framework, logger):
                         "Covered": "bold green",
                         "Uncoverable": "bold red",
                         "Not a Target": "bold white",
+                        "Inconclusive": "bold white",
                         "Covered with Warning": "bold yellow",
                         "Covered without Waveform": "bold yellow"
                         }
