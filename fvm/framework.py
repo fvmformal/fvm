@@ -485,11 +485,13 @@ class fvmframework:
             self.init_reset.append(line)
 
     def set_pre_hook(self, hook, step, design='*'):
-        self.pre_hooks[design] = dict()
+        if design not in self.pre_hooks:
+            self.pre_hooks[design] = {}
         self.pre_hooks[design][step] = hook
 
     def set_post_hook(self, hook, step, design='*'):
-        self.post_hooks[design] = dict()
+        if design not in self.post_hooks:
+            self.post_hooks[design] = {}
         self.post_hooks[design][step] = hook
 
     def set_loglevel(self, loglevel):
