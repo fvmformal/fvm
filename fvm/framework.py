@@ -287,7 +287,7 @@ class fvmframework:
         self.logger.info(f'Removing all PSL sources')
         self.psl_sources = []
 
-    def add_drom_source(self, src, library="work"):
+    def add_drom_source(self, src):
         """Add a single wavedrom source"""
         self.logger.info(f'Adding wavedrom source: {src}')
         if not os.path.exists(src) :
@@ -569,10 +569,13 @@ class fvmframework:
         return ret
 
     # TODO : check that port_list must be an actual list()
+    # TODO : consider what to do with pylint unused-argument warnings
+    # because all arguments are used but with locals(), so pylint doesn't see
+    # that they are used because it is done dynamically
     def add_clock_domain(self, name, port_list, asynchronous=None,
                          synchronous=None, ignore=None, posedge=None,
                          negedge=None, module=None, inout_clock_in=None,
-                         inout_clock_out=None):
+                         inout_clock_out=None): # pylint: disable=unused-argument
         domain = {key: value for key, value in locals().items() if key != 'self'}
         self.logger.trace(f'adding clock domain: {domain}')
         self.clock_domains.append(domain)

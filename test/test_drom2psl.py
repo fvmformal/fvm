@@ -53,7 +53,7 @@ def remove_comments(file, comment_string = "--"):
 
     return comments_removed
 
-def compare_files_ignoring_comments(file1, file2, comment_string = "--"):
+def compare_files_ignoring_comments(file1, file2):
     # We need this function because in the CI, the input path that appears in
     # the comment of generated .psl files will be in a subdirectory of /build,
     # which will not match our expected output files
