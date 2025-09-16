@@ -1,5 +1,4 @@
 # Helper functions
-import inspect
 import os
 import sys
 from humanize.time import precisedelta

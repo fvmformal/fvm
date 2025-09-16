@@ -1,6 +1,5 @@
 # Third party imports
 import pytest
-import os
 from pathlib import Path
 
 # Our own imports

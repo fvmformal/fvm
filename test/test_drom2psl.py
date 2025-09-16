@@ -1,6 +1,5 @@
 import pytest
 import os
-import filecmp
 from pathlib import Path
 
 from fvm.drom2psl.generator import generator

@@ -1,5 +1,3 @@
-import sys
-
 class logcounter:
     def __init__(self):
         self.counts = {
