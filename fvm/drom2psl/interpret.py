@@ -49,7 +49,7 @@ def get_signal(dictionary):
 """
 List elements in signal field
 """
-def list_signal_elements(signal):
+def list_signal_elements(prefix, signal):
     ic(type(signal))
     assert isinstance(signal, list), "wavelanes should be a list"
     for index, value in enumerate(signal):

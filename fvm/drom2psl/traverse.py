@@ -1,3 +1,6 @@
+# Allow writing to stderr
+import sys
+
 # Import our own constant definitions
 from fvm.drom2psl.definitions import *
 
