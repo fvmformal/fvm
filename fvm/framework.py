@@ -364,7 +364,7 @@ class fvmframework:
 
     def set_prefix(self, prefix):
         if type(prefix) != str:
-            error(f'Specified {prefix=} is not a string, {type(prefix)=}')
+            self.logger.error(f'Specified {prefix=} is not a string, {type(prefix)=}')
         self.prefix = prefix
 
     def set_toplevel(self, toplevel):
@@ -396,7 +396,7 @@ class fvmframework:
             if self.design in self.toplevel:
                 self.toplevel = [self.design]
             else:
-                self.logger.error(f'Specified {args.design=} not in {self.toplevel=}, did you add it with set_toplevel()?')
+                self.logger.error(f'Specified {self.design=} not in {self.toplevel=}, did you add it with set_toplevel()?')
 
     def init_results(self):
         # TODO: this must be initialized per design configuration, but to do

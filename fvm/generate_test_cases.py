@@ -250,7 +250,7 @@ def generate_test_case(design_name, step, status="passed", start_time=None, stop
                 "start": start_time,
                 "stop": start_time + entry["time"] * 1000
             })
-  
+
     else:
         steps = []
 
