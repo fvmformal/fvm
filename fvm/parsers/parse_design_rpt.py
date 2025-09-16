@@ -1,9 +1,6 @@
 import re
 import math
 
-from rich.console import Console
-from rich.table import Table
-
 def get_design_summary(filename):
     summary = []
     found = False

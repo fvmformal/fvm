@@ -1,4 +1,3 @@
-import json
 import re
 
 def parse_coverage_report(input_file):

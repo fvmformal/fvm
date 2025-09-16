@@ -1,5 +1,4 @@
 import re
-import sys
 
 def parse_formal_reachability_report_to_html(input_file, output_file="report.html"):
     with open(input_file, "r") as file:
@@ -9,7 +8,6 @@ def parse_formal_reachability_report_to_html(input_file, output_file="report.htm
     assumptions = []
     index_items = []
     tables = []
-    current_table = None
     current_section = None
     legend = []
     cover_table = False
@@ -237,7 +235,6 @@ def parse_formal_observability_report_to_html(input_file, output_file="report.ht
     assertions = []
     index_items = []
     tables = []
-    current_table = None
     current_section = None
     legend = []
     cover_table = False
@@ -482,13 +479,11 @@ def parse_reachability_report_to_html(input_file, output_file="report.html"):
 
     html_content = []
     tables = []
-    current_table = None
     current_section = None
     legend = []
     cover_table = False
     cover_type_table = []
     table_title = ""
-    instance_count = 0
     report_generated = ""
 
     for line in lines:
@@ -568,7 +563,6 @@ def parse_reachability_report_to_html(input_file, output_file="report.html"):
     if report_generated:
         match = re.match(r"(Report Generated               :)(.*)", report_generated)
         if match:
-            bold_text = match.group(1).strip()
             normal_text = match.group(2).strip()
             html_content.append(
                 f"<p style='text-align: center;'><strong>Report Generated: </strong>{normal_text}</p>"
@@ -628,7 +622,6 @@ def parse_formal_signoff_report_to_html(input_file, output_file="report.html"):
     index_items = []
     assertions = []
     tables = []
-    current_table = None
     current_section = None
     legend = []
     cover_table = False
