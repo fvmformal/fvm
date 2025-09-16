@@ -161,6 +161,9 @@ def pretty_summary(framework, logger):
                 elif status == 'broken':
                     style = 'bold yellow'
                     total_broken += 1
+                else:
+                    style = 'bold white'
+                    
                 table.add_row(f'[{style}]{status}[/{style}]',
                               f'{step}', result_str_for_table,
                               time_str_for_table)
