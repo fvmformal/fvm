@@ -24,7 +24,6 @@ from fvm.parsers import parse_xverify
 from fvm.parsers import parse_resets
 from fvm.parsers import parse_clocks
 from fvm.parsers import parse_prove
-from fvm.parsers import parse_fault
 from fvm.parsers import parse_design_rpt
 from fvm import generate_test_cases
 from fvm import helpers
@@ -45,7 +44,6 @@ tools = {
         "rulecheck"      : ["autocheck",  "qverify"],
         "xverify"        : ["xcheck",     "qverify"],
         "reachability"   : ["covercheck", "qverify"],
-        "fault"          : ["slec",       "qverify"],
         "resets"         : ["rdc",        "qverify"],
         "clocks"         : ["cdc",        "qverify"],
         "prove"          : ["propcheck",  "qverify"],
@@ -73,7 +71,6 @@ def define_steps(steps):
     steps.add_step('rulecheck', setup_rulecheck, run_rulecheck)
     steps.add_step('xverify', setup_xverify, run_xverify)
     steps.add_step('reachability', setup_reachability, run_reachability)
-    steps.add_step('fault', setup_fault, run_fault)
     steps.add_step('resets', setup_resets, run_resets)
     steps.add_step('clocks', setup_clocks, run_clocks)
     steps.add_step('prove', setup_prove, run_prove)
@@ -379,52 +376,6 @@ def get_linecheck_reachability():
     patterns["ignore"] += ["Coverage Type           Active        Witness   Inconclusive    Unreachable"]
     patterns["warning"] += ["inconclusive", "inconclusives"]
     return patterns
-
-def setup_fault(framework, path):
-    print("**** setup fault ****")
-    filename = "fault.do"
-    """Generate a script to run SLEC"""
-    gencompilescript(framework, filename, path)
-    with open(path+'/'+filename, "a") as f:
-        for line in framework.init_reset:
-            print(line, file=f)
-        parts = framework.current_toplevel.rsplit(".", 1)
-        if len(parts) == 2:
-            lib, design = parts
-            print(f'slec configure -spec -d {design} -work {lib}', file=f)
-            print(f'slec configure -impl -d {design} -work {lib}', file=f)
-        else:
-            design = parts[0]
-            print(f'slec configure -spec -d {design}', file=f)
-            print(f'slec configure -impl -d {design}', file=f)
-
-        for cutpoint in framework.cutpoints:
-            string = f'netlist cutpoint impl.{cutpoint["signal"]}'
-            if cutpoint["module"] is not None:
-                string += f' -module {cutpoint["module"]}'
-            if cutpoint["resetval"] is True:
-                string += ' -reset_value'
-            if cutpoint["condition"] is not None:
-                string += f'-cond {cutpoint["condition"]}'
-            if cutpoint["driver"] is not None:
-                string += f'-cond {cutpoint["driver"]}'
-            if cutpoint["wildcards_dont_match_hierarchy_separators"] is True:
-                string += '-match_local_scope'
-            print(string, file=f)
-        print(f'slec compile {framework.generic_args}', file=f)
-        print(f'slec verify -auto_constraint_off -justify_initial_x', file=f)
-        print(f'slec generate report', file=f)
-        print(f'slec generate waveforms -vcd', file=f)
-        print('exit', file=f)
-
-def run_fault(framework, path):
-    print("**** run fault ****")
-    run_stdout, run_stderr, err = run_qverify_step(framework, framework.current_toplevel, 'fault')
-    fault_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/fault/slec_verify.rpt'
-    if os.path.exists(fault_rpt_path):
-        framework.results[framework.current_toplevel]['fault']['summary'] = parse_fault.parse_fault_summary(fault_rpt_path)
-
-    return run_stdout, run_stderr, err
 
 def gen_reset_config(framework, filename, path):
     with open(path+'/'+filename, "a") as f:

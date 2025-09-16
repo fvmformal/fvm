@@ -14,7 +14,6 @@ from fvm.parsers import parse_rulecheck
 from fvm.parsers import parse_xverify
 from fvm.parsers import parse_resets
 from fvm.parsers import parse_clocks
-from fvm.parsers import parse_fault
 
 # TODO: these constants (FVM_STEPS and FVM_POST_STEPS) are redundant and we
 # will remove them soon, but for now while we are refactoring we need them so
@@ -27,7 +26,6 @@ FVM_STEPS = [
     'rulecheck',
     'xverify',
     'reachability',
-    'fault',
     'resets',
     'clocks',
     'prove'
@@ -139,19 +137,6 @@ def pretty_summary(framework, logger):
                                     result_str_for_table = f"[bold green]{percentage}[/bold green]"
 
                                 break
-                    else:
-                        result_str_for_table = "N/A"
-                ## TODO: Maybe delete fault from this branch?
-                elif step == 'fault':
-                    if step_summary:
-                        fault_summary = step_summary
-                        fault_total_targets = fault_summary["Targets"]["Total"]
-                        fault_total_proven = fault_summary["Targets"]["Proven"]
-                        if fault_total_targets == fault_total_proven:
-                            result_str_for_table += f"[bold green]{fault_total_proven}/{fault_total_targets}[/bold green]"
-                        else:
-                            result_str_for_table += f"[bold red]{fault_total_proven}/{fault_total_targets}[/bold red]"
-                            status = 'fail'
                     else:
                         result_str_for_table = "N/A"
                 elif step != 'prove':

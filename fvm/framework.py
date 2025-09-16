@@ -54,7 +54,6 @@ FVM_STEPS = [
     'rulecheck',
     'xverify',
     'reachability',
-    'fault',
     'resets',
     'clocks',
     'prove'
