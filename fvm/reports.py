@@ -5,15 +5,7 @@ from rich.console import Console
 
 from fvm import helpers
 from fvm import generate_test_cases
-from fvm.parsers import parse_formal_signoff
-from fvm.parsers import parse_reachability
 from fvm.parsers import parse_reports
-from fvm.parsers import parse_simcover
-from fvm.parsers import parse_lint
-from fvm.parsers import parse_rulecheck
-from fvm.parsers import parse_xverify
-from fvm.parsers import parse_resets
-from fvm.parsers import parse_clocks
 
 # TODO: these constants (FVM_STEPS and FVM_POST_STEPS) are redundant and we
 # will remove them soon, but for now while we are refactoring we need them so
@@ -40,7 +32,6 @@ def pretty_summary(framework, logger):
     """Prints the final summary"""
     from rich.table import Table
     from rich.measure import Measurement
-    from rich.box import ROUNDED
 
     console = Console(force_terminal=True, force_interactive=False,
                               record=True)
@@ -146,7 +137,6 @@ def pretty_summary(framework, logger):
                 if "elapsed_time" in framework.results[design][step]:
                     time = framework.results[design][step]["elapsed_time"]
                     total_time += time
-                    time_str = f' ({helpers.readable_time(time)})'
                     time_str_for_table = helpers.readable_time(time)
 
                 if status == 'pass':
@@ -514,7 +504,6 @@ def generate_allure(framework, logger):
         for step in FVM_STEPS + FVM_POST_STEPS:
             if 'status' in framework.results[design][step] and framework.results[design][step]['status'] != "skip":
                 status = framework.results[design][step]['status']
-                custom_status_string = None
                 if framework.results[design][step]['status'] == "pass":
                     status = "passed"
                 elif framework.results[design][step]['status'] == "fail":
