@@ -40,18 +40,3 @@ def parse_type_and_result(file_path):
     parsed_data = [{"Type": match[0].strip(), "Result": match[1].strip()} for match in matches]
 
     return parsed_data
-
-def count_result_occurrences(parsed_data):
-
-    result_counts = {
-        "Corruptible": 0,
-        "Incorruptible": 0,
-        "Inconclusive": 0
-    }
-
-    for case in parsed_data:
-        result = case["Result"]
-        if result in result_counts:
-            result_counts[result] += 1
-
-    return result_counts

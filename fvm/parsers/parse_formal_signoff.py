@@ -103,15 +103,3 @@ def unified_format_table(table, goal=90.0):
         final_data.append(new_row)
 
     return final_data
-
-
-def print_table(table):
-    headers = list(table['data'][0].keys())
-    col_widths = {h: max(len(h), max(len(str(row[h])) for row in table['data'])) for h in headers}
-
-    print(f"\n{table['title']}\n")
-    print(" | ".join(f"{h:{col_widths[h]}}" for h in headers))
-    print("-" * (sum(col_widths.values()) + 3 * (len(headers) - 1)))
-
-    for row in table['data']:
-        print(" | ".join(f"{str(row[h]):{col_widths[h]}}" for h in headers))
