@@ -72,7 +72,7 @@ def setup_prove(framework, path):
         ordered_libraries = OrderedDict.fromkeys(framework.libraries_from_vhdl_sources)
         for lib in ordered_libraries:
             os.makedirs(f'{library_path}/{lib}', exist_ok=True)
-            compilation_order = get_vhdl_compilation_order(lib)
+            get_vhdl_compilation_order(lib)
             lib_sources = [src for src, library in zip(framework.vhdl_sources,
                                                        framework.libraries_from_vhdl_sources) if library == lib]
             abspath_lib_sources = [os.path.abspath(path) for path in lib_sources]
