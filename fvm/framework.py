@@ -263,7 +263,7 @@ class fvmframework:
 
     def clear_vhdl_sources(self):
         """Removes all VHDL sources from the project"""
-        self.logger.info(f'Removing all VHDL sources')
+        self.logger.info('Removing all VHDL sources')
         self.vhdl_sources = []
 
     def add_psl_source(self, src):
@@ -280,7 +280,7 @@ class fvmframework:
 
     def clear_psl_sources(self):
         """Removes all PSL sources from the project"""
-        self.logger.info(f'Removing all PSL sources')
+        self.logger.info('Removing all PSL sources')
         self.psl_sources = []
 
     def add_drom_source(self, src):
@@ -297,7 +297,7 @@ class fvmframework:
 
     def clear_drom_sources(self):
         """Removes all wavedrom sources from the project"""
-        self.logger.info(f'Removing all wavedrom sources')
+        self.logger.info('Removing all wavedrom sources')
         self.drom_sources = []
 
     def add_vhdl_sources(self, globstr, library="work"):

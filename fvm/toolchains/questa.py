@@ -264,7 +264,7 @@ def setup_rulecheck(framework, path):
     filename = "rulecheck.do"
     gencompilescript(framework, filename, path)
     with open(path+'/'+filename, "a") as f:
-        print(f'autocheck report inconclusives', file=f)
+        print('autocheck report inconclusives', file=f)
         for line in framework.init_reset:
             print(line, file=f)
         print(f'autocheck compile {framework.get_tool_flags("autocheck compile")} -d {framework.current_toplevel} {framework.generic_args}', file=f)
@@ -415,17 +415,17 @@ def gen_reset_domain_config(framework, filename, path):
                 string = f'netlist port resetdomain {signal}'
                 string += f' -reset {domain["name"]}'
                 if domain["asynchronous"] is True:
-                    string += f' -async'
+                    string += ' -async'
                 if domain["synchronous"] is True:
-                    string += f' -sync'
+                    string += ' -sync'
                 if domain["active_high"] is True:
-                    string += f' -active_high'
+                    string += ' -active_high'
                 if domain["active_low"] is True:
-                    string += f' -active_low'
+                    string += ' -active_low'
                 if domain["is_set"] is True:
-                    string += f' -set'
+                    string += ' -set'
                 if domain["no_reset"] is True:
-                    string += f' -no_reset'
+                    string += ' -no_reset'
                 if domain["ignore"] is True:
                     string += ' -ignore}'
                 string += ' -add'
@@ -455,7 +455,7 @@ def gen_clock_config(framework, filename, path):
 def gen_clock_domain_config(framework, filename, path):
     with open(path+'/'+filename, "a") as f:
         for domain in framework.clock_domains:
-            string = f'netlist port domain'
+            string = 'netlist port domain'
             for signal in domain["port_list"]:
                 string += f' {signal}'
             string += f' -clock {domain["name"]} -add'
@@ -537,7 +537,7 @@ def setup_clocks(framework, path):
 
         # Enable reconvergence to remove warning [hdl-271]
         # TODO : add option to disable reconvergence?
-        print(f'cdc reconvergence on', file=f)
+        print('cdc reconvergence on', file=f)
         print(f'cdc run -d {framework.current_toplevel} {framework.get_tool_flags("cdc run")} {framework.generic_args}', file=f)
         print(f'cdc generate report clock_report.rpt {framework.get_tool_flags("cdc generate report")}', file=f)
         print('cdc generate tree -clock clock_tree.rpt;', file=f)
@@ -617,7 +617,7 @@ def setup_prove(framework, path):
         #print('log_info "***** Running formal verify (model checking)..."', file=f)
         # If -cov_mode is specified without arguments, it calculates
         # observability coverage
-        print(f'formal coverage enable -code sbceft', file=f)
+        print('formal coverage enable -code sbceft', file=f)
         print(f'formal verify {framework.get_tool_flags("formal verify")} -cov_mode', file=f)
         print('', file=f)
         print('## Compute Formal Coverage', file=f)

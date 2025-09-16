@@ -35,7 +35,7 @@ def pretty_summary(framework, logger):
 
     console = Console(force_terminal=True, force_interactive=False,
                               record=True)
-    console.rule(f'[bold white]FVM Summary[/bold white]')
+    console.rule('[bold white]FVM Summary[/bold white]')
 
     summary_console = Console(force_terminal=True, force_interactive=False,
                               record=True)
