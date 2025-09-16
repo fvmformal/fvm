@@ -1,15 +1,29 @@
+"""
+Parser for clocks step results.
+
+This module extracts checks and organizes them by
+categories such as Violations, Cautions, Evaluations, etc.
+
+It is specifically for Questa CDC results.
+"""
 import re
 
 def parse_clocks_results(file_path):
+    """
+    Parse a clocks step results file and return a dictionary with check details.
 
+    :param file_path: Path to the clocks results file.
+    :type file_path: str
+    :return: Dictionary with categories and their check details.
+    :rtype: dict
+    """
     with open(file_path, 'r', encoding='utf-8') as file:
         content = file.read()
 
-    cdc_summary_pattern = re.compile(
-        r'Total number of checks\s*\((\d+)\)'
-    )
+
     category_pattern = re.compile(
-        r'(Violations|Cautions|Evaluations|Resolved - Waived or Verified Status|Proven|Filtered)\s*\((\d+)\)\n'
+        r'(Violations|Cautions|Evaluations|Resolved - Waived or Verified Status|Proven|Filtered)'
+        r'\s*\((\d+)\)\n'
         r'-----------------------------------------------------------------\n'
         r'([\s\S]*?)\n\n',
         re.DOTALL
@@ -29,7 +43,9 @@ def parse_clocks_results(file_path):
     for category in categories:
         category_name = category[0]
         category_count = int(category[1])
-        category_details = category[2].strip().split('\n') if category[2].strip() != "<None>" else []
+
+        raw_details = category[2].strip()
+        category_details = raw_details.split('\n') if raw_details != "<None>" else []
 
         clocks_results[category_name]["count"] = category_count
 
