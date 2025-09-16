@@ -163,7 +163,7 @@ def pretty_summary(framework, logger):
                     total_broken += 1
                 else:
                     style = 'bold white'
-                    
+
                 table.add_row(f'[{style}]{status}[/{style}]',
                               f'{step}', result_str_for_table,
                               time_str_for_table)
@@ -526,6 +526,8 @@ def generate_allure(framework, logger):
                 stop_time = start_time + framework.results[design][step]["elapsed_time"] * 1000
                 if 'stdout' in framework.results[design][step]:
                     stdout = framework.results[design][step]['stdout']
+                else:
+                    stdout = None
                 if step == 'reachability':
                     reachability_rpt_path = f'{framework.outdir}/{design}/{step}/covercheck_verify.rpt'
                     reachability_html_path = f'{framework.outdir}/{design}/{step}/reachability.html'
