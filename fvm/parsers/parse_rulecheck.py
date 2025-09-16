@@ -1,8 +1,24 @@
+"""
+Parser for rulecheck reports.
+
+This module provides functions to parse checks with their types and severities,
+count occurrences, and group them by severity.
+
+It is specifically for Questa AutoCheck results.
+"""
 import re
 
 from collections import defaultdict
 
 def group_by_severity(data):
+    """
+    Group all rulecheck items by their severity.
+
+    :param data: List of dictionaries with "Type" and "Severity" keys
+    :type data: list of dict
+    :return: Dictionary with counts and type per severity
+    :rtype: dict
+    """
     result = {
         'Violation': {'count': 0, 'checks': defaultdict(int)},
         'Caution': {'count': 0, 'checks': defaultdict(int)}
@@ -18,13 +34,20 @@ def group_by_severity(data):
         result[severity]['count'] += 1
         result[severity]['checks'][type_name] += 1
 
-    for severity in result:
-        result[severity]['checks'] = dict(result[severity]['checks'])
-
+    for severity, info in result.items():
+        info['checks'] = dict(info['checks'])
+    
     return result
 
 def parse_type_and_severity(file_path):
+    """
+    Parse a rulecheck report file and extract Type and Severity information.
 
+    :param file_path: Path to the report file
+    :type file_path: str
+    :return: List of dictionaries with "Type" and "Severity"
+    :rtype: list of dict
+    """
     with open(file_path, 'r', encoding='utf-8') as file:
         content = file.read()
 
@@ -39,18 +62,3 @@ def parse_type_and_severity(file_path):
     parsed_data = [{"Type": match[0].strip(), "Severity": match[1].strip()} for match in matches]
 
     return parsed_data
-
-def count_severity_occurrences(parsed_data):
-
-    severity_counts = {
-        "Violation": 0,
-        "Caution": 0,
-        "Inconclusive": 0
-    }
-
-    for case in parsed_data:
-        severity = case["Severity"]
-        if severity in severity_counts:
-            severity_counts[severity] += 1
-
-    return severity_counts

@@ -1,8 +1,23 @@
+"""
+Parser for xverify reports.
+
+This module provides functions to parse checks with their types and results,
+count occurrences, and group them by results.
+
+It is specifically for Questa X-Check results.
+"""
 import re
 from collections import defaultdict
 
 def group_by_result(data):
-    # Inicializamos con Corruptible e Incorruptible en 0
+    """
+    Group all xverify items by their results.
+
+    :param data: List of dictionaries with "Type" and "Result" keys
+    :type data: list of dict
+    :return: Dictionary with counts and type per result
+    :rtype: dict
+    """
     result = {
         'Corruptible': {'count': 0, 'checks': defaultdict(int)},
         'Incorruptible': {'count': 0, 'checks': defaultdict(int)}
@@ -18,14 +33,20 @@ def group_by_result(data):
         result[result_name]['count'] += 1
         result[result_name]['checks'][type_name] += 1
 
-    # Convertimos defaultdict a dict
-    for result_name in result:
-        result[result_name]['checks'] = dict(result[result_name]['checks'])
+    for result_name, info in result.items():
+        info['checks'] = dict(info['checks'])
 
     return result
 
 def parse_type_and_result(file_path):
+    """
+    Parse a xverify report file and extract Type and Result information.
 
+    :param file_path: Path to the report file
+    :type file_path: str
+    :return: List of dictionaries with "Type" and "Result"
+    :rtype: list of dict
+    """
     with open(file_path, 'r', encoding='utf-8') as file:
         content = file.read()
 
