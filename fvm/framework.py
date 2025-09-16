@@ -220,7 +220,7 @@ class fvmframework:
         self.tool_flags = toolchains.get_default_flags(self.toolchain)
         self.logger.info(f'{self.tool_flags=}')
         self.steps = steps()
-        toolchains.define_steps(self.steps, self.toolchain)
+        toolchains.define_steps(self, self.steps, self.toolchain)
         self.logger.info(f'{steps=}')
 
         # Exit if args.step is unrecognized

@@ -12,9 +12,9 @@ class steps:
         self.steps = {}
         self.post_steps = {}
 
-    def add_step(self, step, setup, run):
+    def add_step(self, framework, step, setup, run):
         if step in self.steps:
-            logger.error(f'{step=} already exists in {self.steps=}')
+            framework.logger.error(f'{step=} already exists in {self.steps=}')
         self.steps[step] = {}
         self.steps[step]["setup"] = setup
         self.steps[step]["run"] = run
@@ -22,11 +22,11 @@ class steps:
     # Cannot reuse add_step for post_steps because post_steps are never run if
     # the relevant step fails, whereas steps may be run even if the previous
     # step fails (when using the --continue flag)
-    def add_post_step(self, step, post_step, setup, run):
+    def add_post_step(self, framework, step, post_step, setup, run):
         if step not in self.steps:
-            logger.error(f'{step=} does not exist in {self.steps=}')
+            framework.logger.error(f'{step=} does not exist in {self.steps=}')
         if post_step in self.post_steps:
-            logger.error(f'{post_step=} already exists in {self.steps[step]=}')
+            framework.logger.error(f'{post_step=} already exists in {self.steps[step]=}')
         # Initialize the post_steps struct if it doesn't exist
         if step not in self.post_steps:
             self.post_steps[step] = {}
@@ -35,10 +35,10 @@ class steps:
         self.post_steps[step][post_step]["setup"] = setup
         self.post_steps[step][post_step]["run"] = run
 
-    def append_step(self, target, step, setup, run):
+    def append_step(self, framework, target, step, setup, run):
         # Fail if target not in dict
         if target not in self.steps:
-            logger.error(f'{target=} not in {self.steps=}, cannot insert step after it')
+            framework.logger.error(f'{target=} not in {self.steps=}, cannot insert step after it')
         # Get position of target in the dict
         pos = list(self.steps).index(target)
         # Convert dict to list
@@ -48,10 +48,10 @@ class steps:
         # Convert list to dict
         self.steps = dict(l)
 
-    def prepend_step(self, target, step, setup, run):
+    def prepend_step(self, framework, target, step, setup, run):
         # Fail if target not in dict
         if target not in self.steps:
-            logger.error(f'{target=} not in {self.steps=}, cannot insert step before it')
+            framework.logger.error(f'{target=} not in {self.steps=}, cannot insert step before it')
         # Get position of target in the dict
         pos = list(self.steps).index(target)
         # Convert dict to list

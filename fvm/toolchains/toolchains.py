@@ -28,9 +28,9 @@ def get_default_flags(toolchain):
     print(f'***** {default_flags=}')
     return default_flags
 
-def define_steps(steps, toolchain):
+def define_steps(framework, steps, toolchain):
     module = importlib.import_module(f'fvm.toolchains.{toolchain}')
-    module.define_steps(steps)
+    module.define_steps(framework, steps)
 
 def set_timeout(framework, toolchain, step, timeout):
     module = importlib.import_module(f'fvm.toolchains.{toolchain}')

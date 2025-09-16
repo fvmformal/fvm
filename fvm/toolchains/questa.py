@@ -65,17 +65,17 @@ default_flags = {
         "formal verify" : "-justify_initial_x -auto_constraint_off",
         }
 
-def define_steps(steps):
-    steps.add_step('lint', setup_lint, run_lint)
-    steps.add_step('friendliness', setup_friendliness, run_friendliness)
-    steps.add_step('rulecheck', setup_rulecheck, run_rulecheck)
-    steps.add_step('xverify', setup_xverify, run_xverify)
-    steps.add_step('reachability', setup_reachability, run_reachability)
-    steps.add_step('resets', setup_resets, run_resets)
-    steps.add_step('clocks', setup_clocks, run_clocks)
-    steps.add_step('prove', setup_prove, run_prove)
-    steps.add_post_step('prove', 'formalcover', setup_prove_formalcover, run_prove_formalcover)
-    steps.add_post_step('prove', 'simcover', setup_prove_simcover, run_prove_simcover)
+def define_steps(framework, steps):
+    steps.add_step(framework, 'lint', setup_lint, run_lint)
+    steps.add_step(framework, 'friendliness', setup_friendliness, run_friendliness)
+    steps.add_step(framework, 'rulecheck', setup_rulecheck, run_rulecheck)
+    steps.add_step(framework, 'xverify', setup_xverify, run_xverify)
+    steps.add_step(framework, 'reachability', setup_reachability, run_reachability)
+    steps.add_step(framework, 'resets', setup_resets, run_resets)
+    steps.add_step(framework, 'clocks', setup_clocks, run_clocks)
+    steps.add_step(framework, 'prove', setup_prove, run_prove)
+    steps.add_post_step(framework, 'prove', 'formalcover', setup_prove_formalcover, run_prove_formalcover)
+    steps.add_post_step(framework, 'prove', 'simcover', setup_prove_simcover, run_prove_simcover)
 
 def create_f_file(filename, sources):
     with open(filename, "w") as f:

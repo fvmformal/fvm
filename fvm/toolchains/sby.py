@@ -29,8 +29,8 @@ default_flags = {
         "ghdl" : "--std=08",
         }
 
-def define_steps(steps):
-    steps.add_step('prove', setup_prove, run_prove)
+def define_steps(framework, steps):
+    steps.add_step(framework, 'prove', setup_prove, run_prove)
 
 def get_vhdl_compilation_order(lib):
     # TODO : run ghdl -i with all sources, then run ghdl with --elab-order
