@@ -1130,10 +1130,6 @@ class fvmframework:
 
         return err
 
-    # TODO: we also need a setup_post_step
-    def setup_post_step(self, design, step):
-        pass
-
     def run_post_step(self, design, step):
         """Run post processing for a specific step of the methodology"""
         # Currently we only do post-processing after the friendliness and prove
