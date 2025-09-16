@@ -11,20 +11,16 @@ import fnmatch
 import signal
 from datetime import datetime
 from io import StringIO
-from collections import OrderedDict
 from shlex import join
 
 # Third party imports
 import argparse
 from loguru import logger
 from rich.console import Console
-from rich.table import Table
-from rich.text import Text
 
 # Our own imports
 from fvm import logcounter
 from fvm import helpers
-from fvm import generate_test_cases
 from fvm import reports
 from fvm.steps import steps
 from fvm.toolchains import toolchains
@@ -329,7 +325,7 @@ class fvmframework:
             self.logger.error(f'No files found for pattern {globstr}')
             self.exit_if_required(BAD_VALUE)
         for source in sources:
-            self.add_drom_source(source, library)
+            self.add_drom_source(source)
 
     def list_vhdl_sources(self):
         """List VHDL sources"""
@@ -572,10 +568,12 @@ class fvmframework:
     # TODO : consider what to do with pylint unused-argument warnings
     # because all arguments are used but with locals(), so pylint doesn't see
     # that they are used because it is done dynamically
+    # pylint: disable=unused-argument
     def add_clock_domain(self, name, port_list, asynchronous=None,
                          synchronous=None, ignore=None, posedge=None,
                          negedge=None, module=None, inout_clock_in=None,
-                         inout_clock_out=None): # pylint: disable=unused-argument
+                         inout_clock_out=None):
+    # pylint: enable=unused-argument
         domain = {key: value for key, value in locals().items() if key != 'self'}
         self.logger.trace(f'adding clock domain: {domain}')
         self.clock_domains.append(domain)
@@ -662,7 +660,7 @@ class fvmframework:
                 self.logger.trace(f'{design=} has no configs, setting up default config')
                 self.setup_design(design, None)
 
-    def list_design(self, design, skip_setup=False):
+    def list_design(self, design):
         """List all available/selected methodology steps for a design"""
         # If configurations exist, list them all
         self.logger.info(f'Listing {design=} with configs: {self.design_configs}')
@@ -1095,7 +1093,6 @@ class fvmframework:
         console.rule(f'[bold white]{design}.{step}[/bold white]')
         err = False
         path = self.current_path
-        open_gui = False
 
         if step in self.steps.steps:
             run_stdout, run_stderr, err = self.steps.steps[step]["run"](self, path)
