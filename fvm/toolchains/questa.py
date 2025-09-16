@@ -167,7 +167,7 @@ def run_qverify_step(framework, design, step):
     if framework.guinorun and framework.list == False :
         open_gui = True
         # TODO : This is provisional because the function returns
-        # cmd_stdout and cmd_stderr. It may be ok because in 
+        # cmd_stdout and cmd_stderr. It may be ok because in
         # guinorun mode we don't care about those values
         cmd_stdout, cmd_stderr = "", ""
     # TODO : maybe check for errors also in the GUI?

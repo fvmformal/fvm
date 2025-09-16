@@ -3,29 +3,29 @@ import re
 
 def parse_coverage_table(html):
     tables = []
-    
+
     button_pattern = re.compile(r"<button.*?>(.*?)</button>", re.DOTALL)
     table_pattern = re.compile(r"<table>.*?</table>", re.DOTALL)
     row_pattern = re.compile(r"<tr.*?>(.*?)</tr>", re.DOTALL)
     cell_pattern = re.compile(r"<t[dh].*?>(.*?)</t[dh]>", re.DOTALL)
-    
+
     buttons = button_pattern.findall(html)
     tables_html = table_pattern.findall(html)
-    
+
     for title, table_html in zip(buttons, tables_html):
         rows = row_pattern.findall(table_html)
         headers = [re.sub(r"<.*?>", "", cell).strip() for cell in cell_pattern.findall(rows[0])]
         data = []
-        
+
         for row in rows[1:]:
             cells = [re.sub(r"<.*?>", "", cell).strip() for cell in cell_pattern.findall(row)]
             data.append({headers[i]: cells[i] for i in range(len(cells))})
-        
+
         tables.append({
             'title': title.strip(),
             'data': data
         })
-    
+
     return tables
 
 def filter_coverage_tables(tables):
@@ -58,7 +58,7 @@ def add_total_field(table):
     coverage_percentage = (total_covered / total_possible * 100) if total_possible > 0 else 0
     total_row['Coverage Type'] = 'Total'
     total_row['Covered (P)'] = f"{total_covered} ({coverage_percentage:.1f}%)"
-    
+
     table['data'].append(total_row)
     return table
 
@@ -77,7 +77,7 @@ def unified_format_table(table, goal=90.0):
 
         covered = total - uncovered - excluded
         if covered < 0:
-            covered = 0  
+            covered = 0
 
         if total == 0:
             percentage = "N/A"

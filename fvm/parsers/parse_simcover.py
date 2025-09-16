@@ -14,9 +14,9 @@ def parse_coverage_report(input_file):
     # Extract headers from the first line
     headers = [h.strip() for h in re.split(r'\s{2,}', lines[0].strip())]
     coverage_results = []
-    
+
     # Process each line (skipping headers and separators)
-    for line in lines[2:]:  
+    for line in lines[2:]:
         if not line.strip():
             continue
 

@@ -11,7 +11,7 @@ from termcolor import colored
 
 # Let's wrap the print function to have info(), warning() and error()
 # We do this by mixing two answers from this stackoverflow link: https://stackoverflow.com/questions/26286203/custom-print-function-that-wraps-print
-#   Prepending characters: https://stackoverflow.com/a/26286813 
+#   Prepending characters: https://stackoverflow.com/a/26286813
 #   Passing both arguments and keyword arguments (kwargs): https://stackoverflow.com/a/64885453
 
 """

@@ -66,7 +66,7 @@ def setup_prove(framework, path):
         print('', file=f)
         print('[script]', file=f)
         # TODO : support libraries? Not sure the ghdl synthesis plugin actually
-        # supports libraries: https://ghdl.github.io/ghdl/using/Synthesis.html 
+        # supports libraries: https://ghdl.github.io/ghdl/using/Synthesis.html
         # TODO : allow user-defined flags such as -frelaxed
         prev_libs = ""
         ordered_libraries = OrderedDict.fromkeys(framework.libraries_from_vhdl_sources)

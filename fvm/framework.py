@@ -883,7 +883,7 @@ class fvmframework:
                   env        = self.env,
                   preexec_fn = os.setsid
                 )
-        
+
         def handle_sigint(signum, frame):
             self.logger.error("Ctrl+C detected")
             self.ctrl_c_pressed = True
@@ -1094,7 +1094,7 @@ class fvmframework:
                             warn = True
                         elif category == "success":
                             success = True
-        
+
         return err, warn, success
 
     def run_step(self, design, step):

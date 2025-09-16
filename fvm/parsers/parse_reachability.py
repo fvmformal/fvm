@@ -57,8 +57,8 @@ def unified_format_table(table):
             if isinstance(v, str) and '(' in v and ')' in v:
                 match = re.search(r'\(\s*(.*?)\s*\)', v)
                 if match:
-                    new_row[k] = v.split('(')[0].strip()  
-                    new_row['Percentage'] = match.group(1) 
+                    new_row[k] = v.split('(')[0].strip()
+                    new_row['Percentage'] = match.group(1)
                     continue
             new_row[k] = v
         if 'Percentage' not in new_row:
@@ -91,7 +91,7 @@ def unified_format_table(table):
         else:
             perc_value = float(perc_str.strip('%'))
             row['Status'] = "pass" if perc_value >= goal else "fail"
-        row['Goal'] = f"{goal:.1f}%" 
+        row['Goal'] = f"{goal:.1f}%"
 
     final_data = []
     for row in new_cleaned:
@@ -120,6 +120,6 @@ def print_table(table):
     print(f"\n{table['title']}\n")
     print(format_row({h: h for h in headers}))
     print("-" * sum(col_widths.values()) + "-" * (len(headers) * 3))
-    
+
     for row in table['data']:
         print(format_row(row))

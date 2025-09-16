@@ -1,4 +1,4 @@
-import re 
+import re
 
 def parse_targets_report(report_path):
     results = {}

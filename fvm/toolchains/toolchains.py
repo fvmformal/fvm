@@ -55,7 +55,7 @@ def get_linecheck_patterns(framework, step=None):
     module = importlib.import_module(f'fvm.toolchains.{framework.toolchain}')
     func_name = f"get_linecheck_{step.replace('.', '_')}"
     get_patterns_func = getattr(module, func_name, None)
-    
+
     if get_patterns_func is None:
         return {}
 
@@ -155,7 +155,7 @@ def show_step_summary(step_summary, error, warning, inconclusive=None, proven=No
 def show_friendliness_score(score):
     friendliness_console = Console(force_terminal=True, force_interactive=False,
                                 record=True)
-    
+
     table = Table(show_header=True)
     table.add_column("Friendliness", justify="center")
     table.add_row(f"{score:.2f}%", style="bold green")
@@ -242,7 +242,7 @@ def show_prove_summary(data, title="Property Summary"):
         items = "-"
         if category not in ["Proven", "Covered"] and has_items:
             items = ", ".join(info['items']) if info['items'] else "-"
-        
+
         style = category_colors.get(category, "")
         if has_items:
             table.add_row(category, count, items, style=style)

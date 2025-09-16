@@ -77,8 +77,8 @@ def pretty_summary(framework, logger):
                 result_str_for_table = ""
                 step_summary = framework.results[design][step].get('summary', None)
                 # Error/Warning summaries
-                if step_summary and ("Error" in step_summary or "Violation" in step_summary or 
-                                        "Violations" in step_summary or "Corruptible" in step_summary):
+                if step_summary and ("Error" in step_summary or "Violation" in step_summary or
+                                     "Violations" in step_summary or "Corruptible" in step_summary):
                     step_errors = step_summary.get('Error', {}).get('count', 0)
                     step_warnings = step_summary.get('Warning', {}).get('count', 0)
                     step_violation = step_summary.get('Violation', {}).get('count', 0)
@@ -114,7 +114,7 @@ def pretty_summary(framework, logger):
                         result_str_for_table += f"[bold white] {step_inconclusives}I[/bold white]"
                     if step_proven != 0:
                         result_str_for_table += f"[bold green] {step_proven}P[/bold green]"
-                    if (step_errors == 0 and step_warnings == 0 and step_violation == 0 and step_caution == 0 and 
+                    if (step_errors == 0 and step_warnings == 0 and step_violation == 0 and step_caution == 0 and
                         step_inconclusives == 0 and step_violations == 0 and step_cautions == 0 and step_proven == 0 and
                         step_corruptibles == 0 and step_incorruptibles == 0):
                         result_str_for_table += "[bold green]ok[/bold green]"
@@ -122,7 +122,7 @@ def pretty_summary(framework, logger):
                 elif "score" in framework.results[design][step]:
                     result_str_for_table += f"[bold green]{framework.results[design][step]['score']:.2f}%[/bold green]"
                 # Coverage summaries
-                elif isinstance(step_summary, list): 
+                elif isinstance(step_summary, list):
                     if step_summary and "Coverage Type" in step_summary[0]:
                         ## TODO: change status to follow this?
                         any_fail = any(row.get("Status") == "fail" for row in step_summary)

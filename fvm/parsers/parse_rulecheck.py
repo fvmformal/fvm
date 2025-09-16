@@ -7,20 +7,20 @@ def group_by_severity(data):
         'Violation': {'count': 0, 'checks': defaultdict(int)},
         'Caution': {'count': 0, 'checks': defaultdict(int)}
     }
-    
+
     for item in data:
         severity = item['Severity']
         type_name = item['Type']
-        
+
         if severity not in result:
             result[severity] = {'count': 0, 'checks': defaultdict(int)}
-        
+
         result[severity]['count'] += 1
         result[severity]['checks'][type_name] += 1
-    
+
     for severity in result:
         result[severity]['checks'] = dict(result[severity]['checks'])
-    
+
     return result
 
 def parse_type_and_severity(file_path):

@@ -1,7 +1,7 @@
 import uuid
 import json
 import os
-import shutil 
+import shutil
 import re
 from datetime import datetime
 
@@ -13,8 +13,8 @@ def generate_test_case(design_name, step, status="passed", start_time=None, stop
     Generate a test case structure for reports.
     """
     test_case_uuid = str(uuid.uuid4())
-    history_id = str(uuid.uuid4()) 
-    test_case_id = str(uuid.uuid4()) 
+    history_id = str(uuid.uuid4())
+    test_case_id = str(uuid.uuid4())
 
     full_name = f"fvm_out/{design_name}/{step}/{step}.log"
     name = f"{design_name}.{step}"
@@ -25,20 +25,20 @@ def generate_test_case(design_name, step, status="passed", start_time=None, stop
         summary_markdown = ""
         asserts_value = None
         covers_value = None
-        
+
         for key, value in property_summary.items():
-            if key == "Asserts": 
+            if key == "Asserts":
                 asserts_value = value
                 summary_markdown += f"- **{key}**: {value}\n"
-            elif key == "Covers": 
+            elif key == "Covers":
                 covers_value = value
                 summary_markdown += f"- **{key}**: {value}\n"
-            elif isinstance(value, dict): 
+            elif isinstance(value, dict):
                 if key == "Assertions":
                     for subkey, subvalue in value.items():
                         percentage = (subvalue / asserts_value) * 100
                         summary_markdown += f"  - **{subkey}**: {subvalue}/{asserts_value} ({percentage:.2f}%)\n"
-                elif key == "Cover":  
+                elif key == "Cover":
                     for subkey, subvalue in value.items():
                         percentage = (subvalue / covers_value) * 100
                         summary_markdown += f"  - **{subkey}**: {subvalue}/{covers_value} ({percentage:.2f}%)\n"
@@ -107,7 +107,7 @@ def generate_test_case(design_name, step, status="passed", start_time=None, stop
         if step != "prove.simcover" and step != "prove.formalcover":
             try:
                 output_attachment_file = f"fvm_out/dashboard/allure-results/{attachment_uuid}-attachment.log"
-                original_file = f"fvm_out/{design_name}/{step}/{step}.log" 
+                original_file = f"fvm_out/{design_name}/{step}/{step}.log"
                 shutil.copy(original_file, output_attachment_file)
             except FileNotFoundError:
                 return
@@ -123,7 +123,7 @@ def generate_test_case(design_name, step, status="passed", start_time=None, stop
             if step == 'reachability':
                 if reachability_html != None:
                     if os.path.exists(reachability_html):
-                        attachment_uuid = str(uuid.uuid4()) 
+                        attachment_uuid = str(uuid.uuid4())
                         try:
                             output_attachment_file = f"fvm_out/dashboard/allure-results/{attachment_uuid}-attachment.html"
                             original_file = reachability_html
@@ -131,7 +131,7 @@ def generate_test_case(design_name, step, status="passed", start_time=None, stop
                         except FileNotFoundError:
                             print(f"Error: Input log file {original_file} not found.")
                             return
-                        attachments.append(                        
+                        attachments.append(
                             {
                             "name": "reachability.html",
                             "source": f"{attachment_uuid}-attachment.html",
@@ -143,7 +143,7 @@ def generate_test_case(design_name, step, status="passed", start_time=None, stop
             if step == 'prove.formalcover':
                 if formal_reachability_html != None:
                     if os.path.exists(formal_reachability_html):
-                        attachment_uuid = str(uuid.uuid4()) 
+                        attachment_uuid = str(uuid.uuid4())
                         try:
                             output_attachment_file = f"fvm_out/dashboard/allure-results/{attachment_uuid}-attachment.html"
                             original_file = formal_reachability_html
@@ -151,7 +151,7 @@ def generate_test_case(design_name, step, status="passed", start_time=None, stop
                         except FileNotFoundError:
                             print(f"Error: Input log file {original_file} not found.")
                             return
-                        attachments.append(                        
+                        attachments.append(
                             {
                             "name": "formal_reachability.html",
                             "source": f"{attachment_uuid}-attachment.html",
@@ -168,7 +168,7 @@ def generate_test_case(design_name, step, status="passed", start_time=None, stop
                         except FileNotFoundError:
                             print(f"Error: Input log file {original_file} not found.")
                             return
-                        attachments.append(                        
+                        attachments.append(
                             {
                             "name": "formal_observability.html",
                             "source": f"{attachment_uuid}-attachment.html",
@@ -185,7 +185,7 @@ def generate_test_case(design_name, step, status="passed", start_time=None, stop
                         except FileNotFoundError:
                             print(f"Error: Input log file {original_file} not found.")
                             return
-                        attachments.append(                        
+                        attachments.append(
                             {
                             "name": "formal_signoff.html",
                             "source": f"{attachment_uuid}-attachment.html",
@@ -209,9 +209,9 @@ def generate_test_case(design_name, step, status="passed", start_time=None, stop
         steps = []
 
         for entry in properties.get("Proven", []):
-            assertion_name = entry.get("assertion", "unknown")  
-            vacuity_check = entry.get("vacuity_check", "unknown") 
-            entry_time = entry.get("time", 0)  
+            assertion_name = entry.get("assertion", "unknown")
+            vacuity_check = entry.get("vacuity_check", "unknown")
+            entry_time = entry.get("time", 0)
             step_in_steps ={
                 "name": "Assertion: " + assertion_name,  
                 "status": "broken" if vacuity_check == "failed" else "passed", 
@@ -226,7 +226,7 @@ def generate_test_case(design_name, step, status="passed", start_time=None, stop
             #        "name": "vacuity_check",
             #        "status": vacuity_check
             #    })
-        
+
         for entry in properties.get("Fired", []):
             steps.append({
                 "name": "Assertion: " + entry["assertion"],  
@@ -250,7 +250,7 @@ def generate_test_case(design_name, step, status="passed", start_time=None, stop
                 "start": start_time,
                 "stop": start_time + entry["time"] * 1000
             })
-           
+  
     else:
         steps = []
 
@@ -294,13 +294,13 @@ def parse_property_summary(file_path):
     if start_index == -1:
         summary["Error"] = "Property Summary section not found."
         return summary
-        
+
     summary_section = content[start_index + len(start_marker):]
     end_index = summary_section.find(end_marker)
     if end_index == -1:
         summary["Error"] = "End of Property Summary section not found."
         return summary
-        
+
     summary_section = summary_section[:end_index]
     current_category = None
     for line in summary_section.splitlines():
@@ -313,10 +313,10 @@ def parse_property_summary(file_path):
             value = int(value)
             if key == 'Assumes':
                 summary['Assumes'] = value
-                current_category = None  
+                current_category = None
             elif key == 'Asserts':
                 summary['Asserts'] = value
-                current_category = 'Assertions' 
+                current_category = 'Assertions'
             elif key == 'Covers':
                 summary['Covers'] = value
                 current_category = 'Cover'
@@ -328,7 +328,7 @@ def parse_property_summary(file_path):
         elif "# ----------------------------------------" in line:
             continue
         elif "# ========================================" in line:
-            current_category = None 
+            current_category = None
 
     return summary
 
@@ -341,7 +341,7 @@ def parse_log_to_json(log_file):
         "Vacuity Check Failed": [],
         "Uncoverable": []
     }
-    
+
     inconclusive_entries = {}
 
     pattern = re.compile(
@@ -357,7 +357,7 @@ def parse_log_to_json(log_file):
     with open(log_file, "r", encoding="utf-8") as file:
         for line in file:
             if "--------- Process Statistics ----------" in line:
-                break 
+                break
 
             match = pattern.search(line)
             if match:
@@ -379,13 +379,13 @@ def parse_log_to_json(log_file):
                 if category == "Vacuity Check Passed":
                     key = assertion
                     if key in inconclusive_entries:
-                        inconclusive_entries[key]["vacuity_check"] = "passed"  
-                        del inconclusive_entries[key]  
+                        inconclusive_entries[key]["vacuity_check"] = "passed"
+                        del inconclusive_entries[key]
                 elif category == "Vacuity Check Failed":
                     key = assertion
                     if key in inconclusive_entries:
-                        inconclusive_entries[key]["vacuity_check"] = "failed"  
-                        del inconclusive_entries[key]  
+                        inconclusive_entries[key]["vacuity_check"] = "failed"
+                        del inconclusive_entries[key]
                 else:
                     results[category].append(entry)
 
@@ -422,18 +422,18 @@ def property_summary(file_path):
         if "Property Summary" in line:
             in_property_summary = True
             i += 1
-            continue 
+            continue
 
         # If we are in the "Property Summary" section, process the lines
         if in_property_summary:
             if line.startswith("==="):
                 if i + 2 < len(lines) and lines[i + 1].strip() == "" and lines[i + 2].strip() == "":
-                    break 
+                    break
 
             # If we find a separation line (---), start capturing children
             if line.startswith("---"):
                 i += 1
-                continue 
+                continue
 
             # Skip empty lines
             if line == "":
@@ -449,7 +449,7 @@ def property_summary(file_path):
                 # If there is no current parent, it's a main property
                 if current_parent is None or lines[i - 1].startswith("==="):
                     log_data[property_name] = {'Count': property_count}
-                    current_parent = property_name 
+                    current_parent = property_name
                 else:
                     # If there is a current parent, it's a child property
                     if 'Children' not in log_data[current_parent]:
