@@ -120,7 +120,7 @@ def pretty_summary(framework, logger):
                         result_str_for_table += "[bold green]ok[/bold green]"
                 # Friendliness summary
                 elif "score" in framework.results[design][step]:
-                        result_str_for_table += f"[bold green]{framework.results[design][step]['score']:.2f}%[/bold green]"
+                    result_str_for_table += f"[bold green]{framework.results[design][step]['score']:.2f}%[/bold green]"
                 # Coverage summaries
                 elif isinstance(step_summary, list): 
                     if step_summary and "Coverage Type" in step_summary[0]:

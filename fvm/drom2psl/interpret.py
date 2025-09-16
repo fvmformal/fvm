@@ -228,26 +228,26 @@ def get_group_arguments(groupname, flattened_signal):
         name = get_wavelane_name(wavelane)
         # If the wavelane belongs to a group
         if name[:len(groupname)] == groupname:
-              # Get the data field
-              data = get_wavelane_data(wavelane)
-              if data is not None:
-                  ic(data, type(data))
-                  # Get the datatype
-                  datatype = get_wavelane_type(wavelane)
-                  # Get the data
-                  actualdata = data2list(data)
-                  ic(actualdata)
-                  # Remove anything between parentheses: we don't want data(0)
-                  # and data(1) to be different arguments
-                  non_paren_data = [remove_parentheses(d) for d in actualdata]
-                  ic(non_paren_data)
-                  # Remove duplicated arguments without losing ordering
-                  deduplicated_data = unique_list = list(dict.fromkeys(non_paren_data))
-                  ic(deduplicated_data)
-                  # Create a new list with each argument and its datatype
-                  args_with_type = [[d, datatype] for d in deduplicated_data]
-                  ic(args_with_type)
-                  group_arguments.extend(args_with_type)
+            # Get the data field
+            data = get_wavelane_data(wavelane)
+            if data is not None:
+                ic(data, type(data))
+                # Get the datatype
+                datatype = get_wavelane_type(wavelane)
+                # Get the data
+                actualdata = data2list(data)
+                ic(actualdata)
+                # Remove anything between parentheses: we don't want data(0)
+                # and data(1) to be different arguments
+                non_paren_data = [remove_parentheses(d) for d in actualdata]
+                ic(non_paren_data)
+                # Remove duplicated arguments without losing ordering
+                deduplicated_data = unique_list = list(dict.fromkeys(non_paren_data))
+                ic(deduplicated_data)
+                # Create a new list with each argument and its datatype
+                args_with_type = [[d, datatype] for d in deduplicated_data]
+                ic(args_with_type)
+                group_arguments.extend(args_with_type)
     return group_arguments
 
 def remove_parentheses(string):

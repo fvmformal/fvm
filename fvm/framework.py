@@ -564,7 +564,7 @@ class fvmframework:
         self.logger.add(sys.stderr, level=self.loglevel, format=LOGFORMAT)
 
         if ret :
-          self.exit_if_required(CHECK_FAILED)
+            self.exit_if_required(CHECK_FAILED)
 
         return ret
 
@@ -647,7 +647,7 @@ class fvmframework:
         reports.generate_allure(self, self.logger)
         err = self.check_errors()
         if err :
-          self.exit_if_required(CHECK_FAILED)
+            self.exit_if_required(CHECK_FAILED)
 
     def setup(self):
         for design in self.toplevel:

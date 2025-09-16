@@ -53,34 +53,34 @@ from icecream import ic
 
 def generator(FILES, outdir = None, verbose = True, debug = False):
 
-  TRAVERSE = debug
+    TRAVERSE = debug
 
-  # If FILES is a single file, convert it to a list
-  if isinstance(FILES, str):
-      FILES = [FILES]
+    # If FILES is a single file, convert it to a list
+    if isinstance(FILES, str):
+        FILES = [FILES]
 
-  # Disable icecream if we are not debugging
-  if DEBUG == False:
-      ic.disable
+    # Disable icecream if we are not debugging
+    if DEBUG == False:
+        ic.disable
 
-  # Set custom prefix for icecream
-  ic.configureOutput(prefix='Debug | ')
+    # Set custom prefix for icecream
+    ic.configureOutput(prefix='Debug | ')
 
-#  ic("Test icecream")
-#  print("Test print")
-#  info("Test info")
-#  warning("Test warning")
-#  error("Test error")
+    #  ic("Test icecream")
+    #  print("Test print")
+    #  info("Test info")
+    #  warning("Test warning")
+    #  error("Test error")
 
 
-  #ic(args)
-  ic(FILES)
+    #ic(args)
+    ic(FILES)
 
-  # Open the input files
-  for FILE in FILES :
-    f = open(FILE)
-    full_filename = Path(FILE).resolve()
-    ic(full_filename)
+    # Open the input files
+    for FILE in FILES :
+        f = open(FILE)
+        full_filename = Path(FILE).resolve()
+        ic(full_filename)
 
 
     # Pass the input file through the linter
@@ -125,22 +125,22 @@ def generator(FILES, outdir = None, verbose = True, debug = False):
     ic(source)
 
     try:
-      ok = True
-      dict = yaml.load(f, Loader=yaml.SafeLoader)
+        ok = True
+        dict = yaml.load(f, Loader=yaml.SafeLoader)
     except yaml.YAMLError:
-      ok = False
+        ok = False
 
     if not ok:
-      error("Invalid YAML syntax in file: "+str(FILE))
+        error("Invalid YAML syntax in file: "+str(FILE))
     if ok:
-      ic(dict)
+        ic(dict)
 
     if ok:
-      if dict is None:
-        error("Input JSON file is empty!")
-        empty_json = True
-      else:
-        empty_json = False
+        if dict is None:
+            error("Input JSON file is empty!")
+            empty_json = True
+        else:
+            empty_json = False
 
     #debug("Extracting dictionary interpreting it as JSON")
     #dict = json.load(f)
@@ -151,9 +151,9 @@ def generator(FILES, outdir = None, verbose = True, debug = False):
     # this time into a string
 
     if ok:
-      ic("Rendering input file -> string -> wavedrompy")
-      with open(FILE, "r") as f:
-        string = f.read()
+        ic("Rendering input file -> string -> wavedrompy")
+        with open(FILE, "r") as f:
+            string = f.read()
 
     # Close the input file
     f.close()
@@ -166,7 +166,7 @@ def generator(FILES, outdir = None, verbose = True, debug = False):
 
     #detect_groups()
     if ok:
-      ic("Traversing dictionary")
+        ic("Traversing dictionary")
 
     if TRAVERSE:
         print("DEBUG: Interpreting dict")
@@ -174,8 +174,8 @@ def generator(FILES, outdir = None, verbose = True, debug = False):
 
     # Process dictionary
     if ok:
-      ic("Getting the signal list")
-      signal, ok = get_signal(dict)
+        ic("Getting the signal list")
+        signal, ok = get_signal(dict)
 
     #if error == False and DEBUG :
     #    ic("Listing signal elements")
@@ -193,12 +193,12 @@ def generator(FILES, outdir = None, verbose = True, debug = False):
         ic(groups)
 
     if ok:
-      ic("Flattening signal")
-      flattened_signal, ok = flatten("", signal, None)
+        ic("Flattening signal")
+        flattened_signal, ok = flatten("", signal, None)
 
     if ok:
-      ic(flattened_signal)
-      ic("Detected", len(flattened_signal), "wavelanes")
+        ic(flattened_signal)
+        ic("Detected", len(flattened_signal), "wavelanes")
 
     if ok:
         ic("Checking wavelanes in flattened signal")
@@ -345,8 +345,8 @@ def generator(FILES, outdir = None, verbose = True, debug = False):
                 if line != prev_line:
                     if prev_line != '':
                         prev_cycles_text = gen_sere_repetition(prev_cycles,
-                                                               prev_or_more,
-                                                               True)
+                                                                prev_or_more,
+                                                                True)
                         vunit += prev_cycles_text + '\n'
 
                     vunit += line
@@ -369,7 +369,7 @@ def generator(FILES, outdir = None, verbose = True, debug = False):
             # After the for loop finishes, we will have the last cycles to
             # write, so let's write them:
             prev_cycles_text = gen_sere_repetition(prev_cycles, prev_or_more,
-                                                   False)
+                                                    False)
             if prev_line != '':
                 vunit += prev_cycles_text + '\n'
 
@@ -419,14 +419,14 @@ def generator(FILES, outdir = None, verbose = True, debug = False):
     # there are any wavedrom-specific errors in an otherwise correct JSON
     if ok:
         if (not empty_json) and DEBUG:
-          ic("Rendering the JSON into an .svg")
-          render = wavedrom.render(string)
-          ic(render)
-          ic(full_filename)
-          svgfilename = Path(full_filename).with_suffix('.svg')
-          ic(svgfilename)
-          if DEBUG:
-              render.saveas(svgfilename)
+            ic("Rendering the JSON into an .svg")
+            render = wavedrom.render(string)
+            ic(render)
+            ic(full_filename)
+            svgfilename = Path(full_filename).with_suffix('.svg')
+            ic(svgfilename)
+            if DEBUG:
+                render.saveas(svgfilename)
 
     #    for i in range(len(value)):
     #        print("i:", i, "value[i]:", value[i])
@@ -434,18 +434,18 @@ def generator(FILES, outdir = None, verbose = True, debug = False):
 
     # Return different values to the shell, depending on the type of error
     if not ok:
-      retval = 1
+        retval = 1
     elif empty_json:
-      retval = 2
+        retval = 2
     else:
-      retval = 0
+        retval = 0
 
     if retval != 0 :
-      error("At least one error!")
+        error("At least one error!")
     else:
-      info("No errors detected!")
+        info("No errors detected!")
 
-  return(retval)
+    return(retval)
 
 
 def format_group_arguments(group_arguments):
