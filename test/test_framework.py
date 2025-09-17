@@ -133,13 +133,13 @@ def test_logger_twice() :
     fvm.log("error", "Error message")
     retval = fvm.check_errors()
     print(f'{retval=}')
-    assert retval == True
+    assert retval is True
 
     # Second time we should still see the error from before. If we don't, it
     # means we inadvertently deleted the message counts
     fvm.log("warning", "Warning message")
     retval = fvm.check_errors()
     print(f'{retval=}')
-    assert retval == True
+    assert retval is True
 
 

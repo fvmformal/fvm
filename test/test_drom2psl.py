@@ -66,6 +66,6 @@ def test_output_matches_expected(file, expected):
     outdir = os.path.join(os.getcwd(), "test", "drom2psl")
     actual = os.path.join(outdir, os.path.basename(Path(file).with_suffix('.psl')))
     retval = generator(file, outdir = outdir)
-    assert retval == False
-    assert compare_files_ignoring_comments(actual, expected) == True
+    assert retval is False
+    assert compare_files_ignoring_comments(actual, expected) is True
 

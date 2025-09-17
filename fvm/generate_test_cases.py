@@ -94,7 +94,7 @@ def generate_test_case(design_name, step, status="passed", start_time=None, stop
                 "message": f"The FVM step {step} failed for design '{design_name}'.",
                 "trace": "Failure due to critical issues or build errors."
             }
-        elif status.lower() == "passed" and step == "friendliness" and friendliness_score != None:
+        elif status.lower() == "passed" and step == "friendliness" and friendliness_score is not None:
             friendliness_score = round(friendliness_score, 2)
             status_details = {
                 "known": False,
@@ -121,7 +121,7 @@ def generate_test_case(design_name, step, status="passed", start_time=None, stop
             ]
 
             if step == 'reachability':
-                if reachability_html != None:
+                if reachability_html is not None:
                     if os.path.exists(reachability_html):
                         attachment_uuid = str(uuid.uuid4())
                         try:
@@ -141,7 +141,7 @@ def generate_test_case(design_name, step, status="passed", start_time=None, stop
         else:
             attachments = []
             if step == 'prove.formalcover':
-                if formal_reachability_html != None:
+                if formal_reachability_html is not None:
                     if os.path.exists(formal_reachability_html):
                         attachment_uuid = str(uuid.uuid4())
                         try:
@@ -158,7 +158,7 @@ def generate_test_case(design_name, step, status="passed", start_time=None, stop
                             "type": "text/html"
                             }
                         )
-                if observability_html != None:
+                if observability_html is not None:
                     if os.path.exists(observability_html):
                         attachment_uuid = str(uuid.uuid4())
                         try:
@@ -175,7 +175,7 @@ def generate_test_case(design_name, step, status="passed", start_time=None, stop
                             "type": "text/html"
                             }
                         )
-                if formal_signoff_html != None:
+                if formal_signoff_html is not None:
                     if os.path.exists(formal_signoff_html):
                         attachment_uuid = str(uuid.uuid4())
                         try:

@@ -60,7 +60,7 @@ def generator(FILES, outdir = None, verbose = True, debug = False):
         FILES = [FILES]
 
     # Disable icecream if we are not debugging
-    if DEBUG == False:
+    if DEBUG is False:
         ic.disable
 
     # Set custom prefix for icecream
@@ -361,7 +361,7 @@ def generator(FILES, outdir = None, verbose = True, debug = False):
                 #   the merged line must allow repeat
                 else:
                     prev_cycles += cycles
-                    if prev_or_more == True or or_more == True:
+                    if prev_or_more is True or or_more is True:
                         prev_or_more = True
                     else:
                         prev_or_more = False
