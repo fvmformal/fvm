@@ -1098,7 +1098,7 @@ class fvmframework:
             run_stdout, run_stderr, err = self.steps.steps[step]["run"](self, path)
             logfile = f'{path}/{step}/{step}.log'
             self.logger.info(f'{step=}, finished, output written to {logfile}')
-            with open(logfile, 'w') as f :
+            with open(logfile, 'w', encoding='utf-8') as f :
                 f.write(run_stdout)
                 f.write(run_stderr)
 
@@ -1139,7 +1139,7 @@ class fvmframework:
                     err = self.steps.post_steps[step][post_step]["run"](self, path)
                     logfile = f'{path}/{step}.log'
                     self.logger.info(f'{step}.{post_step}, finished, output written to {logfile}')
-                    #with open(logfile, 'w') as f :
+                    #with open(logfile, 'w', encoding='utf-8') as f :
                     #    f.write(run_stdout)
                     #    f.write(run_stderr)
                 else:

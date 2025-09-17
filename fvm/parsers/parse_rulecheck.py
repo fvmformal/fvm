@@ -36,7 +36,7 @@ def group_by_severity(data):
 
     for severity, info in result.items():
         info['checks'] = dict(info['checks'])
-    
+
     return result
 
 def parse_type_and_severity(file_path):

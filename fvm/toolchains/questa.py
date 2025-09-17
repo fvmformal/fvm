@@ -78,7 +78,7 @@ def define_steps(framework, steps):
     steps.add_post_step(framework, 'prove', 'simcover', setup_prove_simcover, run_prove_simcover)
 
 def create_f_file(filename, sources):
-    with open(filename, "w") as f:
+    with open(filename, "w", encoding='utf-8') as f:
         for src in sources:
             print(src, file=f)
 
@@ -100,7 +100,7 @@ def gencompilescript(framework, filename, path):
 
     """ This is used as header for the other scripts, since we need to have
     a compiled netlist in order to do anything"""
-    with open(path + '/' + filename, "w") as f:
+    with open(path + '/' + filename, "w", encoding='utf-8') as f:
         print('onerror exit', file=f)
         ordered_libraries = OrderedDict.fromkeys(framework.libraries_from_vhdl_sources)
         for lib in ordered_libraries:
@@ -146,7 +146,7 @@ def run_qverify_step(framework, design, step):
 
         logfile = f'{report_path}/{step}.log'
         framework.logger.info(f'{step=}, {tool=}, finished, output written to {logfile}')
-        with open(logfile, 'w') as f :
+        with open(logfile, 'w', encoding='utf-8') as f :
             f.write(cmd_stdout)
             f.write(cmd_stderr)
         # We cannot exit here immediately because then we wouldn't
@@ -205,7 +205,7 @@ def setup_lint(framework, path):
     print("**** setup lint ****")
     filename = "lint.do"
     gencompilescript(framework, filename, path)
-    with open(f'{path}/{filename}', "a") as f:
+    with open(f'{path}/{filename}', "a", encoding='utf-8') as f:
         print(f'lint methodology {framework.get_tool_flags("lint methodology")}', file=f)
         print(f'lint run -d {framework.current_toplevel} {framework.get_tool_flags("lint run")} {framework.generic_args}', file=f)
         print('exit', file=f)
@@ -234,7 +234,7 @@ def setup_friendliness(framework, path):
     analyze to determine the design's formal-friendliness"""
     filename = "friendliness.do"
     gencompilescript(framework, filename, path)
-    with open(path+'/'+filename, "a") as f:
+    with open(path+'/'+filename, "a", encoding='utf-8') as f:
         print(f'autocheck compile {framework.get_tool_flags("autocheck compile")} -d {framework.current_toplevel} {framework.generic_args}', file=f)
         print('exit', file=f)
 
@@ -263,7 +263,7 @@ def setup_rulecheck(framework, path):
     """Generate script to run AutoCheck"""
     filename = "rulecheck.do"
     gencompilescript(framework, filename, path)
-    with open(path+'/'+filename, "a") as f:
+    with open(path+'/'+filename, "a", encoding='utf-8') as f:
         print('autocheck report inconclusives', file=f)
         for line in framework.init_reset:
             print(line, file=f)
@@ -297,7 +297,7 @@ def setup_xverify(framework, path):
     filename = "xverify.do"
     """Generate script to run X-Check"""
     gencompilescript(framework, filename, path)
-    with open(path+'/'+filename, "a") as f:
+    with open(path+'/'+filename, "a", encoding='utf-8') as f:
         for line in framework.init_reset:
             print(line, file=f)
         print(f'xcheck compile {framework.get_tool_flags("xcheck compile")} -d {framework.current_toplevel} {framework.generic_args}', file=f)
@@ -333,7 +333,7 @@ def setup_reachability(framework, path):
     # https://git.woden.us.es/eda/fvm/-/issues/37#note_4252)
     """Generate a script to run CoverCheck"""
     gencompilescript(framework, filename, path)
-    with open(path+'/'+filename, "a") as f:
+    with open(path+'/'+filename, "a", encoding='utf-8') as f:
         for line in framework.init_reset:
             print(line, file=f)
         print(f'covercheck compile {framework.get_tool_flags("covercheck compile")} -d {framework.current_toplevel} {framework.generic_args}', file=f)
@@ -378,7 +378,7 @@ def get_linecheck_reachability():
     return patterns
 
 def gen_reset_config(framework, filename, path):
-    with open(path+'/'+filename, "a") as f:
+    with open(path+'/'+filename, "a", encoding='utf-8') as f:
         # TODO : let the user specify clock names, polarities, sync/async,
         # clock domains and reset domains
         # Clock trees can be both active high and low when some logic is
@@ -409,7 +409,7 @@ def gen_reset_config(framework, filename, path):
             print(string, file=f)
 
 def gen_reset_domain_config(framework, filename, path):
-    with open(path+'/'+filename, "a") as f:
+    with open(path+'/'+filename, "a", encoding='utf-8') as f:
         for domain in framework.reset_domains:
             for signal in domain["port_list"]:
                 string = f'netlist port resetdomain {signal}'
@@ -432,7 +432,7 @@ def gen_reset_domain_config(framework, filename, path):
                 print(string, file=f)
 
 def gen_clock_config(framework, filename, path):
-    with open(path+'/'+filename, "a") as f:
+    with open(path+'/'+filename, "a", encoding='utf-8') as f:
         for clock in framework.clocks:
             string = f'netlist clock {clock["name"]}'
             if clock["module"] is not None:
@@ -453,7 +453,7 @@ def gen_clock_config(framework, filename, path):
 
 # This is questa-specific
 def gen_clock_domain_config(framework, filename, path):
-    with open(path+'/'+filename, "a") as f:
+    with open(path+'/'+filename, "a", encoding='utf-8') as f:
         for domain in framework.clock_domains:
             string = 'netlist port domain'
             for signal in domain["port_list"]:
@@ -494,7 +494,7 @@ def setup_resets(framework, path):
     gen_clock_domain_config(framework, filename, path)
     gen_reset_config(framework, filename, path)
     gen_reset_domain_config(framework, filename, path)
-    with open(path+'/'+filename, "a") as f:
+    with open(path+'/'+filename, "a", encoding='utf-8') as f:
         print(f'rdc run -d {framework.current_toplevel} {framework.get_tool_flags("rdc run")} {framework.generic_args}', file=f)
         print(f'rdc generate report reset_report.rpt {framework.get_tool_flags("rdc generate report")};', file=f)
         print('rdc generate tree -reset reset_tree.rpt;', file=f)
@@ -530,7 +530,7 @@ def setup_clocks(framework, path):
     gen_clock_domain_config(framework, filename, path)
     gen_reset_config(framework, filename, path)
     gen_reset_domain_config(framework, filename, path)
-    with open(path+'/'+filename, "a") as f:
+    with open(path+'/'+filename, "a", encoding='utf-8') as f:
         # TODO : let the user specify clock names, clock domains and reset domains
         # TODO : also look at reconvergence, and other warnings detected
         #print('netlist clock clk -period 50', file=f)
@@ -578,7 +578,7 @@ def setup_prove(framework, path):
     # Also, adding the clock domain make propcheck throw errors because
     # output ports in the clock domain cannot be constrained
     gen_clock_config(framework, filename, path)
-    with open(path+'/'+filename, "a") as f:
+    with open(path+'/'+filename, "a", encoding='utf-8') as f:
         print('', file=f)
         print('## Run PropCheck', file=f)
         #print('log_info "***** Running formal compile (compiling formal model)..."', file=f)
@@ -812,7 +812,7 @@ def setup_prove_formalcover(framework, path):
     filename = "prove.formalcover.do"
     property_summary = generate_test_cases.parse_property_summary(f'{path}/prove/prove.log')
     inconclusives = property_summary.get('Assertions', {}).get('Inconclusive', 0)
-    with open(f"{path}/{filename}", "a") as f:
+    with open(f"{path}/{filename}", "a", encoding='utf-8') as f:
         print('onerror exit', file=f)
         print(f"formal load db {path}/prove/propcheck.db",file=f)
         # TODO: Delete is_disabled
