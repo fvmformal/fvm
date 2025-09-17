@@ -134,9 +134,9 @@ def run_qverify_step(framework, design, step):
     open_gui = False
     err = False
 
-    if framework.list == True :
+    if framework.list is True :
         framework.logger.info(f'Available step: {step}. Tool: {tool}, command = {" ".join(cmd)}')
-    elif framework.guinorun == True :
+    elif framework.guinorun is True :
         framework.logger.info(f'{framework.guinorun=}, will not run {step=} with {tool=}')
     else :
         framework.logger.trace(f'command: {" ".join(cmd)=}')
@@ -153,18 +153,15 @@ def run_qverify_step(framework, design, step):
         # be able to open the GUI if there is any error, but we can
         # record the error and propagate it outside the function
         if stdout_err or stderr_err:
-            if framework.is_failure_allowed(design, step) == False:
+            if framework.is_failure_allowed(design, step) is False:
                 err = True
-        if stdout_err or stderr_err:
-            if framework.is_failure_allowed(design, step) == False:
-                framework.results[design][step]['status'] = 'fail'
-            else:
-                framework.results[design][step]['status'] = 'broken'
+            framework.results[design][step]['status'] = 'fail'
         else:
             framework.results[design][step]['status'] = 'pass'
+
         if framework.gui :
             open_gui = True
-    if framework.guinorun and framework.list == False :
+    if framework.guinorun and framework.list is False :
         open_gui = True
         # TODO : This is provisional because the function returns
         # cmd_stdout and cmd_stderr. It may be ok because in
@@ -725,13 +722,11 @@ def run_prove_simcover(framework, path):
     # Check for errors
     err = False
     if stdout_err or stderr_err:
-        if framework.is_failure_allowed(design, 'prove.simcover') == False:
+        if framework.is_failure_allowed(design, 'prove.simcover') is False:
             err = True
-    if stdout_err or stderr_err:
-        if framework.is_failure_allowed(design, 'prove.simcover') == False:
-            framework.results[design]['prove.simcover']['status'] = 'fail'
-        else:
-            framework.results[design]['prove.simcover']['status'] = 'broken'
+        framework.results[design]['prove.simcover']['status'] = 'fail'
+    else:
+        framework.results[design]['prove.simcover']['status'] = 'pass'
 
     # Generate simcover summary
     path = f'{framework.outdir}/{framework.current_toplevel}/prove.simcover'
@@ -749,13 +744,9 @@ def run_prove_simcover(framework, path):
     # Check for errors
     err = False
     if stdout_err or stderr_err:
-        if framework.is_failure_allowed(design, 'prove.simcover') == False:
+        if framework.is_failure_allowed(design, 'prove.simcover') is False:
             err = True
-    if stdout_err or stderr_err:
-        if framework.is_failure_allowed(design, 'prove.simcover') == False:
-            framework.results[design]['prove.simcover']['status'] = 'fail'
-        else:
-            framework.results[design]['prove.simcover']['status'] = 'broken'
+        framework.results[design]['prove.simcover']['status'] = 'fail'
     else:
         framework.results[design]['prove.simcover']['status'] = 'pass'
 
@@ -778,13 +769,9 @@ def run_prove_simcover(framework, path):
     # Check for errors
     err = False
     if stdout_err or stderr_err:
-        if framework.is_failure_allowed(design, 'prove.simcover') == False:
+        if framework.is_failure_allowed(design, 'prove.simcover') is False:
             err = True
-    if stdout_err or stderr_err:
-        if framework.is_failure_allowed(design, 'prove.simcover') == False:
-            framework.results[design]['prove.simcover']['status'] = 'fail'
-        else:
-            framework.results[design]['prove.simcover']['status'] = 'broken'
+        framework.results[design]['prove.simcover']['status'] = 'fail'
     else:
         framework.results[design]['prove.simcover']['status'] = 'pass'
 

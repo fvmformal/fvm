@@ -1031,7 +1031,7 @@ class fvmframework:
         for line in result.splitlines() :
             err, warn, success = self.linecheck(line, step)
 
-            if self.is_failure_allowed(design, step) == True and err:
+            if self.is_failure_allowed(design, step) is True and err:
                 warn = True
                 err = False
             # If we are in verbose mode, still check if there are errors /
@@ -1109,7 +1109,7 @@ class fvmframework:
         if self.ctrl_c_pressed is True:
             self.exit_if_required(KEYBOARD_INTERRUPT)
 
-        if err == False and step in self.steps.post_steps:
+        if err is False and step in self.steps.post_steps:
             for post_step in self.steps.post_steps[step]:
                 self.steps.post_steps[step][post_step]["setup"](self, path)
         # TODO : return output values
