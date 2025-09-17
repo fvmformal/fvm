@@ -250,3 +250,4 @@ def show_prove_summary(data, title="Property Summary"):
             table.add_row(category, count, style=style)
 
     console.print(table)
+    
