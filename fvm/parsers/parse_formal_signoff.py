@@ -1,6 +1,22 @@
+"""
+Parser for formal signoff reports.
+
+This module provides functions to parse the coverage tables and convert them
+into a unified coverage table format.
+
+It is specifically for Questa PropCheck results.
+"""
 import re
 
 def parse_coverage_table(html):
+    """
+    Parse formal signoff tables from HTML content.
+
+    :param html: HTML string containing coverage tables.
+    :type html: str
+    :return: A list of parsed tables with titles and row data.
+    :rtype: list[dict[str, list[dict[str, str]]]]
+    """
     tables = []
 
     button_pattern = re.compile(r"<button.*?>(.*?)</button>", re.DOTALL)
@@ -28,21 +44,36 @@ def parse_coverage_table(html):
     return tables
 
 def filter_coverage_tables(tables):
+    """
+    Filter coverage tables to select only the design summary,
+    not the individual module summaries.
+
+    :param tables: List of coverage tables with titles and data.
+    :type tables: list[dict]
+    :return: Filtered list of coverage tables.
+    :rtype: list[dict]
+    """
     filtered = [t for t in tables if t['title'].startswith('Formal Coverage Summary for Design')]
     return filtered if filtered else [tables[0]] if tables else []
 
 def add_total_field(table):
-    total_row = {key: 0 for key in table['data'][0].keys() if key not in ['Coverage Type', 'Covered (P)']}
+    """
+    Add a total row to the coverage table
+
+    :param table: A coverage table with parsed row data.
+    :type table: dict
+    :return: The input table with an additional total row.
+    :rtype: dict
+    """
+    total_row = {key: 0 for key in table['data'][0].keys() 
+                 if key not in ['Coverage Type', 'Covered (P)']}
     total_covered = 0
     total_possible = 0
 
     for row in table['data']:
         for key in total_row:
-            try:
-                total_row[key] += int(re.search(r'\d+', row[key]).group()) if re.search(r'\d+', row[key]) else 0
-            except ValueError:
-                pass
-
+            match = re.search(r'\d+', row[key])
+            total_row[key] += int(match.group()) if match else 0
         # Extraer valores de Covered (P)
         covered_match = re.search(r'(\d+)', row['Covered (P)'])
         if covered_match:
@@ -62,7 +93,20 @@ def add_total_field(table):
     return table
 
 def unified_format_table(table, goal=90.0):
-    """Convert coverage summary table into unified format."""
+    """
+    Convert the formal signoff table into the unified coverage table format.
+
+    This function reformats the columns of a coverage summary into a standard
+    schema including fields like status, totals, covered values, and
+    percentages. The ``goal`` parameter defines the pass/fail threshold.
+
+    :param table: Parsed coverage table.
+    :type table: dict
+    :param goal: Coverage percentage required to mark a row as "pass".
+    :type goal: float, optional
+    :return: Reformatted coverage data with unified schema.
+    :rtype: list[dict]
+    """    
     final_data = []
 
     for row in table["data"]:
@@ -75,8 +119,7 @@ def unified_format_table(table, goal=90.0):
         excluded = int(row.get("Excluded", 0))
 
         covered = total - uncovered - excluded
-        if covered < 0:
-            covered = 0
+        covered = max(covered, 0)
 
         if total == 0:
             percentage = "N/A"
