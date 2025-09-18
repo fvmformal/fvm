@@ -1,3 +1,11 @@
+"""
+Parser for simulation coverage reports.
+
+This module provides functions to parse the coverage tables and convert them
+into a unified coverage table format.
+
+It is specifically for Questa VSim results.
+"""
 import re
 
 def parse_coverage_report(input_file):
@@ -43,7 +51,9 @@ def parse_coverage_report(input_file):
                 percentage = match.group(1) if match.group(1) else "-"
                 covered = int(match.group(2))
                 total = int(match.group(3))
-                coverage_data[headers[i]] = {"percentage": percentage, "covered": covered, "total": total}
+                coverage_data[headers[i]] = {"percentage": percentage,
+                                             "covered": covered,
+                                             "total": total}
             else:
                 coverage_data[headers[i]] = None if values[i] == '-' else values[i]
 
@@ -82,7 +92,7 @@ def sum_coverage_data(coverage_results):
     for key, data in sum_totals.items():
         if data["total"] > 0:
             percentage = (data["covered"] / data["total"]) * 100
-            sum_totals[key]["percentage"] = f"{percentage:.2f}%"
+            data["percentage"] = f"{percentage:.2f}%"
 
     # Add Grand Total
     if grand_total > 0:
@@ -102,7 +112,12 @@ def sum_coverage_data(coverage_results):
     return sorted_totals
 
 def unified_format_table(table, goal=90.0):
-    """Convert coverage summary table into unified format."""
+    """Convert coverage summary table into unified table format.
+    
+    :param table: Coverage summary table as returned by sum_coverage_data.
+    :param goal: Coverage goal percentage.
+    :return: List of dictionaries with unified coverage data format.
+    """
     final_data = []
 
     for cov_type, values in table.items():

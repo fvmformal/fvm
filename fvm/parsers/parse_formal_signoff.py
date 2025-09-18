@@ -65,7 +65,7 @@ def add_total_field(table):
     :return: The input table with an additional total row.
     :rtype: dict
     """
-    total_row = {key: 0 for key in table['data'][0].keys() 
+    total_row = {key: 0 for key in table['data'][0].keys()
                  if key not in ['Coverage Type', 'Covered (P)']}
     total_covered = 0
     total_possible = 0
@@ -106,7 +106,7 @@ def unified_format_table(table, goal=90.0):
     :type goal: float, optional
     :return: Reformatted coverage data with unified schema.
     :rtype: list[dict]
-    """    
+    """
     final_data = []
 
     for row in table["data"]:
