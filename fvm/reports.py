@@ -413,7 +413,7 @@ def generate_reports(framework, logger):
             shutil.rmtree(framework.reportdir)
 
     os.makedirs(framework.resultsdir, exist_ok=True)
-    with open(xmlfile, 'w') as f:
+    with open(xmlfile, 'w', encoding="utf-8") as f:
         f.write(xml_string)
 
     # TODO : move this to generate_html_reports function

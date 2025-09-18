@@ -46,7 +46,7 @@ def test_retval(file, expected):
 def remove_comments(file, comment_string = "--"):
     comments_removed = []
 
-    with open(file, 'r') as f:
+    with open(file, 'r', encoding="utf-8") as f:
         for line in f:
             if not line.strip().startswith(comment_string):
                 comments_removed.append(line)

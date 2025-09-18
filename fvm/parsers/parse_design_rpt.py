@@ -4,7 +4,7 @@ import math
 def get_design_summary(filename):
     summary = []
     found = False
-    with open(filename, "r") as f:
+    with open(filename, "r", encoding="utf-8") as f:
         # Get all lines between "Design Summary" and
         # "User-specified Constant Bits"
         for line in f:

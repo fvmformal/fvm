@@ -194,7 +194,7 @@ def generate_test_case(design_name, step, status="passed", start_time=None, stop
                         )
             attachment_uuid = str(uuid.uuid4())
             output_attachment_file = f"fvm_out/dashboard/allure-results/{attachment_uuid}-attachment.log"
-            with open(output_attachment_file, "w") as log_file:
+            with open(output_attachment_file, "w", encoding="utf-8") as log_file:
                 log_file.write(stdout)
             attachments.append(
                 {
@@ -276,7 +276,7 @@ def generate_test_case(design_name, step, status="passed", start_time=None, stop
         test_case["attachments"] = attachments
 
     output_file = f"fvm_out/dashboard/allure-results/{test_case_uuid}-result.json"
-    with open(output_file, 'w') as json_file:
+    with open(output_file, 'w', encoding="utf-8") as json_file:
         json.dump(test_case, json_file, indent=2)
 
 def parse_property_summary(file_path):
@@ -287,7 +287,7 @@ def parse_property_summary(file_path):
     start_marker = "# ========================================\n# Property Summary                   Count\n# ========================================\n"
     end_marker = "# Message"
 
-    with open(file_path, 'r') as file:
+    with open(file_path, 'r', encoding="utf-8") as file:
         content = file.read()
 
     start_index = content.find(start_marker)
@@ -411,7 +411,7 @@ def property_summary(file_path):
     # Variables to handle the hierarchy
     current_parent = None
 
-    with open(file_path, 'r') as file:
+    with open(file_path, 'r', encoding="utf-8") as file:
         lines = file.readlines()
 
     i = 0

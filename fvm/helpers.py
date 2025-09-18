@@ -30,7 +30,7 @@ def readable_time(seconds):
     return ret
 
 def insert_line_before_target(file, target_line, line_to_insert):
-    with open(file, 'r') as f:
+    with open(file, 'r', encoding="utf-8") as f:
         lines = f.readlines()
 
     new_lines = []
@@ -39,11 +39,11 @@ def insert_line_before_target(file, target_line, line_to_insert):
             new_lines.append(line_to_insert + '\n')
         new_lines.append(line)
 
-    with open(file, 'w') as f:
+    with open(file, 'w', encoding="utf-8") as f:
         f.writelines(new_lines)
 
 def insert_line_after_target(file, target_line, line_to_insert):
-    with open(file, 'r') as f:
+    with open(file, 'r', encoding="utf-8") as f:
         lines = f.readlines()
 
     new_lines = []
@@ -52,6 +52,6 @@ def insert_line_after_target(file, target_line, line_to_insert):
         if line.strip() == target_line:
             new_lines.append(line_to_insert + '\n')
 
-    with open(file, 'w') as f:
+    with open(file, 'w', encoding="utf-8") as f:
         f.writelines(new_lines)
 

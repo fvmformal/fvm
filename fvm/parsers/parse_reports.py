@@ -1,7 +1,7 @@
 import re
 
 def parse_formal_reachability_report_to_html(input_file, output_file="report.html"):
-    with open(input_file, "r") as file:
+    with open(input_file, "r", encoding="utf-8") as file:
         lines = file.readlines()
 
     html_content = []
@@ -223,11 +223,11 @@ def parse_formal_reachability_report_to_html(input_file, output_file="report.htm
     html_content.append("</body>")
     html_content.append("</html>")
 
-    with open(output_file, "w") as output:
+    with open(output_file, "w", encoding="utf-8") as output:
         output.write("\n".join(html_content))
 
 def parse_formal_observability_report_to_html(input_file, output_file="report.html"):
-    with open(input_file, "r") as file:
+    with open(input_file, "r", encoding="utf-8") as file:
         lines = file.readlines()
 
     html_content = []
@@ -470,11 +470,11 @@ def parse_formal_observability_report_to_html(input_file, output_file="report.ht
     html_content.append("</div>")
     html_content.append("</body></html>")
 
-    with open(output_file, "w") as output:
+    with open(output_file, "w", encoding="utf-8") as output:
         output.write("\n".join(html_content))
 
 def parse_reachability_report_to_html(input_file, output_file="report.html"):
-    with open(input_file, "r") as file:
+    with open(input_file, "r", encoding="utf-8") as file:
         lines = file.readlines()
 
     html_content = []
@@ -610,11 +610,11 @@ def parse_reachability_report_to_html(input_file, output_file="report.html"):
     html_content.append("</body>")
     html_content.append("</html>")
 
-    with open(output_file, "w") as output:
+    with open(output_file, "w", encoding="utf-8") as output:
         output.write("\n".join(html_content))
 
 def parse_formal_signoff_report_to_html(input_file, output_file="report.html"):
-    with open(input_file, "r") as file:
+    with open(input_file, "r", encoding="utf-8") as file:
         lines = file.readlines()
 
     html_content = []
@@ -864,5 +864,5 @@ def parse_formal_signoff_report_to_html(input_file, output_file="report.html"):
     html_content.append("</body>")
     html_content.append("</html>")
 
-    with open(output_file, "w") as output:
+    with open(output_file, "w", encoding="utf-8") as output:
         output.write("\n".join(html_content))

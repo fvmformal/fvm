@@ -78,7 +78,7 @@ def generator(FILES, outdir = None, verbose = True, debug = False):
 
     # Open the input files
     for FILE in FILES :
-        f = open(FILE)
+        f = open(FILE, encoding="utf-8")
         full_filename = Path(FILE).resolve()
         ic(full_filename)
 
@@ -152,7 +152,7 @@ def generator(FILES, outdir = None, verbose = True, debug = False):
 
     if ok:
         ic("Rendering input file -> string -> wavedrompy")
-        with open(FILE, "r") as f:
+        with open(FILE, "r", encoding="utf-8") as f:
             string = f.read()
 
     # Close the input file
@@ -409,7 +409,7 @@ def generator(FILES, outdir = None, verbose = True, debug = False):
 
         ic(flattened_signal[0])
 
-        with open(output_file, 'w') as f:
+        with open(output_file, 'w', encoding="utf-8") as f:
             f.write(vunit)
 
     ic("Was the execution correct?")

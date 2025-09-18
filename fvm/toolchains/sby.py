@@ -47,7 +47,7 @@ def setup_prove(framework, path):
     filename = "prove.sby"
     library_path = f'{framework.outdir}/libraries'
     os.makedirs(library_path, exist_ok=True)
-    with open(f'{path}/{filename}', "w") as f:
+    with open(f'{path}/{filename}', "w", encoding="utf-8") as f:
         print('[tasks]', file=f)
         #print('bmc', file=f)
         print('prove', file=f)
