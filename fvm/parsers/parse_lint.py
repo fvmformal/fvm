@@ -1,8 +1,29 @@
+"""
+Parser for lint reports.
+
+This module provides functions to parse checks with their severities and counts.
+
+It is specifically for Questa Lint results.
+"""
 import re
 
 def parse_check_summary(file_path):
+    """
+    Parse a lint summary file and return counts and individual check details.
 
-    with open(file_path, "r") as file:
+    :param file_path: Path to the lint summary file to parse.
+    :type file_path: str
+    :return: Dictionary containing counts and check details for each category.
+             Example structure:
+             {
+                 "Error": {"count": int},
+                 "Warning": {"count": int, "checks": {"check_name": int, ...}},
+                 "Info": {"count": int, "checks": {"check_name": int, ...}},
+                 "Resolved": {"count": int}
+             }
+    :rtype: dict
+    """
+    with open(file_path, "r", encoding="utf-8") as file:
         file_content = file.read()
 
     error_pattern = re.compile(r'\| Error \((\d+)\) \|')
@@ -25,19 +46,19 @@ def parse_check_summary(file_path):
     warning_match = warning_pattern.search(file_content)
     if warning_match:
         warning_text = warning_match.group(0)
-        result["Warning"]["count"] = int(re.search(r'\| Warning \((\d+)\) \|', warning_text).group(1))
+        result["Warning"]["count"] = int(re.search(r"\| Warning \((\d+)\) \|", warning_text).group(1))
         checks = check_pattern.findall(warning_text)
         result["Warning"]["checks"] = {check[0]: int(check[1]) for check in checks}
 
-    info_match = info_pattern.search(file_content)
-    if info_match:
-        info_text = info_match.group(0)
+    match = info_pattern.search(file_content)
+    if match:
+        info_text = match.group(0)
         result["Info"]["count"] = int(re.search(r'\| Info \((\d+)\) \|', info_text).group(1))
         checks = check_pattern.findall(info_text)
         result["Info"]["checks"] = {check[0]: int(check[1]) for check in checks}
 
-    resolved_match = resolved_pattern.search(file_content)
-    if resolved_match:
-        result["Resolved"]["count"] = int(resolved_match.group(1))
+    match = resolved_pattern.search(file_content)
+    if match:
+        result["Resolved"]["count"] = int(match.group(1))
 
     return result
