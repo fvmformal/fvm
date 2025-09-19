@@ -43,9 +43,9 @@ def parse_check_summary(file_path):
     if error_match:
         result["Error"]["count"] = int(error_match.group(1))
 
-    warning_match = warning_pattern.search(file_content)
-    if warning_match:
-        warning_text = warning_match.group(0)
+    match = warning_pattern.search(file_content)
+    if match:
+        warning_text = match.group(0)
         count_match = re.search(r"\| Warning \((\d+)\) \|", warning_text)
         if count_match:
             result["Warning"]["count"] = int(count_match.group(1))

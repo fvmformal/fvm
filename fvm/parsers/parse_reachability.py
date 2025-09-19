@@ -17,7 +17,8 @@ def parse_single_table(html):
 
 def add_total_row(table):
     """Adds a total row to the table, summing numerical fields and computing percentages."""
-    total_row = {key: 0 for key in table['data'][0].keys() if key not in ['Coverage Type', 'Unreachable']}
+    total_row = {key: 0 for key in table['data'][0].keys() 
+                 if key not in ['Coverage Type', 'Unreachable']}
     total_covered = 0
     total_possible = 0
 
