@@ -1,7 +1,12 @@
 import os
 import subprocess
+import shutil
+
 from datetime import datetime
 from rich.console import Console
+from rich.table import Table
+from rich.measure import Measurement
+from junit_xml import TestSuite, TestCase, to_xml_report_string
 
 from fvm import helpers
 from fvm import generate_test_cases
@@ -33,8 +38,6 @@ def get_all_steps(steps, post_steps):
 
 def pretty_summary(framework, logger):
     """Prints the final summary"""
-    from rich.table import Table
-    from rich.measure import Measurement
 
     console = Console(force_terminal=True, force_interactive=False,
                               record=True)
@@ -280,9 +283,7 @@ def pretty_summary(framework, logger):
 #       - generate_html_report
 def generate_reports(framework, logger):
     """Generates output reports"""
-    # TODO : move this import to the top of the new file (for example,
-    # reports.py)
-    from junit_xml import TestSuite, TestCase, to_xml_report_string
+    
     # For all designs:
     #   Define a TestSuite per design
     #   For all steps:
@@ -404,7 +405,6 @@ def generate_reports(framework, logger):
     # This should make the history available so the next call to "allure
     # generate" can find it
 
-    import shutil
     if os.path.isdir(framework.resultsdir):
         timestamp = datetime.now().isoformat()
         logger.info(f'Results directory already exists, moving it from {framework.resultsdir} to {framework.outdir}/fvm_history/{timestamp}')
@@ -422,7 +422,6 @@ def generate_reports(framework, logger):
         f.write(xml_string)
 
     # TODO : move this to generate_html_reports function
-    import shutil
 
     if shutil.which('allure') is not None:
         # We normalize the path because the Popen documentation recommends
@@ -594,9 +593,6 @@ def generate_allure(framework, logger):
                                                         start_time=start_time, stop_time=start_time, step=step)
             else:
                 status = 'omit'
-
-
-    import shutil
 
     if shutil.which('allure') is not None:
         # We normalize the path because the Popen documentation recommends
