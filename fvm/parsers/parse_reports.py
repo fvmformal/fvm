@@ -36,7 +36,8 @@ def parse_formal_reachability_report_to_html(input_file, output_file="report.htm
                 current_section = None
             else:
                 if "Reachability Percentage" in stripped_line:
-                    legend.append("<strong>Reachability Percentage</strong>: Reachable/(Total-User Excluded)")
+                    text = "Reachable/(Total-User Excluded)"
+                    legend.append(f"<strong>Reachability Percentage</strong>: {text}")
                 else:
                     parts = stripped_line.split(" ", 1)
                     if len(parts) == 2:
@@ -104,7 +105,8 @@ def parse_formal_reachability_report_to_html(input_file, output_file="report.htm
     <meta charset='UTF-8'>
     <meta name='viewport' content='width=device-width, initial-scale=1.0'>
     <title>Reachability Report</title>
-    <link href='https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap' rel='stylesheet'>
+    <link href='https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap'
+          rel='stylesheet'>
     <style>
     body {
         font-family: 'Poppins',
@@ -253,10 +255,15 @@ def parse_formal_reachability_report_to_html(input_file, output_file="report.htm
 
             if section_type == "Design":
                 item_text = item.split(":")[-1].strip()
-                html_content.append(f"<li><a href='#{link_id}'>{section_type}: {item_text}</a></li>")
+                html_content.append(
+                    f"<li><a href='#{link_id}'>{section_type}: {item_text}</a></li>"
+                    )
             if section_type == "Instance":
                 item_text = item.split(":")[-1].strip()
-                html_content.append(f"<li class ='index_instance'><a href='#{link_id}'>{section_type}: {item_text}</a></li>")
+                html_content.append(
+                    f"<li class='index_instance'><a href='#{link_id}'>"
+                    f"{section_type}: {item_text}</a></li>"
+                )
         html_content.append("</ul>")
         html_content.append("</div>")
 
@@ -274,9 +281,16 @@ def parse_formal_reachability_report_to_html(input_file, output_file="report.htm
         for idx, (table_title, table) in enumerate(tables):
             title_id = f"table_title_{idx}"
 
-            html_content.append(f"<button class='toggle-btn' id='{title_id}' onclick='toggleTable(\"table_{idx}\")'>{table_title}</button>")
+            html_content.append(
+                f"<button class='toggle-btn' id='{title_id}' "
+                f"onclick='toggleTable(\"table_{idx}\")'>{table_title}</button>"
+            )
 
-            html_content.append(f"<div id='table_{idx}' class='table-content' style='display: block; margin-bottom: 20px;'>")
+            html_content.append(
+                f"<div id='table_{idx}' class='table-content' "
+                f"style='display: block; margin-bottom: 20px;'>"
+            )
+
             html_content.append("<table><thead><tr>")
             for header in table[0]:
                 html_content.append(f"<th>{header}</th>")
@@ -291,15 +305,25 @@ def parse_formal_reachability_report_to_html(input_file, output_file="report.htm
                         if match:
                             percentage = float(match.group(1))
                             if 80 <= percentage < 90:
-                                html_content.append(f"<td style='background-color: #A5D6A7; color: black;'>{cell}</td>")
+                                html_content.append(
+                                    f"<td style=background-color:#A5D6A7;color:black>{cell}</td>"
+                                )
                             elif 90 <= percentage <= 100:
-                                html_content.append(f"<td style='background-color: #66bb6a; color: black;'>{cell}</td>")
+                                html_content.append(
+                                    f"<td style=background-color:#66bb6a;color:black>{cell}</td>"
+                                )
                             elif 60 <= percentage < 80:
-                                html_content.append(f"<td style='background-color: #FFF59D; color: black;'>{cell}</td>")
+                                html_content.append(
+                                    f"<td style=background-color:#FFF59D;color:black>{cell}</td>"
+                                )
                             elif 30 <= percentage < 60:
-                                html_content.append(f"<td style='background-color: #FFEB3B; color: black;'>{cell}</td>")
+                                html_content.append(
+                                    f"<td style=background-color:#FFEB3B;color:black>{cell}</td>"
+                                )
                             else:
-                                html_content.append(f"<td style='background-color: #FF7043; color: black;'>{cell}</td>")
+                                html_content.append(
+                                    f"<td style=background-color:#FF7043;color:black>{cell}</td>"
+                                )
                         else:
                             html_content.append(f"<td>{cell}</td>")
                     else:
@@ -365,7 +389,8 @@ def parse_formal_observability_report_to_html(input_file, output_file="report.ht
                 current_section = None
             else:
                 if "Observability Percentage" in stripped_line:
-                    legend.append("<strong>Observability Percentage</strong>: Observable/(Total-User Excluded)")
+                    text = "Observable/(Total-User Excluded)"
+                    legend.append(f"<strong>Observability Percentage</strong>: {text}")
                 else:
                     parts = stripped_line.split(" ", 1)
                     if len(parts) == 2:
@@ -391,11 +416,16 @@ def parse_formal_observability_report_to_html(input_file, output_file="report.ht
         if "Formal Coverage Report Generated for Proven Targets" in stripped_line:
             current_section = "Assertions"
             assertions = []
-            match = re.search(r"Formal Coverage Report Generated for Proven Targets \((\d+)\)", stripped_line)
+            match = re.search(
+                r"Formal Coverage Report Generated for Proven Targets \((\d+)\)",
+                stripped_line
+            )
             if match:
                 assertions_count = match.group(1)
-                assertions.append(f"<h2>Formal Coverage Report Generated for Proven Targets ({assertions_count})</h2><ul>")
-            continue
+                assertions.append(
+                    f"<h2>Formal Coverage Report Generated for Proven Targets "
+                    f"({assertions_count})</h2><ul>"
+                )
 
         if current_section == "Assertions":
             if stripped_line == "":
@@ -448,7 +478,8 @@ def parse_formal_observability_report_to_html(input_file, output_file="report.ht
     <meta charset='UTF-8'>
     <meta name='viewport' content='width=device-width, initial-scale=1.0'>
     <title>Observability Report</title>
-    <link href='https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap' rel='stylesheet'>
+    <link href='https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap'
+          rel='stylesheet'>
     <style>
     body {
         font-family: 'Poppins',
@@ -603,10 +634,15 @@ def parse_formal_observability_report_to_html(input_file, output_file="report.ht
 
             if section_type == "Design":
                 item_text = item.split(":")[-1].strip()
-                html_content.append(f"<li><a href='#{link_id}'>{section_type}: {item_text}</a></li>")
+                html_content.append(
+                    f"<li><a href='#{link_id}'>{section_type}: {item_text}</a></li>"
+                    )
             if section_type == "Instance":
                 item_text = item.split(":")[-1].strip()
-                html_content.append(f"<li class ='index_instance'><a href='#{link_id}'>{section_type}: {item_text}</a></li>")
+                html_content.append(
+                    f"<li class='index_instance'><a href='#{link_id}'>"
+                    f"{section_type}: {item_text}</a></li>"
+                )
         html_content.append("</ul>")
         html_content.append("</div>")
 
@@ -630,9 +666,16 @@ def parse_formal_observability_report_to_html(input_file, output_file="report.ht
         for idx, (table_title, table) in enumerate(tables):
             title_id = f"table_title_{idx}"
 
-            html_content.append(f"<button class='toggle-btn' id='{title_id}' onclick='toggleTable(\"table_{idx}\")'>{table_title}</button>")
+            html_content.append(
+                f"<button class='toggle-btn' id='{title_id}' "
+                f"onclick='toggleTable(\"table_{idx}\")'>{table_title}</button>"
+            )
 
-            html_content.append(f"<div id='table_{idx}' class='table-content' style='display: block; margin-bottom: 20px;'>")
+            html_content.append(
+                f"<div id='table_{idx}' class='table-content' "
+                f"style='display: block; margin-bottom: 20px;'>"
+            )
+
             html_content.append("<table><thead><tr>")
             for header in table[0]:
                 html_content.append(f"<th>{header}</th>")
@@ -647,15 +690,25 @@ def parse_formal_observability_report_to_html(input_file, output_file="report.ht
                         if match:
                             percentage = float(match.group(1))
                             if 80 <= percentage < 90:
-                                html_content.append(f"<td style='background-color: #A5D6A7; color: black;'>{cell}</td>")
+                                html_content.append(
+                                    f"<td style=background-color:#A5D6A7;color:black>{cell}</td>"
+                                )
                             elif 90 <= percentage <= 100:
-                                html_content.append(f"<td style='background-color: #66bb6a; color: black;'>{cell}</td>")
+                                html_content.append(
+                                    f"<td style=background-color:#66bb6a;color:black>{cell}</td>"
+                                )
                             elif 60 <= percentage < 80:
-                                html_content.append(f"<td style='background-color: #FFF59D; color: black;'>{cell}</td>")
+                                html_content.append(
+                                    f"<td style=background-color:#FFF59D;color:black>{cell}</td>"
+                                )
                             elif 30 <= percentage < 60:
-                                html_content.append(f"<td style='background-color: #FFEB3B; color: black;'>{cell}</td>")
+                                html_content.append(
+                                    f"<td style=background-color:#FFEB3B;color:black>{cell}</td>"
+                                )
                             else:
-                                html_content.append(f"<td style='background-color: #FF7043; color: black;'>{cell}</td>")
+                                html_content.append(
+                                    f"<td style=background-color:#FF7043;color:black>{cell}</td>"
+                                )
                         else:
                             html_content.append(f"<td>{cell}</td>")
                     else:
@@ -716,7 +769,8 @@ def parse_reachability_report_to_html(input_file, output_file="report.html"):
                 current_section = None
             else:
                 if "Reachability Percentage" in stripped_line:
-                    legend.append("<strong>Reachability Percentage</strong>: Reachable/(Total-User Excluded)")
+                    text = "Reachable/(Total-User Excluded)"
+                    legend.append(f"<strong>Reachability Percentage</strong>: {text}")
                 else:
                     parts = stripped_line.split(" ", 1)
                     if len(parts) == 2:
@@ -753,7 +807,8 @@ def parse_reachability_report_to_html(input_file, output_file="report.html"):
     <meta charset='UTF-8'>
     <meta name='viewport' content='width=device-width, initial-scale=1.0'>
     <title>CoverCheck Reachability Report</title>
-    <link href='https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap' rel='stylesheet'>
+    <link href='https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap'
+          rel='stylesheet'>
     <style>
     body {
         font-family: 'Poppins', sans-serif;
@@ -826,9 +881,10 @@ def parse_reachability_report_to_html(input_file, output_file="report.html"):
     if report_generated:
         match = re.match(r"(Report Generated               :)(.*)", report_generated)
         if match:
+            bold_text = match.group(1).strip()
             normal_text = match.group(2).strip()
             html_content.append(
-                f"<p style='text-align: center;'><strong>Report Generated: </strong>{normal_text}</p>"
+                f"<p style='text-align: center;'><strong>{bold_text}</strong> {normal_text}</p>"
             )
 
     if legend:
@@ -853,16 +909,26 @@ def parse_reachability_report_to_html(input_file, output_file="report.html"):
                     match = re.search(r"(\d+(\.\d+)?)%", cell)
                     if match:
                         percentage = float(match.group(1))
-                        if 10 <= percentage < 20:
-                            html_content.append(f"<td style='background-color: #A5D6A7; color: black;'>{cell}</td>")
-                        elif 0 <= percentage <= 10:
-                            html_content.append(f"<td style='background-color: #66bb6a; color: black;'>{cell}</td>")
-                        elif 20 <= percentage < 40:
-                            html_content.append(f"<td style='background-color: #FFF59D; color: black;'>{cell}</td>")
-                        elif 40 <= percentage < 70:
-                            html_content.append(f"<td style='background-color: #FFEB3B; color: black;'>{cell}</td>")
+                        if 80 <= percentage < 90:
+                            html_content.append(
+                                f"<td style=background-color:#A5D6A7;color:black>{cell}</td>"
+                            )
+                        elif 90 <= percentage <= 100:
+                            html_content.append(
+                                f"<td style=background-color:#66bb6a;color:black>{cell}</td>"
+                            )
+                        elif 60 <= percentage < 80:
+                            html_content.append(
+                                f"<td style=background-color:#FFF59D;color:black>{cell}</td>"
+                            )
+                        elif 30 <= percentage < 60:
+                            html_content.append(
+                                f"<td style=background-color:#FFEB3B;color:black>{cell}</td>"
+                            )
                         else:
-                            html_content.append(f"<td style='background-color: #FF7043; color: black;'>{cell}</td>")
+                            html_content.append(
+                                f"<td style=background-color:#FF7043;color:black>{cell}</td>"
+                            )
                     else:
                         html_content.append(f"<td>{cell}</td>")
                 else:
@@ -913,7 +979,8 @@ def parse_formal_signoff_report_to_html(input_file, output_file="report.html"):
                 current_section = None
             else:
                 if "Covered Percentage" in stripped_line:
-                    legend.append("<strong>Covered Percentage</strong>: Covered / (Total - Excluded)")
+                    text = "Covered / (Total - Excluded)"
+                    legend.append(f"<strong>Covered Percentage</strong>: {text}")
                 else:
                     parts = stripped_line.split(" ", 1)
                     if len(parts) == 2:
@@ -951,11 +1018,16 @@ def parse_formal_signoff_report_to_html(input_file, output_file="report.html"):
         if "Formal Coverage Report Generated for Proven Targets" in stripped_line:
             current_section = "Assertions"
             assertions = []
-            match = re.search(r"Formal Coverage Report Generated for Proven Targets \((\d+)\)", stripped_line)
+            match = re.search(
+                r"Formal Coverage Report Generated for Proven Targets \((\d+)\)",
+                stripped_line
+            )
             if match:
                 assertions_count = match.group(1)
-                assertions.append(f"<h2>Formal Coverage Report Generated for Proven Targets ({assertions_count})</h2><ul>")
-            continue
+                assertions.append(
+                    f"<h2>Formal Coverage Report Generated for Proven Targets "
+                    f"({assertions_count})</h2><ul>"
+                )
 
         if current_section == "Assertions":
             if stripped_line == "":
@@ -988,9 +1060,20 @@ def parse_formal_signoff_report_to_html(input_file, output_file="report.html"):
             if len(row) >= 4:
                 if not cover_type_table:
                     if len(row) == 5:
-                        cover_type_table.append(["Coverage Type","Total","Uncovered","Excluded","Covered (P)"])
+                        cover_type_table.append([
+                            "Coverage Type",
+                            "Total",
+                            "Uncovered",
+                            "Excluded",
+                            "Covered (P)"
+                        ])
                     elif len(row) == 4:
-                        cover_type_table.append(["Coverage Type","Total","Uncovered","Covered (P)"])
+                        cover_type_table.append([
+                            "Coverage Type",
+                            "Total",
+                            "Uncovered",
+                            "Covered (P)"
+                        ])
                 cover_type_table.append(row)
 
     html_content.append("""<!DOCTYPE html>
@@ -999,7 +1082,8 @@ def parse_formal_signoff_report_to_html(input_file, output_file="report.html"):
     <meta charset='UTF-8'>
     <meta name='viewport' content='width=device-width, initial-scale=1.0'>
     <title>Signoff Report</title>
-    <link href='https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap' rel='stylesheet'>
+    <link href='https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap'
+        rel='stylesheet'>
     <style>
     body {
         font-family: 'Poppins', sans-serif;
@@ -1144,10 +1228,15 @@ def parse_formal_signoff_report_to_html(input_file, output_file="report.html"):
 
             if section_type == "Design":
                 item_text = item.split(":")[-1].strip()
-                html_content.append(f"<li><a href='#{link_id}'>{section_type}: {item_text}</a></li>")
+                html_content.append(
+                    f"<li><a href='#{link_id}'>{section_type}: {item_text}</a></li>"
+                    )
             if section_type == "Instance":
                 item_text = item.split(":")[-1].strip()
-                html_content.append(f"<li class ='index_instance'><a href='#{link_id}'>{section_type}: {item_text}</a></li>")
+                html_content.append(
+                    f"<li class='index_instance'><a href='#{link_id}'>"
+                    f"{section_type}: {item_text}</a></li>"
+                )
         html_content.append("</ul>")
         html_content.append("</div>")
 
@@ -1172,9 +1261,16 @@ def parse_formal_signoff_report_to_html(input_file, output_file="report.html"):
         for idx, (table_title, table) in enumerate(tables):
             title_id = f"table_title_{idx}"
 
-            html_content.append(f"<button class='toggle-btn' id='{title_id}' onclick='toggleTable(\"table_{idx}\")'>{table_title}</button>")
+            html_content.append(
+                f"<button class='toggle-btn' id='{title_id}' "
+                f"onclick='toggleTable(\"table_{idx}\")'>{table_title}</button>"
+            )
 
-            html_content.append(f"<div id='table_{idx}' class='table-content' style='display: block; margin-bottom: 20px;'>")
+            html_content.append(
+                f"<div id='table_{idx}' class='table-content' "
+                f"style='display: block; margin-bottom: 20px;'>"
+            )
+
             html_content.append("<table><thead><tr>")
             for header in table[0]:
                 html_content.append(f"<th>{header}</th>")
@@ -1189,15 +1285,25 @@ def parse_formal_signoff_report_to_html(input_file, output_file="report.html"):
                         if match:
                             percentage = float(match.group(1))
                             if 80 <= percentage < 90:
-                                html_content.append(f"<td style='background-color: #A5D6A7; color: black;'>{cell}</td>")
+                                html_content.append(
+                                    f"<td style=background-color:#A5D6A7;color:black>{cell}</td>"
+                                )
                             elif 90 <= percentage <= 100:
-                                html_content.append(f"<td style='background-color: #66bb6a; color: black;'>{cell}</td>")
+                                html_content.append(
+                                    f"<td style=background-color:#66bb6a;color:black>{cell}</td>"
+                                )
                             elif 60 <= percentage < 80:
-                                html_content.append(f"<td style='background-color: #FFF59D; color: black;'>{cell}</td>")
+                                html_content.append(
+                                    f"<td style=background-color:#FFF59D;color:black>{cell}</td>"
+                                )
                             elif 30 <= percentage < 60:
-                                html_content.append(f"<td style='background-color: #FFEB3B; color: black;'>{cell}</td>")
+                                html_content.append(
+                                    f"<td style=background-color:#FFEB3B;color:black>{cell}</td>"
+                                )
                             else:
-                                html_content.append(f"<td style='background-color: #FF7043; color: black;'>{cell}</td>")
+                                html_content.append(
+                                    f"<td style=background-color:#FF7043;color:black>{cell}</td>"
+                                )
                         else:
                             html_content.append(f"<td>{cell}</td>")
                     else:
