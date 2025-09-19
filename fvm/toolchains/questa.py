@@ -87,7 +87,11 @@ def create_f_file(filename, sources):
 # fvmframework is correctly setting the path (it should be!)
 
 def gencompilescript(framework, filename, path):
-    """Generate script to compile design sources"""
+    """Generate script to compile design sources
+
+    This is used as header for the other scripts, since we need to have
+    a compiled netlist in order to do anything
+    """
     # TODO : we must also compile the Verilog sources, if they exist
     # TODO : we must check for the case of only-verilog designs (no VHDL files)
     # TODO : we must check for the case of only-VHDL designs (no verilog files)
@@ -98,8 +102,6 @@ def gencompilescript(framework, filename, path):
     # TODO : probably the following call to create_f_file is not needed
     #create_f_file(f'{path}/design.f', framework.vhdl_sources)
 
-    """ This is used as header for the other scripts, since we need to have
-    a compiled netlist in order to do anything"""
     with open(path + '/' + filename, "w", encoding='utf-8') as f:
         print('onerror exit', file=f)
         ordered_libraries = OrderedDict.fromkeys(framework.libraries_from_vhdl_sources)
@@ -226,9 +228,9 @@ def get_linecheck_lint():
     return patterns
 
 def setup_friendliness(framework, path):
-    print("**** setup friendliness ****")
     """Generate script to compile AutoCheck, which also generates a report we
     analyze to determine the design's formal-friendliness"""
+    print("**** setup friendliness ****")
     filename = "friendliness.do"
     gencompilescript(framework, filename, path)
     with open(path+'/'+filename, "a", encoding='utf-8') as f:
@@ -256,8 +258,8 @@ def get_linecheck_friendliness():
     return patterns
 
 def setup_rulecheck(framework, path):
-    print("**** setup rulecheck ****")
     """Generate script to run AutoCheck"""
+    print("**** setup rulecheck ****")
     filename = "rulecheck.do"
     gencompilescript(framework, filename, path)
     with open(path+'/'+filename, "a", encoding='utf-8') as f:
@@ -290,9 +292,9 @@ def get_linecheck_rulecheck():
     return patterns
 
 def setup_xverify(framework, path):
+    """Generate script to run X-Check"""
     print("**** setup xverify ****")
     filename = "xverify.do"
-    """Generate script to run X-Check"""
     gencompilescript(framework, filename, path)
     with open(path+'/'+filename, "a", encoding='utf-8') as f:
         for line in framework.init_reset:
@@ -323,12 +325,12 @@ def get_linecheck_xverify():
     return patterns
 
 def setup_reachability(framework, path):
+    """Generate a script to run CoverCheck"""
     print("**** setup reachability ****")
     filename = "reachability.do"
     # TODO : if a .ucdb file is specified as argument, run the post-simulation
     # analysis instead of the pre-simulation analysis (see
     # https://git.woden.us.es/eda/fvm/-/issues/37#note_4252)
-    """Generate a script to run CoverCheck"""
     gencompilescript(framework, filename, path)
     with open(path+'/'+filename, "a", encoding='utf-8') as f:
         for line in framework.init_reset:
@@ -517,9 +519,9 @@ def get_linecheck_resets():
     return patterns
 
 def setup_clocks(framework, path):
+    """Generate script to run Clock Domain Crossing"""
     print("**** setup clocks ****")
     filename = "clocks.do"
-    """Generate script to run Clock Domain Crossing"""
     # We first write the header to compile the netlist  and then append
     # (mode "a") the tool-specific instructions
     gencompilescript(framework, filename, path)
@@ -561,6 +563,7 @@ def get_linecheck_clocks():
     return patterns
 
 def setup_prove(framework, path):
+    """Generate script to run PropCheck"""
     print("**** setup prove ****")
     filename = "prove.do"
     # TODO : we will need arguments for the clocks, timeout, we probably need
@@ -569,7 +572,6 @@ def setup_prove(framework, path):
     # specified. This is not trivial. Also, in the future we may want to
     # specify verilog files with vlog, etc...
     # TODO : can we also compile the PSL files using a .f file?
-    """Generate script to run PropCheck"""
     gencompilescript(framework, filename, path)
     # Only add the clocks since we don't want to add any extra constraint
     # Also, adding the clock domain make propcheck throw errors because

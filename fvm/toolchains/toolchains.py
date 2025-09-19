@@ -42,7 +42,7 @@ def generics_to_args(toolchain, generics):
 
 def formal_initialize_rst(framework, rst, active_high=True, cycles=1):
     module = importlib.import_module(f'{framework.toolchain}')
-    module.formal_initialize_rst(framework, rst, active_high=True, cycles=1)
+    module.formal_initialize_rst(framework, rst, active_high=active_high, cycles=cycles)
 
 def get_linecheck_patterns(framework, step=None):
     """
