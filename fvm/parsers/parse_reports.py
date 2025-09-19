@@ -52,7 +52,7 @@ def parse_formal_reachability_report_to_html(input_file, output_file="report.htm
                 assumptions_count = match.group(1)
                 assumptions.append(f"<h2>Assumptions ({assumptions_count})</h2><ul>")
             continue
-        
+
         if current_section == "Assumptions":
             if stripped_line == "":
                 current_section = None
@@ -359,7 +359,7 @@ def parse_formal_observability_report_to_html(input_file, output_file="report.ht
             current_section = "Legend"
             legend = []
             continue
-        
+
         if current_section == "Legend":
             if stripped_line == "":
                 current_section = None
@@ -381,7 +381,7 @@ def parse_formal_observability_report_to_html(input_file, output_file="report.ht
                 assumptions_count = match.group(1)
                 assumptions.append(f"<h2>Assumptions ({assumptions_count})</h2><ul>")
             continue
-        
+
         if current_section == "Assumptions":
             if stripped_line == "":
                 current_section = None
@@ -396,7 +396,7 @@ def parse_formal_observability_report_to_html(input_file, output_file="report.ht
                 assertions_count = match.group(1)
                 assertions.append(f"<h2>Formal Coverage Report Generated for Proven Targets ({assertions_count})</h2><ul>")
             continue
-        
+
         if current_section == "Assertions":
             if stripped_line == "":
                 current_section = None
@@ -710,7 +710,7 @@ def parse_reachability_report_to_html(input_file, output_file="report.html"):
             current_section = "Legend"
             legend = []
             continue
-        
+
         if current_section == "Legend":
             if stripped_line == "":
                 current_section = None
@@ -907,7 +907,7 @@ def parse_formal_signoff_report_to_html(input_file, output_file="report.html"):
             current_section = "Legend"
             legend = []
             continue
-        
+
         if current_section == "Legend":
             if stripped_line == "":
                 current_section = None
@@ -929,7 +929,7 @@ def parse_formal_signoff_report_to_html(input_file, output_file="report.html"):
                 assumptions_count = match.group(1)
                 assumptions.append(f"<h2>Assumptions ({assumptions_count})</h2><ul>")
             continue
-        
+
         if current_section == "Assumptions":
             if stripped_line == "":
                 current_section = None
@@ -956,7 +956,7 @@ def parse_formal_signoff_report_to_html(input_file, output_file="report.html"):
                 assertions_count = match.group(1)
                 assertions.append(f"<h2>Formal Coverage Report Generated for Proven Targets ({assertions_count})</h2><ul>")
             continue
-        
+
         if current_section == "Assertions":
             if stripped_line == "":
                 current_section = None
