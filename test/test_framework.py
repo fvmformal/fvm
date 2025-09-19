@@ -141,5 +141,3 @@ def test_logger_twice() :
     retval = fvm.check_errors()
     print(f'{retval=}')
     assert retval == True
-
-

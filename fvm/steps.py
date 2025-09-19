@@ -60,4 +60,3 @@ class steps:
         l.insert(pos, (step, {"setup": setup, "run": run}))
         # Convert list to dict
         self.steps = dict(l)
-

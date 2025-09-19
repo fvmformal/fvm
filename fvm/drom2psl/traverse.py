@@ -78,4 +78,3 @@ def traverse_signal(prefix, signal):
 
 def traverse_edge(prefix, edge):
     print(prefix, "edge=>", edge)
-

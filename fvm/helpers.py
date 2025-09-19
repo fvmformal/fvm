@@ -54,4 +54,3 @@ def insert_line_after_target(file, target_line, line_to_insert):
 
     with open(file, 'w', encoding="utf-8") as f:
         f.writelines(new_lines)
-

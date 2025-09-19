@@ -888,4 +888,3 @@ def formal_initialize_rst(framework, rst, active_high=True, cycles=1):
     else:
         line = f'formal init {{{rst}=0;##{cycles+1};{rst}=1}}'
         framework.init_reset.append(line)
-

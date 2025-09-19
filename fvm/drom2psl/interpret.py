@@ -391,4 +391,3 @@ def adapt_value_to_hdltype(value):
     else:
         ret = value
     return ret
-

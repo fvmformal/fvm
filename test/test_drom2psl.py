@@ -68,4 +68,3 @@ def test_output_matches_expected(file, expected):
     retval = generator(file, outdir = outdir)
     assert retval == False
     assert compare_files_ignoring_comments(actual, expected) == True
-

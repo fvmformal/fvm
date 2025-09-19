@@ -623,4 +623,3 @@ def generate_allure(framework, logger):
         folder. If you are not using a venv, you should install allure by
         running 'python3 install_allure.py [install_dir], and add its bin/
         directory to your $PATH'""")
-

@@ -121,4 +121,3 @@ SHARP7  = "-|>"
 SHARP8  = "-|->"
 SHARP9  = "|->"
 SHARP10 = "+"
-
