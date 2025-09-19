@@ -30,7 +30,8 @@ def parse_formal_reachability_report_to_html(input_file, output_file="report.htm
             current_section = "Legend"
             legend = []
             continue
-        elif current_section == "Legend":
+
+        if current_section == "Legend":
             if stripped_line == "":
                 current_section = None
             else:
@@ -51,7 +52,8 @@ def parse_formal_reachability_report_to_html(input_file, output_file="report.htm
                 assumptions_count = match.group(1)
                 assumptions.append(f"<h2>Assumptions ({assumptions_count})</h2><ul>")
             continue
-        elif current_section == "Assumptions":
+        
+        if current_section == "Assumptions":
             if stripped_line == "":
                 current_section = None
             else:
@@ -357,7 +359,8 @@ def parse_formal_observability_report_to_html(input_file, output_file="report.ht
             current_section = "Legend"
             legend = []
             continue
-        elif current_section == "Legend":
+        
+        if current_section == "Legend":
             if stripped_line == "":
                 current_section = None
             else:
@@ -378,7 +381,8 @@ def parse_formal_observability_report_to_html(input_file, output_file="report.ht
                 assumptions_count = match.group(1)
                 assumptions.append(f"<h2>Assumptions ({assumptions_count})</h2><ul>")
             continue
-        elif current_section == "Assumptions":
+        
+        if current_section == "Assumptions":
             if stripped_line == "":
                 current_section = None
             else:
@@ -392,7 +396,8 @@ def parse_formal_observability_report_to_html(input_file, output_file="report.ht
                 assertions_count = match.group(1)
                 assertions.append(f"<h2>Formal Coverage Report Generated for Proven Targets ({assertions_count})</h2><ul>")
             continue
-        elif current_section == "Assertions":
+        
+        if current_section == "Assertions":
             if stripped_line == "":
                 current_section = None
             else:
@@ -705,7 +710,8 @@ def parse_reachability_report_to_html(input_file, output_file="report.html"):
             current_section = "Legend"
             legend = []
             continue
-        elif current_section == "Legend":
+        
+        if current_section == "Legend":
             if stripped_line == "":
                 current_section = None
             else:
@@ -901,7 +907,8 @@ def parse_formal_signoff_report_to_html(input_file, output_file="report.html"):
             current_section = "Legend"
             legend = []
             continue
-        elif current_section == "Legend":
+        
+        if current_section == "Legend":
             if stripped_line == "":
                 current_section = None
             else:
@@ -922,7 +929,8 @@ def parse_formal_signoff_report_to_html(input_file, output_file="report.html"):
                 assumptions_count = match.group(1)
                 assumptions.append(f"<h2>Assumptions ({assumptions_count})</h2><ul>")
             continue
-        elif current_section == "Assumptions":
+        
+        if current_section == "Assumptions":
             if stripped_line == "":
                 current_section = None
             else:
@@ -948,7 +956,8 @@ def parse_formal_signoff_report_to_html(input_file, output_file="report.html"):
                 assertions_count = match.group(1)
                 assertions.append(f"<h2>Formal Coverage Report Generated for Proven Targets ({assertions_count})</h2><ul>")
             continue
-        elif current_section == "Assertions":
+        
+        if current_section == "Assertions":
             if stripped_line == "":
                 current_section = None
             else:
@@ -1175,7 +1184,7 @@ def parse_formal_signoff_report_to_html(input_file, output_file="report.html"):
                 row_color = "#f9f9f9" if i % 2 == 0 else "#e0e0e0"
                 html_content.append(f"<tr style='background-color: {row_color};'>")
                 for idx, cell in enumerate(row):
-                    if idx == 3 or idx == 4:
+                    if idx in (3, 4):
                         match = re.search(r"(\d+(\.\d+)?)%", cell)
                         if match:
                             percentage = float(match.group(1))
