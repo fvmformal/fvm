@@ -220,7 +220,7 @@ def get_wavelane_type(wavelane):
         return "specify_datatype_here"
 
 def get_group_arguments(groupname, flattened_signal):
-    group_arguments = list()
+    group_arguments = []
     for wavelane in flattened_signal:
         name = get_wavelane_name(wavelane)
         # If the wavelane belongs to a group
@@ -326,7 +326,7 @@ def get_signal_value(wave, data, cycle):
     if data is not None:
         datalist = data2list(data)
     else:
-        datalist = list()
+        datalist = []
 
     if digit == 'p' or digit == 'P' or digit == 'n' or digit == 'N':
         value = '-'

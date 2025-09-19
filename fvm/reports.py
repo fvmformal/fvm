@@ -283,9 +283,9 @@ def generate_reports(framework, logger):
     #   Define a TestSuite per design
     #   For all steps:
     #     Define a TestCase per step
-    testsuites = list()
+    testsuites = []
     for design in framework.designs:
-        testcases = list()
+        testcases = []
         for step in FVM_STEPS + FVM_POST_STEPS:
             if 'status' in framework.results[design][step]:
                 status = framework.results[design][step]['status']
@@ -446,8 +446,8 @@ def generate_reports(framework, logger):
     # TODO : better manage this log
     verbose = True
 
-    stdout_lines = list()
-    stderr_lines = list()
+    stdout_lines = []
+    stderr_lines = []
     # TODO : the following line fails if the Allure process was not
     # launched
     with process.stdout as stdout, process.stderr as stderr:

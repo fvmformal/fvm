@@ -178,31 +178,31 @@ class fvmframework:
         # Rest of instance variables
         # TODO : this is getting a bit big, we could consider restructuring
         # this, maybe defining a structure per toplevel
-        self.toplevel = list()
+        self.toplevel = []
         self.current_toplevel = ''
         self.start_time_setup = None
-        self.init_reset = list()
-        self.vhdl_sources = list()
-        self.libraries_from_vhdl_sources = list()
-        self.psl_sources = list()
-        self.drom_sources = list()
-        self.drom_generated_psl = list()
-        self.skip_list = list()
-        self.allow_failure_list = list()
-        self.disabled_coverage = list()
+        self.init_reset = []
+        self.vhdl_sources = []
+        self.libraries_from_vhdl_sources = []
+        self.psl_sources = []
+        self.drom_sources = []
+        self.drom_generated_psl = []
+        self.skip_list = []
+        self.allow_failure_list = []
+        self.disabled_coverage = []
         self.vhdlstd = "2008"
-        self.tool_flags = dict()
-        self.resets = list()
-        self.clocks = list()
-        self.reset_domains = list()
-        self.clock_domains = list()
-        self.blackboxes = list()
-        self.blackbox_instances = list()
-        self.cutpoints = list()
-        self.pre_hooks = dict()
-        self.post_hooks = dict()
-        self.designs = list()
-        self.design_configs = dict()
+        self.tool_flags = {}
+        self.resets = []
+        self.clocks = []
+        self.reset_domains = []
+        self.clock_domains = []
+        self.blackboxes = []
+        self.blackbox_instances = []
+        self.cutpoints = []
+        self.pre_hooks = {}
+        self.post_hooks = {}
+        self.designs = []
+        self.design_configs = {}
         self.ctrl_c_pressed = False
 
         # Get the toolchain (questa, sby, etc), assign sensible default options
@@ -427,11 +427,11 @@ class fvmframework:
 
         # Initialize the design configurations list if it doesn't exist
         if design not in self.design_configs:
-            self.design_configs[design] = list()
+            self.design_configs[design] = []
 
         # Create the configuration as a dict() and append it to the design
         # configurations list
-        config = dict()
+        config = {}
         config["name"] = name
         config["generics"] = generics
         self.design_configs[design].append(config)
@@ -883,8 +883,8 @@ class fvmframework:
         signal.signal(signal.SIGINT, handle_sigint)
 
         # Initialize variables where to store command stdout/stderr
-        stdout_lines = list()
-        stderr_lines = list()
+        stdout_lines = []
+        stderr_lines = []
 
         if not verbose:
             print('Running: ', end='', flush=True)

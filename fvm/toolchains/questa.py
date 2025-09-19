@@ -668,7 +668,7 @@ def run_prove_simcover(framework, path):
     stderr_err = 0
     replay_files = glob.glob(framework.outdir+'/'+framework.current_toplevel+'/prove/qsim_tb/*/replay.vsim.do')
     framework.logger.trace(f'{replay_files=}')
-    ucdb_files = list()
+    ucdb_files = []
     elapsed_time = 0
     timestamp = None
     design = framework.current_toplevel
