@@ -40,26 +40,6 @@ LOGFORMAT_SUMMARY = '<cyan>FVM</cyan> | <green>Summary</green> | <level>{level: 
 def getlogformattool(design, step, tool):
     return f'<cyan>{design}.{step}</cyan> | <green>{tool=}</green> | ' + '<level>{level: <8}</level> | <level>{message}</level>'
 
-# TODO : these two constants (FVM_STEPS and FVM_POST_STEPS) will be removed
-# when the steps are programmatically initialized
-#
-# Steps, in order of execution, of the methodology
-FVM_STEPS = [
-    'lint',
-    'friendliness',
-    'rulecheck',
-    'xverify',
-    'reachability',
-    'resets',
-    'clocks',
-    'prove'
-    ]
-
-FVM_POST_STEPS = [
-    'prove.formalcover',
-    'prove.simcover'
-    ]
-
 # Create a rich console object
 # TODO: force_terminal should enable color inside gitlab CI, but may break
 # non-color terminals? maybe we should use environment variables instead? see https://rich.readthedocs.io/en/stable/console.html#environment-variables
@@ -408,12 +388,19 @@ class fvmframework:
 
         for design in self.designs:
             self.results[design] = {}
-            for step in FVM_STEPS + FVM_POST_STEPS:
+            for step in self.steps.steps:
                 self.results[design][step] = {}
                 self.results[design][step]['message'] = ''
                 self.results[design][step]['stdout'] = ''
                 self.results[design][step]['stderr'] = ''
                 self.results[design][step]['summary'] = {}
+                if step in self.steps.post_steps:
+                    for post_step in self.steps.post_steps[step]:
+                        self.results[design][f'{step}.{post_step}'] = {}
+                        self.results[design][f'{step}.{post_step}']['message'] = ''
+                        self.results[design][f'{step}.{post_step}']['stdout'] = ''
+                        self.results[design][f'{step}.{post_step}']['stderr'] = ''
+                        self.results[design][f'{step}.{post_step}']['summary'] = {}
 
     def add_config(self, design, name, generics):
         """Adds a design configuration. The design configuration has a name and
@@ -699,7 +686,7 @@ class fvmframework:
         # TODO : the list code is duplicated below, we could think of some way
         # of deduplicating it
         if self.step is None:
-            for step in FVM_STEPS:
+            for step in self.steps.steps:
                 if self.is_skipped(design, step):
                     self.logger.trace(f'{step=} of {design=} skipped by skip() function, will not list')
                     self.results[design][step]['status'] = 'skip'

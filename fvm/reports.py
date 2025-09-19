@@ -7,26 +7,29 @@ from fvm import helpers
 from fvm import generate_test_cases
 from fvm.parsers import parse_reports
 
-# TODO: these constants (FVM_STEPS and FVM_POST_STEPS) are redundant and we
-# will remove them soon, but for now while we are refactoring we need them so
-# the build doesn't fail. After the refactor, we should get the steps and
-# post_steps from framework.steps
-# Steps, in order of execution, of the methodology
-FVM_STEPS = [
-    'lint',
-    'friendliness',
-    'rulecheck',
-    'xverify',
-    'reachability',
-    'resets',
-    'clocks',
-    'prove'
-    ]
+def get_all_steps(steps, post_steps):
+    """Generate a list of steps including post-steps.
 
-FVM_POST_STEPS = [
-    'prove.formalcover',
-    'prove.simcover'
-    ]
+    Parameters
+    ----------
+    steps : dict
+        Dictionary of steps, where keys are step names and values 
+        are dictionaries with setup/run functions.
+    post_steps : dict
+        Mapping of main steps to their associated post-steps.
+
+    Returns
+    -------
+    list of str
+        Combined list of steps and post-steps.
+    """
+    all_steps = []
+    for step in steps:
+        all_steps.append(step)
+        if step in post_steps:
+            for post_step in post_steps[step]:
+                all_steps.append(f"{step}.{post_step}")
+    return all_steps
 
 def pretty_summary(framework, logger):
     """Prints the final summary"""
@@ -57,7 +60,8 @@ def pretty_summary(framework, logger):
         table.add_column("step", justify="left", min_width=25)
         table.add_column("results", justify="right", min_width=5)
         table.add_column("elapsed time", justify="right", min_width=12)
-        for step in FVM_STEPS + FVM_POST_STEPS:
+        all_steps = get_all_steps(framework.steps.steps, framework.steps.post_steps)
+        for step in all_steps:
             total_cont += 1
             # Only print pass/fail/skip, the rest of steps where not
             # selected by the user so there is no need to be redundant
@@ -286,7 +290,8 @@ def generate_reports(framework, logger):
     testsuites = []
     for design in framework.designs:
         testcases = []
-        for step in FVM_STEPS + FVM_POST_STEPS:
+        all_steps = get_all_steps(framework.steps.steps, framework.steps.post_steps)
+        for step in all_steps:
             if 'status' in framework.results[design][step]:
                 status = framework.results[design][step]['status']
                 custom_status_string = None
@@ -501,7 +506,8 @@ def generate_allure(framework, logger):
     os.makedirs(file_path, exist_ok=True)
 
     for design in framework.designs:
-        for step in FVM_STEPS + FVM_POST_STEPS:
+        all_steps = get_all_steps(framework.steps.steps, framework.steps.post_steps)
+        for step in all_steps:
             if 'status' in framework.results[design][step] and framework.results[design][step]['status'] != "skip":
                 status = framework.results[design][step]['status']
                 if framework.results[design][step]['status'] == "pass":
