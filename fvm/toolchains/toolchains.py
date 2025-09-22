@@ -10,8 +10,6 @@ import importlib
 toolchains = ['questa', 'sby']
 default_toolchain = 'questa'
 
-default_flags = {}
-
 def get_toolchain():
     """Get the toolchain from a specific environment variable. In the future,
     if the environment variable is not set, we plan to auto-detect which tools

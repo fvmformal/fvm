@@ -6,7 +6,7 @@ from humanize.time import precisedelta
 def getscriptname():
     """Gets the absolute path of the called python script"""
     scriptname = os.path.abspath(sys.argv[0])
-    return(scriptname)
+    return scriptname
 
 def is_interactive():
     """Returns True if running from a python interpreter and False if running
@@ -15,16 +15,12 @@ def is_interactive():
 
 def is_inside_venv():
     """Returns True if we are inside a venv, false if not"""
-    if sys.prefix == sys.base_prefix:
-        is_venv = True
-    else:
-        is_venv = False
-    return is_venv
+    return sys.prefix == sys.base_prefix
 
 def readable_time(seconds):
     """Converts a time in seconds to the most appropriate unit"""
     if seconds <= 1:
-        ret = "{:.2f}".format(seconds)+' seconds'
+        ret = f"{seconds:.2f} seconds"
     else:
         ret = precisedelta(seconds)
     return ret

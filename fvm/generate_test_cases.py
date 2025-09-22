@@ -113,7 +113,7 @@ def generate_test_case(design_name, step, status="passed", start_time=None, stop
             }
 
         attachment_uuid = str(uuid.uuid4())
-        if step != "prove.simcover" and step != "prove.formalcover":
+        if step not in ('prove.simcover', 'prove.formalcover'):
             try:
                 attachment = f"{allure_results_dir}/{attachment_uuid}-attachment.log"
                 original_file = f"fvm_out/{design_name}/{step}/{step}.log"

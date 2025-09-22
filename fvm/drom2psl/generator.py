@@ -445,8 +445,7 @@ def generator(FILES, outdir = None, verbose = True, debug = False):
     else:
         info("No errors detected!")
 
-    return(retval)
-
+    return retval
 
 def format_group_arguments(group_arguments):
     """Returns the group arguments with an extra semicolon that should be

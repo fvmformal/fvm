@@ -72,10 +72,10 @@ def difficulty_score(data):
             }
     difficulty = 0
     for row in data:
-        for term in SCORE_WEIGHTS:
+        for term, weight in SCORE_WEIGHTS.items():
             if term in row[1]:
                 #print(f'found:{row=}')
-                difficulty += row[2]*SCORE_WEIGHTS[term]
+                difficulty += row[2]*weight
     return difficulty
 
 def difficulty_to_friendliness(difficulty):

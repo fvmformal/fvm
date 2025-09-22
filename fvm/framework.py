@@ -552,15 +552,14 @@ class fvmframework:
         return ret
 
     # TODO : check that port_list must be an actual list()
-    # TODO : consider what to do with pylint unused-argument warnings
-    # because all arguments are used but with locals(), so pylint doesn't see
+    # Disable pylint unused-argument warnings because all arguments 
+    # are used but with locals(), so pylint doesn't see
     # that they are used because it is done dynamically
     # pylint: disable=unused-argument
     def add_clock_domain(self, name, port_list, asynchronous=None,
                          synchronous=None, ignore=None, posedge=None,
                          negedge=None, module=None, inout_clock_in=None,
                          inout_clock_out=None):
-    # pylint: enable=unused-argument
         domain = {key: value for key, value in locals().items() if key != 'self'}
         self.logger.trace(f'adding clock domain: {domain}')
         self.clock_domains.append(domain)
@@ -590,6 +589,7 @@ class fvmframework:
         clock = {key: value for key, value in locals().items() if key != 'self'}
         self.logger.trace(f'adding clock: {clock}')
         self.clocks.append(clock)
+    # pylint: enable=unused-argument
 
     # TODO : consider what happens when we have multiple toplevels, maybe we
     # should have the arguments (self, design/toplevel, entity)
@@ -607,12 +607,14 @@ class fvmframework:
 
     # TODO : consider what happens when we have multiple toplevels, maybe we
     # should have the arguments (self, design/toplevel, ...and the rest)
+    # pylint: disable=unused-argument
     def cutpoint(self, signal, module=None, resetval=None, condition=None,
                  driver=None, wildcards_dont_match_hierarchy_separators=False):
         """Sets a specifig signal as a cutpoint"""
         cutpoint = {key: value for key, value in locals().items() if key != 'self'}
         self.logger.trace(f'adding cutpoint: {cutpoint}')
         self.cutpoints.append(cutpoint)
+    # pylint: enable=unused-argument
 
     def run(self, skip_setup=False):
         """Run everything"""
