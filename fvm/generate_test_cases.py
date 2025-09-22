@@ -6,8 +6,9 @@ import re
 from datetime import datetime
 
 def generate_test_case(design_name, step, status="passed", start_time=None, stop_time=None,
-                       stdout=None, property_summary=None, reachability_html=None, friendliness_score=None,
-                       observability_html=None, formal_reachability_html=None, formal_signoff_html=None,
+                       stdout=None, property_summary=None, reachability_html=None,
+                       friendliness_score=None, observability_html=None,
+                       formal_reachability_html=None, formal_signoff_html=None,
                        properties = None):
     """
     Generate a test case structure for reports.
@@ -18,6 +19,8 @@ def generate_test_case(design_name, step, status="passed", start_time=None, stop
 
     full_name = f"fvm_out/{design_name}/{step}/{step}.log"
     name = f"{design_name}.{step}"
+
+    allure_results_dir = "fvm_out/dashboard/allure-results"
 
     description=f"This is the step {step} of FVM"
 
@@ -37,15 +40,18 @@ def generate_test_case(design_name, step, status="passed", start_time=None, stop
                 if key == "Assertions":
                     for subkey, subvalue in value.items():
                         percentage = (subvalue / asserts_value) * 100
-                        summary_markdown += f"  - **{subkey}**: {subvalue}/{asserts_value} ({percentage:.2f}%)\n"
+                        summary_markdown += f"  - **{subkey}**: {subvalue}/{asserts_value} "
+                        summary_markdown += f"({percentage:.2f}%)\n"
                 elif key == "Cover":
                     for subkey, subvalue in value.items():
                         percentage = (subvalue / covers_value) * 100
-                        summary_markdown += f"  - **{subkey}**: {subvalue}/{covers_value} ({percentage:.2f}%)\n"
+                        summary_markdown += f"  - **{subkey}**: {subvalue}/{covers_value} "
+                        summary_markdown += f"({percentage:.2f}%)\n"
             else:
                 summary_markdown += f"- **{key}**: {value}\n"
 
-        summary_markdown = summary_markdown if summary_markdown else "No property summary available."
+        summary_markdown = (summary_markdown if summary_markdown
+                            else "No property summary available.")
 
         description = f"{description}\n\n### Property Summary\n{summary_markdown}"
 
@@ -94,21 +100,24 @@ def generate_test_case(design_name, step, status="passed", start_time=None, stop
                 "message": f"The FVM step {step} failed for design '{design_name}'.",
                 "trace": "Failure due to critical issues or build errors."
             }
-        elif status.lower() == "passed" and step == "friendliness" and friendliness_score is not None:
+        elif (status.lower() == "passed" and
+              step == "friendliness" and
+              friendliness_score is not None):
             friendliness_score = round(friendliness_score, 2)
             status_details = {
                 "known": False,
                 "muted": False,
                 "flaky": False,
-                "message": f"The friendliness score for design '{design_name}' is {friendliness_score}%."
+                "message": f"The friendliness score for design "
+                           f"'{design_name}' is {friendliness_score}%."
             }
 
         attachment_uuid = str(uuid.uuid4())
         if step != "prove.simcover" and step != "prove.formalcover":
             try:
-                output_attachment_file = f"fvm_out/dashboard/allure-results/{attachment_uuid}-attachment.log"
+                attachment = f"{allure_results_dir}/{attachment_uuid}-attachment.log"
                 original_file = f"fvm_out/{design_name}/{step}/{step}.log"
-                shutil.copy(original_file, output_attachment_file)
+                shutil.copy(original_file, attachment)
             except FileNotFoundError:
                 return
 
@@ -125,9 +134,9 @@ def generate_test_case(design_name, step, status="passed", start_time=None, stop
                     if os.path.exists(reachability_html):
                         attachment_uuid = str(uuid.uuid4())
                         try:
-                            output_attachment_file = f"fvm_out/dashboard/allure-results/{attachment_uuid}-attachment.html"
+                            attachment = f"{allure_results_dir}/{attachment_uuid}-attachment.html"
                             original_file = reachability_html
-                            shutil.copy(original_file, output_attachment_file)
+                            shutil.copy(original_file, attachment)
                         except FileNotFoundError:
                             print(f"Error: Input log file {original_file} not found.")
                             return
@@ -145,9 +154,9 @@ def generate_test_case(design_name, step, status="passed", start_time=None, stop
                     if os.path.exists(formal_reachability_html):
                         attachment_uuid = str(uuid.uuid4())
                         try:
-                            output_attachment_file = f"fvm_out/dashboard/allure-results/{attachment_uuid}-attachment.html"
+                            attachment = f"{allure_results_dir}/{attachment_uuid}-attachment.html"
                             original_file = formal_reachability_html
-                            shutil.copy(original_file, output_attachment_file)
+                            shutil.copy(original_file, attachment)
                         except FileNotFoundError:
                             print(f"Error: Input log file {original_file} not found.")
                             return
@@ -162,9 +171,9 @@ def generate_test_case(design_name, step, status="passed", start_time=None, stop
                     if os.path.exists(observability_html):
                         attachment_uuid = str(uuid.uuid4())
                         try:
-                            output_attachment_file = f"fvm_out/dashboard/allure-results/{attachment_uuid}-attachment.html"
+                            attachment = f"{allure_results_dir}/{attachment_uuid}-attachment.html"
                             original_file = observability_html
-                            shutil.copy(original_file, output_attachment_file)
+                            shutil.copy(original_file, attachment)
                         except FileNotFoundError:
                             print(f"Error: Input log file {original_file} not found.")
                             return
@@ -179,9 +188,9 @@ def generate_test_case(design_name, step, status="passed", start_time=None, stop
                     if os.path.exists(formal_signoff_html):
                         attachment_uuid = str(uuid.uuid4())
                         try:
-                            output_attachment_file = f"fvm_out/dashboard/allure-results/{attachment_uuid}-attachment.html"
+                            attachment = f"{allure_results_dir}/{attachment_uuid}-attachment.html"
                             original_file = formal_signoff_html
-                            shutil.copy(original_file, output_attachment_file)
+                            shutil.copy(original_file, attachment)
                         except FileNotFoundError:
                             print(f"Error: Input log file {original_file} not found.")
                             return
@@ -193,8 +202,8 @@ def generate_test_case(design_name, step, status="passed", start_time=None, stop
                             }
                         )
             attachment_uuid = str(uuid.uuid4())
-            output_attachment_file = f"fvm_out/dashboard/allure-results/{attachment_uuid}-attachment.log"
-            with open(output_attachment_file, "w", encoding="utf-8") as log_file:
+            attachment = f"{allure_results_dir}/{attachment_uuid}-attachment.log"
+            with open(attachment, "w", encoding="utf-8") as log_file:
                 log_file.write(stdout)
             attachments.append(
                 {
@@ -275,7 +284,7 @@ def generate_test_case(design_name, step, status="passed", start_time=None, stop
     if status.lower() != "skipped":
         test_case["attachments"] = attachments
 
-    output_file = f"fvm_out/dashboard/allure-results/{test_case_uuid}-result.json"
+    output_file = f"{allure_results_dir}/{test_case_uuid}-result.json"
     with open(output_file, 'w', encoding="utf-8") as json_file:
         json.dump(test_case, json_file, indent=2)
 
@@ -284,7 +293,9 @@ def parse_property_summary(file_path):
     Parse the 'Property Summary' section from the given file.
     """
     summary = {}
-    start_marker = "# ========================================\n# Property Summary                   Count\n# ========================================\n"
+    start_marker = "# ========================================\n# "
+    start_marker += "Property Summary                   "
+    start_marker += "Count\n# ========================================\n"
     end_marker = "# Message"
 
     with open(file_path, 'r', encoding="utf-8") as file:
@@ -345,7 +356,8 @@ def parse_log_to_json(log_file):
     inconclusive_entries = {}
 
     pattern = re.compile(
-        r"^# \[(\d{2}:\d{2}:\d{2})\]\s+(Proven|Covered|Vacuity Check Passed|Fired|Vacuity Check Failed|Uncoverable):\s+([A-Za-z0-9_.]+)"
+        r"^# \[(\d{2}:\d{2}:\d{2})\]\s+(Proven|Covered|Vacuity Check Passed|"
+        r"Fired|Vacuity Check Failed|Uncoverable):\s+([A-Za-z0-9_.]+)"
         r"\s*\(engine:(\d+)(?:, vacuity check:([\w]+))?(?:, radius:(-?\d+))?\)"
     )
 
@@ -427,7 +439,8 @@ def property_summary(file_path):
         # If we are in the "Property Summary" section, process the lines
         if in_property_summary:
             if line.startswith("==="):
-                if i + 2 < len(lines) and lines[i + 1].strip() == "" and lines[i + 2].strip() == "":
+                if (i + 2 < len(lines) and lines[i + 1].strip() == "" and
+                    lines[i + 2].strip() == ""):
                     break
 
             # If we find a separation line (---), start capturing children
@@ -460,11 +473,11 @@ def property_summary(file_path):
             sub_property_match = sub_property_pattern.match(lines[i])
             if sub_property_match:
                 sub_property_name = sub_property_match.group(1).strip()
-                sub_property_count = int(sub_property_match.group(2))
+                count = int(sub_property_match.group(2))
                 # Assign the sub-property to the last child of the current parent
                 if current_parent and 'Children' in log_data[current_parent]:
                     last_child = list(log_data[current_parent]['Children'].keys())[-1]
-                    log_data[current_parent]['Children'][last_child][sub_property_name] = sub_property_count
+                    log_data[current_parent]['Children'][last_child][sub_property_name] = count
 
         i += 1
 
