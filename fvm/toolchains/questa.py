@@ -2,15 +2,8 @@
 
 import os
 from collections import OrderedDict
-from datetime import datetime
-import shutil
 import glob
 import pathlib
-import time
-
-from rich.console import Console
-from rich.table import Table
-from rich.text import Text
 
 # TODO : are this parsers questa-specific or could they be made configurable?
 # should they be moved to someplace like toolchains/questa/parsers?
@@ -28,7 +21,6 @@ from fvm.parsers import parse_design_rpt
 from fvm import generate_test_cases
 from fvm import helpers
 from fvm import tables
-from fvm.toolchains import toolchains
 
 # TODO : For all this file: probably forward slashes (/) are not portable and
 # we should use a library to manage path operations, such as os.path or pathlib
