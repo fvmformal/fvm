@@ -283,9 +283,9 @@ def run_rulecheck(framework, path):
                                                    step)
     rpt_path = f'{framework.outdir}/{framework.current_toplevel}/{step}/autocheck_verify.rpt'
     if os.path.exists(rpt_path):
-        sum = parse_rulecheck.group_by_severity(parse_rulecheck.parse_type_and_severity(rpt_path))
-        framework.results[framework.current_toplevel][step]['summary'] = sum
-        tables.show_step_summary(sum,
+        res = parse_rulecheck.group_by_severity(parse_rulecheck.parse_type_and_severity(rpt_path))
+        framework.results[framework.current_toplevel][step]['summary'] = res
+        tables.show_step_summary(res,
                                  "Violation", "Caution", "Inconclusive",
                                  outdir=f'{framework.outdir}/{framework.current_toplevel}/{step}',
                                  step=step)
@@ -323,8 +323,8 @@ def run_xverify(framework, path):
     run_stdout, run_stderr, err = run_qverify_step(framework, framework.current_toplevel, step)
     rpt_path = f'{framework.outdir}/{framework.current_toplevel}/{step}/xcheck_verify.rpt'
     if os.path.exists(rpt_path):
-        sum = parse_xverify.group_by_result(parse_xverify.parse_type_and_result(rpt_path))
-        framework.results[framework.current_toplevel][step]['summary'] = sum
+        res = parse_xverify.group_by_result(parse_xverify.parse_type_and_result(rpt_path))
+        framework.results[framework.current_toplevel][step]['summary'] = res
         tables.show_step_summary(framework.results[framework.current_toplevel][step]['summary'],
                                  "Corruptible", "Incorruptible", "Inconclusive",
                                  outdir=f'{framework.outdir}/{framework.current_toplevel}/{step}',
@@ -379,10 +379,10 @@ def run_reachability(framework, path):
             html_content = f.read()
 
         table = parse_reachability.parse_single_table(html_content)
-        sum = parse_reachability.unified_format_table(parse_reachability.add_total_row(table))
-        framework.results[framework.current_toplevel]['reachability']['summary'] = sum
+        res = parse_reachability.unified_format_table(parse_reachability.add_total_row(table))
+        framework.results[framework.current_toplevel]['reachability']['summary'] = res
         title = f"Reachability Summary for Design: {framework.current_toplevel}"
-        tables.show_coverage_summary(sum, title=title)
+        tables.show_coverage_summary(res, title=title)
     return run_stdout, run_stderr, err
 
 # TODO : We have to consider if Uncoverable is an error or a warning or nothing.
@@ -531,9 +531,9 @@ def run_resets(framework, path):
     run_stdout, run_stderr, err = run_qverify_step(framework, framework.current_toplevel, 'resets')
     rpt_path = f'{framework.outdir}/{framework.current_toplevel}/resets/rdc.rpt'
     if os.path.exists(rpt_path):
-        sum = parse_resets.parse_resets_results(rpt_path)
-        framework.results[framework.current_toplevel]['resets']['summary'] = sum
-        tables.show_step_summary(sum,
+        res = parse_resets.parse_resets_results(rpt_path)
+        framework.results[framework.current_toplevel]['resets']['summary'] = res
+        tables.show_step_summary(res,
                                  "Violation", "Caution",
                                  outdir=f'{framework.outdir}/{framework.current_toplevel}/resets',
                                  step="resets")
@@ -579,9 +579,9 @@ def run_clocks(framework, path):
     run_stdout, run_stderr, err = run_qverify_step(framework, framework.current_toplevel, 'clocks')
     clocks_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/clocks/cdc.rpt'
     if os.path.exists(clocks_rpt_path):
-        sum = parse_clocks.parse_clocks_results(clocks_rpt_path)
-        framework.results[framework.current_toplevel]['clocks']['summary'] = sum
-        tables.show_step_summary(sum,
+        res = parse_clocks.parse_clocks_results(clocks_rpt_path)
+        framework.results[framework.current_toplevel]['clocks']['summary'] = res
+        tables.show_step_summary(res,
                                  "Violations", "Cautions", proven="Proven",
                                  outdir=f'{framework.outdir}/{framework.current_toplevel}/clocks',
                                  step="clocks")
@@ -673,8 +673,8 @@ def run_prove(framework, path):
     run_stdout, run_stderr, err = run_qverify_step(framework, framework.current_toplevel, 'prove')
     rpt_path = f'{framework.outdir}/{framework.current_toplevel}/prove/formal_verify.rpt'
     if os.path.exists(rpt_path):
-        sum = generate_test_cases.property_summary(rpt_path)
-        framework.results[framework.current_toplevel]['prove']['summary'] = sum
+        res = generate_test_cases.property_summary(rpt_path)
+        framework.results[framework.current_toplevel]['prove']['summary'] = res
         properties = parse_prove.normalize_sections(parse_prove.parse_targets_report(rpt_path))
         tables.show_prove_summary(properties)
     return run_stdout, run_stderr, err
@@ -820,8 +820,8 @@ def run_prove_simcover(framework, path):
 
     if framework.results[design]['prove.simcover']['summary'] is not None:
         coverage_data = parse_simcover.parse_coverage_report(f'{path}/simulation_coverage.log')
-        sum = parse_simcover.unified_format_table(parse_simcover.sum_coverage_data(coverage_data))
-        framework.results[design]['prove.simcover']['summary'] = sum
+        res = parse_simcover.unified_format_table(parse_simcover.sum_coverage_data(coverage_data))
+        framework.results[design]['prove.simcover']['summary'] = res
         title = f"Simulation Coverage Summary for Design: {framework.current_toplevel}"
         tables.show_coverage_summary(framework.results[design]['prove.simcover']['summary'],
                                      title=title)
@@ -891,12 +891,12 @@ def run_prove_formalcover(framework, path):
             filtered_tables = parse_formal_signoff.filter_coverage_tables(table)
 
             if filtered_tables:
-                sum = parse_formal_signoff.unified_format_table(
+                res = parse_formal_signoff.unified_format_table(
                     parse_formal_signoff.add_total_field(filtered_tables[0]))
-                framework.results[framework.current_toplevel]['prove.formalcover']['summary'] = sum
+                framework.results[framework.current_toplevel]['prove.formalcover']['summary'] = res
 
                 title = f"Formal Signoff Coverage Summary for Design: {framework.current_toplevel}"
-                tables.show_coverage_summary(sum, title=title)
+                tables.show_coverage_summary(res, title=title)
     return err
 
 def get_linecheck_prove_formalcover():
