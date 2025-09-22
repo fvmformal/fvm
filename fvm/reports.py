@@ -55,6 +55,9 @@ def pretty_summary(framework, logger):
     total_cont = 0
     total_stat = 0
 
+    def colorize(color, text):
+        return f"[bold {color}]{text}[/bold {color}]"
+
     table = None
     for design in framework.designs:
         table = None
@@ -76,7 +79,8 @@ def pretty_summary(framework, logger):
                 step_summary = framework.results[design][step].get('summary', None)
                 # Error/Warning summaries
                 if step_summary and ("Error" in step_summary or "Violation" in step_summary or
-                                     "Violations" in step_summary or "Corruptible" in step_summary):
+                                     "Violations" in step_summary
+                                     or "Corruptible" in step_summary):
                     step_errors = step_summary.get('Error', {}).get('count', 0)
                     step_warnings = step_summary.get('Warning', {}).get('count', 0)
                     step_violation = step_summary.get('Violation', {}).get('count', 0)
@@ -86,7 +90,7 @@ def pretty_summary(framework, logger):
                     step_cautions = step_summary.get('Cautions', {}).get('count', 0)
                     step_proven = step_summary.get('Proven', {}).get('count', 0)
                     step_corruptibles = step_summary.get('Corruptible', {}).get('count', 0)
-                    step_incorruptibles = step_summary.get('Incorruptible', {}).get('count', 0)
+                    step_incorruptible = step_summary.get('Incorruptible', {}).get('count', 0)
 
                     if step_errors != 0:
                         result_str_for_table += f"[bold red]{step_errors}E[/bold red]"
@@ -106,19 +110,21 @@ def pretty_summary(framework, logger):
                         result_str_for_table += f"[bold yellow] {step_caution}C[/bold yellow]"
                     if step_cautions != 0:
                         result_str_for_table += f"[bold yellow] {step_cautions}C[/bold yellow]"
-                    if step_incorruptibles != 0:
-                        result_str_for_table += f"[bold yellow] {step_incorruptibles}I[/bold yellow]"
+                    if step_incorruptible != 0:
+                        result_str_for_table += f"[bold yellow]{step_incorruptible}I[/bold yellow]"
                     if step_inconclusives != 0:
                         result_str_for_table += f"[bold white] {step_inconclusives}I[/bold white]"
                     if step_proven != 0:
                         result_str_for_table += f"[bold green] {step_proven}P[/bold green]"
-                    if (step_errors == 0 and step_warnings == 0 and step_violation == 0 and step_caution == 0 and
-                        step_inconclusives == 0 and step_violations == 0 and step_cautions == 0 and step_proven == 0 and
-                        step_corruptibles == 0 and step_incorruptibles == 0):
+                    if (step_errors == 0 and step_warnings == 0 and step_violation == 0 and
+                        step_caution == 0 and step_inconclusives == 0 and step_violations == 0
+                        and step_cautions == 0 and step_proven == 0 and step_corruptibles == 0
+                        and step_incorruptible == 0):
                         result_str_for_table += "[bold green]ok[/bold green]"
                 # Friendliness summary
                 elif "score" in framework.results[design][step]:
-                    result_str_for_table += f"[bold green]{framework.results[design][step]['score']:.2f}%[/bold green]"
+                    friendliness = framework.results[design][step]['score']
+                    result_str_for_table += f"[bold green]{friendliness:.2f}%[/bold green]"
                 # Coverage summaries
                 elif isinstance(step_summary, list):
                     if step_summary and "Coverage Type" in step_summary[0]:
@@ -188,8 +194,8 @@ def pretty_summary(framework, logger):
                     else:
                         color_asserts = "bold green"
 
-                    table.add_row("", f"  [{color_asserts}]Asserts[/{color_asserts}]", str(asserts), "")
-
+                    table.add_row("", f"  [{color_asserts}]Asserts[/{color_asserts}]",
+                                  str(asserts), "")
 
                     color_map_asserts = {
                         "Proven": "bold green",
@@ -205,14 +211,15 @@ def pretty_summary(framework, logger):
                         count = value.get("Count", 0)
                         formatted_str = f"{count}/{asserts}" if asserts else f"{count}/0"
                         color_asserts_children = color_map_asserts.get(key, "bold green")
-                        table.add_row("", f"    └ {key}", f"[{color_asserts_children}]{formatted_str}[/{color_asserts_children}]", "")
+                        colored = colorize(color_asserts_children, formatted_str)
+                        table.add_row("", f"    └ {key}", colored, "")
 
                         for subkey, subval in value.items():
                             if subkey != "Count":
-                                subcount = subval
-                                formatted_substr = f"{subcount}/{count}" if count else f"{subcount}/0"
-                                color_asserts_children = color_map_asserts.get(subkey, "bold green")
-                                table.add_row("", f"       └ {subkey}", f"[{color_asserts_children}]{formatted_substr}[/{color_asserts_children}]", "")
+                                formatted_substr = f"{subval}/{count}" if count else f"{subval}/0"
+                                color_asserts_children = color_map_asserts.get(subkey,"bold green")
+                                colored = colorize(color_asserts_children, formatted_substr)
+                                table.add_row("", f"       └ {subkey}", colored, "")
 
                     covers_children = prop_summary.get("Covers", {}).get("Children", {})
                     uncovered_count = covers_children.get("Uncoverable", {}).get("Count", 0)
@@ -235,19 +242,27 @@ def pretty_summary(framework, logger):
                         "Covered without Waveform": "bold yellow"
                         }
 
-                    table.add_row("", f"  [{color_covers}]Covers[/{color_covers}]", str(covers), "")
+                    table.add_row("",
+                                  f"  [{color_covers}]Covers[/{color_covers}]",
+                                  str(covers),
+                                  "")
                     for key, value in covers_children.items():
                         count = value.get("Count", 0)
                         formatted_str = f"{count}/{covers}" if covers else f"{count}/0"
                         color_covers_children = color_map_covers.get(key, "bold green")
-                        table.add_row("", f"    └ {key}", f"[{color_covers_children}]{formatted_str}[/{color_covers_children}]", "")
+                        table.add_row("",
+                                      f"    └ {key}",
+                                      colorize(color_covers_children, formatted_str),
+                                      "")
 
                         for subkey, subval in value.items():
                             if subkey != "Count":
-                                subcount = subval
-                                formatted_substr = f"{subcount}/{count}" if count else f"{subcount}/0"
+                                formatted_substr = f"{subval}/{count}" if count else f"{subval}/0"
                                 color_covers_children = color_map_covers.get(subkey, "bold green")
-                                table.add_row("", f"       └ {subkey}", f"[{color_covers_children}]{formatted_substr}[/{color_covers_children}]", "")
+                                table.add_row("",
+                                              f"       └ {subkey}",
+                                              colorize(color_covers_children, formatted_substr),
+                                              "")
         summary_console.print(table)
 
     summary = f"[bold green]  pass[/bold green] {total_pass} of {total_cont}\n"
@@ -407,12 +422,14 @@ def generate_reports(framework, logger):
 
     if os.path.isdir(framework.resultsdir):
         timestamp = datetime.now().isoformat()
-        logger.info(f'Results directory already exists, moving it from {framework.resultsdir} to {framework.outdir}/fvm_history/{timestamp}')
+        logger.info(f'Results directory already exists, moving it from '
+                    f'{framework.resultsdir} to {framework.outdir}/fvm_history/{timestamp}')
         shutil.move(framework.resultsdir, f'{framework.outdir}/fvm_history/{timestamp}')
         os.makedirs(framework.resultsdir, exist_ok=True)
         historydir = f'{framework.reportdir}/history'
         if os.path.isdir(historydir):
-            logger.info(f'Report history directory already exists, moving it from {historydir} to {framework.resultsdir}/history')
+            logger.info(f'Report history directory already exists, moving it from '
+                        f'{historydir} to {framework.resultsdir}/history')
             shutil.move(historydir, f'{framework.resultsdir}/history')
             logger.info(f'Removing old report directory at {framework.resultsdir}')
             shutil.rmtree(framework.reportdir)
@@ -507,7 +524,9 @@ def generate_allure(framework, logger):
     for design in framework.designs:
         all_steps = get_all_steps(framework.steps.steps, framework.steps.post_steps)
         for step in all_steps:
-            if 'status' in framework.results[design][step] and framework.results[design][step]['status'] != "skip":
+            if ('status' in framework.results[design][step] and
+                framework.results[design][step]['status'] != "skip"):
+
                 status = framework.results[design][step]['status']
                 if framework.results[design][step]['status'] == "pass":
                     status = "passed"
@@ -523,11 +542,11 @@ def generate_allure(framework, logger):
                 else:
                     stdout = None
                 if step == 'reachability':
-                    reachability_rpt_path = f'{framework.outdir}/{design}/{step}/covercheck_verify.rpt'
-                    reachability_html_path = f'{framework.outdir}/{design}/{step}/reachability.html'
-                    if os.path.exists(reachability_rpt_path):
-                        parse_reports.parse_reachability_report_to_html(reachability_rpt_path, reachability_html_path)
-                        reachability_html = reachability_html_path
+                    rpt_path = f'{framework.outdir}/{design}/{step}/covercheck_verify.rpt'
+                    html_path = f'{framework.outdir}/{design}/{step}/reachability.html'
+                    if os.path.exists(rpt_path):
+                        parse_reports.parse_reachability_report_to_html(rpt_path, html_path)
+                        reachability_html = html_path
                     else:
                         reachability_html = None
                 else:
@@ -542,55 +561,67 @@ def generate_allure(framework, logger):
                 properties = None
                 property_summary = None
                 if step == 'prove':
-                    properties = generate_test_cases.parse_log_to_json(f'{framework.outdir}/{design}/{step}/{step}.log')
-                    property_summary = generate_test_cases.parse_property_summary(f'{framework.outdir}/{design}/{step}/{step}.log')
+                    path = f'{framework.outdir}/{design}/{step}/{step}.log'
+                    if os.path.exists(path):
+                        properties = generate_test_cases.parse_log_to_json(path)
+                        property_summary = generate_test_cases.parse_property_summary(path)
                 if step == 'prove.formalcover':
                     formal_signoff_html = None
                     if not framework.is_disabled('observability'):
-                        observability_rpt_path = f'{framework.outdir}/{design}/{step}/formal_observability.rpt'
-                        observability_html_path = f'{framework.outdir}/{design}/{step}/formal_observability.html'
-                        if os.path.exists(observability_rpt_path):
-                            parse_reports.parse_formal_observability_report_to_html(observability_rpt_path, observability_html_path)
-                            observability_html = observability_html_path
+                        rpt_path = f'{framework.outdir}/{design}/{step}/formal_observability.rpt'
+                        html_path = f'{framework.outdir}/{design}/{step}/formal_observability.html'
+                        if os.path.exists(rpt_path):
+                            parse_reports.parse_formal_observability_report_to_html(rpt_path,
+                                                                                    html_path)
+                            observability_html = html_path
                         else:
                             observability_html = None
                     if not framework.is_disabled('reachability'):
-                        formal_reachability_rpt_path = f'{framework.outdir}/{design}/{step}/formal_reachability.rpt'
-                        formal_reachability_html_path = f'{framework.outdir}/{design}/{step}/formal_reachability.html'
-                        if os.path.exists(formal_reachability_rpt_path):
-                            parse_reports.parse_formal_reachability_report_to_html(formal_reachability_rpt_path, formal_reachability_html_path)
-                            formal_reachability_html = formal_reachability_html_path
+                        rpt_path = f'{framework.outdir}/{design}/{step}/formal_reachability.rpt'
+                        html_path = f'{framework.outdir}/{design}/{step}/formal_reachability.html'
+                        if os.path.exists(rpt_path):
+                            parse_reports.parse_formal_reachability_report_to_html(rpt_path,
+                                                                                   html_path)
+                            formal_reachability_html = html_path
                         else:
                             formal_reachability_html = None
                     if not framework.is_disabled('signoff'):
-                        formal_signoff_rpt_path = f'{framework.outdir}/{design}/{step}/formal_signoff.rpt'
-                        formal_signoff_html_path = f'{framework.outdir}/{design}/{step}/formal_signoff.html'
-                        if os.path.exists(formal_signoff_rpt_path):
-                            parse_reports.parse_formal_signoff_report_to_html(formal_signoff_rpt_path, formal_signoff_html_path)
-                            formal_signoff_html = formal_signoff_html_path
+                        rpt_path = f'{framework.outdir}/{design}/{step}/formal_signoff.rpt'
+                        html_path = f'{framework.outdir}/{design}/{step}/formal_signoff.html'
+                        if os.path.exists(rpt_path):
+                            parse_reports.parse_formal_signoff_report_to_html(rpt_path, html_path)
+                            formal_signoff_html = html_path
                         else:
                             formal_signoff_html = None
                 else:
                     observability_html = None
                     formal_reachability_html = None
                     formal_signoff_html = None
-                generate_test_cases.generate_test_case( design, status=status,
-                                                        start_time=start_time, stop_time=stop_time, step=step,
-                                                        stdout = stdout, property_summary = property_summary,
-                                                        reachability_html = reachability_html,
-                                                        friendliness_score=friendliness_score,
-                                                        observability_html=observability_html,
-                                                        formal_reachability_html=formal_reachability_html,
-                                                        formal_signoff_html=formal_signoff_html,
-                                                        properties=properties)
-            elif 'status' in framework.results[design][step] and framework.results[design][step]['status'] == "skip":
+                generate_test_cases.generate_test_case(design,
+                                                       status=status,
+                                                       start_time=start_time,
+                                                       stop_time=stop_time,
+                                                       step=step,
+                                                       stdout=stdout,
+                                                       property_summary=property_summary,
+                                                       reachability_html=reachability_html,
+                                                       friendliness_score=friendliness_score,
+                                                       observability_html=observability_html,
+                                                       formal_reachability_html=formal_reachability_html,
+                                                       formal_signoff_html=formal_signoff_html,
+                                                       properties=properties)
+            elif ('status' in framework.results[design][step] and
+                  framework.results[design][step]['status'] == "skip"):
                 status = "skipped"
                 start_time_str = datetime.now().isoformat()
                 start_time_obj = datetime.fromisoformat(framework.start_time_setup)
                 start_time_sec = start_time_obj.timestamp()
                 start_time = int(start_time_sec * 1000)
-                generate_test_cases.generate_test_case( design, status=status,
-                                                        start_time=start_time, stop_time=start_time, step=step)
+                generate_test_cases.generate_test_case(design,
+                                                       status=status,
+                                                       start_time=start_time,
+                                                       stop_time=start_time,
+                                                       step=step)
             else:
                 status = 'omit'
 
