@@ -298,7 +298,7 @@ def pretty_summary(framework, logger):
 #       - generate_html_report
 def generate_reports(framework, logger):
     """Generates output reports"""
-    
+
     # For all designs:
     #   Define a TestSuite per design
     #   For all steps:

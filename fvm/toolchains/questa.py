@@ -67,7 +67,8 @@ def define_steps(framework, steps):
     steps.add_step(framework, 'resets', setup_resets, run_resets)
     steps.add_step(framework, 'clocks', setup_clocks, run_clocks)
     steps.add_step(framework, 'prove', setup_prove, run_prove)
-    steps.add_post_step(framework, 'prove', 'formalcover', setup_prove_formalcover, run_prove_formalcover)
+    steps.add_post_step(framework, 'prove', 'formalcover',
+                        setup_prove_formalcover, run_prove_formalcover)
     steps.add_post_step(framework, 'prove', 'simcover', setup_prove_simcover, run_prove_simcover)
 
 def create_f_file(filename, sources):
@@ -106,10 +107,12 @@ def gencompilescript(framework, filename, path):
             print(f'vlib {framework.get_tool_flags("vlib")} {lib_dir}', file=f)
             print(f'vmap {framework.get_tool_flags("vmap")} {lib} {lib_dir}', file=f)
             lib_sources = [src for src, library in zip(framework.vhdl_sources,
-                                                       framework.libraries_from_vhdl_sources) if library == lib]
+                                                       framework.libraries_from_vhdl_sources)
+                                                       if library == lib]
             f_file_path = f'{path}/{lib}_design.f'
             create_f_file(f_file_path, lib_sources)
-            print(f'vcom {framework.get_tool_flags("vcom")} -{framework.vhdlstd} -work {lib} -autoorder -f {f_file_path}', file=f)
+            print(f'vcom {framework.get_tool_flags("vcom")} -{framework.vhdlstd} '
+                  f'-work {lib} -autoorder -f {f_file_path}', file=f)
             print('', file=f)
 
 # TODO: this function is too big, it can and must be simplified a bit
@@ -199,7 +202,8 @@ def setup_lint(framework, path):
     gencompilescript(framework, filename, path)
     with open(f'{path}/{filename}', "a", encoding='utf-8') as f:
         print(f'lint methodology {framework.get_tool_flags("lint methodology")}', file=f)
-        print(f'lint run -d {framework.current_toplevel} {framework.get_tool_flags("lint run")} {framework.generic_args}', file=f)
+        print(f'lint run -d {framework.current_toplevel} {framework.get_tool_flags("lint run")} '
+              f'{framework.generic_args}', file=f)
         print('exit', file=f)
 
 def run_lint(framework, path):
@@ -207,9 +211,12 @@ def run_lint(framework, path):
     run_stdout, run_stderr, err = run_qverify_step(framework, framework.current_toplevel, 'lint')
     lint_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/lint/lint.rpt'
     if os.path.exists(lint_rpt_path):
-        framework.results[framework.current_toplevel]['lint']['summary'] = parse_lint.parse_check_summary(lint_rpt_path)
-        tables.show_step_summary(framework.results[framework.current_toplevel]['lint']['summary'], "Error", "Warning",
-                                     outdir=f'{framework.outdir}/{framework.current_toplevel}/lint', step="lint")
+        lint_summary = parse_lint.parse_check_summary(lint_rpt_path)
+        framework.results[framework.current_toplevel]['lint']['summary'] = lint_summary
+        tables.show_step_summary(framework.results[framework.current_toplevel]['lint']['summary'],
+                                 "Error", "Warning",
+                                 outdir=f'{framework.outdir}/{framework.current_toplevel}/lint',
+                                 step="lint")
     return run_stdout, run_stderr, err
 
 def get_linecheck_lint():
@@ -227,18 +234,22 @@ def setup_friendliness(framework, path):
     filename = "friendliness.do"
     gencompilescript(framework, filename, path)
     with open(path+'/'+filename, "a", encoding='utf-8') as f:
-        print(f'autocheck compile {framework.get_tool_flags("autocheck compile")} -d {framework.current_toplevel} {framework.generic_args}', file=f)
+        print(f'autocheck compile {framework.get_tool_flags("autocheck compile")} -d '
+              f'{framework.current_toplevel} {framework.generic_args}', file=f)
         print('exit', file=f)
 
 def run_friendliness(framework, path):
     print("**** run friendliness ****")
-    run_stdout, run_stderr, err = run_qverify_step(framework, framework.current_toplevel, 'friendliness')
+    run_stdout, run_stderr, err = run_qverify_step(framework,
+                                                   framework.current_toplevel,
+                                                   'friendliness')
     rpt = os.path.join(path, 'friendliness', 'autocheck_design.rpt')
     if os.path.exists(rpt):
         data = parse_design_rpt.data_from_design_summary(rpt)
+        score = parse_design_rpt.friendliness_score(data)
         framework.results[framework.current_toplevel]['friendliness']['data'] = data
-        framework.results[framework.current_toplevel]['friendliness']['score'] = parse_design_rpt.friendliness_score(data)
-        tables.show_friendliness_score(framework.results[framework.current_toplevel]['friendliness']['score'])
+        framework.results[framework.current_toplevel]['friendliness']['score'] = score
+        tables.show_friendliness_score(score)
 
     return run_stdout, run_stderr, err
 
@@ -259,18 +270,25 @@ def setup_rulecheck(framework, path):
         print('autocheck report inconclusives', file=f)
         for line in framework.init_reset:
             print(line, file=f)
-        print(f'autocheck compile {framework.get_tool_flags("autocheck compile")} -d {framework.current_toplevel} {framework.generic_args}', file=f)
+        print(f'autocheck compile {framework.get_tool_flags("autocheck compile")} -d '
+              f'{framework.current_toplevel} {framework.generic_args}', file=f)
         print(f'autocheck verify {default_flags["autocheck verify"]}', file=f)
         print('exit', file=f)
 
 def run_rulecheck(framework, path):
     print("**** run rulecheck ****")
-    run_stdout, run_stderr, err = run_qverify_step(framework, framework.current_toplevel, 'rulecheck')
-    rulecheck_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/rulecheck/autocheck_verify.rpt'
-    if os.path.exists(rulecheck_rpt_path):
-        framework.results[framework.current_toplevel]['rulecheck']['summary'] = parse_rulecheck.group_by_severity(parse_rulecheck.parse_type_and_severity(rulecheck_rpt_path))
-        tables.show_step_summary(framework.results[framework.current_toplevel]['rulecheck']['summary'], "Violation", "Caution", "Inconclusive",
-                                     outdir=f'{framework.outdir}/{framework.current_toplevel}/rulecheck', step="rulecheck")
+    step = 'rulecheck'
+    run_stdout, run_stderr, err = run_qverify_step(framework,
+                                                   framework.current_toplevel,
+                                                   step)
+    rpt_path = f'{framework.outdir}/{framework.current_toplevel}/{step}/autocheck_verify.rpt'
+    if os.path.exists(rpt_path):
+        sum = parse_rulecheck.group_by_severity(parse_rulecheck.parse_type_and_severity(rpt_path))
+        framework.results[framework.current_toplevel][step]['summary'] = sum
+        tables.show_step_summary(sum,
+                                 "Violation", "Caution", "Inconclusive",
+                                 outdir=f'{framework.outdir}/{framework.current_toplevel}/{step}',
+                                 step=step)
     return run_stdout, run_stderr, err
 
 def get_linecheck_rulecheck():
@@ -279,7 +297,9 @@ def get_linecheck_rulecheck():
     # Make a copy to avoid modifying the original dict
     patterns = {k: v.copy() for k, v in patterns.items()}
 
-    patterns["ignore"] += ["Check                     Evaluations         Found Inconclusives        Waived"]
+    patterns["ignore"] += [
+        "Check                     Evaluations         Found Inconclusives        Waived"
+        ]
     patterns["error"] += ["violation", "violations"]
     patterns["warning"] += ["caution", "cautions", "inconclusive", "inconclusives"]
     return patterns
@@ -292,18 +312,23 @@ def setup_xverify(framework, path):
     with open(path+'/'+filename, "a", encoding='utf-8') as f:
         for line in framework.init_reset:
             print(line, file=f)
-        print(f'xcheck compile {framework.get_tool_flags("xcheck compile")} -d {framework.current_toplevel} {framework.generic_args}', file=f)
+        print(f'xcheck compile {framework.get_tool_flags("xcheck compile")} -d '
+              f'{framework.current_toplevel} {framework.generic_args}', file=f)
         print(f'xcheck verify {framework.get_tool_flags("xcheck verify")}', file=f)
         print('exit', file=f)
 
 def run_xverify(framework, path):
     print("**** run xverify ****")
-    run_stdout, run_stderr, err = run_qverify_step(framework, framework.current_toplevel, 'xverify')
-    xverify_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/xverify/xcheck_verify.rpt'
-    if os.path.exists(xverify_rpt_path):
-        framework.results[framework.current_toplevel]['xverify']['summary'] = parse_xverify.group_by_result(parse_xverify.parse_type_and_result(xverify_rpt_path))
-        tables.show_step_summary(framework.results[framework.current_toplevel]['xverify']['summary'], "Corruptible", "Incorruptible", "Inconclusive",
-                                     outdir=f'{framework.outdir}/{framework.current_toplevel}/xverify', step="xverify")
+    step = 'xverify'
+    run_stdout, run_stderr, err = run_qverify_step(framework, framework.current_toplevel, step)
+    rpt_path = f'{framework.outdir}/{framework.current_toplevel}/{step}/xcheck_verify.rpt'
+    if os.path.exists(rpt_path):
+        sum = parse_xverify.group_by_result(parse_xverify.parse_type_and_result(rpt_path))
+        framework.results[framework.current_toplevel][step]['summary'] = sum
+        tables.show_step_summary(framework.results[framework.current_toplevel][step]['summary'],
+                                 "Corruptible", "Incorruptible", "Inconclusive",
+                                 outdir=f'{framework.outdir}/{framework.current_toplevel}/{step}',
+                                 step=step)
     return run_stdout, run_stderr, err
 
 def get_linecheck_xverify():
@@ -312,7 +337,9 @@ def get_linecheck_xverify():
     # Make a copy to avoid modifying the original dict
     patterns = {k: v.copy() for k, v in patterns.items()}
 
-    patterns["ignore"] += ["Check                    Active     Corruptible   Incorruptible    Inconclusive"]
+    patterns["ignore"] += [
+        "Check                    Active     Corruptible   Incorruptible    Inconclusive"
+        ]
     patterns["error"] += ["corruptible", "corruptibles"]
     patterns["warning"] += ["incorruptible", "incorruptibles", "inconclusive", "inconclusives"]
     return patterns
@@ -328,7 +355,8 @@ def setup_reachability(framework, path):
     with open(path+'/'+filename, "a", encoding='utf-8') as f:
         for line in framework.init_reset:
             print(line, file=f)
-        print(f'covercheck compile {framework.get_tool_flags("covercheck compile")} -d {framework.current_toplevel} {framework.generic_args}', file=f)
+        print(f'covercheck compile {framework.get_tool_flags("covercheck compile")} -d '
+              f'{framework.current_toplevel} {framework.generic_args}', file=f)
         # if .ucdb file is specified:
         #    print('covercheck load ucdb {ucdb_file}', file=f)
         #    print(f'covercheck verify -covered_items', file=f)
@@ -337,12 +365,13 @@ def setup_reachability(framework, path):
 
 def run_reachability(framework, path):
     print("**** run reachability ****")
-    run_stdout, run_stderr, err = run_qverify_step(framework, framework.current_toplevel, 'reachability')
-    reachability_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/reachability/covercheck_verify.rpt'
-    reachability_html_path = f'{framework.outdir}/{framework.current_toplevel}/reachability/reachability.html'
-    if os.path.exists(reachability_rpt_path):
-        parse_reports.parse_reachability_report_to_html(reachability_rpt_path, reachability_html_path)
-        reachability_html = reachability_html_path
+    step = 'reachability'
+    run_stdout, run_stderr, err = run_qverify_step(framework, framework.current_toplevel, step)
+    rpt_path = f'{framework.outdir}/{framework.current_toplevel}/{step}/covercheck_verify.rpt'
+    html_path = f'{framework.outdir}/{framework.current_toplevel}/{step}/reachability.html'
+    if os.path.exists(rpt_path):
+        parse_reports.parse_reachability_report_to_html(rpt_path, html_path)
+        reachability_html = html_path
     else:
         reachability_html = None
     if reachability_html is not None:
@@ -350,9 +379,10 @@ def run_reachability(framework, path):
             html_content = f.read()
 
         table = parse_reachability.parse_single_table(html_content)
-        framework.results[framework.current_toplevel]['reachability']['summary'] = parse_reachability.unified_format_table(parse_reachability.add_total_row(table))
-        tables.show_coverage_summary(framework.results[framework.current_toplevel]['reachability']['summary'],
-                                             title=f"Reachability Summary for Design: {framework.current_toplevel}")
+        sum = parse_reachability.unified_format_table(parse_reachability.add_total_row(table))
+        framework.results[framework.current_toplevel]['reachability']['summary'] = sum
+        title = f"Reachability Summary for Design: {framework.current_toplevel}"
+        tables.show_coverage_summary(sum, title=title)
     return run_stdout, run_stderr, err
 
 # TODO : We have to consider if Uncoverable is an error or a warning or nothing.
@@ -365,7 +395,9 @@ def get_linecheck_reachability():
     # Make a copy to avoid modifying the original dict
     patterns = {k: v.copy() for k, v in patterns.items()}
 
-    patterns["ignore"] += ["Coverage Type           Active        Witness   Inconclusive    Unreachable"]
+    patterns["ignore"] += [
+        "Coverage Type           Active        Witness   Inconclusive    Unreachable"
+        ]
     patterns["warning"] += ["inconclusive", "inconclusives"]
     return patterns
 
@@ -487,19 +519,24 @@ def setup_resets(framework, path):
     gen_reset_config(framework, filename, path)
     gen_reset_domain_config(framework, filename, path)
     with open(path+'/'+filename, "a", encoding='utf-8') as f:
-        print(f'rdc run -d {framework.current_toplevel} {framework.get_tool_flags("rdc run")} {framework.generic_args}', file=f)
-        print(f'rdc generate report reset_report.rpt {framework.get_tool_flags("rdc generate report")};', file=f)
+        print(f'rdc run -d {framework.current_toplevel} {framework.get_tool_flags("rdc run")} '
+              f'{framework.generic_args}', file=f)
+        print(f'rdc generate report reset_report.rpt '
+              f'{framework.get_tool_flags("rdc generate report")};', file=f)
         print('rdc generate tree -reset reset_tree.rpt;', file=f)
         print('exit', file=f)
 
 def run_resets(framework, path):
     print("**** run resets ****")
     run_stdout, run_stderr, err = run_qverify_step(framework, framework.current_toplevel, 'resets')
-    resets_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/resets/rdc.rpt'
-    if os.path.exists(resets_rpt_path):
-        framework.results[framework.current_toplevel]['resets']['summary'] = parse_resets.parse_resets_results(resets_rpt_path)
-        tables.show_step_summary(framework.results[framework.current_toplevel]['resets']['summary'], "Violation", "Caution",
-                                     outdir=f'{framework.outdir}/{framework.current_toplevel}/resets', step="resets")
+    rpt_path = f'{framework.outdir}/{framework.current_toplevel}/resets/rdc.rpt'
+    if os.path.exists(rpt_path):
+        sum = parse_resets.parse_resets_results(rpt_path)
+        framework.results[framework.current_toplevel]['resets']['summary'] = sum
+        tables.show_step_summary(sum,
+                                 "Violation", "Caution",
+                                 outdir=f'{framework.outdir}/{framework.current_toplevel}/resets',
+                                 step="resets")
     return run_stdout, run_stderr, err
 
 def get_linecheck_resets():
@@ -530,8 +567,10 @@ def setup_clocks(framework, path):
         # Enable reconvergence to remove warning [hdl-271]
         # TODO : add option to disable reconvergence?
         print('cdc reconvergence on', file=f)
-        print(f'cdc run -d {framework.current_toplevel} {framework.get_tool_flags("cdc run")} {framework.generic_args}', file=f)
-        print(f'cdc generate report clock_report.rpt {framework.get_tool_flags("cdc generate report")}', file=f)
+        print(f'cdc run -d {framework.current_toplevel} {framework.get_tool_flags("cdc run")} '
+              f'{framework.generic_args}', file=f)
+        print(f'cdc generate report clock_report.rpt '
+              f'{framework.get_tool_flags("cdc generate report")}', file=f)
         print('cdc generate tree -clock clock_tree.rpt;', file=f)
         print('exit', file=f)
 
@@ -540,9 +579,12 @@ def run_clocks(framework, path):
     run_stdout, run_stderr, err = run_qverify_step(framework, framework.current_toplevel, 'clocks')
     clocks_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/clocks/cdc.rpt'
     if os.path.exists(clocks_rpt_path):
-        framework.results[framework.current_toplevel]['clocks']['summary'] = parse_clocks.parse_clocks_results(clocks_rpt_path)
-        tables.show_step_summary(framework.results[framework.current_toplevel]['clocks']['summary'], "Violations", "Cautions", proven="Proven",
-                                     outdir=f'{framework.outdir}/{framework.current_toplevel}/clocks', step="clocks")
+        sum = parse_clocks.parse_clocks_results(clocks_rpt_path)
+        framework.results[framework.current_toplevel]['clocks']['summary'] = sum
+        tables.show_step_summary(sum,
+                                 "Violations", "Cautions", proven="Proven",
+                                 outdir=f'{framework.outdir}/{framework.current_toplevel}/clocks',
+                                 step="clocks")
     return run_stdout, run_stderr, err
 
 def get_linecheck_clocks():
@@ -618,7 +660,8 @@ def setup_prove(framework, path):
         # scripts so we can better capture if there have been any errors,
         # and also to annotate if they have been skipped
         #print('log_info "***** Running formal generate coverage..."', file=f)
-        print(f'formal generate testbenches {framework.get_tool_flags("formal generate testbenches")}', file=f)
+        print(f'formal generate testbenches '
+              f'{framework.get_tool_flags("formal generate testbenches")}',file=f)
         print('formal generate waveforms', file=f)
         print('formal generate waveforms -vcd', file=f)
         print('formal generate report', file=f)
@@ -628,10 +671,11 @@ def setup_prove(framework, path):
 def run_prove(framework, path):
     print("**** run prove ****")
     run_stdout, run_stderr, err = run_qverify_step(framework, framework.current_toplevel, 'prove')
-    prove_rpt_path = f'{framework.outdir}/{framework.current_toplevel}/prove/formal_verify.rpt'
-    if os.path.exists(prove_rpt_path):
-        framework.results[framework.current_toplevel]['prove']['summary'] = generate_test_cases.property_summary(prove_rpt_path)
-        properties = parse_prove.normalize_sections(parse_prove.parse_targets_report(prove_rpt_path))
+    rpt_path = f'{framework.outdir}/{framework.current_toplevel}/prove/formal_verify.rpt'
+    if os.path.exists(rpt_path):
+        sum = generate_test_cases.property_summary(rpt_path)
+        framework.results[framework.current_toplevel]['prove']['summary'] = sum
+        properties = parse_prove.normalize_sections(parse_prove.parse_targets_report(rpt_path))
         tables.show_prove_summary(properties)
     return run_stdout, run_stderr, err
 
@@ -642,7 +686,8 @@ def get_linecheck_prove():
     patterns = {k: v.copy() for k, v in patterns.items()}
 
     patterns["error"] += ["fired", "uncoverable"]
-    patterns["warning"] += ["inconclusives", "vacuous", r"^(?!Proven:).*inconclusive"] # inconclusive only if not in "Proven:" line"
+    # inconclusive only if not in "Proven:" line"
+    patterns["warning"] += ["inconclusives", "vacuous", r"^(?!Proven:).*inconclusive"]
     patterns["success"] += ["covered"]
 
     return patterns
@@ -661,7 +706,8 @@ def run_prove_simcover(framework, path):
     # the reports, and not only the last log (vcover report)
     stdout_err = 0
     stderr_err = 0
-    replay_files = glob.glob(framework.outdir+'/'+framework.current_toplevel+'/prove/qsim_tb/*/replay.vsim.do')
+    replay_files = glob.glob(framework.outdir+'/'+framework.current_toplevel+
+                             '/prove/qsim_tb/*/replay.vsim.do')
     framework.logger.trace(f'{replay_files=}')
     ucdb_files = []
     elapsed_time = 0
@@ -674,8 +720,10 @@ def run_prove_simcover(framework, path):
         #     merging the UCDBs, and
         #   - It saves a UCDB file
         vcdfilename = os.path.basename(os.path.dirname(file)) + '.vcd'
-        helpers.insert_line_after_target(file, "onerror {resume}", f'vcd dumpports -file {vcdfilename} -in -out *')
-        helpers.insert_line_before_target(file, "quit -f;", f'coverage attribute -name TESTNAME -value {pathlib.Path(file).parent.name}')
+        helpers.insert_line_after_target(file, "onerror {resume}", f'vcd dumpports -file '
+                                         f'{vcdfilename} -in -out *')
+        helpers.insert_line_before_target(file, "quit -f;", f'coverage attribute -name '
+                                          f'TESTNAME -value {pathlib.Path(file).parent.name}')
         helpers.insert_line_before_target(file, "quit -f;", "coverage save sim.ucdb")
         # TODO: Maybe we need to modify the replay.scr so it exports
         # more types of code coverage, we will know that when we try
@@ -772,19 +820,24 @@ def run_prove_simcover(framework, path):
 
     if framework.results[design]['prove.simcover']['summary'] is not None:
         coverage_data = parse_simcover.parse_coverage_report(f'{path}/simulation_coverage.log')
-        framework.results[design]['prove.simcover']['summary'] = parse_simcover.unified_format_table(parse_simcover.sum_coverage_data(coverage_data))
+        sum = parse_simcover.unified_format_table(parse_simcover.sum_coverage_data(coverage_data))
+        framework.results[design]['prove.simcover']['summary'] = sum
+        title = f"Simulation Coverage Summary for Design: {framework.current_toplevel}"
         tables.show_coverage_summary(framework.results[design]['prove.simcover']['summary'],
-                                             title=f"Simulation Coverage Summary for Design: {framework.current_toplevel}")
+                                     title=title)
 
     return err
 
 def get_linecheck_prove_simcover():
+
     patterns = get_linecheck_common()
 
     # Make a copy to avoid modifying the original dict
     patterns = {k: v.copy() for k, v in patterns.items()}
 
-    patterns["ignore"] += ["Note: (vsim-12126) Error and warning message counts have been restored"]
+    patterns["ignore"] += [
+        "Note: (vsim-12126) Error and warning message counts have been restored"
+        ]
     patterns["warning"] += ["inconclusive", "inconclusives"]
 
     return patterns
@@ -801,13 +854,16 @@ def setup_prove_formalcover(framework, path):
         if not framework.is_disabled('observability'):
             print('formal generate coverage -detail_all -cov_mode o', file=f)
         if not framework.is_disabled('reachability'):
-            print(f'formal verify {framework.get_tool_flags("formal verify")} -cov_mode reachability', file=f)
+            print(f'formal verify {framework.get_tool_flags("formal verify")} '
+                  f'-cov_mode reachability', file=f)
             print('formal generate coverage -detail_all -cov_mode r', file=f)
         if not framework.is_disabled('bounded_reachability') and inconclusives != 0:
-            print(f'formal verify {framework.get_tool_flags("formal verify")} -cov_mode bounded_reachability', file=f)
+            print(f'formal verify {framework.get_tool_flags("formal verify")} '
+                  f'-cov_mode bounded_reachability', file=f)
             print('formal generate coverage -detail_all -cov_mode b', file=f)
         if not framework.is_disabled('signoff'):
-            print(f'formal verify {framework.get_tool_flags("formal verify")} -cov_mode signoff', file=f)
+            print(f'formal verify {framework.get_tool_flags("formal verify")} '
+                  f'-cov_mode signoff', file=f)
             print('formal generate coverage -detail_all -cov_mode s', file=f)
         print('', file=f)
         print('exit', file=f)
@@ -815,14 +871,16 @@ def setup_prove_formalcover(framework, path):
 # TODO: Decide what to return. Maybe stdout, stderr, and status?
 def run_prove_formalcover(framework, path):
     print("**** run prove_formalcover ****")
-    run_stdout, run_stderr, err = run_qverify_step(framework, framework.current_toplevel, 'prove.formalcover')
+    run_stdout, run_stderr, err = run_qverify_step(framework,
+                                                   framework.current_toplevel,
+                                                   'prove.formalcover')
     report_path = path + '/prove.formalcover'
     if not framework.is_disabled('signoff'):
-        formal_signoff_rpt_path = f'{report_path}/formal_signoff.rpt'
-        formal_signoff_html_path = f'{report_path}/formal_signoff.html'
-        if os.path.exists(formal_signoff_rpt_path):
-            parse_reports.parse_formal_signoff_report_to_html(formal_signoff_rpt_path, formal_signoff_html_path)
-            formal_signoff_html = formal_signoff_html_path
+        rpt_path = f'{report_path}/formal_signoff.rpt'
+        html_path = f'{report_path}/formal_signoff.html'
+        if os.path.exists(rpt_path):
+            parse_reports.parse_formal_signoff_report_to_html(rpt_path, html_path)
+            formal_signoff_html = html_path
         else:
             formal_signoff_html = None
         if formal_signoff_html is not None:
@@ -833,11 +891,12 @@ def run_prove_formalcover(framework, path):
             filtered_tables = parse_formal_signoff.filter_coverage_tables(table)
 
             if filtered_tables:
-                framework.results[framework.current_toplevel]['prove.formalcover']['summary'] = parse_formal_signoff.unified_format_table(
-                                                parse_formal_signoff.add_total_field(filtered_tables[0]))
+                sum = parse_formal_signoff.unified_format_table(
+                    parse_formal_signoff.add_total_field(filtered_tables[0]))
+                framework.results[framework.current_toplevel]['prove.formalcover']['summary'] = sum
 
-                tables.show_coverage_summary(framework.results[framework.current_toplevel]['prove.formalcover']['summary'],
-                                                    title=f"Formal Coverage Summary for Design: {framework.current_toplevel}")
+                title = f"Formal Signoff Coverage Summary for Design: {framework.current_toplevel}"
+                tables.show_coverage_summary(sum, title=title)
     return err
 
 def get_linecheck_prove_formalcover():
@@ -846,7 +905,9 @@ def get_linecheck_prove_formalcover():
     # Make a copy to avoid modifying the original dict
     patterns = {k: v.copy() for k, v in patterns.items()}
 
-    patterns["ignore"] += ["Cover Type               Total    Unreachable   Inconclusive      Reachable"]
+    patterns["ignore"] += [
+        "Cover Type               Total    Unreachable   Inconclusive      Reachable"
+        ]
     patterns["warning"] += ["inconclusive", "inconclusives"]
 
     return patterns
