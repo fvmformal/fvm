@@ -109,6 +109,9 @@ examplelist += sdram
 examplelist += ddr2_controller
 examplelist += ipv6
 
+# If we only want to calculate friendliness
+friendlinesslist = $(addsuffix .friendliness, $(examplelist))
+
 # List with all the concepts
 conceptlist += transactions_deprecated
 conceptlist += parameterized_sequences
@@ -131,6 +134,7 @@ conceptlist += reachability_example
 # concept target runs all the concepts
 examples: $(examplelist)
 concepts: $(conceptlist)
+friendliness: $(friendlinesslist)
 
 # Print the lists, in case this is needed for debugging
 list-examples:
@@ -142,6 +146,9 @@ list-concepts:
 # Generic rules to run examples and concepts
 %: examples/% fvm
 	$(VENV_ACTIVATE) $(PYTHON) examples/$@/formal.py
+
+%.friendliness: examples/% fvm
+	$(VENV_ACTIVATE) $(PYTHON) examples/$*/formal.py -s friendliness
 
 %: concepts/% fvm
 	$(VENV_ACTIVATE) $(PYTHON) concepts/$@/formal.py
