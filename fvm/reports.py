@@ -626,6 +626,7 @@ def generate_allure(framework, logger):
                 start_time_sec = start_time_obj.timestamp()
                 start_time = int(start_time_sec * 1000)
                 generate_test_cases.generate_test_case(design,
+                                                       prefix=framework.prefix,
                                                        results_dir=results_dir,
                                                        status=status,
                                                        start_time=start_time,
