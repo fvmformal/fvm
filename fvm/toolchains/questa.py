@@ -249,7 +249,9 @@ def run_friendliness(framework, path):
         score = parse_design_rpt.friendliness_score(data)
         framework.results[framework.current_toplevel]['friendliness']['data'] = data
         framework.results[framework.current_toplevel]['friendliness']['score'] = score
-        tables.show_friendliness_score(score)
+        tables.show_friendliness_score(score,
+                                       outdir=f'{framework.outdir}/{framework.current_toplevel}/friendliness',
+                                       step="friendliness")
 
     return run_stdout, run_stderr, err
 
@@ -382,7 +384,9 @@ def run_reachability(framework, path):
         res = parse_reachability.unified_format_table(parse_reachability.add_total_row(table))
         framework.results[framework.current_toplevel]['reachability']['summary'] = res
         title = f"Reachability Summary for Design: {framework.current_toplevel}"
-        tables.show_coverage_summary(res, title=title)
+        tables.show_coverage_summary(res, title=title,
+                                    outdir=f'{framework.outdir}/{framework.current_toplevel}/{step}',
+                                    step=step)
     return run_stdout, run_stderr, err
 
 # TODO : We have to consider if Uncoverable is an error or a warning or nothing.
@@ -676,7 +680,10 @@ def run_prove(framework, path):
         res = generate_test_cases.property_summary(rpt_path)
         framework.results[framework.current_toplevel]['prove']['summary'] = res
         properties = parse_prove.normalize_sections(parse_prove.parse_targets_report(rpt_path))
-        tables.show_prove_summary(properties)
+        tables.show_prove_summary(properties,
+                                  outdir=f'{framework.outdir}/{framework.current_toplevel}/prove',
+                                  step='prove')
+
     return run_stdout, run_stderr, err
 
 def get_linecheck_prove():
@@ -824,8 +831,9 @@ def run_prove_simcover(framework, path):
         framework.results[design]['prove.simcover']['summary'] = res
         title = f"Simulation Coverage Summary for Design: {framework.current_toplevel}"
         tables.show_coverage_summary(framework.results[design]['prove.simcover']['summary'],
-                                     title=title)
-
+                                     title=title,
+                                     outdir=f'{framework.outdir}/{framework.current_toplevel}/prove.simcover',
+                                     step='prove.simcover')
     return err
 
 def get_linecheck_prove_simcover():
@@ -896,7 +904,10 @@ def run_prove_formalcover(framework, path):
                 framework.results[framework.current_toplevel]['prove.formalcover']['summary'] = res
 
                 title = f"Formal Signoff Coverage Summary for Design: {framework.current_toplevel}"
-                tables.show_coverage_summary(res, title=title)
+                tables.show_coverage_summary(res,
+                                             title=title,
+                                             outdir=f'{framework.outdir}/{framework.current_toplevel}/prove.formalcover',
+                                             step='prove.formalcover')
     return err
 
 def get_linecheck_prove_formalcover():

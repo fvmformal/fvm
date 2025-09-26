@@ -512,18 +512,23 @@ def generate_reports(framework, logger):
     #   allure open fvm_out/dashboard
 
 def generate_allure(framework, logger):
+        
+    dashboard_dir = os.path.join(f'{framework.outdir}', "dashboard")
+    results_dir = os.path.join(dashboard_dir, "allure-results")
+    report_dir = os.path.join(dashboard_dir, "allure-report")
+    framework.clear_directory(results_dir)
 
-    framework.clear_directory("fvm_out/dashboard/allure-results")
-    file_path = "fvm_out/dashboard"
-    os.makedirs(file_path, exist_ok=True)
-    file_path = "fvm_out/dashboard/allure-results"
-    os.makedirs(file_path, exist_ok=True)
-    file_path = "fvm_out/dashboard/allure-report"
-    os.makedirs(file_path, exist_ok=True)
+    os.makedirs(dashboard_dir, exist_ok=True)
+    os.makedirs(results_dir, exist_ok=True)
+    os.makedirs(report_dir, exist_ok=True)
 
     for design in framework.designs:
         all_steps = get_all_steps(framework.steps.steps, framework.steps.post_steps)
         for step in all_steps:
+            if os.path.exists(f"{framework.outdir}/{framework.current_toplevel}/{step}/{step}_summary.html"):
+                step_summary_html = f"{framework.outdir}/{framework.current_toplevel}/{step}/{step}_summary.html"
+            else:
+                step_summary_html = None
             if ('status' in framework.results[design][step] and
                 framework.results[design][step]['status'] != "skip"):
 
@@ -598,6 +603,7 @@ def generate_allure(framework, logger):
                     formal_reachability_html = None
                     formal_signoff_html = None
                 generate_test_cases.generate_test_case(design,
+                                                       results_dir=results_dir,
                                                        status=status,
                                                        start_time=start_time,
                                                        stop_time=stop_time,
@@ -609,7 +615,8 @@ def generate_allure(framework, logger):
                                                        observability_html=observability_html,
                                                        formal_reachability_html=formal_reachability_html,
                                                        formal_signoff_html=formal_signoff_html,
-                                                       properties=properties)
+                                                       properties=properties,
+                                                       step_summary_html=step_summary_html)
             elif ('status' in framework.results[design][step] and
                   framework.results[design][step]['status'] == "skip"):
                 status = "skipped"
@@ -629,10 +636,17 @@ def generate_allure(framework, logger):
         # We normalize the path because the Popen documentation recommends
         # to pass a fully qualified (absolute) path, and it also states
         # that shutil.which() returns unqualified paths
-        allure_res = f'{framework.outdir}/dashboard/allure-results'
-        allure_rep = f'{framework.outdir}/dashboard/allure-report'
+
+        # Copy history if it exists
+        report_history = os.path.join(report_dir, "history")
+        results_history = os.path.join(results_dir, "history")
+        if os.path.exists(report_history):
+            # Delete new_history if it exists
+            if os.path.exists(results_history):
+                shutil.rmtree(results_history)
+            shutil.copytree(report_history, results_history)
         allure_exec = os.path.abspath(shutil.which('allure'))
-        cmd = [allure_exec, 'generate', allure_res, '-o', allure_rep]
+        cmd = [allure_exec, 'generate', '--clean', results_dir, '-o', report_dir]
         logger.info(f'Generating dashboard with {cmd=}')
         process = subprocess.Popen (cmd,
                                     stdout  = subprocess.PIPE,

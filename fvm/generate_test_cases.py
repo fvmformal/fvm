@@ -5,55 +5,29 @@ import shutil
 import re
 from datetime import datetime
 
-def generate_test_case(design_name, step, status="passed", start_time=None, stop_time=None,
-                       stdout=None, property_summary=None, reachability_html=None,
-                       friendliness_score=None, observability_html=None,
+def generate_test_case(design_name, step, results_dir, status="passed", start_time=None,
+                       stop_time=None, stdout=None, property_summary=None,
+                       reachability_html=None, friendliness_score=None, observability_html=None,
                        formal_reachability_html=None, formal_signoff_html=None,
-                       properties = None):
+                       properties = None, step_summary_html = None):
     """
     Generate a test case structure for reports.
     """
     test_case_uuid = str(uuid.uuid4())
-    history_id = str(uuid.uuid4())
-    test_case_id = str(uuid.uuid4())
+    history_id = f"{design_name}.{step}"
+    test_case_id = f"{design_name}.{step}_id"
 
     full_name = f"fvm_out/{design_name}/{step}/{step}.log"
     name = f"{design_name}.{step}"
 
-    allure_results_dir = "fvm_out/dashboard/allure-results"
+    allure_results_dir = results_dir
 
-    description=f"This is the step {step} of FVM"
-
-    if step == "prove":
-        summary_markdown = ""
-        asserts_value = None
-        covers_value = None
-
-        for key, value in property_summary.items():
-            if key == "Asserts":
-                asserts_value = value
-                summary_markdown += f"- **{key}**: {value}\n"
-            elif key == "Covers":
-                covers_value = value
-                summary_markdown += f"- **{key}**: {value}\n"
-            elif isinstance(value, dict):
-                if key == "Assertions":
-                    for subkey, subvalue in value.items():
-                        percentage = (subvalue / asserts_value) * 100
-                        summary_markdown += f"  - **{subkey}**: {subvalue}/{asserts_value} "
-                        summary_markdown += f"({percentage:.2f}%)\n"
-                elif key == "Cover":
-                    for subkey, subvalue in value.items():
-                        percentage = (subvalue / covers_value) * 100
-                        summary_markdown += f"  - **{subkey}**: {subvalue}/{covers_value} "
-                        summary_markdown += f"({percentage:.2f}%)\n"
-            else:
-                summary_markdown += f"- **{key}**: {value}\n"
-
-        summary_markdown = (summary_markdown if summary_markdown
-                            else "No property summary available.")
-
-        description = f"{description}\n\n### Property Summary\n{summary_markdown}"
+    if step_summary_html is not None:
+        desc_key = "descriptionHtml"
+        description = html_to_oneline(step_summary_html)
+    else:
+        desc_key = "description"
+        description=f"This is the step {step} of FVM"
 
     links = [
         {
@@ -230,11 +204,6 @@ def generate_test_case(design_name, step, status="passed", start_time=None, stop
             }
 
             steps.append(step_in_steps)
-            #if vacuity_check:
-            #    step_in_steps["steps"].append({
-            #        "name": "vacuity_check",
-            #        "status": vacuity_check
-            #    })
 
         for entry in properties.get("Fired", []):
             steps.append({
@@ -269,7 +238,7 @@ def generate_test_case(design_name, step, status="passed", start_time=None, stop
         "testCaseId": test_case_id,
         "fullName": full_name,
         "name": name,
-        "description": description,
+        desc_key: description,
         "links": links,
         "labels": labels,
         "status": status,
@@ -287,6 +256,25 @@ def generate_test_case(design_name, step, status="passed", start_time=None, stop
     output_file = f"{allure_results_dir}/{test_case_uuid}-result.json"
     with open(output_file, 'w', encoding="utf-8") as json_file:
         json.dump(test_case, json_file, indent=2)
+
+def html_to_oneline(html_file):
+    import re
+
+    with open(html_file, "r", encoding="utf-8") as f:
+        html = f.read()
+
+    html = re.sub(r"<pre.*?>.*?</pre>", lambda m: m.group(0), html, flags=re.DOTALL)
+
+    def remove_outside_pre(text):
+        parts = re.split(r"(<pre.*?>.*?</pre>)", text, flags=re.DOTALL)
+        for i in range(len(parts)):
+            if not parts[i].startswith("<pre"):
+                parts[i] = parts[i].replace("\n", "")
+        return "".join(parts)
+
+    html_oneline = remove_outside_pre(html)
+
+    return html_oneline
 
 def parse_property_summary(file_path):
     """

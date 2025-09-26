@@ -87,7 +87,8 @@ def show_step_summary(step_summary, error, warning, inconclusive=None, proven=No
     step_summary_console.print(table)
     step_summary_console.save_html(f"{outdir}/{step}_summary.html")
 
-def show_friendliness_score(score):
+def show_friendliness_score(score, outdir=None, step=None):
+
     friendliness_console = Console(force_terminal=True, force_interactive=False,
                                 record=True)
 
@@ -96,8 +97,10 @@ def show_friendliness_score(score):
     table.add_row(f"{score:.2f}%", style="bold green")
 
     friendliness_console.print(table)
+    friendliness_console.save_html(f"{outdir}/{step}_summary.html")
 
-def show_coverage_summary(data, title="xxx"):
+def show_coverage_summary(data, title="xxx", outdir=None, step=None):
+
     console = Console(force_terminal=True, force_interactive=False,
                         record=True)
     table = Table(title=f"[cyan]{title}[/cyan]", show_header=True, header_style="bold")
@@ -144,8 +147,10 @@ def show_coverage_summary(data, title="xxx"):
         )
 
     console.print(table)
+    console.save_html(f"{outdir}/{step}_summary.html")
 
-def show_prove_summary(data, title="Property Summary"):
+def show_prove_summary(data, title="Property Summary", outdir=None, step=None):
+    
     console = Console(force_terminal=True, force_interactive=False,
                         record=True)
     table = Table(title=f"[cyan]{title}[/cyan]", show_header=True, header_style="bold")
@@ -185,3 +190,4 @@ def show_prove_summary(data, title="Property Summary"):
             table.add_row(category, count, style=style)
 
     console.print(table)
+    console.save_html(f"{outdir}/{step}_summary.html")
