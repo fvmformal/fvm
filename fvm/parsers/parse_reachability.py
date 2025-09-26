@@ -6,6 +6,9 @@ def parse_single_table(html):
     cell_pattern = re.compile(r"<t[dh].*?>(.*?)</t[dh]>", re.DOTALL)
 
     rows = row_pattern.findall(html)
+    if not rows:
+        return {"title": "Formal Coverage Summary", "data": []}
+
     headers = [re.sub(r"<.*?>", "", cell).strip() for cell in cell_pattern.findall(rows[0])]
     data = []
 
@@ -17,6 +20,10 @@ def parse_single_table(html):
 
 def add_total_row(table):
     """Adds a total row to the table, summing numerical fields and computing percentages."""
+
+    if not table.get('data'):
+        return table
+    
     total_row = {key: 0 for key in table['data'][0].keys()
                  if key not in ['Coverage Type', 'Unreachable']}
     total_covered = 0

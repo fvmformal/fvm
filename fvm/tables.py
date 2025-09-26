@@ -103,7 +103,6 @@ def show_coverage_summary(data, title="xxx"):
     table = Table(title=f"[cyan]{title}[/cyan]", show_header=True, header_style="bold")
 
     if not data:
-        console.print("No data to display")
         return
 
     # Fixed columns
@@ -151,6 +150,9 @@ def show_prove_summary(data, title="Property Summary"):
                         record=True)
     table = Table(title=f"[cyan]{title}[/cyan]", show_header=True, header_style="bold")
 
+    if not data:
+        return
+    
     # TODO: Check if there are more categories
     category_colors = {
         "Proven": "bold green",
