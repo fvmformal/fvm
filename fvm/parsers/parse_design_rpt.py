@@ -62,25 +62,30 @@ def difficulty_score(data):
     operation of the number of elements in the design. Currently the operation
     is just a sum but it could be an exponential function in the future"""
     SCORE_WEIGHTS = {
-            'Clocks'             : 30,
-            'Resets'             : 15,
-            'Control Point Bits' : 5,
-            'State Bits'         : 4,
-            'Counters'           : 10,
-            'FSMs'               : 10,
-            'RAMs'               : 50
+            'Clocks'             : 500,
+            'Resets'             : 250,
+            'Control Point Bits' : 4,
+            'State Bits'         : 5,
+            'Counters'           : 40,
+            'FSMs'               : 80,
+            'RAMs'               : 100
             }
     difficulty = 0
     for row in data:
         for term, weight in SCORE_WEIGHTS.items():
             if term in row[1]:
                 #print(f'found:{row=}')
-                difficulty += row[2]*weight
+                if row[1] in ['Clocks', 'Resets']:
+                    number = row[2] - 1
+                else:
+                    number = row[2]
+
+                difficulty += number*weight
     return difficulty
 
 def difficulty_to_friendliness(difficulty):
     """Converts difficulty score to a friendliness percentage"""
-    DECAY = 0.0001 # Makes the exponential decay slower
+    DECAY = 0.00008 # Makes the exponential decay slower
     percentage = 100 / (math.log(DECAY*difficulty+1) + 1)
     return percentage
 
