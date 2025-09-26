@@ -512,7 +512,7 @@ def generate_reports(framework, logger):
     #   allure open fvm_out/dashboard
 
 def generate_allure(framework, logger):
-        
+
     dashboard_dir = os.path.join(f'{framework.outdir}', "dashboard")
     results_dir = os.path.join(dashboard_dir, "allure-results")
     report_dir = os.path.join(dashboard_dir, "allure-report")
@@ -603,6 +603,7 @@ def generate_allure(framework, logger):
                     formal_reachability_html = None
                     formal_signoff_html = None
                 generate_test_cases.generate_test_case(design,
+                                                       prefix=framework.prefix,
                                                        results_dir=results_dir,
                                                        status=status,
                                                        start_time=start_time,

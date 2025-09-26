@@ -5,7 +5,7 @@ import shutil
 import re
 from datetime import datetime
 
-def generate_test_case(design_name, step, results_dir, status="passed", start_time=None,
+def generate_test_case(design_name, prefix, step, results_dir, status="passed", start_time=None,
                        stop_time=None, stdout=None, property_summary=None,
                        reachability_html=None, friendliness_score=None, observability_html=None,
                        formal_reachability_html=None, formal_signoff_html=None,
@@ -14,8 +14,8 @@ def generate_test_case(design_name, step, results_dir, status="passed", start_ti
     Generate a test case structure for reports.
     """
     test_case_uuid = str(uuid.uuid4())
-    history_id = f"{design_name}.{step}"
-    test_case_id = f"{design_name}.{step}_id"
+    history_id = f"{prefix}.{design_name}.{step}"
+    test_case_id = f"{prefix}.{design_name}.{step}_id"
 
     full_name = f"fvm_out/{design_name}/{step}/{step}.log"
     name = f"{design_name}.{step}"
@@ -48,7 +48,7 @@ def generate_test_case(design_name, step, results_dir, status="passed", start_ti
         },
         {
             "name": "parentSuite",
-            "value": design_name
+            "value": f"{prefix}.{design_name}"
         },
         {
             "name": "package",
