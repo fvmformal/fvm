@@ -739,8 +739,7 @@ def run_prove_simcover(framework, path):
         elapsed_time += framework.results[design]['prove.simcover']['elapsed_time']
         if timestamp is None:
             timestamp = framework.results[design]['prove.simcover']['timestamp']
-        # TODO : maybe check for errors here?
-        tool = 'vcover'
+
         stdout_err += framework.logcheck(cmd_stdout, design, 'prove.simcover', tool)
         stderr_err += framework.logcheck(cmd_stderr, design, 'prove.simcover', tool)
 
