@@ -58,6 +58,8 @@ default_flags = {
         "formal verify" : "-justify_initial_x -auto_constraint_off",
         }
 
+coverage_goal = {}
+
 def define_steps(framework, steps):
     steps.add_step(framework, 'lint', setup_lint, run_lint)
     steps.add_step(framework, 'friendliness', setup_friendliness, run_friendliness)
@@ -381,7 +383,10 @@ def run_reachability(framework, path):
             html_content = f.read()
 
         table = parse_reachability.parse_single_table(html_content)
-        res = parse_reachability.unified_format_table(parse_reachability.add_total_row(table))
+        # Default goal is 90% if not specified otherwise
+        goal = coverage_goal.get(step, 90.0)
+        res = parse_reachability.unified_format_table(parse_reachability.add_total_row(table),
+                                                      goal=goal)
         framework.results[framework.current_toplevel]['reachability']['summary'] = res
         title = f"Reachability Summary for Design: {framework.current_toplevel}"
         tables.show_coverage_summary(res, title=title,
@@ -827,7 +832,10 @@ def run_prove_simcover(framework, path):
 
     if framework.results[design]['prove.simcover']['summary'] is not None:
         coverage_data = parse_simcover.parse_coverage_report(f'{path}/simulation_coverage.log')
-        res = parse_simcover.unified_format_table(parse_simcover.sum_coverage_data(coverage_data))
+        # Default goal is 90% if not specified otherwise
+        goal = coverage_goal.get("prove.simcover", 90.0)
+        res = parse_simcover.unified_format_table(parse_simcover.sum_coverage_data(coverage_data),
+                                                  goal=goal)
         framework.results[design]['prove.simcover']['summary'] = res
         title = f"Simulation Coverage Summary for Design: {framework.current_toplevel}"
         tables.show_coverage_summary(framework.results[design]['prove.simcover']['summary'],
@@ -899,8 +907,11 @@ def run_prove_formalcover(framework, path):
             filtered_tables = parse_formal_signoff.filter_coverage_tables(table)
 
             if filtered_tables:
+                # Default goal is 90% if not specified otherwise
+                goal = coverage_goal.get("prove.formalcover", 90.0)
                 res = parse_formal_signoff.unified_format_table(
-                    parse_formal_signoff.add_total_field(filtered_tables[0]))
+                    parse_formal_signoff.add_total_field(filtered_tables[0]),
+                    goal=goal)
                 framework.results[framework.current_toplevel]['prove.formalcover']['summary'] = res
 
                 title = f"Formal Signoff Coverage Summary for Design: {framework.current_toplevel}"
@@ -934,6 +945,10 @@ def set_timeout(framework, step, timeout):
         framework.tool_flags["covercheck verify"] += timeout_value
     elif step == "prove":
         framework.tool_flags["formal verify"] += timeout_value
+
+def set_coverage_goal(step, goal):
+    """Set the coverage goal for a specific step"""
+    coverage_goal[step] = goal
 
 def generics_to_args(generics):
     """Converts a dict with generic:value pairs to the argument we have to

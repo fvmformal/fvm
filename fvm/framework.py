@@ -450,6 +450,27 @@ class fvmframework:
         """Set the timeout for a specific step"""
         toolchains.set_timeout(self, self.toolchain, step, timeout)
 
+    def set_coverage_goal(self, step, goal):
+        """Set the coverage goal for a step (0-100)."""
+        if not (isinstance(goal, (int, float)) and 0 <= goal <= 100):
+            self.logger.error(f"{goal=} must be between 0 and 100")
+            return self.exit_if_required(BAD_VALUE)
+
+        valid = False
+        if step in self.steps.steps:
+            valid = True
+        elif "." in step:
+            prefix, suffix = step.split(".", 1)
+            if prefix in self.steps.post_steps and suffix in self.steps.post_steps[prefix]:
+                valid = True
+
+        if not valid:
+            self.logger.error(f"Specified {step=} not in {self.steps.steps=}"
+                              f" or {self.steps.post_steps=}")
+            return self.exit_if_required(BAD_VALUE)
+
+        toolchains.set_coverage_goal(self.toolchain, step, goal)
+
     def generics_to_args(self, generics):
         """Converts a dict with generic:value pairs to the argument we have to
         pass to the tools"""

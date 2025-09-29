@@ -34,6 +34,10 @@ def set_timeout(framework, toolchain, step, timeout):
     module = importlib.import_module(f'fvm.toolchains.{toolchain}')
     module.set_timeout(framework, step, timeout)
 
+def set_coverage_goal(toolchain, step, goal):
+    module = importlib.import_module(f'fvm.toolchains.{toolchain}')
+    module.set_coverage_goal(step, goal)
+
 def generics_to_args(toolchain, generics):
     module = importlib.import_module(f'fvm.toolchains.{toolchain}')
     return module.generics_to_args(generics)

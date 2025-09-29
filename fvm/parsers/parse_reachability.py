@@ -54,7 +54,7 @@ def add_total_row(table):
     table['data'].append(total_row)
     return table
 
-def unified_format_table(table):
+def unified_format_table(table, goal=90.0):
     """Converts the table into a unified format."""
 
     cleaned = []
@@ -88,9 +88,6 @@ def unified_format_table(table):
             new_row['Percentage'] = "N/A"
 
         new_cleaned.append(new_row)
-
-    ## TODO: Enable set_goal() function
-    goal = 90.0
 
     for row in new_cleaned:
         perc_str = row['Percentage']
