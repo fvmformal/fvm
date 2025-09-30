@@ -1105,13 +1105,20 @@ class fvmframework:
         path = self.current_path
 
         if step in self.steps.steps:
-            run_stdout, run_stderr, err = self.steps.steps[step]["run"](self, path)
+            run_stdout, run_stderr, stdout_err, stderr_err, status = self.steps.steps[step]["run"](self, path)
             logfile = f'{path}/{step}/{step}.log'
             self.logger.info(f'{step=}, finished, output written to {logfile}')
             with open(logfile, 'w', encoding='utf-8') as f :
                 f.write(run_stdout)
                 f.write(run_stderr)
 
+            if stdout_err or stderr_err or status == "fail":
+                if self.is_failure_allowed(design, step) == False:
+                    err = True
+                self.results[design][step]['status'] = 'fail'
+            else:
+                self.results[design][step]['status'] = 'pass'
+                
         else :
             self.logger.error(f'No tool available for {step=} in {self.toolchain=}')
             self.exit_if_required(BAD_VALUE)
@@ -1146,12 +1153,19 @@ class fvmframework:
             for post_step in self.steps.post_steps[step]:
                 if not self.is_skipped(design, f'{step}.{post_step}'):
                     console.rule(f'[bold white]{design}.{step}.{post_step}[/bold white]')
-                    err = self.steps.post_steps[step][post_step]["run"](self, path)
-                    logfile = f'{path}/{step}.log'
+                    run_stdout, run_stderr, stdout_err, stderr_err, status = self.steps.post_steps[step][post_step]["run"](self, path)
+                    logfile = f'{path}/{step}.{post_step}/{step}.{post_step}.log'
                     self.logger.info(f'{step}.{post_step}, finished, output written to {logfile}')
-                    #with open(logfile, 'w', encoding='utf-8') as f :
-                    #    f.write(run_stdout)
-                    #    f.write(run_stderr)
+                    with open(logfile, 'w', encoding='utf-8') as f :
+                        f.write(run_stdout)
+                        f.write(run_stderr)
+                    if stdout_err or stderr_err or status == "fail":
+                        if self.is_failure_allowed(design, f"{step}.{post_step}") == False:
+                            err = True
+                        self.results[design][f"{step}.{post_step}"]['status'] = 'fail'
+                    else:
+                        self.results[design][f"{step}.{post_step}"]['status'] = 'pass'
+
                 else:
                     self.results[design][f'{step}.{post_step}']['status'] = 'skip'
 

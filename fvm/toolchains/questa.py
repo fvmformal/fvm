@@ -132,7 +132,6 @@ def run_qverify_step(framework, design, step):
     framework.logger.debug(f'Running {tool=} with {wrapper=}')
     cmd = [wrapper, '-c', '-od', report_path, '-do', f'{path}/{step}.do']
     open_gui = False
-    err = False
 
     if framework.list is True :
         framework.logger.info(f'Available step: {step}. Tool: {tool}, command = {" ".join(cmd)}')
@@ -143,21 +142,6 @@ def run_qverify_step(framework, design, step):
         cmd_stdout, cmd_stderr = framework.run_cmd(cmd, design, step, tool, framework.verbose)
         stdout_err = framework.logcheck(cmd_stdout, design, step, tool)
         stderr_err = framework.logcheck(cmd_stderr, design, step, tool)
-
-        logfile = f'{report_path}/{step}.log'
-        framework.logger.info(f'{step=}, {tool=}, finished, output written to {logfile}')
-        with open(logfile, 'w', encoding='utf-8') as f :
-            f.write(cmd_stdout)
-            f.write(cmd_stderr)
-        # We cannot exit here immediately because then we wouldn't
-        # be able to open the GUI if there is any error, but we can
-        # record the error and propagate it outside the function
-        if stdout_err or stderr_err:
-            if framework.is_failure_allowed(design, step) is False:
-                err = True
-            framework.results[design][step]['status'] = 'fail'
-        else:
-            framework.results[design][step]['status'] = 'pass'
 
         if framework.gui :
             open_gui = True
@@ -183,7 +167,7 @@ def run_qverify_step(framework, design, step):
             framework.logger.trace(f'command: {" ".join(cmd)=}')
             framework.run_cmd(cmd, design, step, tool, framework.verbose)
 
-    return cmd_stdout, cmd_stderr, err
+    return cmd_stdout, cmd_stderr, stdout_err, stderr_err
 
 def get_linecheck_common():
     return {
@@ -210,7 +194,8 @@ def setup_lint(framework, path):
 
 def run_lint(framework, path):
     print("**** run lint ****")
-    run_stdout, run_stderr, err = run_qverify_step(framework, framework.current_toplevel, 'lint')
+    status = "pass"
+    run_stdout, run_stderr, stdout_err, stderr_err = run_qverify_step(framework, framework.current_toplevel, 'lint')
     lint_rpt_path = f'{path}/lint/lint.rpt'
     if os.path.exists(lint_rpt_path):
         lint_summary = parse_lint.parse_check_summary(lint_rpt_path)
@@ -219,7 +204,9 @@ def run_lint(framework, path):
                                  "Error", "Warning",
                                  outdir=f'{framework.outdir}/{framework.current_toplevel}/lint',
                                  step="lint")
-    return run_stdout, run_stderr, err
+        if framework.results[framework.current_toplevel]['lint']['summary'].get('Error', {}).get('count', 0) > 0:
+            status = "fail"
+    return run_stdout, run_stderr, stdout_err, stderr_err, status
 
 def get_linecheck_lint():
     patterns = get_linecheck_common()
@@ -242,7 +229,8 @@ def setup_friendliness(framework, path):
 
 def run_friendliness(framework, path):
     print("**** run friendliness ****")
-    run_stdout, run_stderr, err = run_qverify_step(framework,
+    status = "pass"
+    run_stdout, run_stderr, stdout_err, stderr_err = run_qverify_step(framework,
                                                    framework.current_toplevel,
                                                    'friendliness')
     rpt = os.path.join(path, 'friendliness', 'autocheck_design.rpt')
@@ -255,7 +243,7 @@ def run_friendliness(framework, path):
                                        outdir=f'{framework.outdir}/{framework.current_toplevel}/friendliness',
                                        step="friendliness")
 
-    return run_stdout, run_stderr, err
+    return run_stdout, run_stderr, stdout_err, stderr_err, status
 
 def get_linecheck_friendliness():
     patterns = get_linecheck_common()
@@ -281,8 +269,9 @@ def setup_rulecheck(framework, path):
 
 def run_rulecheck(framework, path):
     print("**** run rulecheck ****")
+    status = "pass"
     step = 'rulecheck'
-    run_stdout, run_stderr, err = run_qverify_step(framework,
+    run_stdout, run_stderr, stdout_err, stderr_err = run_qverify_step(framework,
                                                    framework.current_toplevel,
                                                    step)
     rpt_path = f'{path}/{step}/autocheck_verify.rpt'
@@ -293,7 +282,9 @@ def run_rulecheck(framework, path):
                                  "Violation", "Caution", "Inconclusive",
                                  outdir=f'{framework.outdir}/{framework.current_toplevel}/{step}',
                                  step=step)
-    return run_stdout, run_stderr, err
+        if framework.results[framework.current_toplevel]['rulecheck']['summary'].get('Violation', {}).get('count', 0) > 0:
+            status = "fail"
+    return run_stdout, run_stderr, stdout_err, stderr_err, status
 
 def get_linecheck_rulecheck():
     patterns = get_linecheck_common()
@@ -323,8 +314,9 @@ def setup_xverify(framework, path):
 
 def run_xverify(framework, path):
     print("**** run xverify ****")
+    status = "pass"
     step = 'xverify'
-    run_stdout, run_stderr, err = run_qverify_step(framework, framework.current_toplevel, step)
+    run_stdout, run_stderr, stdout_err, stderr_err = run_qverify_step(framework, framework.current_toplevel, step)
     rpt_path = f'{path}/{step}/xcheck_verify.rpt'
     if os.path.exists(rpt_path):
         res = parse_xverify.group_by_result(parse_xverify.parse_type_and_result(rpt_path))
@@ -333,7 +325,9 @@ def run_xverify(framework, path):
                                  "Corruptible", "Incorruptible", "Inconclusive",
                                  outdir=f'{framework.outdir}/{framework.current_toplevel}/{step}',
                                  step=step)
-    return run_stdout, run_stderr, err
+        if framework.results[framework.current_toplevel]['xverify']['summary'].get('Corruptible', {}).get('count', 0) > 0:
+            status = "fail"
+    return run_stdout, run_stderr, stdout_err, stderr_err, status
 
 def get_linecheck_xverify():
     patterns = get_linecheck_common()
@@ -369,8 +363,9 @@ def setup_reachability(framework, path):
 
 def run_reachability(framework, path):
     print("**** run reachability ****")
+    status = "pass"
     step = 'reachability'
-    run_stdout, run_stderr, err = run_qverify_step(framework, framework.current_toplevel, step)
+    run_stdout, run_stderr, stdout_err, stderr_err = run_qverify_step(framework, framework.current_toplevel, step)
     rpt_path = f'{path}/{step}/covercheck_verify.rpt'
     html_path = f'{path}/{step}/reachability.html'
     if os.path.exists(rpt_path):
@@ -392,7 +387,9 @@ def run_reachability(framework, path):
         tables.show_coverage_summary(res, title=title,
                                     outdir=f'{framework.outdir}/{framework.current_toplevel}/{step}',
                                     step=step)
-    return run_stdout, run_stderr, err
+        if any(row.get("Status") == "fail" for row in framework.results[framework.current_toplevel]['reachability']['summary']):
+            status = "fail"
+    return run_stdout, run_stderr, stdout_err, stderr_err, status
 
 # TODO : We have to consider if Uncoverable is an error or a warning or nothing.
 # If we consider it an error, then reachability will fail in most designs.
@@ -537,7 +534,8 @@ def setup_resets(framework, path):
 
 def run_resets(framework, path):
     print("**** run resets ****")
-    run_stdout, run_stderr, err = run_qverify_step(framework, framework.current_toplevel, 'resets')
+    status = "pass"
+    run_stdout, run_stderr, stdout_err, stderr_err = run_qverify_step(framework, framework.current_toplevel, 'resets')
     rpt_path = f'{path}/resets/rdc.rpt'
     if os.path.exists(rpt_path):
         res = parse_resets.parse_resets_results(rpt_path)
@@ -546,7 +544,9 @@ def run_resets(framework, path):
                                  "Violation", "Caution",
                                  outdir=f'{framework.outdir}/{framework.current_toplevel}/resets',
                                  step="resets")
-    return run_stdout, run_stderr, err
+        if framework.results[framework.current_toplevel]['resets']['summary'].get('Violation', {}).get('count', 0) > 0:
+            status = "fail"
+    return run_stdout, run_stderr, stdout_err, stderr_err, status
 
 def get_linecheck_resets():
     patterns = get_linecheck_common()
@@ -585,7 +585,8 @@ def setup_clocks(framework, path):
 
 def run_clocks(framework, path):
     print("**** run clocks ****")
-    run_stdout, run_stderr, err = run_qverify_step(framework, framework.current_toplevel, 'clocks')
+    status = "pass"
+    run_stdout, run_stderr, stdout_err, stderr_err = run_qverify_step(framework, framework.current_toplevel, 'clocks')
     clocks_rpt_path = f'{path}/clocks/cdc.rpt'
     if os.path.exists(clocks_rpt_path):
         res = parse_clocks.parse_clocks_results(clocks_rpt_path)
@@ -594,7 +595,9 @@ def run_clocks(framework, path):
                                  "Violations", "Cautions", proven="Proven",
                                  outdir=f'{framework.outdir}/{framework.current_toplevel}/clocks',
                                  step="clocks")
-    return run_stdout, run_stderr, err
+        if framework.results[framework.current_toplevel]['clocks']['summary'].get('Violations', {}).get('count', 0) > 0:
+            status = "fail"
+    return run_stdout, run_stderr, stdout_err, stderr_err, status
 
 def get_linecheck_clocks():
     patterns = get_linecheck_common()
@@ -679,7 +682,8 @@ def setup_prove(framework, path):
 
 def run_prove(framework, path):
     print("**** run prove ****")
-    run_stdout, run_stderr, err = run_qverify_step(framework, framework.current_toplevel, 'prove')
+    status = "pass"
+    run_stdout, run_stderr, stdout_err, stderr_err = run_qverify_step(framework, framework.current_toplevel, 'prove')
     rpt_path = f'{path}/prove/formal_verify.rpt'
     if os.path.exists(rpt_path):
         res = generate_test_cases.property_summary(rpt_path)
@@ -688,8 +692,10 @@ def run_prove(framework, path):
         tables.show_prove_summary(properties,
                                   outdir=f'{framework.outdir}/{framework.current_toplevel}/prove',
                                   step='prove')
-
-    return run_stdout, run_stderr, err
+        if (framework.results[framework.current_toplevel]['prove']['summary'].get("Asserts", {}).get("Children", {}).get("Fired", {}).get("Count", 0 )> 0  
+            or framework.results[framework.current_toplevel]['prove']['summary'].get("Covers", {}).get("Children", {}).get("Uncoverable", {}).get("Count", 0) > 0):
+            status = "fail"
+    return run_stdout, run_stderr, stdout_err, stderr_err, status
 
 def get_linecheck_prove():
     patterns = get_linecheck_common()
@@ -720,6 +726,7 @@ def setup_prove_simcover(framework, path):
 
 def run_prove_simcover(framework, path):
     print("**** run prove_simcover ****")
+    status = "pass"
     sum_cmd_stdout, sum_cmd_stderr = '', ''
     stdout_err, stderr_err = 0, 0
     replay_files = glob.glob(framework.outdir+'/'+framework.current_toplevel+
@@ -801,7 +808,9 @@ def run_prove_simcover(framework, path):
                                      title=title,
                                      outdir=f'{framework.outdir}/{framework.current_toplevel}/prove.simcover',
                                      step='prove.simcover')
-    return err
+        if any(row.get("Status") == "fail" for row in framework.results[framework.current_toplevel]['prove.simcover']['summary']):
+            status = "fail"
+    return sum_cmd_stdout, sum_cmd_stderr, stdout_err, stderr_err, status
 
 def get_linecheck_prove_simcover():
 
@@ -846,9 +855,10 @@ def setup_prove_formalcover(framework, path):
 # TODO: Decide what to return. Maybe stdout, stderr, and status?
 def run_prove_formalcover(framework, path):
     print("**** run prove_formalcover ****")
-    run_stdout, run_stderr, err = run_qverify_step(framework,
-                                                   framework.current_toplevel,
-                                                   'prove.formalcover')
+    status = "pass"
+    run_stdout, run_stderr, stdout_err, stderr_err = run_qverify_step(framework,
+                                                                      framework.current_toplevel,
+                                                                      'prove.formalcover')
     report_path = path + '/prove.formalcover'
     if not framework.is_disabled('signoff'):
         rpt_path = f'{report_path}/formal_signoff.rpt'
@@ -878,7 +888,9 @@ def run_prove_formalcover(framework, path):
                                              title=title,
                                              outdir=f'{framework.outdir}/{framework.current_toplevel}/prove.formalcover',
                                              step='prove.formalcover')
-    return err
+                if any(row.get("Status") == "fail" for row in framework.results[framework.current_toplevel]['prove.formalcover']['summary']):
+                    status = "fail"
+    return run_stdout, run_stderr, stdout_err, stderr_err, status
 
 def get_linecheck_prove_formalcover():
     patterns = get_linecheck_common()
