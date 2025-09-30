@@ -183,7 +183,6 @@ def get_linecheck_common():
 
 def setup_lint(framework, path):
     """Generate script to run Lint"""
-    print("**** setup lint ****")
     filename = "lint.do"
     gencompilescript(framework, filename, path)
     with open(f'{path}/{filename}', "a", encoding='utf-8') as f:
@@ -193,7 +192,6 @@ def setup_lint(framework, path):
         print('exit', file=f)
 
 def run_lint(framework, path):
-    print("**** run lint ****")
     status = "pass"
     run_stdout, run_stderr, stdout_err, stderr_err = run_qverify_step(framework, framework.current_toplevel, 'lint')
     lint_rpt_path = f'{path}/lint/lint.rpt'
@@ -219,7 +217,6 @@ def get_linecheck_lint():
 def setup_friendliness(framework, path):
     """Generate script to compile AutoCheck, which also generates a report we
     analyze to determine the design's formal-friendliness"""
-    print("**** setup friendliness ****")
     filename = "friendliness.do"
     gencompilescript(framework, filename, path)
     with open(path+'/'+filename, "a", encoding='utf-8') as f:
@@ -228,7 +225,6 @@ def setup_friendliness(framework, path):
         print('exit', file=f)
 
 def run_friendliness(framework, path):
-    print("**** run friendliness ****")
     status = "pass"
     run_stdout, run_stderr, stdout_err, stderr_err = run_qverify_step(framework,
                                                    framework.current_toplevel,
@@ -255,7 +251,6 @@ def get_linecheck_friendliness():
 
 def setup_rulecheck(framework, path):
     """Generate script to run AutoCheck"""
-    print("**** setup rulecheck ****")
     filename = "rulecheck.do"
     gencompilescript(framework, filename, path)
     with open(path+'/'+filename, "a", encoding='utf-8') as f:
@@ -268,7 +263,6 @@ def setup_rulecheck(framework, path):
         print('exit', file=f)
 
 def run_rulecheck(framework, path):
-    print("**** run rulecheck ****")
     status = "pass"
     step = 'rulecheck'
     run_stdout, run_stderr, stdout_err, stderr_err = run_qverify_step(framework,
@@ -301,7 +295,6 @@ def get_linecheck_rulecheck():
 
 def setup_xverify(framework, path):
     """Generate script to run X-Check"""
-    print("**** setup xverify ****")
     filename = "xverify.do"
     gencompilescript(framework, filename, path)
     with open(path+'/'+filename, "a", encoding='utf-8') as f:
@@ -313,7 +306,6 @@ def setup_xverify(framework, path):
         print('exit', file=f)
 
 def run_xverify(framework, path):
-    print("**** run xverify ****")
     status = "pass"
     step = 'xverify'
     run_stdout, run_stderr, stdout_err, stderr_err = run_qverify_step(framework, framework.current_toplevel, step)
@@ -344,7 +336,6 @@ def get_linecheck_xverify():
 
 def setup_reachability(framework, path):
     """Generate a script to run CoverCheck"""
-    print("**** setup reachability ****")
     filename = "reachability.do"
     # TODO : if a .ucdb file is specified as argument, run the post-simulation
     # analysis instead of the pre-simulation analysis (see
@@ -362,7 +353,6 @@ def setup_reachability(framework, path):
         print('exit', file=f)
 
 def run_reachability(framework, path):
-    print("**** run reachability ****")
     status = "pass"
     step = 'reachability'
     run_stdout, run_stderr, stdout_err, stderr_err = run_qverify_step(framework, framework.current_toplevel, step)
@@ -515,7 +505,6 @@ def gen_clock_domain_config(framework, filename, path):
         #print('netlist clock clk', file=f)
 
 def setup_resets(framework, path):
-    print("**** setup resets ****")
     filename = "resets.do"
     # We first write the header to compile the netlist and then append
     # (mode "a") the tool-specific instructions
@@ -533,7 +522,6 @@ def setup_resets(framework, path):
         print('exit', file=f)
 
 def run_resets(framework, path):
-    print("**** run resets ****")
     status = "pass"
     run_stdout, run_stderr, stdout_err, stderr_err = run_qverify_step(framework, framework.current_toplevel, 'resets')
     rpt_path = f'{path}/resets/rdc.rpt'
@@ -559,7 +547,6 @@ def get_linecheck_resets():
 
 def setup_clocks(framework, path):
     """Generate script to run Clock Domain Crossing"""
-    print("**** setup clocks ****")
     filename = "clocks.do"
     # We first write the header to compile the netlist  and then append
     # (mode "a") the tool-specific instructions
@@ -584,7 +571,6 @@ def setup_clocks(framework, path):
         print('exit', file=f)
 
 def run_clocks(framework, path):
-    print("**** run clocks ****")
     status = "pass"
     run_stdout, run_stderr, stdout_err, stderr_err = run_qverify_step(framework, framework.current_toplevel, 'clocks')
     clocks_rpt_path = f'{path}/clocks/cdc.rpt'
@@ -611,7 +597,6 @@ def get_linecheck_clocks():
 
 def setup_prove(framework, path):
     """Generate script to run PropCheck"""
-    print("**** setup prove ****")
     filename = "prove.do"
     # TODO : we will need arguments for the clocks, timeout, we probably need
     # to detect compile order if vcom doesn't detect it, set the other options
@@ -667,11 +652,6 @@ def setup_prove(framework, path):
         print(f'formal verify {framework.get_tool_flags("formal verify")} -cov_mode', file=f)
         print('', file=f)
         print('## Compute Formal Coverage', file=f)
-        #print('log_info "***** Running formal verify to get coverage..."', file=f)
-        # TODO : maybe we should run coverage collection in separate
-        # scripts so we can better capture if there have been any errors,
-        # and also to annotate if they have been skipped
-        #print('log_info "***** Running formal generate coverage..."', file=f)
         print(f'formal generate testbenches '
               f'{framework.get_tool_flags("formal generate testbenches")}',file=f)
         print('formal generate waveforms', file=f)
@@ -681,7 +661,6 @@ def setup_prove(framework, path):
         print('exit', file=f)
 
 def run_prove(framework, path):
-    print("**** run prove ****")
     status = "pass"
     run_stdout, run_stderr, stdout_err, stderr_err = run_qverify_step(framework, framework.current_toplevel, 'prove')
     rpt_path = f'{path}/prove/formal_verify.rpt'
@@ -711,7 +690,6 @@ def get_linecheck_prove():
     return patterns
 
 def setup_prove_simcover(framework, path):
-    print("**** setup prove_simcover ****")
     replay_files = glob.glob(path + '/prove/qsim_tb/*/replay.vsim.do')
     for file in replay_files:
         # Modify the replay.vsim.do so:
@@ -725,7 +703,6 @@ def setup_prove_simcover(framework, path):
         helpers.insert_line_before_target(file, "quit -f;", "coverage save sim.ucdb")
 
 def run_prove_simcover(framework, path):
-    print("**** run prove_simcover ****")
     status = "pass"
     sum_cmd_stdout, sum_cmd_stderr = '', ''
     stdout_err, stderr_err = 0, 0
@@ -818,7 +795,6 @@ def get_linecheck_prove_simcover():
     return patterns
 
 def setup_prove_formalcover(framework, path):
-    print("**** setup prove_formalcover ****")
     filename = "prove.formalcover.do"
     property_summary = generate_test_cases.parse_property_summary(f'{path}/prove/prove.log')
     inconclusives = property_summary.get('Assertions', {}).get('Inconclusive', 0)
@@ -843,9 +819,7 @@ def setup_prove_formalcover(framework, path):
         print('', file=f)
         print('exit', file=f)
 
-# TODO: Decide what to return. Maybe stdout, stderr, and status?
 def run_prove_formalcover(framework, path):
-    print("**** run prove_formalcover ****")
     status = "pass"
     run_stdout, run_stderr, stdout_err, stderr_err = run_qverify_step(framework,
                                                                       framework.current_toplevel,

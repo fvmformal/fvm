@@ -22,8 +22,6 @@ def get_default_flags(toolchain):
     """Returns sensible tool flags for a specific toolchain"""
     module = importlib.import_module(f'fvm.toolchains.{toolchain}')
     default_flags = module.default_flags
-    print(f'***** {module=}')
-    print(f'***** {default_flags=}')
     return default_flags
 
 def define_steps(framework, steps, toolchain):
