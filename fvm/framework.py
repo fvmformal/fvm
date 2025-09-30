@@ -780,7 +780,9 @@ class fvmframework:
                         self.exit_if_required(ERROR_IN_LOG)
                     # TODO : allow post_steps to return errors and stop the run
                     # if they fail
-                    self.run_post_step(design, step)
+                    err = self.run_post_step(design, step)
+                    if err:
+                        self.exit_if_required(ERROR_IN_LOG)
                     # TODO : allow post_hooks to return errors and stop the run
                     # if they fail
                     self.run_post_hook(design, step)
@@ -792,7 +794,9 @@ class fvmframework:
             err = self.run_step(design, self.step)
             if err:
                 self.exit_if_required(ERROR_IN_LOG)
-            self.run_post_step(design, self.step)
+            err = self.run_post_step(design, self.step)
+            if err:
+                self.exit_if_required(ERROR_IN_LOG)
             self.run_post_hook(design, self.step)
 
     def is_skipped(self, design, step):
@@ -1129,10 +1133,6 @@ class fvmframework:
         if err is False and step in self.steps.post_steps:
             for post_step in self.steps.post_steps[step]:
                 self.steps.post_steps[step][post_step]["setup"](self, path)
-        # TODO : return output values
-        # pass / fail / skipped / disabled, and also warnings, errors,
-        # successes, and for prove the number of asserts, proven, fired,
-        # inconclusives, cover, covered, uncoverable... etc
 
         return err
 
@@ -1142,9 +1142,6 @@ class fvmframework:
         # steps
         self.logger.trace(f'run_post_step, {design=}, {step=})')
         path = self.current_path
-        # TODO : quick hack to prototype sby support since we cannot change the
-        # questa-dependent code (well we can, but we have no way of checking if
-        # we broke it since our license is expired)
         # TODO : run_post_step should probably run a _single_ step, and maybe
         # we can have a run_post_steps function that calls run_post_step
         # multiple times?
@@ -1172,8 +1169,6 @@ class fvmframework:
                 # Check for keyboard interrupt after each post step
                 if self.ctrl_c_pressed is True:
                     self.exit_if_required(KEYBOARD_INTERRUPT)
-
-        # TODO : correctly process errors
 
         return err
 

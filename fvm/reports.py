@@ -93,16 +93,16 @@ def pretty_summary(framework, logger):
                     step_incorruptible = step_summary.get('Incorruptible', {}).get('count', 0)
 
                     if step_errors != 0:
-                        result_str_for_table += f"[bold red]{step_errors}E[/bold red]"
+                        result_str_for_table += f"[bold red] {step_errors}E[/bold red]"
                         status = 'fail'
                     if step_violation != 0:
-                        result_str_for_table += f"[bold red]{step_violation}V[/bold red]"
+                        result_str_for_table += f"[bold red] {step_violation}V[/bold red]"
                         status = 'fail'
                     if step_violations != 0:
-                        result_str_for_table += f"[bold red]{step_violations}V[/bold red]"
+                        result_str_for_table += f"[bold red] {step_violations}V[/bold red]"
                         status = 'fail'
                     if step_corruptibles != 0:
-                        result_str_for_table += f"[bold red]{step_corruptibles}C[/bold red]"
+                        result_str_for_table += f"[bold red] {step_corruptibles}C[/bold red]"
                         status = 'fail'
                     if step_warnings != 0:
                         result_str_for_table += f"[bold yellow] {step_warnings}W[/bold yellow]"
@@ -111,7 +111,7 @@ def pretty_summary(framework, logger):
                     if step_cautions != 0:
                         result_str_for_table += f"[bold yellow] {step_cautions}C[/bold yellow]"
                     if step_incorruptible != 0:
-                        result_str_for_table += f"[bold yellow]{step_incorruptible}I[/bold yellow]"
+                        result_str_for_table += f"[bold yellow] {step_incorruptible}I[/bold yellow]"
                     if step_inconclusives != 0:
                         result_str_for_table += f"[bold white] {step_inconclusives}I[/bold white]"
                     if step_proven != 0:
