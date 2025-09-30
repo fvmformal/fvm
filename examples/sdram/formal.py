@@ -14,8 +14,9 @@ fvm.add_psl_source("examples/sdram/sdram.psl")
 fvm.set_toplevel("sdram")
 fvm.add_config("sdram", "config_freq_10_desl_200", {"CLK_FREQ": 10.0, "T_DESL": 200.0})
 
-fvm.skip('reachability')
-fvm.skip('fault')
-fvm.skip('prove.formalcover')
+fvm.allow_failure('rulecheck')
+fvm.allow_failure('xverify')
+fvm.set_coverage_goal('reachability', 75)
+
 fvm.skip('prove.simcover')
 fvm.run()

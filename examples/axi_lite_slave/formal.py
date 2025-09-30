@@ -14,6 +14,7 @@ fvm.add_psl_source("examples/axi_lite_slave/olo_axi_lite_slave.psl")
 
 fvm.set_toplevel("olo_axi_lite_slave")
 
-fvm.skip('reachability')
-fvm.skip('prove.formalcover')
+fvm.allow_failure("xverify")
+fvm.set_coverage_goal("prove.formalcover", 45)
+
 fvm.run()

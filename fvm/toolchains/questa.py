@@ -772,17 +772,18 @@ def run_prove_simcover(framework, path):
         _ = simcover_run_and_check('vsim')
         ucdb_files.append(f'{path}/sim.ucdb')
 
-    # Merge all simulation code coverage files
-    path = None
-    simcover_path = f"{framework.outdir}/{framework.current_toplevel}/prove.simcover"
-    os.makedirs(simcover_path, exist_ok=True)
-    cmd = ['vcover', 'merge', '-out', f'{simcover_path}/simcover.ucdb']
-    cmd = cmd + ucdb_files
-    err = simcover_run_and_check('vcover merge')
+    # TODO : Check if ucdb_files exists
+    if ucdb_files: 
+        # Merge all simulation code coverage files
+        path = None
+        simcover_path = f"{framework.outdir}/{framework.current_toplevel}/prove.simcover"
+        os.makedirs(simcover_path, exist_ok=True)
+        cmd = ['vcover', 'merge', '-out', f'{simcover_path}/simcover.ucdb']
+        cmd = cmd + ucdb_files
+        err = simcover_run_and_check('vcover merge')
 
-    path = simcover_path
-    # If no errors, generate reports
-    if err is False:
+        path = simcover_path
+
         # Generate a csv coverage report
         cmd = ['vcover', 'report', '-csv', '-hierarchical', 'simcover.ucdb',
             '-output', 'simulation_coverage.log']

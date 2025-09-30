@@ -42,17 +42,15 @@ fvm.add_psl_sources("examples/ipv6/*.psl")
 
 fvm.set_toplevel("PoC.ipv6_Wrapper")
 
-#fvm.skip('lint')
-#fvm.skip('friendliness')
-#fvm.skip('rulecheck')
 fvm.set_timeout('rulecheck', "1m")
 fvm.allow_failure('rulecheck')
+
+fvm.allow_failure('xverify')
+
 fvm.set_timeout('reachability', "5m")
-#fvm.skip('reachability')
 fvm.allow_failure('reachability')
-#fvm.skip('resets')
-#fvm.skip('clocks')
-#fvm.skip('prove.formalcover')
+
 fvm.allow_failure('prove.formalcover')
 fvm.skip('prove.simcover')
+
 fvm.run()

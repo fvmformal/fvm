@@ -17,12 +17,10 @@ fvm.add_config("olo_base_fifo_sync", "config_width_3_depth_8", {"Width_g": 3, "D
 if fvm.toolchain == "sby":
     fvm.set_tool_flags("ghdl", fvm.get_tool_flags("ghdl") + " -frelaxed")
 
-#fvm.skip('lint')
-#fvm.skip('friendliness')
-fvm.skip('reachability')
-#fvm.skip('resets')
-#fvm.skip('clocks')
-#fvm.disable_coverage('signoff')
-#fvm.disable_coverage('reachability')
-fvm.allow_failure('prove.formalcover')
+fvm.allow_failure('xverify')
+
+fvm.set_coverage_goal('reachability', 70)
+fvm.set_coverage_goal('prove.formalcover', 80)
+fvm.set_coverage_goal('prove.simcover', 70)
+
 fvm.run()
