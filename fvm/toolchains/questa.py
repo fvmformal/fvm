@@ -4,6 +4,7 @@ import os
 from collections import OrderedDict
 import glob
 import pathlib
+import shutil
 
 # TODO : are this parsers questa-specific or could they be made configurable?
 # should they be moved to someplace like toolchains/questa/parsers?
@@ -132,6 +133,8 @@ def run_qverify_step(framework, design, step):
     framework.logger.debug(f'Running {tool=} with {wrapper=}')
     cmd = [wrapper, '-c', '-od', report_path, '-do', f'{path}/{step}.do']
     open_gui = False
+    cmd_stdout, cmd_stderr = "", ""
+    stdout_err, stderr_err = 0, 0
 
     if framework.list is True :
         framework.logger.info(f'Available step: {step}. Tool: {tool}, command = {" ".join(cmd)}')
@@ -140,23 +143,16 @@ def run_qverify_step(framework, design, step):
     else :
         framework.logger.trace(f'command: {" ".join(cmd)=}')
         cmd_stdout, cmd_stderr = framework.run_cmd(cmd, design, step, tool, framework.verbose)
-        stdout_err = framework.logcheck(cmd_stdout, design, step, tool)
-        stderr_err = framework.logcheck(cmd_stderr, design, step, tool)
+        stdout_err += framework.logcheck(cmd_stdout, design, step, tool)
+        stderr_err += framework.logcheck(cmd_stderr, design, step, tool)
 
         if framework.gui :
             open_gui = True
     if framework.guinorun and framework.list is False :
         open_gui = True
-        # TODO : This is provisional because the function returns
-        # cmd_stdout and cmd_stderr. It may be ok because in
-        # guinorun mode we don't care about those values
-        cmd_stdout, cmd_stderr = "", ""
-    # TODO : maybe check for errors also in the GUI?
     # TODO : maybe run the GUI processes without blocking
     # the rest of the steps? For that we would probably
     # need to pass another option to run_cmd
-    # TODO : code here can be deduplicated by having the database
-    # names (.db) in a dictionary -> just open {tool}.db
     if open_gui:
         framework.logger.info(f'{step=}, {tool=}, opening results with GUI')
         db_file = f'{report_path}/{tool}.db'
@@ -165,7 +161,11 @@ def run_qverify_step(framework, design, step):
             framework.logger.error(f"The database file does not exist: {db_file}")
         else:
             framework.logger.trace(f'command: {" ".join(cmd)=}')
-            framework.run_cmd(cmd, design, step, tool, framework.verbose)
+            aux_cmd_stdout, aux_cmd_stderr = framework.run_cmd(cmd, design, step, tool, framework.verbose)
+            stdout_err += framework.logcheck(aux_cmd_stdout, design, step, tool)
+            stderr_err += framework.logcheck(aux_cmd_stderr, design, step, tool)
+            cmd_stdout += aux_cmd_stdout
+            cmd_stderr += aux_cmd_stderr
 
     return cmd_stdout, cmd_stderr, stdout_err, stderr_err
 
@@ -824,6 +824,14 @@ def run_prove_formalcover(framework, path):
     run_stdout, run_stderr, stdout_err, stderr_err = run_qverify_step(framework,
                                                                       framework.current_toplevel,
                                                                       'prove.formalcover')
+
+    # Copy the database to the prove folder so we can
+    # see coverage results in prove guinorun mode
+    tool = tools["prove"][0]
+    db_dir = f'{path}/prove.formalcover/{tool}.db'
+    if os.path.exists(db_dir):
+        shutil.copytree(db_dir, f'{path}/prove/{tool}.db', dirs_exist_ok=True)
+
     report_path = path + '/prove.formalcover'
     if not framework.is_disabled('signoff'):
         rpt_path = f'{report_path}/formal_signoff.rpt'
