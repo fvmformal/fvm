@@ -4,8 +4,6 @@ fvm = fvmframework()
 fvm.add_vhdl_source("concepts/reachability_example/counter.vhd")
 fvm.add_psl_sources("concepts/reachability_example/*.psl")
 fvm.set_toplevel("counter")
-# Reachability is skipped because is going to fail,
-# and we don't want to break the CI.
-fvm.skip('reachability')
-fvm.skip('prove.formalcover')
+fvm.set_coverage_goal("reachability", 85)
+fvm.set_coverage_goal("prove.simcover", 85)
 fvm.run()
