@@ -712,7 +712,7 @@ def get_linecheck_prove():
 
 def setup_prove_simcover(framework, path):
     print("**** setup prove_simcover ****")
-    replay_files = glob.glob(framework.outdir+'/'+framework.current_toplevel+'/prove/qsim_tb/*/replay.vsim.do')
+    replay_files = glob.glob(path + '/prove/qsim_tb/*/replay.vsim.do')
     for file in replay_files:
         # Modify the replay.vsim.do so:
         #   - It dumps the waveforms into a .vcd file
@@ -729,17 +729,16 @@ def run_prove_simcover(framework, path):
     status = "pass"
     sum_cmd_stdout, sum_cmd_stderr = '', ''
     stdout_err, stderr_err = 0, 0
-    replay_files = glob.glob(framework.outdir+'/'+framework.current_toplevel+
-                             '/prove/qsim_tb/*/replay.vsim.do')
+    replay_files = glob.glob(path + '/prove/qsim_tb/*/replay.vsim.do')
     framework.logger.trace(f'{replay_files=}')
     ucdb_files = []
     elapsed_time = 0
     timestamp = None
     design = framework.current_toplevel
 
-    # Function to run a command and check for errors, updating
+    # Function to run a command in prove.simcover, updating
     # the relevant variables. Used to avoid code duplication
-    def simcover_run_and_check(tool):
+    def simcover_run(tool):
         nonlocal timestamp, elapsed_time, stdout_err, stderr_err, sum_cmd_stdout, sum_cmd_stderr
         cmd_stdout, cmd_stderr = framework.run_cmd(cmd, design, 'prove.simcover',
                                                 tool, framework.verbose, path)
@@ -750,50 +749,41 @@ def run_prove_simcover(framework, path):
         stdout_err += framework.logcheck(cmd_stdout, design, 'prove.simcover', tool)
         stderr_err += framework.logcheck(cmd_stderr, design, 'prove.simcover', tool)
 
-        err = False
-        if stdout_err or stderr_err:
-            if framework.is_failure_allowed(design, 'prove.simcover') is False:
-                err = True
-            framework.results[design]['prove.simcover']['status'] = 'fail'
-        else:
-            framework.results[design]['prove.simcover']['status'] = 'pass'
-
         sum_cmd_stdout += cmd_stdout
         sum_cmd_stderr += cmd_stderr
         framework.results[design]['prove.simcover']['timestamp'] = timestamp
         framework.results[design]['prove.simcover']['elapsed_time'] = elapsed_time
-
-        return err
     
     # Run all the simulations to generate the UCDB files
     for file in replay_files:
         path = pathlib.Path(file).parent
         cmd = ['./replay.scr']
-        _ = simcover_run_and_check('vsim')
+        simcover_run('vsim')
         ucdb_files.append(f'{path}/sim.ucdb')
 
-    # TODO : Check if ucdb_files exists
-    if ucdb_files: 
+    # If we have any UCDB files, merge them and generate reports
+    if any(os.path.exists(f) for f in ucdb_files):
         # Merge all simulation code coverage files
         path = None
         simcover_path = f"{framework.outdir}/{framework.current_toplevel}/prove.simcover"
         os.makedirs(simcover_path, exist_ok=True)
         cmd = ['vcover', 'merge', '-out', f'{simcover_path}/simcover.ucdb']
         cmd = cmd + ucdb_files
-        err = simcover_run_and_check('vcover merge')
+        simcover_run('vcover merge')
 
         path = simcover_path
+        # Generate reports only if the merge was successful
+        if os.path.exists(f'{path}/simcover.ucdb'):
+            # Generate a csv coverage report
+            cmd = ['vcover', 'report', '-csv', '-hierarchical', 'simcover.ucdb',
+                '-output', 'simulation_coverage.log']
+            simcover_run('vcover report')
 
-        # Generate a csv coverage report
-        cmd = ['vcover', 'report', '-csv', '-hierarchical', 'simcover.ucdb',
-            '-output', 'simulation_coverage.log']
-        _ = simcover_run_and_check('vcover report')
-
-        # Generate an html coverage report
-        cmd = ['vcover', 'report', '-html', '-annotate', '-details',
-            '-testdetails', '-codeAll', '-multibitverbose', '-out',
-            'simcover', 'simcover.ucdb']
-        _ = simcover_run_and_check('vcover report')
+            # Generate an html coverage report
+            cmd = ['vcover', 'report', '-html', '-annotate', '-details',
+                '-testdetails', '-codeAll', '-multibitverbose', '-out',
+                'simcover', 'simcover.ucdb']
+            simcover_run('vcover report')
 
     # Generate summary table
     coverage_path = f'{path}/simulation_coverage.log'
