@@ -853,7 +853,7 @@ class fvmframework:
     def exit_if_required(self, errorcode):
         """Exits with a specific error code if the continue flag (cont) is not
         set"""
-        if self.cont:
+        if self.cont and self.ctrl_c_pressed is False:
             pass
         else:
             reports.pretty_summary(self, self.logger)
