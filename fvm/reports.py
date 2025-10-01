@@ -528,8 +528,7 @@ def generate_allure(framework, logger):
 
             if ('status' in framework.results[design][step] and
                 framework.results[design][step]['status'] != "skip"):
-
-                step_path = f"{framework.outdir}/{framework.current_toplevel}/{step}"
+                step_path = f"{framework.outdir}/{design}/{step}"
                 step_summary = f"{step}_summary.html"
                 if os.path.exists(f"{step_path}/{step_summary}"):
                     step_summary_html = f"{step_path}/{step_summary}"
