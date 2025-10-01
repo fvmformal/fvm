@@ -19,7 +19,6 @@ from fvm.parsers import parse_resets
 from fvm.parsers import parse_clocks
 from fvm.parsers import parse_prove
 from fvm.parsers import parse_design_rpt
-from fvm import generate_test_cases
 from fvm import helpers
 from fvm import tables
 
@@ -665,7 +664,7 @@ def run_prove(framework, path):
     run_stdout, run_stderr, stdout_err, stderr_err = run_qverify_step(framework, framework.current_toplevel, 'prove')
     rpt_path = f'{path}/prove/formal_verify.rpt'
     if os.path.exists(rpt_path):
-        res = generate_test_cases.property_summary(rpt_path)
+        res = parse_prove.property_summary(rpt_path)
         framework.results[framework.current_toplevel]['prove']['summary'] = res
         properties = parse_prove.normalize_sections(parse_prove.parse_targets_report(rpt_path))
         tables.show_prove_summary(properties,
@@ -796,7 +795,7 @@ def get_linecheck_prove_simcover():
 
 def setup_prove_formalcover(framework, path):
     filename = "prove.formalcover.do"
-    property_summary = generate_test_cases.parse_property_summary(f'{path}/prove/prove.log')
+    property_summary = parse_prove.parse_property_summary(f'{path}/prove/prove.log')
     inconclusives = property_summary.get('Assertions', {}).get('Inconclusive', 0)
     with open(f"{path}/{filename}", "a", encoding='utf-8') as f:
         print('onerror exit', file=f)
@@ -833,36 +832,48 @@ def run_prove_formalcover(framework, path):
         shutil.copytree(db_dir, f'{path}/prove/{tool}.db', dirs_exist_ok=True)
 
     report_path = path + '/prove.formalcover'
-    if not framework.is_disabled('signoff'):
-        rpt_path = f'{report_path}/formal_signoff.rpt'
-        html_path = f'{report_path}/formal_signoff.html'
-        if os.path.exists(rpt_path):
-            parse_reports.parse_formal_signoff_report_to_html(rpt_path, html_path)
-            formal_signoff_html = html_path
-        else:
-            formal_signoff_html = None
-        if formal_signoff_html is not None:
-            with open(formal_signoff_html, 'r', encoding='utf-8') as f:
-                html_content = f.read()
+    # Generate HTML reports
+    rpt_path = f'{report_path}/formal_observability.rpt'
+    html_path = f'{report_path}/formal_observability.html'
+    if os.path.exists(rpt_path):
+        parse_reports.parse_formal_observability_report_to_html(rpt_path,
+                                                                html_path)
+    rpt_path = f'{report_path}/formal_reachability.rpt'
+    html_path = f'{report_path}/formal_reachability.html'
+    if os.path.exists(rpt_path):
+        parse_reports.parse_formal_reachability_report_to_html(rpt_path,
+                                                                html_path)
+    rpt_path = f'{report_path}/formal_signoff.rpt'
+    html_path = f'{report_path}/formal_signoff.html'
+    if os.path.exists(rpt_path):
+        parse_reports.parse_formal_signoff_report_to_html(rpt_path, html_path)
+        formal_signoff_html = html_path
+    else:
+        formal_signoff_html = None
 
-            table = parse_formal_signoff.parse_coverage_table(html_content)
-            filtered_tables = parse_formal_signoff.filter_coverage_tables(table)
+    if formal_signoff_html is not None:
+        with open(formal_signoff_html, 'r', encoding='utf-8') as f:
+            html_content = f.read()
 
-            if filtered_tables:
-                # Default goal is 90% if not specified otherwise
-                goal = coverage_goal.get("prove.formalcover", 90.0)
-                res = parse_formal_signoff.unified_format_table(
-                    parse_formal_signoff.add_total_field(filtered_tables[0]),
-                    goal=goal)
-                framework.results[framework.current_toplevel]['prove.formalcover']['summary'] = res
+        # Generate the result table
+        table = parse_formal_signoff.parse_coverage_table(html_content)
+        filtered_tables = parse_formal_signoff.filter_coverage_tables(table)
 
-                title = f"Formal Signoff Coverage Summary for Design: {framework.current_toplevel}"
-                tables.show_coverage_summary(res,
-                                             title=title,
-                                             outdir=f'{framework.outdir}/{framework.current_toplevel}/prove.formalcover',
-                                             step='prove.formalcover')
-                if any(row.get("Status") == "fail" for row in framework.results[framework.current_toplevel]['prove.formalcover']['summary']):
-                    status = "fail"
+        if filtered_tables:
+            # Default goal is 90% if not specified otherwise
+            goal = coverage_goal.get("prove.formalcover", 90.0)
+            res = parse_formal_signoff.unified_format_table(
+                parse_formal_signoff.add_total_field(filtered_tables[0]),
+                goal=goal)
+            framework.results[framework.current_toplevel]['prove.formalcover']['summary'] = res
+
+            title = f"Formal Signoff Coverage Summary for Design: {framework.current_toplevel}"
+            tables.show_coverage_summary(res,
+                                            title=title,
+                                            outdir=f'{framework.outdir}/{framework.current_toplevel}/prove.formalcover',
+                                            step='prove.formalcover')
+            if any(row.get("Status") == "fail" for row in framework.results[framework.current_toplevel]['prove.formalcover']['summary']):
+                status = "fail"
     return run_stdout, run_stderr, stdout_err, stderr_err, status
 
 def get_linecheck_prove_formalcover():

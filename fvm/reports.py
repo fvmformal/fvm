@@ -10,7 +10,7 @@ from junit_xml import TestSuite, TestCase, to_xml_report_string
 
 from fvm import helpers
 from fvm import generate_test_cases
-from fvm.parsers import parse_reports
+from fvm.parsers import parse_prove
 
 def get_all_steps(steps, post_steps):
     """Generate a list of steps including post-steps.
@@ -525,12 +525,22 @@ def generate_allure(framework, logger):
     for design in framework.designs:
         all_steps = get_all_steps(framework.steps.steps, framework.steps.post_steps)
         for step in all_steps:
-            if os.path.exists(f"{framework.outdir}/{framework.current_toplevel}/{step}/{step}_summary.html"):
-                step_summary_html = f"{framework.outdir}/{framework.current_toplevel}/{step}/{step}_summary.html"
-            else:
-                step_summary_html = None
+
             if ('status' in framework.results[design][step] and
                 framework.results[design][step]['status'] != "skip"):
+
+                step_path = f"{framework.outdir}/{framework.current_toplevel}/{step}"
+                step_summary = f"{step}_summary.html"
+                if os.path.exists(f"{step_path}/{step_summary}"):
+                    step_summary_html = f"{step_path}/{step_summary}"
+                else:
+                    step_summary_html = None
+
+                html_files = [
+                    os.path.join(step_path, f)
+                    for f in os.listdir(step_path)
+                    if f.endswith(".html") and f != step_summary
+                ]
 
                 status = framework.results[design][step]['status']
                 if framework.results[design][step]['status'] == "pass":
@@ -542,66 +552,16 @@ def generate_allure(framework, logger):
                 start_time_sec = start_time_obj.timestamp()
                 start_time = int(start_time_sec * 1000)
                 stop_time = start_time + framework.results[design][step]["elapsed_time"] * 1000
-                if 'stdout' in framework.results[design][step]:
-                    stdout = framework.results[design][step]['stdout']
-                else:
-                    stdout = None
-                if step == 'reachability':
-                    rpt_path = f'{framework.outdir}/{design}/{step}/covercheck_verify.rpt'
-                    html_path = f'{framework.outdir}/{design}/{step}/reachability.html'
-                    if os.path.exists(rpt_path):
-                        parse_reports.parse_reachability_report_to_html(rpt_path, html_path)
-                        reachability_html = html_path
-                    else:
-                        reachability_html = None
-                else:
-                    reachability_html = None
+
                 if step == 'friendliness' and status == "passed":
                     friendliness_score = framework.results[design][step]['score']
                 else:
                     friendliness_score = None
-                observability_html = None
-                formal_reachability_html = None
-                formal_signoff_html = None
                 properties = None
-                property_summary = None
                 if step == 'prove':
                     path = f'{framework.outdir}/{design}/{step}/{step}.log'
                     if os.path.exists(path):
-                        properties = generate_test_cases.parse_log_to_json(path)
-                        property_summary = generate_test_cases.parse_property_summary(path)
-                if step == 'prove.formalcover':
-                    formal_signoff_html = None
-                    if not framework.is_disabled('observability'):
-                        rpt_path = f'{framework.outdir}/{design}/{step}/formal_observability.rpt'
-                        html_path = f'{framework.outdir}/{design}/{step}/formal_observability.html'
-                        if os.path.exists(rpt_path):
-                            parse_reports.parse_formal_observability_report_to_html(rpt_path,
-                                                                                    html_path)
-                            observability_html = html_path
-                        else:
-                            observability_html = None
-                    if not framework.is_disabled('reachability'):
-                        rpt_path = f'{framework.outdir}/{design}/{step}/formal_reachability.rpt'
-                        html_path = f'{framework.outdir}/{design}/{step}/formal_reachability.html'
-                        if os.path.exists(rpt_path):
-                            parse_reports.parse_formal_reachability_report_to_html(rpt_path,
-                                                                                   html_path)
-                            formal_reachability_html = html_path
-                        else:
-                            formal_reachability_html = None
-                    if not framework.is_disabled('signoff'):
-                        rpt_path = f'{framework.outdir}/{design}/{step}/formal_signoff.rpt'
-                        html_path = f'{framework.outdir}/{design}/{step}/formal_signoff.html'
-                        if os.path.exists(rpt_path):
-                            parse_reports.parse_formal_signoff_report_to_html(rpt_path, html_path)
-                            formal_signoff_html = html_path
-                        else:
-                            formal_signoff_html = None
-                else:
-                    observability_html = None
-                    formal_reachability_html = None
-                    formal_signoff_html = None
+                        properties = parse_prove.parse_properties_extended(path)
                 generate_test_cases.generate_test_case(design,
                                                        prefix=framework.prefix,
                                                        results_dir=results_dir,
@@ -609,15 +569,11 @@ def generate_allure(framework, logger):
                                                        start_time=start_time,
                                                        stop_time=stop_time,
                                                        step=step,
-                                                       stdout=stdout,
-                                                       property_summary=property_summary,
-                                                       reachability_html=reachability_html,
                                                        friendliness_score=friendliness_score,
-                                                       observability_html=observability_html,
-                                                       formal_reachability_html=formal_reachability_html,
-                                                       formal_signoff_html=formal_signoff_html,
                                                        properties=properties,
-                                                       step_summary_html=step_summary_html)
+                                                       step_summary_html=step_summary_html,
+                                                       html_files=html_files
+                                                       )
             elif ('status' in framework.results[design][step] and
                   framework.results[design][step]['status'] == "skip"):
                 status = "skipped"
