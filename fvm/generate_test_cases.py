@@ -2,8 +2,6 @@ import uuid
 import json
 import os
 import shutil
-import re
-from datetime import datetime
 
 def generate_test_case(design_name, prefix, step, results_dir, status="passed",
                        start_time=None, stop_time=None, friendliness_score=None,
@@ -117,45 +115,46 @@ def generate_test_case(design_name, prefix, step, results_dir, status="passed",
 
     steps = []
     if step == "prove":
-        properties = json.loads(properties)
+        if properties is not None:
+            properties = json.loads(properties)
 
-        for entry in properties.get("Proven", []):
-            assertion_name = entry.get("assertion", "unknown")
-            vacuity_check = entry.get("vacuity_check", "unknown")
-            entry_time = entry.get("time", 0)
-            step_in_steps ={
-                "name": "Assertion: " + assertion_name,
-                "status": "broken" if vacuity_check == "failed" else "passed", 
-                "start": start_time,
-                "stop": start_time + entry_time * 1000,    
-                "steps": []
-            }
+            for entry in properties.get("Proven", []):
+                assertion_name = entry.get("assertion", "unknown")
+                vacuity_check = entry.get("vacuity_check", "unknown")
+                entry_time = entry.get("time", 0)
+                step_in_steps ={
+                    "name": "Assertion: " + assertion_name,
+                    "status": "broken" if vacuity_check == "failed" else "passed", 
+                    "start": start_time,
+                    "stop": start_time + entry_time * 1000,    
+                    "steps": []
+                }
 
-            steps.append(step_in_steps)
+                steps.append(step_in_steps)
 
-        for entry in properties.get("Fired", []):
-            steps.append({
-                "name": "Assertion: " + entry["assertion"],
-                "status": "failed",
-                "start": start_time,
-                "stop": start_time + entry["time"] * 1000
-            })
+            for entry in properties.get("Fired", []):
+                steps.append({
+                    "name": "Assertion: " + entry["assertion"],
+                    "status": "failed",
+                    "start": start_time,
+                    "stop": start_time + entry["time"] * 1000
+                })
 
-        for entry in properties.get("Covered", []):
-            steps.append({
-                "name": "Cover: " + entry["assertion"],
-                "status": "passed",
-                "start": start_time,
-                "stop": start_time + entry["time"] * 1000
-            })
+            for entry in properties.get("Covered", []):
+                steps.append({
+                    "name": "Cover: " + entry["assertion"],
+                    "status": "passed",
+                    "start": start_time,
+                    "stop": start_time + entry["time"] * 1000
+                })
 
-        for entry in properties.get("Uncoverable", []):
-            steps.append({
-                "name": "Cover: " + entry["assertion"],
-                "status": "failed",
-                "start": start_time,
-                "stop": start_time + entry["time"] * 1000
-            })
+            for entry in properties.get("Uncoverable", []):
+                steps.append({
+                    "name": "Cover: " + entry["assertion"],
+                    "status": "failed",
+                    "start": start_time,
+                    "stop": start_time + entry["time"] * 1000
+                })
 
     test_case = {
         "uuid": test_case_uuid,
