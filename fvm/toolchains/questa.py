@@ -681,7 +681,7 @@ def get_linecheck_prove():
     patterns["error"] += ["fired", "uncoverable"]
     # inconclusive only if not in "Proven:" line"
     patterns["warning"] += ["inconclusives", "vacuous", r"^(?!Proven:).*inconclusive"]
-    patterns["success"] += ["covered"]
+    patterns["success"] += ["covered", "proven"]
 
     return patterns
 
