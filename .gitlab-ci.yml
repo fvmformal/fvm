@@ -158,7 +158,7 @@ run_examples_questa:
       - .coverage.*
 
 run_options_questa:
-  stage: examples
+  stage: concepts
   image: registry.woden.us.es/containers/questa:2025.1_2
   variables:
     TOOLCHAIN: "questa"
@@ -167,17 +167,17 @@ run_options_questa:
     - export SALT_LICENSE_SERVER=29000@popote.us.es
     - yum install -y python39 java-1.8.0-openjdk
   script:
-    - source .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.hooks.verbose -m concepts.hooks.formal -v
+    - . .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.hooks.verbose concepts.hooks.formal -v
     - make clean
-    - source .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.hooks.list --m concepts.hooks.formal -l
+    - . .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.hooks.list concepts.hooks.formal -l
     - make clean
-    - source .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.hooks.outdir --m concepts.hooks.formal -o fvm_out_2
+    - . .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.hooks.outdir concepts.hooks.formal -o fvm_out_2
     - make clean
-    - source .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.hooks.design --m concepts.hooks.formal -d counter
+    - . .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.hooks.design concepts.hooks.formal -d counter
     - make clean
-    - source .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.hooks.prove --m concepts.hooks.formal -s prove
+    - . .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.hooks.prove concepts.hooks.formal -s prove
     - make clean
-    - source .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.vunits.continue --m concepts.inheriting_vunits_fail.formal -c
+    - . .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.vunits.continue concepts.inheriting_vunits_fail.formal -c
     - make clean
   artifacts:
     when: always
@@ -187,7 +187,7 @@ run_options_questa:
       - .coverage.$TOOLCHAIN.hooks.outdir
       - .coverage.$TOOLCHAIN.hooks.design
       - .coverage.$TOOLCHAIN.hooks.prove
-      - .coverage.$TOOLCHAIN.vunits.continue
+      - .coverage.$TOOLCHAIN.vunits.cont
 
 full_dashboard:
   stage: doc
