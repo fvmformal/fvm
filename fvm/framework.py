@@ -715,11 +715,15 @@ class fvmframework:
                     self.results[design][step]['status'] = 'skip'
                 elif step in self.steps.steps:
                     self.list_step(design, step)
+                    for post_step in self.steps.post_steps.get(step, []):
+                        self.list_step(design, f'{step}.{post_step}')
                 else:
                     self.logger.trace(f'{step=} not available in {self.toolchain=}, skipping')
                     self.results[design][step]['status'] = 'skip'
         else:
             self.list_step(design, self.step)
+            for post_step in self.steps.post_steps.get(self.step, []):
+                self.list_step(design, f'{self.step}.{post_step}')
 
     def list_step(self, design, step):
         self.logger.trace(f'{design}.{step}')
