@@ -535,11 +535,13 @@ def generate_allure(framework, logger):
                 else:
                     step_summary_html = None
 
-                html_files = [
-                    os.path.join(step_path, f)
-                    for f in os.listdir(step_path)
-                    if f.endswith(".html") and f != step_summary
-                ]
+                html_files = []
+                if os.path.exists(step_path):
+                    html_files = [
+                        os.path.join(step_path, f)
+                        for f in os.listdir(step_path)
+                        if f.endswith(".html") and f != step_summary
+                    ]
 
                 status = framework.results[design][step]['status']
                 if framework.results[design][step]['status'] == "pass":
