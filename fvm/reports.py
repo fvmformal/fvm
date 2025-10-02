@@ -556,7 +556,7 @@ def generate_allure(framework, logger):
                     start_time = int(start_time_sec * 1000)
                     stop_time = start_time + framework.results[design][step]["elapsed_time"] * 1000
 
-                if step == 'friendliness' and status == "passed":
+                if step == 'friendliness' and 'score' in framework.results[design][step]:
                     friendliness_score = framework.results[design][step]['score']
 
                 if step == 'prove':
