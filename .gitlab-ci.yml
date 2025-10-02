@@ -167,17 +167,17 @@ run_options_questa:
     - export SALT_LICENSE_SERVER=29000@popote.us.es
     - yum install -y python39 java-1.8.0-openjdk
   script:
-    - . .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.hooks.verbose concepts.hooks.formal -v
+    - . .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.hooks.verbose concepts/hooks/formal.py -v
     - make clean
-    - . .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.hooks.list concepts.hooks.formal -l
+    - . .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.hooks.list concepts/hooks/formal.py -l
     - make clean
-    - . .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.hooks.outdir concepts.hooks.formal -o fvm_out_2
+    - . .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.hooks.outdir concepts/hooks/formal.py -o fvm_out_2
     - make clean
-    - . .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.hooks.design concepts.hooks.formal -d counter
+    - . .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.hooks.design concepts/hooks/formal.py -d counter
     - make clean
-    - . .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.hooks.prove concepts.hooks.formal -s prove
+    - . .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.hooks.prove concepts/hooks/formal.py -s prove
     - make clean
-    - . .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.vunits.continue concepts.inheriting_vunits_fail.formal -c
+    - . .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.vunits.continue concepts/inheriting_vunits_fail/formal.py -c
     - make clean
   artifacts:
     when: always
