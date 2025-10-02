@@ -42,8 +42,6 @@ def parse_formal_reachability_report_to_html(input_file, output_file="report.htm
                     parts = stripped_line.split(" ", 1)
                     if len(parts) == 2:
                         legend.append(f"<strong>{parts[0]}</strong>: {parts[1]}")
-                    else:
-                        legend.append(stripped_line)
 
         if "Assumptions" in stripped_line:
             current_section = "Assumptions"
@@ -70,14 +68,6 @@ def parse_formal_reachability_report_to_html(input_file, output_file="report.htm
             table_title = stripped_line
             current_section = "Instance"
             index_items.append((current_section, table_title))
-            continue
-
-        if re.match(r"Reachability Summary for (Design|Instance):", stripped_line):
-            table_title = stripped_line
-            if "Instance" in table_title:
-                instance_count += 1
-                if instance_count == 1:
-                    table_title = f"Reachability Details by Instance\n{table_title}"
             continue
 
         if "Cover Type" in stripped_line and not cover_table:
@@ -395,8 +385,6 @@ def parse_formal_observability_report_to_html(input_file, output_file="report.ht
                     parts = stripped_line.split(" ", 1)
                     if len(parts) == 2:
                         legend.append(f"<strong>{parts[0]}</strong>: {parts[1]}")
-                    else:
-                        legend.append(stripped_line)
 
         if "Assumptions" in stripped_line:
             current_section = "Assumptions"
@@ -443,14 +431,6 @@ def parse_formal_observability_report_to_html(input_file, output_file="report.ht
             table_title = stripped_line
             current_section = "Instance"
             index_items.append((current_section, table_title))
-            continue
-        if re.match(r"Observability Summary for (Design|Instance):", stripped_line):
-            table_title = stripped_line
-
-            if "Instance" in table_title:
-                instance_count += 1
-                if instance_count == 1:
-                    table_title = f"Observability Details by Instance\n{table_title}"
             continue
 
         if "Cover Type" in stripped_line and not cover_table:
@@ -742,8 +722,6 @@ def parse_reachability_report_to_html(input_file, output_file="report.html"):
 
     html_content = []
     tables = []
-    current_section = None
-    legend = []
     cover_table = False
     cover_type_table = []
     table_title = ""
@@ -759,26 +737,7 @@ def parse_reachability_report_to_html(input_file, output_file="report.html"):
         if re.search(r"-{2,}", stripped_line):
             continue
 
-        if "Legend" in stripped_line:
-            current_section = "Legend"
-            legend = []
-            continue
-
-        if current_section == "Legend":
-            if stripped_line == "":
-                current_section = None
-            else:
-                if "Reachability Percentage" in stripped_line:
-                    text = "Reachable/(Total-User Excluded)"
-                    legend.append(f"<strong>Reachability Percentage</strong>: {text}")
-                else:
-                    parts = stripped_line.split(" ", 1)
-                    if len(parts) == 2:
-                        legend.append(f"<strong>{parts[0]}</strong>: {parts[1]}")
-                    else:
-                        legend.append(stripped_line)
-
-        if re.match(r"CoverCheck Summary", stripped_line):
+        if re.match(r"Summary", stripped_line):
             table_title = stripped_line
             continue
 
@@ -887,12 +846,6 @@ def parse_reachability_report_to_html(input_file, output_file="report.html"):
                 f"<p style='text-align: center;'><strong>{bold_text}</strong> {normal_text}</p>"
             )
 
-    if legend:
-        html_content.append("<div class='legend'><h2>Legend</h2><ul>")
-        for item in legend:
-            html_content.append(f"<li>{item}</li>")
-        html_content.append("</ul></div>")
-
     for table_title, table in tables:
         for line in table_title.split("\n"):
             html_content.append(f"<h2>{line}</h2>")
@@ -985,8 +938,6 @@ def parse_formal_signoff_report_to_html(input_file, output_file="report.html"):
                     parts = stripped_line.split(" ", 1)
                     if len(parts) == 2:
                         legend.append(f"<strong>{parts[0]}</strong>: {parts[1]}")
-                    else:
-                        legend.append(stripped_line)
 
         if "Assumptions" in stripped_line:
             current_section = "Assumptions"
@@ -1034,15 +985,6 @@ def parse_formal_signoff_report_to_html(input_file, output_file="report.html"):
                 current_section = None
             else:
                 assertions.append(stripped_line)
-
-        if re.match(r"Formal Coverage Summary for (Design|Instance):", stripped_line):
-            table_title = stripped_line
-
-            if "Instance" in table_title:
-                instance_count += 1
-                if instance_count == 1:
-                    table_title = f"Formal Coverage Details by Instance\n{table_title}"
-            continue
 
         if "Coverage Type" in stripped_line and not cover_table:
             cover_table = True
