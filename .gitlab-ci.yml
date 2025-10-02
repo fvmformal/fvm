@@ -173,6 +173,7 @@ run_options_questa:
     - . .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.hooks.outdir concepts/hooks/formal.py -o fvm_out_2
     - . .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.hooks.design concepts/hooks/formal.py -d counter
     - . .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.hooks.prove concepts/hooks/formal.py -s prove
+    - . .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.hooks.prove concepts/hooks/formal.py -s prove -l
     - . .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.vunits.continue concepts/inheriting_vunits_fail/formal.py -c
     - make clean
   artifacts:
