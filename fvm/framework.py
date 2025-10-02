@@ -214,20 +214,6 @@ class fvmframework:
         else :
             self.toolchain = toolchain
 
-    def run_command(self, command):
-        """Execute a system command and handle errors."""
-        try:
-            result = subprocess.run(command, shell=True, check=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            self.logger.info(f'Command succeeded: {command}')
-            self.logger.debug(f'STDOUT: {result.stdout.strip()}')
-            if result.stderr.strip():
-                self.logger.debug(f'STDERR: {result.stderr.strip()}')
-            return result.stdout.strip()
-        except subprocess.CalledProcessError as e:
-            self.logger.error(f'Command failed: {command}')
-            self.logger.error(f'Error: {e.stderr.strip()}')
-            raise
-
     def add_vhdl_source(self, src, library="work"):
         """Add a single VHDL source"""
         self.logger.info(f'Adding VHDL source: {src}')
@@ -1184,43 +1170,3 @@ class fvmframework:
     # code, and encapsulated here (the same as we do in set_timeout)
     # ******************************************************************* #
     # ******************************************************************* #
-
-    # TODO: are we really using these functions? I don't see them being called
-    # neither in concepts/ nor in examples/
-
-    # This is questa-specific
-    def add_external_library(self, name, src):
-        """Add an external library"""
-        self.logger.info(f'Adding the external library: {name} from {src}')
-        if not os.path.exists(src) :
-            self.logger.error(f'External library not found: {name} from {src}')
-            self.exit_if_required(BAD_VALUE)
-        try:
-            self.logger.info(f'Compiling library {name} from {src}')
-            self.run_command(f'vlib {name}')
-            self.run_command(f'vmap {name} {name}')
-            vhdl_files = [os.path.join(root, file)
-                        for root, _, files in os.walk(src)
-                        for file in files if file.endswith(('.vhd', '.VHD', '.vhdl', '.VHDL'))]
-            if vhdl_files:
-                self.logger.info(f'Compiling VHDL files for external library {name}')
-                self.run_command(f'vcom -work {name} -{self.vhdlstd} -autoorder {" ".join(vhdl_files)}')
-        except Exception as e:
-            self.logger.error(f'Error compiling library {name}: {e}')
-            self.exit_if_required(BAD_VALUE)
-        self.logger.info(f'Successfully added and mapped library {name}')
-
-    # This is questa-specific
-    def add_precompiled_library(self, name, path):
-        """Add a precompiled external library"""
-        self.logger.info(f'Adding precompiled library: {name} from {path}')
-        if not os.path.exists(path):
-            self.logger.error(f'Precompiled library path not found: {path}')
-            self.exit_if_required(BAD_VALUE)
-        try:
-            self.logger.info(f'Mapping precompiled library {name} to {path}')
-            self.run_command(f'vmap {name} {path}')
-        except Exception as e:
-            self.logger.error(f'Error mapping precompiled library {name}: {e}')
-            self.exit_if_required(BAD_VALUE)
-        self.logger.info(f'Successfully mapped precompiled library {name}')
