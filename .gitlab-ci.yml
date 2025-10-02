@@ -139,12 +139,15 @@ run_examples_questa:
     - export SALT_LICENSE_SERVER=29000@popote.us.es
     - yum install -y python39 java-1.8.0-openjdk
   script:
-    - make install
     - make PYTHON="coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN" $DESIGN
     - source .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.lint -m examples.countervunit.formal -s lint
+    - make clean
     - source .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.rulecheck --m examples.countervunit.formal -s friendliness
+    - make clean
     - source .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.reachability --m examples.countervunit.formal -s reachability
+    - make clean
     - source .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.resets --m examples.countervunit.formal -s resets
+    - make clean
 #    - coverage run -m examples.countervunit.formal -s clocks
 #    - make clean
     - source .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.prove --m examples.countervunit.formal -s prove
@@ -164,16 +167,12 @@ run_options_questa:
     - export SALT_LICENSE_SERVER=29000@popote.us.es
     - yum install -y python39 java-1.8.0-openjdk
   script:
+    - make install
     - . .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.hooks.verbose concepts/hooks/formal.py -v
-    - make clean
     - . .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.hooks.list concepts/hooks/formal.py -l
-    - make clean
     - . .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.hooks.outdir concepts/hooks/formal.py -o fvm_out_2
-    - make clean
     - . .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.hooks.design concepts/hooks/formal.py -d counter
-    - make clean
     - . .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.hooks.prove concepts/hooks/formal.py -s prove
-    - make clean
     - . .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.vunits.continue concepts/inheriting_vunits_fail/formal.py -c
     - make clean
   artifacts:
