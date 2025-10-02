@@ -135,10 +135,9 @@ def run_qverify_step(framework, design, step):
     cmd_stdout, cmd_stderr = "", ""
     stdout_err, stderr_err = 0, 0
 
-    if framework.list is True :
-        framework.logger.info(f'Available step: {step}. Tool: {tool}, command = {" ".join(cmd)}')
-    elif framework.guinorun is True :
+    if framework.guinorun is True :
         framework.logger.info(f'{framework.guinorun=}, will not run {step=} with {tool=}')
+        open_gui = True
     else :
         framework.logger.trace(f'command: {" ".join(cmd)=}')
         cmd_stdout, cmd_stderr = framework.run_cmd(cmd, design, step, tool, framework.verbose)
@@ -147,8 +146,6 @@ def run_qverify_step(framework, design, step):
 
         if framework.gui :
             open_gui = True
-    if framework.guinorun and framework.list is False :
-        open_gui = True
     # TODO : maybe run the GUI processes without blocking
     # the rest of the steps? For that we would probably
     # need to pass another option to run_cmd
