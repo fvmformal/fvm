@@ -157,6 +157,38 @@ run_examples_questa:
     paths:
       - .coverage.*
 
+run_options_questa:
+  stage: examples
+  image: registry.woden.us.es/containers/questa:2025.1_2
+  variables:
+    TOOLCHAIN: "questa"
+  before_script:
+    - unset LM_LICENSE_FILE
+    - export SALT_LICENSE_SERVER=29000@popote.us.es
+    - yum install -y python39 java-1.8.0-openjdk
+  script:
+    - source .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.hooks.verbose -m concepts.hooks.formal -v
+    - make clean
+    - source .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.hooks.list --m concepts.hooks.formal -l
+    - make clean
+    - source .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.hooks.outdir --m concepts.hooks.formal -o fvm_out_2
+    - make clean
+    - source .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.hooks.design --m concepts.hooks.formal -d counter
+    - make clean
+    - source .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.hooks.prove --m concepts.hooks.formal -s prove
+    - make clean
+    - source .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.vunits.continue --m concepts.inheriting_vunits_fail.formal -c
+    - make clean
+  artifacts:
+    when: always
+    paths:
+      - .coverage.$TOOLCHAIN.hooks.verbose
+      - .coverage.$TOOLCHAIN.hooks.list
+      - .coverage.$TOOLCHAIN.hooks.outdir
+      - .coverage.$TOOLCHAIN.hooks.design
+      - .coverage.$TOOLCHAIN.hooks.prove
+      - .coverage.$TOOLCHAIN.vunits.continue
+
 full_dashboard:
   stage: doc
   image: debian:12
