@@ -183,7 +183,7 @@ run_options_questa:
       - .coverage.$TOOLCHAIN.hooks.outdir
       - .coverage.$TOOLCHAIN.hooks.design
       - .coverage.$TOOLCHAIN.hooks.prove
-      - .coverage.$TOOLCHAIN.vunits.cont
+      - .coverage.$TOOLCHAIN.vunits.continue
 
 full_dashboard:
   stage: doc
