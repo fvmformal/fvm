@@ -51,7 +51,6 @@ def pretty_summary(framework, logger):
     total_pass = 0
     total_fail = 0
     total_skip = 0
-    total_broken = 0
     total_cont = 0
     total_stat = 0
 
@@ -161,9 +160,6 @@ def pretty_summary(framework, logger):
                 elif status == 'skip':
                     style = 'bold yellow'
                     total_skip += 1
-                elif status == 'broken':
-                    style = 'bold yellow'
-                    total_broken += 1
                 else:
                     style = 'bold white'
 
@@ -270,8 +266,6 @@ def pretty_summary(framework, logger):
         summary += f"[bold red]  fail[/bold red] {total_fail} of {total_cont}\n"
     if total_skip != 0:
         summary += f"[bold yellow]  skip[/bold yellow] {total_skip} of {total_cont}\n"
-    if total_broken != 0:
-        summary += f"[bold yellow]  broken[/bold yellow] {total_broken} of {total_cont}\n"
     if total_stat != total_cont:
         summary += f"[bold white]  omit[/bold white] {total_cont - total_stat} of {total_cont}\n"
 
@@ -528,14 +522,21 @@ def generate_allure(framework, logger):
 
             if ('status' in framework.results[design][step] and
                 framework.results[design][step]['status'] != "skip"):
+
+                # Default values
+                step_summary_html = None
+                html_files = []
+                status = framework.results[design][step]['status']
+                start_time = int(datetime.now().timestamp() * 1000)
+                stop_time = start_time
+                friendliness_score = None
+                properties = None
+
                 step_path = f"{framework.outdir}/{design}/{step}"
                 step_summary = f"{step}_summary.html"
                 if os.path.exists(f"{step_path}/{step_summary}"):
                     step_summary_html = f"{step_path}/{step_summary}"
-                else:
-                    step_summary_html = None
 
-                html_files = []
                 if os.path.exists(step_path):
                     html_files = [
                         os.path.join(step_path, f)
@@ -543,26 +544,26 @@ def generate_allure(framework, logger):
                         if f.endswith(".html") and f != step_summary
                     ]
 
-                status = framework.results[design][step]['status']
                 if framework.results[design][step]['status'] == "pass":
                     status = "passed"
                 elif framework.results[design][step]['status'] == "fail":
                     status = "failed"
-                start_time_str = framework.results[design][step]['timestamp']
-                start_time_obj = datetime.fromisoformat(start_time_str)
-                start_time_sec = start_time_obj.timestamp()
-                start_time = int(start_time_sec * 1000)
-                stop_time = start_time + framework.results[design][step]["elapsed_time"] * 1000
+
+                if 'timestamp' in framework.results[design][step]:
+                    start_time_str = framework.results[design][step]['timestamp']
+                    start_time_obj = datetime.fromisoformat(start_time_str)
+                    start_time_sec = start_time_obj.timestamp()
+                    start_time = int(start_time_sec * 1000)
+                    stop_time = start_time + framework.results[design][step]["elapsed_time"] * 1000
 
                 if step == 'friendliness' and status == "passed":
                     friendliness_score = framework.results[design][step]['score']
-                else:
-                    friendliness_score = None
-                properties = None
+
                 if step == 'prove':
                     path = f'{framework.outdir}/{design}/{step}/{step}.log'
                     if os.path.exists(path):
                         properties = parse_prove.parse_properties_extended(path)
+
                 generate_test_cases.generate_test_case(design,
                                                        prefix=framework.prefix,
                                                        results_dir=results_dir,
