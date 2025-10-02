@@ -139,15 +139,12 @@ run_examples_questa:
     - export SALT_LICENSE_SERVER=29000@popote.us.es
     - yum install -y python39 java-1.8.0-openjdk
   script:
+    - make install
     - make PYTHON="coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN" $DESIGN
     - source .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.lint -m examples.countervunit.formal -s lint
-    - make clean
     - source .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.rulecheck --m examples.countervunit.formal -s friendliness
-    - make clean
     - source .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.reachability --m examples.countervunit.formal -s reachability
-    - make clean
     - source .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.resets --m examples.countervunit.formal -s resets
-    - make clean
 #    - coverage run -m examples.countervunit.formal -s clocks
 #    - make clean
     - source .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.prove --m examples.countervunit.formal -s prove
