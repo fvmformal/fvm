@@ -27,10 +27,17 @@ from fvm.toolchains import toolchains
 from fvm.drom2psl.generator import generator
 
 # Error codes
-BAD_VALUE    = "FVM exit condition: Bad value"
-ERROR_IN_LOG = "FVM exit condition: Error in tool log"
-CHECK_FAILED = "FVM exit condition: check_for_errors failed"
-KEYBOARD_INTERRUPT = "FVM exit condition: Keyboard interrupt"
+BAD_VALUE = {"msg": "FVM exit condition: Bad value",
+             "value" : 2}
+ERROR_IN_LOG = {"msg": "FVM exit condition: Error detected during tool execution",
+                 "value": 3}
+#ERROR_IN_STEP = "FVM exit condition: Error detected during step"
+GOAL_NOT_MET = {"msg": "FVM exit condition: User goal not met",
+                "value": 4}
+CHECK_FAILED = {"msg": "FVM exit condition: check_for_errors failed",
+                "value": 5}
+KEYBOARD_INTERRUPT = {"msg": "FVM exit condition: Keyboard interrupt",
+                "value": 6}
 
 # Log formats
 LOGFORMAT = '<cyan>FVM</cyan> | <green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>'
@@ -849,7 +856,8 @@ class fvmframework:
             reports.pretty_summary(self, self.logger)
             reports.generate_reports(self, self.logger)
             reports.generate_allure(self, self.logger)
-            sys.exit(errorcode)
+            logger.error(errorcode['msg'])
+            sys.exit(errorcode['value'])
 
     # TODO : design argument may be redundant since we have
     # self.current_toplevel
