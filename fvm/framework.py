@@ -27,17 +27,19 @@ from fvm.toolchains import toolchains
 from fvm.drom2psl.generator import generator
 
 # Error codes
+# Error codes 1 and 2 are reserved: 1 is the default error code in unix shells,
+# and 2 is sometimes used to signal syntax errors in the executed command
 BAD_VALUE = {"msg": "FVM exit condition: Bad value",
-             "value" : 2}
+             "value" : 3}
 ERROR_IN_LOG = {"msg": "FVM exit condition: Error detected during tool execution",
-                 "value": 3}
+                 "value": 4}
 #ERROR_IN_STEP = "FVM exit condition: Error detected during step"
 GOAL_NOT_MET = {"msg": "FVM exit condition: User goal not met",
-                "value": 4}
-CHECK_FAILED = {"msg": "FVM exit condition: check_for_errors failed",
                 "value": 5}
-KEYBOARD_INTERRUPT = {"msg": "FVM exit condition: Keyboard interrupt",
+CHECK_FAILED = {"msg": "FVM exit condition: check_for_errors failed",
                 "value": 6}
+KEYBOARD_INTERRUPT = {"msg": "FVM exit condition: Keyboard interrupt",
+                "value": 7}
 
 # Log formats
 LOGFORMAT = '<cyan>FVM</cyan> | <green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>'
