@@ -5,6 +5,18 @@ from pathlib import Path
 # Our own imports
 from fvm import fvmframework
 
+# Error codes
+BAD_VALUE = {"msg": "FVM exit condition: Bad value",
+             "value" : 3}
+ERROR_IN_LOG = {"msg": "FVM exit condition: Error detected during tool execution",
+                 "value": 4}
+GOAL_NOT_MET = {"msg": "FVM exit condition: User goal not met",
+                "value": 5}
+CHECK_FAILED = {"msg": "FVM exit condition: check_for_errors failed",
+                "value": 6}
+KEYBOARD_INTERRUPT = {"msg": "FVM exit condition: Keyboard interrupt",
+                "value": 7}
+
 # Common pre-test actions for all tests
 #fvm = fvmframework(loglevel="TRACE")
 #fvm.set_loglevel("TRACE")
@@ -21,6 +33,7 @@ def test_add_single_vhdl_source_doesnt_exist() :
     with pytest.raises(SystemExit) as pytest_wrapped_e:
         fvm.add_vhdl_source("thisfiledoesntexist.vhd")
     assert pytest_wrapped_e.type == SystemExit
+    assert pytest_wrapped_e.value.code == BAD_VALUE["value"]
 
 def test_add_single_psl_source_exists():
     fvm = fvmframework()
