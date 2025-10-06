@@ -31,9 +31,8 @@ from fvm.drom2psl.generator import generator
 # and 2 is sometimes used to signal syntax errors in the executed command
 BAD_VALUE = {"msg": "FVM exit condition: Bad value",
              "value" : 3}
-ERROR_IN_LOG = {"msg": "FVM exit condition: Error detected during tool execution",
+ERROR_IN_TOOL = {"msg": "FVM exit condition: Error detected during tool execution",
                  "value": 4}
-#ERROR_IN_STEP = "FVM exit condition: Error detected during step"
 GOAL_NOT_MET = {"msg": "FVM exit condition: User goal not met",
                 "value": 5}
 CHECK_FAILED = {"msg": "FVM exit condition: check_for_errors failed",
@@ -774,14 +773,12 @@ class fvmframework:
                     # TODO : allow pre_hooks to return errors and stop the run
                     # if they fail
                     self.run_pre_hook(design, step)
-                    err = self.run_step(design, step)
+                    err, errorcode = self.run_step(design, step)
                     if err:
-                        self.exit_if_required(ERROR_IN_LOG)
-                    # TODO : allow post_steps to return errors and stop the run
-                    # if they fail
-                    err = self.run_post_step(design, step)
+                        self.exit_if_required(errorcode)
+                    err, errorcode = self.run_post_step(design, step)
                     if err:
-                        self.exit_if_required(ERROR_IN_LOG)
+                        self.exit_if_required(errorcode)
                     # TODO : allow post_hooks to return errors and stop the run
                     # if they fail
                     self.run_post_hook(design, step)
@@ -790,12 +787,12 @@ class fvmframework:
                     self.results[design][step]['status'] = 'skip'
         else:
             self.run_pre_hook(design, self.step)
-            err = self.run_step(design, self.step)
+            err, errorcode = self.run_step(design, self.step)
             if err:
-                self.exit_if_required(ERROR_IN_LOG)
-            err = self.run_post_step(design, self.step)
+                self.exit_if_required(errorcode)
+            err, errorcode = self.run_post_step(design, self.step)
             if err:
-                self.exit_if_required(ERROR_IN_LOG)
+                self.exit_if_required(errorcode)
             self.run_post_hook(design, self.step)
 
     def is_skipped(self, design, step):
@@ -835,19 +832,6 @@ class fvmframework:
         else:
             flags = ""
         return flags
-
-    def clear_directory(self, directory_path):
-        try:
-            if os.path.exists(directory_path) and os.path.isdir(directory_path):
-                for item in os.listdir(directory_path):
-                    item_path = os.path.join(directory_path, item)
-
-                    if os.path.isdir(item_path):
-                        shutil.rmtree(item_path)
-                    else:
-                        os.remove(item_path)
-        except Exception as e:
-            print(f"Error occurred while clearing the directory: {e}")
 
     def exit_if_required(self, errorcode):
         """Exits with a specific error code if the continue flag (cont) is not
@@ -1106,6 +1090,7 @@ class fvmframework:
         """Run a specific step of the methodology"""
         console.rule(f'[bold white]{design}.{step}[/bold white]')
         err = False
+        errorcode = {}
         self.current_path = f'{self.outdir}/{self.current_toplevel}'
         path = self.current_path
         if step in self.steps.steps:
@@ -1119,11 +1104,17 @@ class fvmframework:
             if stdout_err or stderr_err or status == "fail":
                 if self.is_failure_allowed(design, step) == False:
                     err = True
+                    errorcode = ERROR_IN_TOOL
+                self.results[design][step]['status'] = 'fail'
+            elif status == "goal_not_met":
+                if self.is_failure_allowed(design, step) == False:
+                    err = True
+                    errorcode = GOAL_NOT_MET
                 self.results[design][step]['status'] = 'fail'
             else:
                 self.results[design][step]['status'] = 'pass'
-                
-        else :
+
+        else:
             self.logger.error(f'No tool available for {step=} in {self.toolchain=}')
             self.exit_if_required(BAD_VALUE)
 
@@ -1134,19 +1125,15 @@ class fvmframework:
             for post_step in self.steps.post_steps[step]:
                 self.steps.post_steps[step][post_step]["setup"](self, path)
 
-        return err
+        return err, errorcode
 
     def run_post_step(self, design, step):
         """Run post processing for a specific step of the methodology"""
-        # Currently we only do post-processing after the friendliness and prove
-        # steps
         self.logger.trace(f'run_post_step, {design=}, {step=})')
         self.current_path = f'{self.outdir}/{self.current_toplevel}'
         path = self.current_path
-        # TODO : run_post_step should probably run a _single_ step, and maybe
-        # we can have a run_post_steps function that calls run_post_step
-        # multiple times?
         err = False
+        errorcode = {}
         if step in self.steps.post_steps:
             for post_step in self.steps.post_steps[step]:
                 if not self.is_skipped(design, f'{step}.{post_step}'):
@@ -1157,21 +1144,25 @@ class fvmframework:
                     with open(logfile, 'w', encoding='utf-8') as f :
                         f.write(run_stdout)
                         f.write(run_stderr)
+
                     if stdout_err or stderr_err or status == "fail":
                         if self.is_failure_allowed(design, f"{step}.{post_step}") == False:
                             err = True
+                            errorcode = ERROR_IN_TOOL
+                        self.results[design][f"{step}.{post_step}"]['status'] = 'fail'
+                    elif status == "goal_not_met":
+                        if self.is_failure_allowed(design, f"{step}.{post_step}") == False:
+                            err = True
+                            errorcode = GOAL_NOT_MET
                         self.results[design][f"{step}.{post_step}"]['status'] = 'fail'
                     else:
                         self.results[design][f"{step}.{post_step}"]['status'] = 'pass'
-
-                else:
-                    self.results[design][f'{step}.{post_step}']['status'] = 'skip'
 
                 # Check for keyboard interrupt after each post step
                 if self.ctrl_c_pressed is True:
                     self.exit_if_required(KEYBOARD_INTERRUPT)
 
-        return err
+        return err, errorcode
 
     # ******************************************************************* #
     # ******************************************************************* #

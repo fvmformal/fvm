@@ -374,7 +374,7 @@ def run_reachability(framework, path):
                                     outdir=f'{framework.outdir}/{framework.current_toplevel}/{step}',
                                     step=step)
         if any(row.get("Status") == "fail" for row in framework.results[framework.current_toplevel]['reachability']['summary']):
-            status = "fail"
+            status = "goal_not_met"
     return run_stdout, run_stderr, stdout_err, stderr_err, status
 
 # TODO : We have to consider if Uncoverable is an error or a warning or nothing.
@@ -773,7 +773,7 @@ def run_prove_simcover(framework, path):
                                      outdir=f'{framework.outdir}/{framework.current_toplevel}/prove.simcover',
                                      step='prove.simcover')
         if any(row.get("Status") == "fail" for row in framework.results[framework.current_toplevel]['prove.simcover']['summary']):
-            status = "fail"
+            status = "goal_not_met"
     return sum_cmd_stdout, sum_cmd_stderr, stdout_err, stderr_err, status
 
 def get_linecheck_prove_simcover():
@@ -870,7 +870,7 @@ def run_prove_formalcover(framework, path):
                                             outdir=f'{framework.outdir}/{framework.current_toplevel}/prove.formalcover',
                                             step='prove.formalcover')
             if any(row.get("Status") == "fail" for row in framework.results[framework.current_toplevel]['prove.formalcover']['summary']):
-                status = "fail"
+                status = "goal_not_met"
     return run_stdout, run_stderr, stdout_err, stderr_err, status
 
 def get_linecheck_prove_formalcover():

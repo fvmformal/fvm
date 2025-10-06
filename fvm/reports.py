@@ -510,7 +510,15 @@ def generate_allure(framework, logger):
     dashboard_dir = os.path.join(f'{framework.outdir}', "dashboard")
     results_dir = os.path.join(dashboard_dir, "allure-results")
     report_dir = os.path.join(dashboard_dir, "allure-report")
-    framework.clear_directory(results_dir)
+
+    if os.path.isdir(results_dir):
+        for item in os.listdir(results_dir):
+            item_path = os.path.join(results_dir, item)
+
+            if os.path.isdir(item_path):
+                shutil.rmtree(item_path)
+            else:
+                os.remove(item_path)
 
     os.makedirs(dashboard_dir, exist_ok=True)
     os.makedirs(results_dir, exist_ok=True)
