@@ -634,8 +634,6 @@ class fvmframework:
         self.init_results()
 
         self.start_time_setup = datetime.now().isoformat()
-        # TODO: correctly manage self.list here (self.list is True if -l or
-        # --list was provided as a command-line argument)
 
         self.logger.info(f'Designs: {self.toplevel}')
         for design in self.toplevel:
@@ -650,7 +648,8 @@ class fvmframework:
         reports.generate_allure(self, self.logger)
         err = self.check_errors()
         if err :
-            self.exit_if_required(CHECK_FAILED)
+            self.logger.error(CHECK_FAILED['msg'])
+            sys.exit(CHECK_FAILED['value'])
 
     def setup(self):
         for design in self.toplevel:
@@ -859,7 +858,7 @@ class fvmframework:
             reports.pretty_summary(self, self.logger)
             reports.generate_reports(self, self.logger)
             reports.generate_allure(self, self.logger)
-            logger.error(errorcode['msg'])
+            self.logger.error(errorcode['msg'])
             sys.exit(errorcode['value'])
 
     # TODO : design argument may be redundant since we have
