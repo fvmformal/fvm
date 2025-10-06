@@ -562,9 +562,6 @@ class fvmframework:
         self.logger.add(self.log_counter, level=0)
         self.logger.add(sys.stderr, level=self.loglevel, format=LOGFORMAT)
 
-        if ret :
-            self.exit_if_required(CHECK_FAILED)
-
         return ret
 
     # TODO : check that port_list must be an actual list()
