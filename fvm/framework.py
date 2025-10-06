@@ -746,7 +746,11 @@ class fvmframework:
                     os.makedirs(archive_dir)
                 timestamp = datetime.now().isoformat()
                 target_dir = os.path.join(archive_dir, f'{previous_design}_{timestamp}')
-                shutil.move(current_dir, target_dir)
+                shutil.copytree(current_dir, target_dir)
+                for item in os.listdir(current_dir):
+                    path = os.path.join(current_dir, item)
+                    if os.path.isdir(path):
+                        shutil.rmtree(path)
 
         # Create all necessary scripts
         if not skip_setup:
@@ -1106,8 +1110,8 @@ class fvmframework:
         """Run a specific step of the methodology"""
         console.rule(f'[bold white]{design}.{step}[/bold white]')
         err = False
+        self.current_path = f'{self.outdir}/{self.current_toplevel}'
         path = self.current_path
-
         if step in self.steps.steps:
             run_stdout, run_stderr, stdout_err, stderr_err, status = self.steps.steps[step]["run"](self, path)
             logfile = f'{path}/{step}/{step}.log'
@@ -1141,6 +1145,7 @@ class fvmframework:
         # Currently we only do post-processing after the friendliness and prove
         # steps
         self.logger.trace(f'run_post_step, {design=}, {step=})')
+        self.current_path = f'{self.outdir}/{self.current_toplevel}'
         path = self.current_path
         # TODO : run_post_step should probably run a _single_ step, and maybe
         # we can have a run_post_steps function that calls run_post_step
