@@ -2,6 +2,7 @@ import uuid
 import json
 import os
 import shutil
+import re
 
 def generate_test_case(design_name, prefix, step, results_dir, status="passed",
                        start_time=None, stop_time=None, friendliness_score=None,
@@ -182,8 +183,6 @@ def generate_test_case(design_name, prefix, step, results_dir, status="passed",
         json.dump(test_case, json_file, indent=2)
 
 def html_to_oneline(html_file):
-    import re
-
     with open(html_file, "r", encoding="utf-8") as f:
         html = f.read()
 
@@ -191,9 +190,9 @@ def html_to_oneline(html_file):
 
     def remove_outside_pre(text):
         parts = re.split(r"(<pre.*?>.*?</pre>)", text, flags=re.DOTALL)
-        for i in range(len(parts)):
-            if not parts[i].startswith("<pre"):
-                parts[i] = parts[i].replace("\n", "")
+        for i, part in enumerate(parts):
+            if not part.startswith("<pre"):
+                parts[i] = part.replace("\n", "")
         return "".join(parts)
 
     html_oneline = remove_outside_pre(html)

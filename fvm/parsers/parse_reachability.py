@@ -23,7 +23,7 @@ def add_total_row(table):
 
     if not table.get('data'):
         return table
-    
+
     total_row = {key: 0 for key in table['data'][0].keys()
                  if key not in ['Coverage Type', 'Unreachable']}
     total_covered = 0

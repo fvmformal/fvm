@@ -648,7 +648,7 @@ def run_prove(framework, path):
         tables.show_prove_summary(properties,
                                   outdir=f'{framework.outdir}/{framework.current_toplevel}/prove',
                                   step='prove')
-        if (framework.results[framework.current_toplevel]['prove']['summary'].get("Asserts", {}).get("Children", {}).get("Fired", {}).get("Count", 0 )> 0  
+        if (framework.results[framework.current_toplevel]['prove']['summary'].get("Asserts", {}).get("Children", {}).get("Fired", {}).get("Count", 0 )> 0
             or framework.results[framework.current_toplevel]['prove']['summary'].get("Covers", {}).get("Children", {}).get("Uncoverable", {}).get("Count", 0) > 0):
             status = "fail"
     return run_stdout, run_stderr, stdout_err, stderr_err, status
@@ -707,7 +707,7 @@ def run_prove_simcover(framework, path):
         sum_cmd_stderr += cmd_stderr
         framework.results[design]['prove.simcover']['timestamp'] = timestamp
         framework.results[design]['prove.simcover']['elapsed_time'] = elapsed_time
-    
+
     # Run all the simulations to generate the UCDB files
     for file in replay_files:
         path = pathlib.Path(file).parent

@@ -333,7 +333,7 @@ class fvmframework:
         return ret
 
     def set_prefix(self, prefix):
-        if type(prefix) != str:
+        if not isinstance(prefix, str):
             self.logger.error(f'Specified {prefix=} is not a string, {type(prefix)=}')
         self.prefix = prefix
 
@@ -444,7 +444,7 @@ class fvmframework:
         """Set the coverage goal for a step (0-100)."""
         if not (isinstance(goal, (int, float)) and 0 <= goal <= 100):
             self.logger.error(f"{goal=} must be between 0 and 100")
-            return self.exit_if_required(BAD_VALUE)
+            self.exit_if_required(BAD_VALUE)
 
         valid = False
         if step in self.steps.steps:
@@ -457,7 +457,7 @@ class fvmframework:
         if not valid:
             self.logger.error(f"Specified {step=} not in {self.steps.steps=}"
                               f" or {self.steps.post_steps=}")
-            return self.exit_if_required(BAD_VALUE)
+            self.exit_if_required(BAD_VALUE)
 
         toolchains.set_coverage_goal(self.toolchain, step, goal)
 
@@ -551,7 +551,6 @@ class fvmframework:
         else :
             self.logger.success(f'Got {msg_counts["CRITICAL"]=} critical messages')
 
-
         # Restore the original log format and loglevel
         self.logger.remove()
         self.logger.add(self.log_counter, level=0)
@@ -560,7 +559,7 @@ class fvmframework:
         return ret
 
     # TODO : check that port_list must be an actual list()
-    # Disable pylint unused-argument warnings because all arguments 
+    # Disable pylint unused-argument warnings because all arguments
     # are used but with locals(), so pylint doesn't see
     # that they are used because it is done dynamically
     # pylint: disable=unused-argument
@@ -966,8 +965,7 @@ class fvmframework:
         """Run a user-specified hook"""
         if callable(hook):
             return hook(step, design)
-        else:
-            self.logger.error(f'{hook=} is not callable, only functions or other callable objects can be passed as hooks')
+        self.logger.error(f'{hook=} is not callable, only functions or other callable objects can be passed as hooks')
 
     def generate_psl_from_drom_sources(self, path):
         self.logger.info(f'{self.drom_sources=}')
@@ -1001,7 +999,6 @@ class fvmframework:
 
         # Run the assigned setup function for each step
         for step in self.steps.steps :
-            #self.logger.trace(f'Setting up {design=}, {step=}')
             self.steps.steps[step]["setup"](self, path)
 
     def logcheck(self, result, design, step, tool):
@@ -1087,12 +1084,12 @@ class fvmframework:
                 f.write(run_stderr)
 
             if stdout_err or stderr_err or status == "fail":
-                if self.is_failure_allowed(design, step) == False:
+                if self.is_failure_allowed(design, step) is False:
                     err = True
                     errorcode = ERROR_IN_TOOL
                 self.results[design][step]['status'] = 'fail'
             elif status == "goal_not_met":
-                if self.is_failure_allowed(design, step) == False:
+                if self.is_failure_allowed(design, step) is False:
                     err = True
                     errorcode = GOAL_NOT_MET
                 self.results[design][step]['status'] = 'fail'
@@ -1131,12 +1128,12 @@ class fvmframework:
                         f.write(run_stderr)
 
                     if stdout_err or stderr_err or status == "fail":
-                        if self.is_failure_allowed(design, f"{step}.{post_step}") == False:
+                        if self.is_failure_allowed(design, f"{step}.{post_step}") is False:
                             err = True
                             errorcode = ERROR_IN_TOOL
                         self.results[design][f"{step}.{post_step}"]['status'] = 'fail'
                     elif status == "goal_not_met":
-                        if self.is_failure_allowed(design, f"{step}.{post_step}") == False:
+                        if self.is_failure_allowed(design, f"{step}.{post_step}") is False:
                             err = True
                             errorcode = GOAL_NOT_MET
                         self.results[design][f"{step}.{post_step}"]['status'] = 'fail'

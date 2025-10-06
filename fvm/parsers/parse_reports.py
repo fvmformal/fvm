@@ -13,7 +13,6 @@ def parse_formal_reachability_report_to_html(input_file, output_file="report.htm
     cover_table = False
     cover_type_table = []
     table_title = ""
-    instance_count = 0
     report_generated = ""
 
     for line in lines:
@@ -356,7 +355,6 @@ def parse_formal_observability_report_to_html(input_file, output_file="report.ht
     cover_table = False
     cover_type_table = []
     table_title = ""
-    instance_count = 0
     report_generated = ""
 
     for line in lines:
@@ -909,7 +907,6 @@ def parse_formal_signoff_report_to_html(input_file, output_file="report.html"):
     cover_table = False
     cover_type_table = []
     table_title = ""
-    instance_count = 0
     report_generated = ""
 
     for line in lines:

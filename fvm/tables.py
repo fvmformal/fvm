@@ -150,14 +150,14 @@ def show_coverage_summary(data, title="xxx", outdir=None, step=None):
     console.save_html(f"{outdir}/{step}_summary.html")
 
 def show_prove_summary(data, title="Property Summary", outdir=None, step=None):
-    
+
     console = Console(force_terminal=True, force_interactive=False,
                         record=True)
     table = Table(title=f"[cyan]{title}[/cyan]", show_header=True, header_style="bold")
 
     if not data:
         return
-    
+
     # TODO: Check if there are more categories
     category_colors = {
         "Proven": "bold green",
