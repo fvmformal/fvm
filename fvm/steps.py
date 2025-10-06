@@ -1,4 +1,3 @@
-# TODO : add docstrings, but with nice format, arguments, etc
 
 class steps:
     """This class defines a data structure in which to store the steps and

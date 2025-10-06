@@ -78,10 +78,6 @@ def create_f_file(filename, sources):
         for src in sources:
             print(src, file=f)
 
-# TODO : probably all these functions do not need to receive path as argument
-# and can instead use framework.current_path, but we have to make sure that the
-# fvmframework is correctly setting the path (it should be!)
-
 def gencompilescript(framework, filename, path):
     """Generate script to compile design sources
 
@@ -91,12 +87,8 @@ def gencompilescript(framework, filename, path):
     # TODO : we must also compile the Verilog sources, if they exist
     # TODO : we must check for the case of only-verilog designs (no VHDL files)
     # TODO : we must check for the case of only-VHDL designs (no verilog files)
-    # TODO : libraries folder should be inside fvm_out as per #268
     library_path = f"{framework.outdir}/libraries"
     os.makedirs(library_path, exist_ok=True)
-
-    # TODO : probably the following call to create_f_file is not needed
-    #create_f_file(f'{path}/design.f', framework.vhdl_sources)
 
     with open(path + '/' + filename, "w", encoding='utf-8') as f:
         print('onerror exit', file=f)
@@ -117,7 +109,6 @@ def gencompilescript(framework, filename, path):
                   f'-work {lib} -autoorder -f {f_file_path}', file=f)
             print('', file=f)
 
-# TODO: this function is too big, it can and must be simplified a bit
 def run_qverify_step(framework, design, step):
     """Run a specific step with the Questa formal toolchain. A single function
     can be reused for multiple steps since the tools share the same interface
@@ -377,10 +368,6 @@ def run_reachability(framework, path):
             status = "goal_not_met"
     return run_stdout, run_stderr, stdout_err, stderr_err, status
 
-# TODO : We have to consider if Uncoverable is an error or a warning or nothing.
-# If we consider it an error, then reachability will fail in most designs.
-# Also, in big designs, if we show these logs, the user won't be able to see
-# anything else
 def get_linecheck_reachability():
     patterns = get_linecheck_common()
 
@@ -552,7 +539,6 @@ def setup_clocks(framework, path):
     gen_reset_config(framework, filename, path)
     gen_reset_domain_config(framework, filename, path)
     with open(path+'/'+filename, "a", encoding='utf-8') as f:
-        # TODO : let the user specify clock names, clock domains and reset domains
         # TODO : also look at reconvergence, and other warnings detected
         #print('netlist clock clk -period 50', file=f)
 
@@ -594,11 +580,6 @@ def get_linecheck_clocks():
 def setup_prove(framework, path):
     """Generate script to run PropCheck"""
     filename = "prove.do"
-    # TODO : we will need arguments for the clocks, timeout, we probably need
-    # to detect compile order if vcom doesn't detect it, set the other options
-    # such as timeout... and also throw some errors if any option is not
-    # specified. This is not trivial. Also, in the future we may want to
-    # specify verilog files with vlog, etc...
     # TODO : can we also compile the PSL files using a .f file?
     gencompilescript(framework, filename, path)
     # Only add the clocks since we don't want to add any extra constraint
@@ -797,7 +778,6 @@ def setup_prove_formalcover(framework, path):
     with open(f"{path}/{filename}", "a", encoding='utf-8') as f:
         print('onerror exit', file=f)
         print(f"formal load db {path}/prove/propcheck.db",file=f)
-        # TODO: Delete is_disabled
         if not framework.is_disabled('observability'):
             print('formal generate coverage -detail_all -cov_mode o', file=f)
         if not framework.is_disabled('reachability'):

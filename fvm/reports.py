@@ -127,7 +127,6 @@ def pretty_summary(framework, logger):
                 # Coverage summaries
                 elif isinstance(step_summary, list):
                     if step_summary and "Coverage Type" in step_summary[0]:
-                        ## TODO: change status to follow this?
                         any_fail = any(row.get("Status") == "fail" for row in step_summary)
 
                         for row in step_summary:
@@ -404,8 +403,6 @@ def generate_reports(framework, logger):
     # For this, we are going to:
     #   1. Move the already-existing results directory out of the way. We
     #   will create a new name for it using a timestamp
-    #   TODO : we should create the timestamp when we create the directory,
-    #   not when we move it
     #   2. Create a new results directory
     #   3. If a reportdir exits, copy its history to the new results
     #   directory

@@ -369,8 +369,6 @@ class fvmframework:
                 self.logger.error(f'Specified {self.design=} not in {self.toplevel=}, did you add it with set_toplevel()?')
 
     def init_results(self):
-        # TODO: this must be initialized per design configuration, but to do
-        # that we must do it somewhere else
         # Initialize a dict structure for the results
         self.results = {}
         for design in self.toplevel:
@@ -418,8 +416,6 @@ class fvmframework:
         self.design_configs[design].append(config)
         self.logger.trace(f'Added configuration {self.design_configs} to {design=}')
 
-    # TODO : we could make this function accept also a list, but not sure if it
-    # is worth it since the user could just call it inside a loop
     def skip(self, step, design='*'):
         """Allow to skip specific steps and/or designs. Accepts the wilcards
         '*' and '*'"""
@@ -818,9 +814,6 @@ class fvmframework:
 
     def set_tool_flags(self, tool, flags):
         """Set user-defined flags for a specific tool"""
-        # TODO : warn the user if neither -jix nor -justify_initial_x is in
-        # self.tool_flags["formal verify"]: it could lead to failing
-        # assumptions during simulation
         self.tool_flags[tool] = flags
 
     def get_tool_flags(self, tool):
@@ -845,10 +838,6 @@ class fvmframework:
             self.logger.error(errorcode['msg'])
             sys.exit(errorcode['value'])
 
-    # TODO : design argument may be redundant since we have
-    # self.current_toplevel
-    # TODO : we could also put step in self.current_step so we don't have to
-    # also pass that argument
     def run_cmd(self, cmd, design, step, tool, verbose = True, cwd=None):
         """Run a specific command"""
         self.set_logformat(getlogformattool(design, step, tool))
@@ -1056,10 +1045,6 @@ class fvmframework:
         self.set_logformat(LOGFORMAT)
         return err_in_log
 
-    # TODO: this must be independized from the toolchain and possibly from the
-    # methodology step/tool. We should have a list of pass/clear (strings that
-    # look like errors/warnings but are not, such as error summaries), error
-    # and warning strings, and look for those in that order
     def linecheck(self, line, step=None):
         """Check for errors and warnings in log lines"""
         err = False
@@ -1168,7 +1153,5 @@ class fvmframework:
     # ******************************************************************* #
     # From now on, these are (or should be!) the functions that are
     # toolchain-dependent (meaning that they have tool-specific code)
-    # TODO : this functionality must be moved to the specific toolchain
-    # code, and encapsulated here (the same as we do in set_timeout)
     # ******************************************************************* #
     # ******************************************************************* #
