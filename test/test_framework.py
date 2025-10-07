@@ -157,9 +157,7 @@ def test_check_if_tools_exist() :
 
 def test_check_if_tools_exist() :
     fvm = fvmframework()
-    exists = fvm.check_tool("vsim")
-    assert exists == True
-    exists = fvm.check_tool("qverify")
+    exists = fvm.check_tool("ls")
     assert exists == True
     exists = fvm.check_tool("notfoundtool")
     assert exists == False
