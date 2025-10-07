@@ -162,6 +162,19 @@ def test_check_if_tools_exist() :
     exists = fvm.check_tool("notfoundtool")
     assert exists == False
 
+def test_set_prefix() :
+    fvm = fvmframework()
+    fvm.set_prefix("prefix")
+    assert fvm.prefix == "prefix"
+
+def test_set_prefix_no_str() :
+    fvm = fvmframework()
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        fvm.set_prefix(2)
+    assert pytest_wrapped_e.type == SystemExit
+    assert pytest_wrapped_e.value.code == BAD_VALUE["value"]
+    assert fvm.prefix != 2
+
 def test_set_toplevel() :
     fvm = fvmframework()
     fvm.set_toplevel("test")

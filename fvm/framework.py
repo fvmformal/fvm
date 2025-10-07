@@ -335,6 +335,7 @@ class fvmframework:
     def set_prefix(self, prefix):
         if not isinstance(prefix, str):
             self.logger.error(f'Specified {prefix=} is not a string, {type(prefix)=}')
+            self.exit_if_required(BAD_VALUE)
         self.prefix = prefix
 
     def set_toplevel(self, toplevel):
