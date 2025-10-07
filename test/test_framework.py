@@ -4,6 +4,7 @@ from pathlib import Path
 
 # Our own imports
 from fvm import fvmframework
+import fvm
 
 # Error codes
 BAD_VALUE = {"msg": "FVM exit condition: Bad value",
@@ -148,15 +149,6 @@ def test_list_added_sources() :
 
 def test_check_if_tools_exist() :
     fvm = fvmframework()
-    exists = fvm.check_tool("vsim")
-    assert exists == True
-    exists = fvm.check_tool("qverify")
-    assert exists == True
-    exists = fvm.check_tool("notfoundtool")
-    assert exists == False
-
-def test_check_if_tools_exist() :
-    fvm = fvmframework()
     exists = fvm.check_tool("ls")
     assert exists == True
     exists = fvm.check_tool("notfoundtool")
@@ -221,6 +213,154 @@ def test_add_config_before_set_toplevel() :
         fvm.add_config("test", "config1", {"generic1": 1, "generic2": 2})
     assert pytest_wrapped_e.type == SystemExit
     assert pytest_wrapped_e.value.code == BAD_VALUE["value"]
+
+def test_skip() :
+    fvm = fvmframework()
+    fvm.skip("Not implemented yet", "test")
+
+def test_allow_failure() :
+    fvm = fvmframework()
+    fvm.allow_failure("Not implemented yet", "test")
+
+def test_disable_coverage_o() :
+    fvm = fvmframework()
+    fvm.disable_coverage("observability", "test")
+
+def test_disable_coverage_s() :
+    fvm = fvmframework()
+    fvm.disable_coverage("signoff", "test")
+
+def test_disable_coverage_r() :
+    fvm = fvmframework()
+    fvm.disable_coverage("reachability", "test")
+
+def test_disable_coverage_b() :
+    fvm = fvmframework()
+    fvm.disable_coverage("bounded_reachability", "test")
+
+def test_disable_coverage_covtype_not_valid() :
+    fvm = fvmframework()
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        fvm.disable_coverage("not valid", "test")
+    assert pytest_wrapped_e.type == SystemExit
+    assert pytest_wrapped_e.value.code == BAD_VALUE["value"]
+
+def test_set_timeout() :
+    fvm = fvmframework()
+    fvm.set_timeout("xverify", "1m")
+
+def test_set_timeout_prove() :
+    fvm = fvmframework()
+    fvm.set_timeout("prove", "5m")
+
+def test_set_coverage_goal_float() :
+    fvm = fvmframework()
+    fvm.set_coverage_goal("reachability", 90.0)
+
+def test_set_coverage_goal_int() :
+    fvm = fvmframework()
+    fvm.set_coverage_goal("reachability", 90)
+
+def test_set_coverage_goal_wrong_type() :
+    fvm = fvmframework()
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        fvm.set_coverage_goal("reachability", "90")
+    assert pytest_wrapped_e.type == SystemExit
+    assert pytest_wrapped_e.value.code == BAD_VALUE["value"]
+
+def test_set_coverage_goal_wrong_range() :
+    fvm = fvmframework()
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        fvm.set_coverage_goal("reachability", 150)
+    assert pytest_wrapped_e.type == SystemExit
+    assert pytest_wrapped_e.value.code == BAD_VALUE["value"]
+
+def test_set_coverage_goal_wrong_range_2() :
+    fvm = fvmframework()
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        fvm.set_coverage_goal("reachability", -20)
+    assert pytest_wrapped_e.type == SystemExit
+    assert pytest_wrapped_e.value.code == BAD_VALUE["value"]
+
+def test_set_coverage_goal_step_invalid() :
+    fvm = fvmframework()
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        fvm.set_coverage_goal("wrong", 10)
+    assert pytest_wrapped_e.type == SystemExit
+    assert pytest_wrapped_e.value.code == BAD_VALUE["value"]
+
+def test_formal_initialize_reset_active_high() :
+    fvm = fvmframework()
+    fvm.formal_initialize_reset("rst", active_high=True, cycles=3)
+
+def test_formal_initialize_reset_active_low() :
+    fvm = fvmframework()
+    fvm.formal_initialize_reset("reset", active_high=False, cycles=1)
+
+def test_set_pre_hook() :
+    fvm = fvmframework()
+    fvm.set_pre_hook("echo pre-hook", "xverify")
+
+def test_set_post_hook() :
+    fvm = fvmframework()
+    fvm.set_post_hook("echo post-hook", "xverify")
+
+def test_set_loglevel() :
+    fvm = fvmframework()
+    fvm.set_loglevel("ERROR")
+
+def test_log() :
+    fvm = fvmframework()
+    fvm.log("info", "This is an info message")
+    fvm.log("error", "This is an error message")
+
+def test_add_clock_domain() :
+    fvm = fvmframework()
+    fvm.add_clock_domain("clk", ["rst", "enable"], asynchronous=True, synchronous=True,
+                         ignore=True, posedge=True, negedge=False, module="toplevel",
+                         inout_clock_in="clk_in", inout_clock_out="clk_out")
+    fvm.setup_design("toplevel")
+
+def test_add_reset_domain() :
+    fvm = fvmframework()
+    fvm.add_reset_domain("rst", active_high=True, synchronous=True, module="toplevel",
+                         port_list=["enable"], asynchronous=True, ignore=True,
+                         active_low=True, is_set=True, no_reset=True)
+    fvm.setup_design("toplevel")
+
+def test_add_clock() :
+    fvm = fvmframework()
+    fvm.add_clock("clk", module="toplevel", period=10, waveform=(3,7),
+                  group="clk_in", ignore=True, remove=True, external="clk_ext")
+    fvm.setup_design("toplevel")
+
+def test_add_reset() :
+    fvm = fvmframework()
+    fvm.add_reset("rst", module="toplevel", group="rst_in", ignore=True,
+                  remove=True, external="rst_ext", active_high=True,
+                  active_low=True, asynchronous=True, synchronous=True)
+    fvm.setup_design("toplevel")
+
+def test_blackbox() :
+    fvm = fvmframework()
+    fvm.blackbox("entity")
+    fvm.setup_design("toplevel")
+
+def test_blackbox_instance() :
+    fvm = fvmframework()
+    fvm.blackbox_instance("inst")
+    fvm.setup_design("toplevel")
+
+def test_cutpoint() :
+    fvm = fvmframework()
+    fvm.cutpoint("signal", module="toplevel", resetval="1111", condition="0000",
+                 driver="signal2", wildcards_dont_match_hierarchy_separators=True)
+    fvm.setup_design("toplevel")
+
+def test_set_tool_flags() :
+    fvm = fvmframework()
+    fvm.set_tool_flags("xverify", "flag")
+    fvm.setup_design("toplevel")
 
 #def test_check_library_exists_false() :
 #    fvm = fvmframework()

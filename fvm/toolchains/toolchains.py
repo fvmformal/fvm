@@ -40,9 +40,9 @@ def generics_to_args(toolchain, generics):
     module = importlib.import_module(f'fvm.toolchains.{toolchain}')
     return module.generics_to_args(generics)
 
-def formal_initialize_rst(framework, rst, active_high=True, cycles=1):
-    module = importlib.import_module(f'{framework.toolchain}')
-    module.formal_initialize_rst(framework, rst, active_high=active_high, cycles=cycles)
+def formal_initialize_reset(framework, toolchain, reset, active_high=True, cycles=1):
+    module = importlib.import_module(f'fvm.toolchains.{toolchain}')
+    module.formal_initialize_reset(framework, reset, active_high=active_high, cycles=cycles)
 
 def get_linecheck_patterns(framework, step=None):
     """

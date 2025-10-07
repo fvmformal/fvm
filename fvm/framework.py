@@ -436,7 +436,9 @@ class fvmframework:
         for covtype are 'observability', 'reachability',
         'bounded_reachability', and 'signoff'"""
         allowed_covtypes = ['observability', 'signoff', 'reachability', 'bounded_reachability']
-        assert covtype in allowed_covtypes, f'Specified {covtype=} not in {allowed_covtypes=}'
+        if covtype not in allowed_covtypes :
+            self.logger.error(f'Specified {covtype=} not in {allowed_covtypes=}')
+            self.exit_if_required(BAD_VALUE)
         self.disabled_coverage.append(f'{design}.prove.{covtype}')
 
     def set_timeout(self, step, timeout):
@@ -469,16 +471,11 @@ class fvmframework:
         pass to the tools"""
         return toolchains.generics_to_args(self.toolchain, generics)
 
-    def formal_initialize_rst(self, rst, active_high=True, cycles=1):
+    def formal_initialize_reset(self, reset, active_high=True, cycles=1):
         """
         Initialize reset for formal steps.
         """
-        if active_high:
-            line = f'formal init {{{rst}=1;##{cycles+1};{rst}=0}}'
-            self.init_reset.append(line)
-        else:
-            line = f'formal init {{{rst}=0;##{cycles+1};{rst}=1}}'
-            self.init_reset.append(line)
+        toolchains.formal_initialize_reset(self, self.toolchain, reset, active_high, cycles)
 
     def set_pre_hook(self, hook, step, design='*'):
         if design not in self.pre_hooks:
