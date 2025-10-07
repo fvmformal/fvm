@@ -405,6 +405,7 @@ class fvmframework:
         # Check that the configuration is for a valid design
         if design not in self.toplevel:
             self.logger.error(f'Specified {design=} not in {self.toplevel=}')
+            self.exit_if_required(BAD_VALUE)
 
         # Initialize the design configurations list if it doesn't exist
         if design not in self.design_configs:

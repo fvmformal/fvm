@@ -210,6 +210,18 @@ def test_set_toplevels_if_a_different_design_exists() :
     assert pytest_wrapped_e.type == SystemExit
     assert pytest_wrapped_e.value.code == BAD_VALUE["value"]
 
+def test_add_config() :
+    fvm = fvmframework()
+    fvm.set_toplevel(["test1", "test2", "test3"])
+    fvm.add_config("test1", "config1", {"generic1": 1, "generic2": 2})
+
+def test_add_config_before_set_toplevel() :
+    fvm = fvmframework()
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        fvm.add_config("test", "config1", {"generic1": 1, "generic2": 2})
+    assert pytest_wrapped_e.type == SystemExit
+    assert pytest_wrapped_e.value.code == BAD_VALUE["value"]
+
 #def test_check_library_exists_false() :
 #    fvm = fvmframework()
 #    exists = fvm.check_library_exists("librarythatdoesntexist")
