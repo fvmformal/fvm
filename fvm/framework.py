@@ -349,7 +349,7 @@ class fvmframework:
             # specified more than once
             if len(toplevel) != len(set(toplevel)):
                 self.logger.error(f'Duplicates exist in {toplevel=}')
-                sys.exit(BAD_VALUE)
+                self.exit_if_required(BAD_VALUE)
             else:
                 self.toplevel = toplevel
 
@@ -359,7 +359,7 @@ class fvmframework:
         # directories
         if 'fvm_dashboard' in toplevel or 'fvm_reports' in toplevel:
             self.logger.error("toplevels can not have the following reserved names: fvm_dashboard, fvm_reports")
-            sys.exit(BAD_VALUE)
+            self.exit_if_required(BAD_VALUE)
 
         # If a design was specified, just run that design
         if self.design is not None:
@@ -367,6 +367,7 @@ class fvmframework:
                 self.toplevel = [self.design]
             else:
                 self.logger.error(f'Specified {self.design=} not in {self.toplevel=}, did you add it with set_toplevel()?')
+                self.exit_if_required(BAD_VALUE)
 
     def init_results(self):
         # Initialize a dict structure for the results

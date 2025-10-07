@@ -15,6 +15,9 @@ test/test3.vhd
 test/test.psl
 test/test2.psl
 test/test3.psl
+test/test.json
+test/test2.json
+test/test3.json
 test/drom2psl/*.psl
 test/drom2psl/test/*.psl
 test/drom2psl/test/*.svg
