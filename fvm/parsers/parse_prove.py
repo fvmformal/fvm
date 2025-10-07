@@ -44,8 +44,10 @@ def normalize_sections(data):
         "Targets Vacuously Proven": "Vacuous",
         "Targets Fired": "Fired",
         "Targets Fired with Warning": "Fired with Warning",
+        "Targets Fired with Warnings": "Fired with Warning",
         "Targets Covered": "Covered",
         "Targets Covered with Warning": "Covered with Warning",
+        "Targets Covered with Warnings": "Covered with Warning",
         "Targets Uncoverable": "Uncoverable",
         "Targets Inconclusive": "Inconclusive",
     }
