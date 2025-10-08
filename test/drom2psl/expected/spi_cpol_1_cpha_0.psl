@@ -1,0 +1,50 @@
+-- Automatically created by drom2psl
+-- Input file: /home/hipolito/devel/eda/fvm-refactor/drom/spi_cpol_1_cpha_0.json
+-- These sequences and/or properties can be reused from other PSL files by doing:
+-- inherit spi_cpol_1_cpha_0;
+
+vunit spi_cpol_1_cpha_0 {
+
+  sequence spi_cpol_1_cpha_0_master (
+    hdltype std_ulogic_vector(7 downto 0) m2s
+  ) is {
+    ((master.cs_n = '1') and (master.mosi = 'Z'))[*1];  -- 1 cycle
+    ((master.cs_n = '0') and (master.mosi = m2s(7)))[*2];  -- 2 cycles
+    ((master.cs_n = '0') and (master.mosi = m2s(6)))[*2];  -- 2 cycles
+    ((master.cs_n = '0') and (master.mosi = m2s(5)))[*2];  -- 2 cycles
+    ((master.cs_n = '0') and (master.mosi = m2s(4)))[*2];  -- 2 cycles
+    ((master.cs_n = '0') and (master.mosi = m2s(3)))[*2];  -- 2 cycles
+    ((master.cs_n = '0') and (master.mosi = m2s(2)))[*2];  -- 2 cycles
+    ((master.cs_n = '0') and (master.mosi = m2s(1)))[*2];  -- 2 cycles
+    ((master.cs_n = '0') and (master.mosi = m2s(0)))[*2];  -- 2 cycles
+    ((master.cs_n = '0') and (master.mosi = 'Z'))[*1];  -- 1 cycle
+    ((master.cs_n = '1') and (master.mosi = 'Z'))[+]  -- 1 or more cycles
+  };
+
+  sequence spi_cpol_1_cpha_0_slave (
+    hdltype std_ulogic_vector(7 downto 0) s2m
+  ) is {
+    ((slave.mosi = 'Z'))[*1];  -- 1 cycle
+    ((slave.mosi = s2m(7)))[*2];  -- 2 cycles
+    ((slave.mosi = s2m(6)))[*2];  -- 2 cycles
+    ((slave.mosi = s2m(5)))[*2];  -- 2 cycles
+    ((slave.mosi = s2m(4)))[*2];  -- 2 cycles
+    ((slave.mosi = s2m(3)))[*2];  -- 2 cycles
+    ((slave.mosi = s2m(2)))[*2];  -- 2 cycles
+    ((slave.mosi = s2m(1)))[*2];  -- 2 cycles
+    ((slave.mosi = s2m(0)))[*2];  -- 2 cycles
+    ((slave.mosi = 'Z'))[*2:inf]  -- 2 or more cycles
+  };
+
+  -- Relational operands between sequences may be, among others:
+  --   && : both must happen and last exactly the same number of cycles
+  --   & : both must happen, without any requirement on their durations
+  --   |-> : implication: both must happen, with the first cycle of the second occurring during the last cycle of the first
+  --   |=> : non-overlapping implication: both must happen, with the first cycle of the second occuring the cycle after the last cycle of the first
+  property spi_cpol_1_cpha_0 (
+    hdltype std_ulogic_vector(7 downto 0) m2s;
+    hdltype std_ulogic_vector(7 downto 0) s2m
+  ) is
+    always { {spi_cpol_1_cpha_0_master(m2s)} && {spi_cpol_1_cpha_0_slave(s2m)} };
+
+}

@@ -35,7 +35,16 @@ examples_and_retvals = [
   ]
 
 inputs_and_expected_outputs = [
+    ("drom/spi_cpol_0_cpha_0.json", "test/drom2psl/expected/spi_cpol_0_cpha_0.psl"),
+    ("drom/spi_cpol_0_cpha_1.json", "test/drom2psl/expected/spi_cpol_0_cpha_1.psl"),
+    ("drom/spi_cpol_1_cpha_0.json", "test/drom2psl/expected/spi_cpol_1_cpha_0.psl"),
+    ("drom/spi_cpol_1_cpha_1.json", "test/drom2psl/expected/spi_cpol_1_cpha_1.psl"),
+    ("drom/uart_tx.json", "test/drom2psl/expected/uart_tx.psl"),
     ("drom/wishbone_classic_read.json", "concepts/wishbone_sequence/wishbone_classic_read.psl"),
+    ("drom/wishbone_classic_read.json", "test/drom2psl/expected/wishbone_classic_read.psl"),
+    ("drom/wishbone_classic_write.json", "test/drom2psl/expected/wishbone_classic_write.psl"),
+    ("drom/wishbone_pipelined_read.json", "test/drom2psl/expected/wishbone_pipelined_read.psl"),
+    ("drom/wishbone_pipelined_write.json", "test/drom2psl/expected/wishbone_pipelined_write.psl"),
   ]
 
 @pytest.mark.parametrize("file,expected", examples_and_retvals)

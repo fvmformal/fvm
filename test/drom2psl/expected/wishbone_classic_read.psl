@@ -1,0 +1,35 @@
+-- Automatically created by drom2psl
+-- Input file: /home/hipolito/devel/eda/fvm-refactor/drom/wishbone_classic_read.json
+-- These sequences and/or properties can be reused from other PSL files by doing:
+-- inherit wishbone_classic_read;
+
+vunit wishbone_classic_read {
+
+  sequence wishbone_classic_read_Master (
+    hdltype std_ulogic_vector(31 downto 0) addr
+  ) is {
+    ((Master.cyc = '0') and (Master.stb = '0'))[*1];  -- 1 cycle
+    ((Master.adr = addr) and (Master.cyc = '1') and (Master.stb = '1') and (Master.we = '0'))[+];  -- 1 or more cycles
+    ((Master.cyc = '0') and (Master.stb = '0'))[*]  -- 0 or more cycles
+  };
+
+  sequence wishbone_classic_read_Slave (
+    hdltype std_ulogic_vector(31 downto 0) data
+  ) is {
+    ((Slave.ack = '0') and (Slave.err = '0'))[+];  -- 1 or more cycles
+    ((Slave.dat = data) and (Slave.ack = '1') and (Slave.err = '0'))[*1];  -- 1 cycle
+    ((Slave.ack = '0') and (Slave.err = '0'))[*]  -- 0 or more cycles
+  };
+
+  -- Relational operands between sequences may be, among others:
+  --   && : both must happen and last exactly the same number of cycles
+  --   & : both must happen, without any requirement on their durations
+  --   |-> : implication: both must happen, with the first cycle of the second occurring during the last cycle of the first
+  --   |=> : non-overlapping implication: both must happen, with the first cycle of the second occuring the cycle after the last cycle of the first
+  property wishbone_classic_read (
+    hdltype std_ulogic_vector(31 downto 0) addr;
+    hdltype std_ulogic_vector(31 downto 0) data
+  ) is
+    always { {wishbone_classic_read_Master(addr)} && {wishbone_classic_read_Slave(data)} };
+
+}

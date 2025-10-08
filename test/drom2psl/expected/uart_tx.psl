@@ -1,0 +1,23 @@
+-- Automatically created by drom2psl
+-- Input file: /home/hipolito/devel/eda/fvm-refactor/drom/uart_tx.json
+-- These sequences and/or properties can be reused from other PSL files by doing:
+-- inherit uart_tx;
+
+vunit uart_tx {
+
+  sequence uart_tx_ (
+    hdltype std_ulogic_vector(7 downto 0) data
+  ) is {
+    ((tx = '0'))[*1];  -- 1 cycle
+    ((tx = data(0)))[*1];  -- 1 cycle
+    ((tx = data(1)))[*1];  -- 1 cycle
+    ((tx = data(2)))[*1];  -- 1 cycle
+    ((tx = data(3)))[*1];  -- 1 cycle
+    ((tx = data(4)))[*1];  -- 1 cycle
+    ((tx = data(5)))[*1];  -- 1 cycle
+    ((tx = data(6)))[*1];  -- 1 cycle
+    ((tx = data(7)))[*1];  -- 1 cycle
+    ((tx = '1'))[+]  -- 1 or more cycles
+  };
+
+}
