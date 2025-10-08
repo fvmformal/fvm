@@ -213,9 +213,17 @@ class fvmframework:
                 self.logger.error(f'step {args.step} not available in {self.toolchain}. Available steps are: {list(self.steps.steps.keys())}')
                 self.exit_if_required(BAD_VALUE)
 
-    def set_toolchain(self, toolchain) :
-        """Allows to override the FVM_TOOLCHAIN environment variable and set a
-        different toolchain"""
+    def set_toolchain(self, toolchain):
+        """
+        Override the current toolchain selection.
+
+        This method allows overriding the ``FVM_TOOLCHAIN`` environment variable
+        and explicitly setting a different toolchain for the framework. If the
+        provided toolchain is not supported, the framework logs an error and exits.
+
+        :param toolchain: Name of the toolchain to be set.
+        :type toolchain: str
+        """
         if toolchain not in toolchains.toolchains :
             self.logger.error(f'{toolchain=} not supported')
             self.exit_if_required(BAD_VALUE)
@@ -223,7 +231,20 @@ class fvmframework:
             self.toolchain = toolchain
 
     def add_vhdl_source(self, src, library="work"):
-        """Add a single VHDL source"""
+        """
+        Add a single VHDL source file to the framework.
+
+        This method registers a VHDL source file for later compilation and 
+        associates it with a VHDL library (defaulting to ``work``). It checks 
+        whether the file exists and validates its extension. Non-standard 
+        extensions trigger a warning but are still accepted.
+
+        :param src: Path to the VHDL source file.
+        :type src: str
+        :param library: VHDL library name to associate with the source file.
+                        Defaults to ``"work"``.
+        :type library: str
+        """
         self.logger.info(f'Adding VHDL source: {src}')
         if not os.path.exists(src) :
             self.logger.error(f'VHDL source not found: {src}')
@@ -236,12 +257,25 @@ class fvmframework:
         self.logger.debug(f'{self.vhdl_sources=}')
 
     def clear_vhdl_sources(self):
-        """Removes all VHDL sources from the project"""
+        """
+        Remove all registered VHDL sources from the framework.
+
+        This method clears the internal list of VHDL sources.
+        """
         self.logger.info('Removing all VHDL sources')
         self.vhdl_sources = []
 
     def add_psl_source(self, src):
-        """Add a single PSL source"""
+        """
+        Add a single PSL (Property Specification Language) source file to the framework.
+
+        The function validates that the provided file exists and checks whether
+        it has a common PSL extension. If the file does not exist, the framework will
+        log an error and exit. If the extension is unusual, a warning is logged.
+
+        :param src: Path to the PSL source file.
+        :type src: str
+        """
         self.logger.info(f'Adding PSL source: {src}')
         if not os.path.exists(src) :
             self.logger.error(f'PSL source not found: {src}')
@@ -253,12 +287,26 @@ class fvmframework:
         self.logger.debug(f'{self.psl_sources=}')
 
     def clear_psl_sources(self):
-        """Removes all PSL sources from the project"""
+        """
+        Remove all registered PSL sources from the framework.
+
+        This method clears the internal list of PSL sources.
+        """
         self.logger.info('Removing all PSL sources')
         self.psl_sources = []
 
     def add_drom_source(self, src):
-        """Add a single wavedrom source"""
+        """
+        Add a single Wavedrom source file to the framework.
+
+        This method validates that the provided file exists and checks whether
+        it has a typical Wavedrom extension (``.json``, ``.JSON``, ``.drom``, or ``.wavedrom``).
+        If the file does not exist, the framework logs an error and exits.
+        If the extension is unusual, a warning is logged.
+
+        :param src: Path to the Wavedrom source file.
+        :type src: str
+        """
         self.logger.info(f'Adding wavedrom source: {src}')
         if not os.path.exists(src) :
             self.logger.error(f'wavedrom source not found: {src}')
@@ -270,12 +318,29 @@ class fvmframework:
         self.logger.debug(f'{self.drom_sources=}')
 
     def clear_drom_sources(self):
-        """Removes all wavedrom sources from the project"""
+        """
+        Remove all registered Wavedrom sources from the framework.
+
+        This method clears the internal list of Wavedrom sources.
+        """
         self.logger.info('Removing all wavedrom sources')
         self.drom_sources = []
 
     def add_vhdl_sources(self, globstr, library="work"):
-        """Add multiple VHDL sources by globbing a pattern"""
+        """
+        Add multiple VHDL source files to the framework using a glob pattern.
+
+        This method searches for all files matching the provided glob pattern 
+        and adds them as VHDL sources. Each matching file is added via 
+        :meth:`add_vhdl_source`. If no files match the pattern, an error is
+        logged and the framework exits.
+
+        :param globstr: Glob pattern to search for VHDL source files.
+        :type globstr: str
+        :param library: VHDL library name to associate with the sources. Defaults 
+                        to ``"work"``.
+        :type library: str
+        """
         sources = glob.glob(globstr)
         if len(sources) == 0 :
             self.logger.error(f'No files found for pattern {globstr}')
@@ -284,16 +349,36 @@ class fvmframework:
             self.add_vhdl_source(source, library)
 
     def add_psl_sources(self, globstr):
-        """Add multiple PSL sources by globbing a pattern"""
+        """
+        Add multiple PSL source files to the framework using a glob pattern.
+
+        This method searches for all files matching the provided glob pattern 
+        and adds them as PSL sources. Each matching file is added via 
+        :meth:`add_psl_source`. If no files match the pattern, an error is
+        logged and the framework exits.
+
+        :param globstr: Glob pattern to search for PSL source files.
+        :type globstr: str
+        """
         sources = glob.glob(globstr)
         if len(sources) == 0 :
             self.logger.error(f'No files found for pattern {globstr}')
             self.exit_if_required(BAD_VALUE)
-        for source in glob.glob(globstr):
+        for source in sources:
             self.add_psl_source(source)
 
-    def add_drom_sources(self, globstr, library="work"):
-        """Add multiple wavedrom sources by globbing a pattern"""
+    def add_drom_sources(self, globstr):
+        """
+        Add multiple Wavedrom source files to the framework using a glob pattern.
+
+        This method searches for all files matching the provided glob pattern 
+        and adds them as Wavedrom sources. Each matching file is added via 
+        :meth:`add_drom_source`. If no files match the pattern, an error is
+        logged and the framework exits.
+
+        :param globstr: Glob pattern to search for Wavedrom source files.
+        :type globstr: str
+        """
         sources = glob.glob(globstr)
         if len(sources) == 0 :
             self.logger.error(f'No files found for pattern {globstr}')
@@ -302,27 +387,58 @@ class fvmframework:
             self.add_drom_source(source)
 
     def list_vhdl_sources(self):
-        """List VHDL sources"""
+        """
+        List all VHDL source files in the framework.
+
+        This method logs the current list of VHDL source files stored in the 
+        framework.
+        """
         self.logger.info(f'{self.vhdl_sources=}')
 
     def list_psl_sources(self):
-        """List PSL sources"""
+        """
+        List all PSL source files in the framework.
+
+        This method logs the current list of PSL source files stored in the 
+        framework.
+        """
         self.logger.info(f'{self.psl_sources=}')
 
     def list_drom_sources(self):
-        """List wavedrom sources"""
+        """
+        List all Wavedrom source files in the framework.
+
+        This method logs the current list of Wavedrom source files stored in the 
+        framework.
+        """
         self.logger.info(f'{self.drom_sources=}')
 
     def list_sources(self):
-        """List all sources"""
+        """
+        List all source files in the framework.
+
+        This method logs all sources currently added to the framework, including:
+        - VHDL sources
+        - PSL sources
+        - Wavedrom sources
+        """
         self.list_vhdl_sources()
         self.list_psl_sources()
         self.list_drom_sources()
 
     def check_tool(self, tool):
-        """Checks if toolname exists in PATH
+        """
+        Check whether a tool name is available in the system PATH.
 
-        @param toolname: name of executable to look for in PATH"""
+        This method searches for the specified tool name in the system PATH.
+        It logs a warning if the tool is not found, and logs a success
+        message if it is found.
+
+        :param tool: Name of the tool name to search for in PATH.
+        :type tool: str
+        :return: True if the tool is found in PATH, False otherwise.
+        :rtype: bool
+        """
         path = shutil.which(tool)
         if path is None :
             self.logger.warning(f'{tool=} not found in PATH')
@@ -333,15 +449,43 @@ class fvmframework:
         return ret
 
     def set_prefix(self, prefix):
+        """
+        Set the prefix string for the framework.
+
+        The prefix is used to distinguish between different executions of the
+        same toplevel in the reports (shows <prefix>.<toplevel>.<config>). This
+        method validates that the provided prefix is a string. If the value
+        is not a string, an error is logged and the framework exits.
+
+        :param prefix: The prefix string to set.
+        :type prefix: str
+        """
         if not isinstance(prefix, str):
             self.logger.error(f'Specified {prefix=} is not a string, {type(prefix)=}')
             self.exit_if_required(BAD_VALUE)
         self.prefix = prefix
 
     def set_toplevel(self, toplevel):
-        """Sets the name of the toplevel module. Multiple toplevels to analyze
-        can be specified as a list. If a single toplevel is specified, this
-        function converts it to a single-element list"""
+        """
+        Set the name of the toplevel module.
+
+        This method allows specifying one or multiple toplevel modules. If a 
+        single toplevel module is provided as a string, it is converted into a 
+        single-element list. If a list is provided, duplicates are checked and 
+        an error is logged if any are found.
+
+        Certain reserved names are prohibited (``fvm_dashboard`` and 
+        ``fvm_reports``) to avoid conflicts with framework directories.
+
+        If a specific design has already been set with framework
+        argument ``-d``, ``--design``, only that design will be 
+        kept in the toplevel list; an error is raised if the design is not 
+        present in the provided toplevel list.
+
+        :param toplevel: Name of the toplevel module as a string, or a list of 
+                        toplevel module names.
+        :type toplevel: str or list of str
+        """
 
         if isinstance(toplevel, str):
             self.toplevel = [toplevel]
@@ -397,10 +541,21 @@ class fvmframework:
                         self.results[design][f'{step}.{post_step}']['summary'] = {}
 
     def add_config(self, design, name, generics):
-        """Adds a design configuration. The design configuration has a name and
-        values for its generics, and applies to a specific design. If at least
-        one design configuration exists, the default configuration is not
-        used"""
+        """
+        Add a design configuration.
+
+        This method registers a configuration for a given design. Each configuration
+        has a name and a dictionary with the generics/parameters. Once at least one
+        configuration exists for a design, the framework default configuration is not used.
+
+        :param design: Name of the design to which the configuration applies. Must
+                    be one of the toplevel modules.
+        :type design: str
+        :param name: Name of the configuration.
+        :type name: str
+        :param generics: Dictionary with the generics/parameters for the configuration.
+        :type generics: dict
+        """
 
         # Check that the configuration is for a valid design
         if design not in self.toplevel:
@@ -420,15 +575,34 @@ class fvmframework:
         self.logger.trace(f'Added configuration {self.design_configs} to {design=}')
 
     def skip(self, step, design='*'):
-        """Allow to skip specific steps and/or designs. Accepts the wilcards
-        '*' and '*'"""
+        """
+        Allow to skip specific steps.
+
+        Both the step and the design can be specified. The special wildcard '*' can
+        be used to indicate all steps or all designs.
+
+        :param step: Name of the step to skip.
+        :type step: str
+        :param design: Name of the design to skip the step for. Defaults to '*', 
+                    which matches all designs.
+        :type design: str
+        """
         self.skip_list.append(f'{design}.{step}')
 
-    # TODO : use message
-    # TODO : what does "use message mean"?
-    def allow_failure(self, step, design='*', message='Failure allowed'):
-        """Allow failures for specific steps and/or designs. Accepts the wildcards
-        '*' and '*'"""
+    def allow_failure(self, step, design='*'):
+        """
+        Allow specific steps to fail.
+
+        The fail will be marked but the execution will continue. Both the step and
+        the design can be specified. The special wildcard '*' can be used to
+        indicate all steps or all designs.
+
+        :param step: Name of the step to allow the fail.
+        :type step: str
+        :param design: Name of the design to allow the fail for. Defaults to '*', 
+                    which matches all designs.
+        :type design: str
+        """
         self.allow_failure_list.append(f'{design}.{step}')
 
     def disable_coverage(self, covtype, design='*'):
