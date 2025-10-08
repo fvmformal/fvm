@@ -1,87 +1,83 @@
-# Set to True to print debug messages
-DEBUG = True
-
-# Set to True to print the result of traversing the dictionary
-TRAVERSE = False
+"""
+Functions to actually convert the .json wavedroms into PSL sequences
+"""
 
 # To use the JSON encoder and decoder
 import json
-
-# Since JSON is a subset of YAML, use pyyaml since it accepts missing quotes
-import yaml
-
-# To use sys.exit and be able to print to sys.stderr
-import sys
-
-# Use yamllint to detect common YAML errors, such as key in dict defined more
-# than once
-#import yamllint
-#from yamllint import config
-
-# To easily get command-line arguments
-import argparse
-
-# Allow to render wavedrom signals from inside python
-import wavedrom
 
 # Allow to obtain basename of input files
 from pathlib import Path
 import os
 
-# Very cool debug function
-# Documentation here: https://pypi.org/project/varname/
-#from varname.helpers import debug
+# To use sys.exit and be able to print to sys.stderr
+import sys
 
-# Allow to compare data type to Dict
-#from typing import Dict
+# To easily get command-line arguments
+import argparse
 
-# Import our own constant definitions
-#from definitions import *
+# To allow pretty cool debug prints than can be disabled after development
+from icecream import ic
+
+# Since JSON is a subset of YAML, use pyyaml since it accepts missing quotes
+import yaml
+
+# Allow to render wavedrom signals from inside python
+import wavedrom
+
+# Import the wavedrom definitions we need
+from fvm.drom2psl.definitions import GROUP, WAVE, NAME
 
 # Import our own functions to traverse the dictionary
 from fvm.drom2psl.traverse import traverse
 
 # Import our own functions to interpret the dictionary
-from fvm.drom2psl.interpret import *
+from fvm.drom2psl.interpret import (get_signal, check_wavelane, get_type,
+                                    get_group_name, flatten, get_wavelane_wave,
+                                    get_wavelane_name, get_wavelane_data,
+                                    get_group_arguments, get_clock_value,
+                                    is_pipe, gen_sere_repetition,
+                                    get_signal_value, adapt_value_to_hdltype)
 
 # Import our own logging functions
-from fvm.drom2psl.basiclogging import info, warning, error
+from fvm.drom2psl.basiclogging import info, error #, warning
 
-# To allow pretty cool debug prints than can be disabled after development
-# Explanation at: https://towardsdatascience.com/do-not-use-print-for-debugging-in-python-anymore-6767b6f1866d
-from icecream import ic
+def generator(filename, outdir = None, verbose_psl = True, debug = False,
+              do_traverse = False):
+    """
+    Actually generate the PSL file with the sequences
 
-def generator(FILES, outdir = None, verbose = True, debug = False):
+    :param filename: input wavedrom file (JSON)
+    :type filename: string
+    :param outdir: output directory (if not specified, each .psl file will be
+                   generated in the same directory of each input file)
+    :type outdir: string
+    :param verbose_psl: add extra comments to generated psl file
+    :type verbose_psl: bool
+    :param debug: print debug messages
+    :type debug: bool
+    :param do_traverse: traverse the wavedrom file, printing structural debug
+                        information
+    :type do_traverse: bool
 
-    TRAVERSE = debug
+    :returns: 0 if no errors detected, 1 if errors were detected, 2 if the dict
+              extracted from the json file was empty
+    :rtype: int
+    """
 
-    # If FILES is a single file, convert it to a list
-    if isinstance(FILES, str):
-        FILES = [FILES]
+    ic("generator")
+    ic(filename, outdir, verbose_psl, debug, do_traverse)
 
     # Disable icecream if we are not debugging
-    if DEBUG is False:
-        ic.disable
+    if debug is False:
+        ic.disable()
 
     # Set custom prefix for icecream
-    ic.configureOutput(prefix='Debug | ')
+    ic.configureOutput(prefix='generator | ')
 
-    #  ic("Test icecream")
-    #  print("Test print")
-    #  info("Test info")
-    #  warning("Test warning")
-    #  error("Test error")
-
-
-    #ic(args)
-    ic(FILES)
-
-    # Open the input files
-    for FILE in FILES :
-        f = open(FILE, encoding="utf-8")
-        full_filename = Path(FILE).resolve()
-        ic(full_filename)
-
+    # Open the input file
+    f = open(filename, encoding="utf-8")
+    full_filename = Path(filename).resolve()
+    ic(full_filename)
 
     # Pass the input file through the linter
     #conf = config.YamlLintConfig('extends: default')
@@ -121,45 +117,42 @@ def generator(FILES, outdir = None, verbose = True, debug = False):
     #debug(type(fixed_dict))
     #debug(fixed_dict)
 
-    source = json.loads(wavedrom.fixQuotes(FILE))
+    source = json.loads(wavedrom.fixQuotes(filename))
     ic(source)
 
     try:
         ok = True
-        dict = yaml.load(f, Loader=yaml.SafeLoader)
+        dictionary = yaml.load(f, Loader=yaml.SafeLoader)
     except yaml.YAMLError:
         ok = False
 
     if not ok:
-        error("Invalid YAML syntax in file: "+str(FILE))
+        error("Invalid YAML syntax in file: "+str(filename))
     if ok:
-        ic(dict)
+        ic(dictionary)
 
     if ok:
-        if dict is None:
+        if dictionary is None:
             error("Input JSON file is empty!")
             empty_json = True
         else:
             empty_json = False
 
     #debug("Extracting dictionary interpreting it as JSON")
-    #dict = json.load(f)
-    #debug(type(dict))
-    #debug(dict)
+    #dictionary = json.load(f)
+    #debug(type(dictionary))
+    #debug(dictionary)
 
     # Since wavedrompy reads a string and not a dict, let's read the file again,
     # this time into a string
 
     if ok:
         ic("Rendering input file -> string -> wavedrompy")
-        with open(FILE, "r", encoding="utf-8") as f:
+        with open(filename, "r", encoding="utf-8") as f:
             string = f.read()
 
     # Close the input file
     f.close()
-
-    #ic(type(string))
-    #ic(string)
 
     # Let's process the dict now
     # We probably should do this recursively
@@ -168,16 +161,16 @@ def generator(FILES, outdir = None, verbose = True, debug = False):
     if ok:
         ic("Traversing dictionary")
 
-    if TRAVERSE:
-        print("DEBUG: Interpreting dict")
-        traverse("  ", dict)
+    if do_traverse:
+        print("TRAVERSE: Interpreting dict")
+        traverse("  ", dictionary)
 
     # Process dictionary
     if ok:
         ic("Getting the signal list")
-        signal, ok = get_signal(dict)
+        signal, ok = get_signal(dictionary)
 
-    #if error == False and DEBUG :
+    #if error == False and debug :
     #    ic("Listing signal elements")
     #    list_elements("ListElements:", signal)
 
@@ -222,7 +215,9 @@ def generator(FILES, outdir = None, verbose = True, debug = False):
         if len(set(lengths)) != 1 :
             error("Not all wavelanes' wave fields have the same length!")
             for wavelane in flattened_signal :
-                error("  wavelane "+str(wavelane.get(NAME))+" has a wave with length "+str(len(wavelane.get(WAVE)))+" (wave is "+str(wavelane.get(WAVE))+" )")
+                error("  wavelane "+str(wavelane.get(NAME))+
+                      " has a wave with length "+str(len(wavelane.get(WAVE)))+
+                      " (wave is "+str(wavelane.get(WAVE))+" )")
             ok = False
         else:
             ic("detected", lengths[0], "clock cycles")
@@ -245,40 +240,28 @@ def generator(FILES, outdir = None, verbose = True, debug = False):
         vunit_name = full_filename.stem
 
         if outdir is not None:
-            output_file = os.path.join(outdir, os.path.basename(Path(full_filename).with_suffix('.psl')))
+            output_file = os.path.join(outdir,
+                                       os.path.basename(Path(full_filename).with_suffix('.psl')))
         else:
             output_file = Path(full_filename).with_suffix('.psl')
 
         ic(output_file)
 
-        # TODO : add arguments to drom2psl and timestamp of file creation
         vunit = ''
         vunit +=  '-- Automatically created by drom2psl\n'
         vunit += f'-- Input file: {full_filename}\n'
-        vunit +=  '-- These sequences and/or properties can be reused from other PSL files by doing:\n'
+        vunit +=  ('-- These sequences and/or properties can be reused from'
+                       ' other PSL files by doing:\n')
         vunit += f'-- inherit {vunit_name};\n\n'
         vunit += f'vunit {vunit_name} ' + '{\n\n'
 
-        # TODO : We are assuming a number of things to make this usable:
-        #   1. That the clock is the first signal that appears in the wavedrom
-        #   2. That only the clock carries the repeat zero-or-more symbol '|'
-        #   3. That all non-clock signals are in groups
-        #      TODO : we could just create the sequence with the signals if
-        #      there are no groups
-        #   4. That, if we have two top-level groups, then we are describing
-        #   some relation between two sequences
-        #      5. In that case, we also are assuming that the sequence that
-        #      appears first in the wavedrom is the sequence that should
-        #      trigger the other one
-        # TODO : maybe if there is only one signal we don't want to assume it
-        # is a clock? Or maybe we could determine what is a clock and what is
-        # not by doing a first pass through the wavelanes
+        # We are assuming a number of things to make this usable, see the
+        # module docstring
 
         # To cover the special case where we have no groups, in that case let's
         # define a group whose name is the empty string
         if num_groups == 0:
             groups.append('')
-            group = 1
 
         for groupname in groups:
             sequence_name = f'{vunit_name}_{groupname}'
@@ -287,13 +270,9 @@ def generator(FILES, outdir = None, verbose = True, debug = False):
 
             # Get group arguments
             group_arguments = get_group_arguments(groupname, flattened_signal)
-
-            # TODO : let the user specify these datatypes
-            # or we may even use a transacion/record
-            # the thing is that we can't define that in the drom JSON
-
             ic(group_arguments)
             vunit += format_group_arguments(group_arguments)
+
             # If we are in the last element, we don't want a semicolon
             # so we remove the last two characters: ';\n', then we add the \n
             # again
@@ -307,9 +286,6 @@ def generator(FILES, outdir = None, verbose = True, debug = False):
             prev_cycles = 0
             prev_or_more = False
             for cycle in range(clock_cycles):
-                cycle_string = ''
-                cycle_count = 0
-                clk_wavelane = flattened_signal[0]
 
                 # The clock wavelane is processed a bit different and apart
                 # from the rest of the wavelanes
@@ -361,10 +337,7 @@ def generator(FILES, outdir = None, verbose = True, debug = False):
                 #   the merged line must allow repeat
                 else:
                     prev_cycles += cycles
-                    if prev_or_more is True or or_more is True:
-                        prev_or_more = True
-                    else:
-                        prev_or_more = False
+                    prev_or_more = bool(prev_or_more or or_more)
 
             # After the for loop finishes, we will have the last cycles to
             # write, so let's write them:
@@ -376,16 +349,19 @@ def generator(FILES, outdir = None, verbose = True, debug = False):
             vunit +=  '  };\n'
             vunit += '\n'
 
-        # TODO : create the sequence
-        # In the case of exactly two groups, create the sequence
-        # TODO : maybe allow to specify the abort signal or condition?
+        # If we have exactly two sequences (two wavedrom groups), let's create
+        # a sample property relating them
         if num_groups == 2:
-            if verbose:
+            if verbose_psl:
                 vunit += "  -- Relational operands between sequences may be, among others:\n"
                 vunit += "  --   && : both must happen and last exactly the same number of cycles\n"
                 vunit += "  --   & : both must happen, without any requirement on their durations\n"
-                vunit += "  --   |-> : implication: both must happen, with the first cycle of the second occurring during the last cycle of the first\n"
-                vunit += "  --   |=> : non-overlapping implication: both must happen, with the first cycle of the second occuring the cycle after the last cycle of the first\n"
+                vunit += ("  --   |-> : implication: both must happen, with"
+                          " the first cycle of the second occurring during the"
+                          " last cycle of the first\n")
+                vunit += ("  --   |=> : non-overlapping implication: both must"
+                          " happen, with the first cycle of the second occuring"
+                          " the cycle after the last cycle of the first\n")
             vunit += f'  property {vunit_name} (\n'
             for groupname in groups:
                 group_arguments = get_group_arguments(groupname, flattened_signal)
@@ -396,12 +372,12 @@ def generator(FILES, outdir = None, verbose = True, debug = False):
                 vunit = vunit[:-2]
                 vunit +=  '\n'
             vunit +=  '  ) is\n' # {\n'
-            # TODO : add arguments, if any, to sequence
-            # TODO : maybe we can determine whether ->, =>, |->, |=>, or & is
-            # appropriate?
-            group0_args = format_group_arguments_in_call(get_group_arguments(groups[0], flattened_signal))
-            group1_args = format_group_arguments_in_call(get_group_arguments(groups[1], flattened_signal))
-            vunit += f'    always {{ {{{vunit_name}_{groups[0]}{group0_args}}} && {{{vunit_name}_{groups[1]}{group1_args}}} }};\n'
+            group0_args = format_group_arguments_in_call(get_group_arguments(groups[0],
+                                                                             flattened_signal))
+            group1_args = format_group_arguments_in_call(get_group_arguments(groups[1],
+                                                                             flattened_signal))
+            vunit += f'    always {{ {{{vunit_name}_{groups[0]}{group0_args}}}'
+            vunit += f' && {{{vunit_name}_{groups[1]}{group1_args}}} }};\n'
             vunit += '\n'
 
 
@@ -418,14 +394,14 @@ def generator(FILES, outdir = None, verbose = True, debug = False):
     # Render the json using wavedrompy. This way we should receive an error if
     # there are any wavedrom-specific errors in an otherwise correct JSON
     if ok:
-        if (not empty_json) and DEBUG:
+        if (not empty_json) and debug:
             ic("Rendering the JSON into an .svg")
             render = wavedrom.render(string)
             ic(render)
             ic(full_filename)
             svgfilename = Path(full_filename).with_suffix('.svg')
             ic(svgfilename)
-            if DEBUG:
+            if debug:
                 render.saveas(svgfilename)
 
     #    for i in range(len(value)):
@@ -434,18 +410,19 @@ def generator(FILES, outdir = None, verbose = True, debug = False):
 
     # Return different values to the shell, depending on the type of error
     if not ok:
-        retval = 1
+        ret = 1
     elif empty_json:
-        retval = 2
+        ret = 2
     else:
-        retval = 0
+        ret = 0
 
-    if retval != 0 :
+    if ret != 0 :
         error("At least one error!")
     else:
-        info("No errors detected!")
+        if debug:
+            info("No errors detected!")
 
-    return retval
+    return ret
 
 def format_group_arguments(group_arguments):
     """Returns the group arguments with an extra semicolon that should be
@@ -474,13 +451,35 @@ def format_group_arguments_in_call(group_arguments):
 
 if __name__ == "__main__":
     # Configure the argument parser
-    parser = argparse.ArgumentParser(description='Generate PSL sequence from .json wavedrom descriptions.')
-    parser.add_argument('inputfiles', nargs='+', help='.json input file(s) (must be wavedrom compatible)')
-    parser.add_argument('--out', default='out', help='Output directory for generated files')
+    parser = argparse.ArgumentParser(description=('Generate PSL sequence from'
+                                     ' .json wavedrom descriptions.'))
+    parser.add_argument('inputfiles', nargs='+',
+                        help='.json input file(s) (must be wavedrom compatible)')
+    parser.add_argument('--outdir', default=None,
+                        help=('Output directory for generated files. By'
+                              ' default, outputs are generated in the same'
+                              ' directories where the input files are.'))
+    parser.add_argument('-d', '--debug', default=False, action='store_true',
+                        help='Show debug messages. (default: %(default)s)')
+    parser.add_argument('-t', '--traverse', default=False, action='store_true',
+                        help=('Traverse the wavedrom file, printing even more'
+                              ' debug information. (default: %(default)s)'))
+    parser.add_argument('-q', '--quiet_psl', default=False, action='store_true',
+                        help=('Do not include extra comments in generated PSL'
+                              ' files. (default: %(default)s)'))
 
     # Get arguments from command-line
     args = parser.parse_args()
-    FILES = args.inputfiles
 
-    retval = generator(FILES)
+    if not args.debug:
+        ic.disable()
+
+    ic(args)
+
+    for file in args.inputfiles:
+        retval = generator(file, verbose_psl=not args.quiet_psl,
+                           debug=args.debug, do_traverse=args.traverse)
+        if retval != 0:
+            break
+
     sys.exit(retval)

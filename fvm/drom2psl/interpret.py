@@ -2,33 +2,33 @@
 Functions to actually interpret the wavedrom dictionary
 """
 
-# To allow pretty cool debug prints than can be disabled after development
-# Explanation at: https://towardsdatascience.com/do-not-use-print-for-debugging-in-python-anymore-6767b6f1866d
-from icecream import ic
-
 # Allow usage of regular expressions
 import re
-
-# Allow to have ordered dicts (used to preserve order when removing duplicated
-# arguments)
-from collections import OrderedDict
-
-#if DEBUG == False:
-#    ic.disable
 
 # Allow to compare data type to Dict
 from typing import Dict
 
+# To allow pretty cool debug prints than can be disabled after development
+from icecream import ic
+
 # Import our own constant definitions
-from fvm.drom2psl.definitions import *
+from fvm.drom2psl.definitions import (SIGNAL, WAVELANE, GROUP, STRING, NAME,
+                                      WAVE, DATA, TYPE)
 
 # Import our own logging functions
-from fvm.drom2psl.basiclogging import info, warning, error
+from fvm.drom2psl.basiclogging import warning, error
 
-"""
-Get signal field from dict
-"""
 def get_signal(dictionary):
+    """
+    Get signal field from dictionary
+
+    :param dictionary: wavedrom dictionary
+    :type dictionary: dict
+
+    :returns: a (signal_list, ok) tuple. signal_list is the signal field, ok is
+              True if there were no errors, False if there were any
+    :type: (list, bool)
+    """
     #ic(type(dictionary))
     #ic(dictionary)
     #for key, value in dictionary.items():
@@ -43,10 +43,18 @@ def get_signal(dictionary):
         ok = False
     return signal_list, ok
 
-"""
-List elements in signal field
-"""
 def list_signal_elements(prefix, signal):
+    """
+    List elements in signal field
+
+    :param prefix: prefix for printing debugging messages
+    :type prefix: str
+    :param signal: signal field
+    :type signal: list
+
+    :returns: None
+    :rtype: None
+    """
     ic(type(signal))
     assert isinstance(signal, list), "wavelanes should be a list"
     for index, value in enumerate(signal):
@@ -55,22 +63,30 @@ def list_signal_elements(prefix, signal):
         elif isinstance(value, list):
             print(prefix, "signal element=>", index, "type=>", type(value), "(group of wavelanes)")
         else:
-            error(str(prefix)+"   element=> "+str(index)+" type=> "+str(type(value))+" (unknown, should be either a wavelane or a group of wavelanes)")
+            error(str(prefix)+"   element=> "+str(index)+" type=> "
+                  +str(type(value))+
+                  " (unknown, should be either a wavelane or a group of wavelanes)")
 
-"""
-Check wavelane for correctness.
-
-In normal wavedrom, a wavelane is always correct if it is a dictionary. It can
-be empty, but it can also have 'name', 'wave', 'data' or 'node' fields.
-
-We'll be a bit more restrictive:
-    - We will allow (and ignore) empty wavelanes
-    - If a wavelane is not empty, it needs to have at least a 'name' field
-    - For now we will allow not having a 'wave' field, but probably we will
-      need to check for that too, because having empty waves or no waves
-      doesn't make sense
-"""
 def check_wavelane(wavelane):
+    """
+    Check wavelane for correctness.
+
+    In normal wavedrom, a wavelane is always correct if it is a dictionary. It can
+    be empty, but it can also have 'name', 'wave', 'data' or 'node' fields.
+
+    We'll be a bit more restrictive:
+        - We will allow (and ignore) empty wavelanes
+        - If a wavelane is not empty, it needs to have at least a 'name' field
+        - For now we will allow not having a 'wave' field, but probably we will
+          need to check for that too, because having empty waves or no waves
+          doesn't make much sense
+
+    :param wavelane: wavelane to analyze
+    :type wavelane: dict
+
+    :returns: True if ok, False if there are any errors
+    :rtype: bool
+    """
     #ic(wavelane)
     status = True
     if len(wavelane) == 0:
@@ -81,28 +97,39 @@ def check_wavelane(wavelane):
         #ic(DATA in wavelane, NODE in wavelane)
         #print(wavelane)
         if NAME not in wavelane:
-            error("wavelane "+str(wavelane)+" has no 'name' field. Check that the key 'name' exists and there is at least a space after the colon (:)")
+            error("wavelane "+str(wavelane)+
+                  (" has no 'name' field. Check that the key 'name' exists and"
+                   " there is at least a space after the colon (:)"))
             status = False
         if WAVE not in wavelane:
             warning("wavelane"+str(wavelane)+"has no 'wave' field.")
     return status
 
-"""
-Check if wavelane is empty.
-"""
 def is_empty(wavelane):
-    if len(wavelane) == 0:
-        return True
-    else:
-        return False
+    """
+    Check if wavelane is empty.
 
-"""
-Get the type of a signal element
+    :param wavelane: wavelane to check
+    :type wavelane: dict
 
-A wavelane is a dictionary
-A group of wavelanes is a list
-"""
+    :returns: True if empty, False if not empty
+    :rtype: bool
+    """
+    return bool(len(wavelane) == 0)
+
 def get_type(element):
+    """
+    Get the type of a signal element.
+
+    - A wavelane is a dictionary
+    - A group of wavelanes is a list
+
+    :param element: signal element to analyze
+    :type element: dict or list
+
+    :returns: one of the following: WAVELANE, GROUP, STRING, "others"
+    :rtype: str
+    """
     if isinstance(element, Dict):
         ret = WAVELANE
     elif isinstance(element, list):
@@ -110,14 +137,23 @@ def get_type(element):
     elif isinstance(element, str):
         ret = STRING
     else:
-        error("element=>", element, "type=>", type(element), "(unknown, should be either a wavelane (dict) or a group of wavelanes (list))")
+        error("element=>", element, "type=>", type(element),
+              "(unknown, should be either a wavelane (dict) or a group of wavelanes (list))")
         ret = "others"
     return ret
 
-"""
-List all signal elements
-"""
 def list_elements(prefix, signal):
+    """
+    List all elements in a signal
+
+    :param prefix: prefix for printing debugging messages
+    :type prefix: str
+    :param signal: signal to list
+    :type signal: list
+
+    :returns: None
+    :rtype: None
+    """
     for index, value in enumerate(signal):
         elementtype = get_type(value)
         print(prefix, "INFO:  element=>", index, "type=>", elementtype, "value=>", value)
@@ -126,37 +162,56 @@ def list_elements(prefix, signal):
             print(prefix, "is group!")
             list_elements(prefix+"  ", value)
 
-"""
-Get name of group.
-
-The name of the group is the first element of the list, which should be a
-string
-"""
 def get_group_name(group):
+    """
+    Get name of group.
+
+    The name of the group is the first element of the list, which should be a
+    string
+
+    :param group: group from which to get the name
+    :type group: list
+
+    :returns: the group name
+    :rtype: str
+    """
     #ic(type(group))
     #ic(group)
     assert isinstance(group, list), "group should be a list"
     assert isinstance(group[0], str), "group[0] should be a str"
     return group[0]
 
-"""
-Flatten the signal field.
-
-We do this by generating a new list of signalelements where there are no
-groups: instead, groups/subgroup names are added as prefixes to the name field
-of each wavelane that is inside a group
-
-For each signalelement:
-    if it is a signal, just append it to the flattened list
-      to do that, first copy the original wavelane
-      and then append the current group name to the wavelane's name field
-    if it is a group, flatten it recursively: set the group name as the new
-      prefix and call flatten passing it the rest of the element
-    if it is a string, something is wrong (strings should be only the names of
-      the groups, and we should have caught that when operating with the group)
-"""
 def flatten (group, signal, flattened=None, hierarchyseparator="."):
+    """
+    Flatten the signal field.
+    
+    We do this by generating a new list of signalelements where there are no
+    groups: instead, groups/subgroup names are added as prefixes to the name field
+    of each wavelane that is inside a group
+    
+    For each signalelement:
+        - if it is a signal, just append it to the flattened list
+          - to do that, first copy the original wavelane
+          - and then append the current group name to the wavelane's name field
+        - if it is a group, flatten it recursively: set the group name as the new
+          prefix and call flatten passing it the rest of the element
+        - if it is a string, something is wrong (strings should be only the names of
+          the groups, and we should have caught that when operating with the group)
 
+    :param group: group prefix from which the signal descends
+    :type group: str
+    :param signal: signal to flatten
+    :type signal: list
+    :param flattened: already flattened signal (for recursive flattening groups)
+    :type flattened: list or None
+    :param hierarchyseparator: hierarchy separator for the flattened
+                               representation
+    :type hierarchyseparator: str
+
+    :returns: a (flattened, ok) tuple. flattened is the flattened signal, ok is
+              True if there were no errors, False if there were any
+    :type: (list, bool)
+    """
     # ok == True is correct, ok == False means some error was found
     ok = True
 
@@ -188,7 +243,9 @@ def flatten (group, signal, flattened=None, hierarchyseparator="."):
         # If a group, recursively flatten its members
         elif get_type(value) == GROUP:
             #ic(signal[i][0])
-            flattened, ok = flatten(group + separator + signal[i][0], signal[i][1:], flattened, hierarchyseparator)
+            flattened, ok = flatten(group + separator + signal[i][0],
+                                    signal[i][1:], flattened,
+                                    hierarchyseparator)
 
         # If something unexpected, signal an error
         else: #if get_type(value) == signalelements.STRING.value:
@@ -206,18 +263,18 @@ def get_wavelane_wave(wavelane):
 def get_wavelane_data(wavelane):
     if DATA in wavelane:
         return wavelane[DATA]
-    else:
-        return None
+    return None
 
 def get_wavelane_type(wavelane):
     if TYPE in wavelane:
-        return wavelane[TYPE]
+        ret = wavelane[TYPE]
     else:
         warning(f"""data field present in {wavelane=} but no datatype
-        specified.  If a datatype is specified, it will be included in the
+        specified. If a datatype is specified, it will be included in the
         generated PSL file, for example: type: 'std_ulogic_vector(31 downto 0)'
                 """)
-        return "specify_datatype_here"
+        ret = "specify_datatype_here"
+    return ret
 
 def get_group_arguments(groupname, flattened_signal):
     group_arguments = []
@@ -239,7 +296,7 @@ def get_group_arguments(groupname, flattened_signal):
                 non_paren_data = [remove_parentheses(d) for d in actualdata]
                 ic(non_paren_data)
                 # Remove duplicated arguments without losing ordering
-                deduplicated_data = unique_list = list(dict.fromkeys(non_paren_data))
+                deduplicated_data = list(dict.fromkeys(non_paren_data))
                 ic(deduplicated_data)
                 # Create a new list with each argument and its datatype
                 args_with_type = [[d, datatype] for d in deduplicated_data]
@@ -255,10 +312,11 @@ def remove_parentheses(string):
 def data2list(wavelane_data):
     """Converts wavelane data to a list if it is a string, returns it untouched
     if it is already a list"""
-    if type(wavelane_data) == str:
-        return wavelane_data.split()
+    if isinstance(wavelane_data, str):
+        ret = wavelane_data.split()
     else:
-        return wavelane_data
+        ret = wavelane_data
+    return ret
 
 def get_clock_value(wavelane, cycle):
     wave = get_wavelane_wave(wavelane)
@@ -280,10 +338,7 @@ def is_pipe(wavelane, cycle):
     means: 'repeat zero or more times'"""
     wave = get_wavelane_wave(wavelane)
     digit = wave[cycle]
-    if digit == '|':
-        pipe = True
-    else:
-        pipe = False
+    pipe = bool(digit == '|')
     return pipe
 
 def gen_sere_repetition(num_cycles, or_more, add_semicolon = False, comments = True):

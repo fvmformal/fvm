@@ -29,4 +29,3 @@ def error(*args, **kwargs):
     """ Print ERROR message (to stderr) """
     args = (colored("ERROR:", 'red'),) + args
     print(*args, file=sys.stderr, **kwargs)
-
