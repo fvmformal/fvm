@@ -642,18 +642,7 @@ class fvmframework:
         reports.generate_allure(self, self.logger)
         err = self.check_errors()
         if err :
-            self.logger.error(CHECK_FAILED['msg'])
-            sys.exit(CHECK_FAILED['value'])
-
-    def setup(self):
-        for design in self.toplevel:
-            if design in self.design_configs:
-                self.logger.trace(f'{design=} has configs: {self.design_configs}')
-                for config in self.design_configs[design]:
-                    self.setup_design(design, config)
-            else:
-                self.logger.trace(f'{design=} has no configs, setting up default config')
-                self.setup_design(design, None)
+            self.exit_if_required(CHECK_FAILED)
 
     def list_design(self, design):
         """List all available/selected methodology steps for a design"""
@@ -698,13 +687,10 @@ class fvmframework:
                 if self.is_skipped(design, step):
                     self.logger.trace(f'{step=} of {design=} skipped by skip() function, will not list')
                     self.results[design][step]['status'] = 'skip'
-                elif step in self.steps.steps:
+                else:
                     self.list_step(design, step)
                     for post_step in self.steps.post_steps.get(step, []):
                         self.list_step(design, f'{step}.{post_step}')
-                else:
-                    self.logger.trace(f'{step=} not available in {self.toolchain=}, skipping')
-                    self.results[design][step]['status'] = 'skip'
         else:
             self.list_step(design, self.step)
             for post_step in self.steps.post_steps.get(self.step, []):
@@ -764,7 +750,7 @@ class fvmframework:
                 if self.is_skipped(design, step):
                     self.logger.info(f'{step=} of {design=} skipped by skip() function, will not run')
                     self.results[design][step]['status'] = 'skip'
-                elif step in self.steps.steps:
+                else:
                     # TODO : allow pre_hooks to return errors and stop the run
                     # if they fail
                     self.run_pre_hook(design, step)
@@ -777,9 +763,6 @@ class fvmframework:
                     # TODO : allow post_hooks to return errors and stop the run
                     # if they fail
                     self.run_post_hook(design, step)
-                else:
-                    self.logger.info(f'{step=} not available in {self.toolchain=}, skipping')
-                    self.results[design][step]['status'] = 'skip'
         else:
             self.run_pre_hook(design, self.step)
             err, errorcode = self.run_step(design, self.step)
