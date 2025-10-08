@@ -418,6 +418,7 @@ class fvmframework:
         List all source files in the framework.
 
         This method logs all sources currently added to the framework, including:
+
         - VHDL sources
         - PSL sources
         - Wavedrom sources
@@ -616,6 +617,7 @@ class fvmframework:
         framework will exit.
 
         Allowed coverage types are:
+
         - ``observability``
         - ``reachability``
         - ``bounded_reachability``
@@ -644,6 +646,7 @@ class fvmframework:
         have a timeout, although if they don't, they probably won't take long.
 
         The timeout should be provided as a string combining a number and a unit:
+
         - ``s`` for seconds (e.g., "1s")
         - ``m`` for minutes (e.g., "10m")
         - ``h`` for hours (e.g., "1h")
@@ -758,8 +761,14 @@ class fvmframework:
 
         This method configures the framework's logger to use the specified
         logging level. Only the levels allowed by loguru are accepted:
-        ``TRACE``, ``DEBUG``, ``INFO``, ``SUCCESS``, ``WARNING``, ``ERROR``,
-        and ``CRITICAL``. The logger is reconfigured to reflect the new level.
+
+        - ``TRACE``
+        - ``DEBUG``
+        - ``INFO``
+        - ``SUCCESS``
+        - ``WARNING``
+        - ``ERROR``
+        - ``CRITICAL``
 
         :param loglevel: Logging level to set for the framework.
         :type loglevel: str
