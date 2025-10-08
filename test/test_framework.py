@@ -292,10 +292,12 @@ def test_set_coverage_goal_step_invalid() :
 def test_formal_initialize_reset_active_high() :
     fvm = fvmframework()
     fvm.formal_initialize_reset("rst", active_high=True, cycles=3)
+    fvm.setup_design("toplevel")
 
 def test_formal_initialize_reset_active_low() :
     fvm = fvmframework()
     fvm.formal_initialize_reset("reset", active_high=False, cycles=1)
+    fvm.setup_design("toplevel")
 
 def test_set_pre_hook() :
     fvm = fvmframework()
@@ -317,7 +319,7 @@ def test_log() :
 def test_add_clock_domain() :
     fvm = fvmframework()
     fvm.add_clock_domain("clk", ["rst", "enable"], asynchronous=True, synchronous=True,
-                         ignore=True, posedge=True, negedge=False, module="toplevel",
+                         ignore=True, posedge=True, negedge=True, module="toplevel",
                          inout_clock_in="clk_in", inout_clock_out="clk_out")
     fvm.setup_design("toplevel")
 
@@ -331,13 +333,13 @@ def test_add_reset_domain() :
 def test_add_clock() :
     fvm = fvmframework()
     fvm.add_clock("clk", module="toplevel", period=10, waveform=(3,7),
-                  group="clk_in", ignore=True, remove=True, external="clk_ext")
+                  group="clk_in", ignore=True, remove=True, external=True)
     fvm.setup_design("toplevel")
 
 def test_add_reset() :
     fvm = fvmframework()
     fvm.add_reset("rst", module="toplevel", group="rst_in", ignore=True,
-                  remove=True, external="rst_ext", active_high=True,
+                  remove=True, external=True, active_high=True,
                   active_low=True, asynchronous=True, synchronous=True)
     fvm.setup_design("toplevel")
 
