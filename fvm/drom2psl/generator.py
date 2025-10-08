@@ -45,7 +45,7 @@ from fvm.drom2psl.traverse import traverse
 from fvm.drom2psl.interpret import *
 
 # Import our own logging functions
-from fvm.drom2psl.logging import *
+from fvm.drom2psl.basiclogging import info, warning, error
 
 # To allow pretty cool debug prints than can be disabled after development
 # Explanation at: https://towardsdatascience.com/do-not-use-print-for-debugging-in-python-anymore-6767b6f1866d

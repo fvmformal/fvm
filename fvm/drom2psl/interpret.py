@@ -23,7 +23,7 @@ from typing import Dict
 from fvm.drom2psl.definitions import *
 
 # Import our own logging functions
-from fvm.drom2psl.logging import *
+from fvm.drom2psl.basiclogging import info, warning, error
 
 """
 Get signal field from dict
