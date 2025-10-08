@@ -606,9 +606,27 @@ class fvmframework:
         self.allow_failure_list.append(f'{design}.{step}')
 
     def disable_coverage(self, covtype, design='*'):
-        """Allow disabling specific coverage collection types. Allowed values
-        for covtype are 'observability', 'reachability',
-        'bounded_reachability', and 'signoff'"""
+        """
+        Disable specific types of coverage collection for a design or all designs.
+
+        This method allows the user to disable certain coverage types during
+        formal coverage. The special wildcard '*' can be used for the
+        design parameter to apply the disablement to all designs. If the 
+        specified coverage type is not allowed, an error will be logged and the
+        framework will exit.
+
+        Allowed coverage types are:
+        - ``observability``
+        - ``reachability``
+        - ``bounded_reachability``
+        - ``signoff``
+
+        :param covtype: Type of coverage to disable.
+        :type covtype: str
+        :param design: Name of the design to disable coverage for. Defaults to '*',
+                    which applies to all designs.
+        :type design: str
+        """
         allowed_covtypes = ['observability', 'signoff', 'reachability', 'bounded_reachability']
         if covtype not in allowed_covtypes :
             self.logger.error(f'Specified {covtype=} not in {allowed_covtypes=}')
@@ -616,11 +634,42 @@ class fvmframework:
         self.disabled_coverage.append(f'{design}.prove.{covtype}')
 
     def set_timeout(self, step, timeout):
-        """Set the timeout for a specific step"""
+        """
+        Set the execution timeout for a specific step.
+
+        The timeout specifies the maximum allowed execution time for
+        the given step. It may be that the time during the step is slightly
+        longer than the timeout because the timeout is for the tool execution,
+        but does not take into account the tool compilation. Not all steps
+        have a timeout, although if they don't, they probably won't take long.
+
+        The timeout should be provided as a string combining a number and a unit:
+        - ``s`` for seconds (e.g., "1s")
+        - ``m`` for minutes (e.g., "10m")
+        - ``h`` for hours (e.g., "1h")
+        - ``d`` for days (e.g., "2d")
+
+        :param step: Name of the step to set the timeout for.
+        :type step: str
+        :param timeout: Timeout value as a string with a number and unit.
+        :type timeout: str
+        :return: None
+        :rtype: None
+        """
         toolchains.set_timeout(self, self.toolchain, step, timeout)
 
     def set_coverage_goal(self, step, goal):
-        """Set the coverage goal for a step (0-100)."""
+        """
+        Set the coverage goal for a specific step.
+
+        This method allows configuring the target coverage percentage for a
+        given step. The goal must be a number between 0 and 100 (inclusive). 
+
+        :param step: Name of the step to set the coverage goal for.
+        :type step: str
+        :param goal: Coverage goal value, must be between 0 and 100.
+        :type goal: int or float
+        """
         if not (isinstance(goal, (int, float)) and 0 <= goal <= 100):
             self.logger.error(f"{goal=} must be between 0 and 100")
             self.exit_if_required(BAD_VALUE)
@@ -647,25 +696,74 @@ class fvmframework:
 
     def formal_initialize_reset(self, reset, active_high=True, cycles=1):
         """
-        Initialize reset for formal steps.
+        Initialize a reset signal for formal steps.
+
+        This method initializes the reset signal in formal when the tool
+        cannot infer it. Only formal steps can use it.
+
+        :param reset: Name of the reset signal to initialize.
+        :type reset: str
+        :param active_high: Whether the reset is active high (True) or
+                            active low (False). Defaults to True.
+        :type active_high: bool
+        :param cycles: Number of cycles the reset should be asserted during
+                    initialization. Defaults to 1.
+        :type cycles: int
         """
         toolchains.formal_initialize_reset(self, self.toolchain, reset, active_high, cycles)
 
     def set_pre_hook(self, hook, step, design='*'):
+        """
+        Register a hook before a specific step.
+
+        A pre-hook is a user-defined callable that will be executed before the
+        specified step runs. Hooks can be assigned to a specific design or to
+        all designs using the wildcard '*'.
+
+        :param hook: Callable to execute before the step.
+        :type hook: callable
+        :param step: Name of the step to attach the pre-hook to.
+        :type step: str
+        :param design: Name of the design to apply the hook to, or '*' to apply
+                    to all designs. Defaults to '*'.
+        :type design: str
+        """
         if design not in self.pre_hooks:
             self.pre_hooks[design] = {}
         self.pre_hooks[design][step] = hook
 
     def set_post_hook(self, hook, step, design='*'):
+        """
+        Register a hook after a specific step.
+
+        A post-hook is a user-defined callable that will be executed after the
+        specified step runs. Hooks can be assigned to a specific design or to
+        all designs using the wildcard '*'.
+
+        :param hook: Callable to execute after the step.
+        :type hook: callable
+        :param step: Name of the step to attach the post-hook to.
+        :type step: str
+        :param design: Name of the design to apply the hook to, or '*' to apply
+                    to all designs. Defaults to '*'.
+        :type design: str
+        """
         if design not in self.post_hooks:
             self.post_hooks[design] = {}
         self.post_hooks[design][step] = hook
 
     def set_loglevel(self, loglevel):
-        """Sets the logging level for the build and test framework.
+        """
+        Set the logging level for the build and test framework.
 
-        @param loglevel: must be one of loguru's allowed log levels: TRACE,
-        DEBUG, INFO, SUCCESS, WARNING, ERROR, or CRITICAL"""
+        This method configures the framework's logger to use the specified
+        logging level. Only the levels allowed by loguru are accepted:
+        ``TRACE``, ``DEBUG``, ``INFO``, ``SUCCESS``, ``WARNING``, ``ERROR``,
+        and ``CRITICAL``. The logger is reconfigured to reflect the new level.
+
+        :param loglevel: Logging level to set for the framework.
+        :type loglevel: str
+        """
         # TODO : maybe we will just remove some of these loglevels as valid
         # options if we end up using those log levels to indicate normal
         # operation of our framework
