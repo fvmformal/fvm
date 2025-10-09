@@ -381,7 +381,7 @@ def test_add_reset_domain() :
     """Test adding a reset domain. Arguments can be contradictory, as we are just
     testing the interface here."""
     fvm = fvmframework()
-    fvm.add_reset_domain(port_list=["enable"], reset_name="rst", active_high=True,
+    fvm.add_reset_domain(port_list=["enable"], name="rst", active_high=True,
                          synchronous=True, module="toplevel",
                          asynchronous=True, ignore=True,
                          active_low=True, is_set=True, no_reset=True)
