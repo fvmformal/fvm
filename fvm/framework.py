@@ -932,8 +932,33 @@ class fvmframework:
     def add_reset(self, name, module=None, group=None, active_low=None,
                   active_high=None, asynchronous=None, synchronous=None,
                   external=None, ignore=None, remove=None):
-        """Adds a reset to the design. 'name' can be a signal/port name or a
-        pattern, such as rst*."""
+        """
+        Add a reset signal to the design.
+
+        This method registers a reset signal. The reset can have various properties
+        such as polarity, synchronization, and domain association.
+
+        :param name: Name of the reset signal.
+        :type name: str
+        :param module: Optional name of the module associated with the reset.
+        :type module: str or None
+        :param group: Optional reset group name to classify the reset signal.
+        :type group: str or None
+        :param active_low: If True, the reset signal is active low.
+        :type active_low: bool or None
+        :param active_high: If True, the reset signal is active high.
+        :type active_high: bool or None
+        :param asynchronous: If True, the reset signal is considered asynchronous.
+        :type asynchronous: bool or None
+        :param synchronous: If True, the reset signal is considered synchronous.
+        :type synchronous: bool or None
+        :param external: If True, the reset signal is considered external.
+        :type external: bool or None
+        :param ignore: If True, the reset signal is ignored.
+        :type ignore: bool or None
+        :param remove: If True, the inferred reset signal is removed.
+        :type remove: bool or None
+        """
         # Copy all arguments to a dict, excepting self
         reset = {key: value for key, value in locals().items() if key != 'self'}
         self.logger.trace(f'adding reset: {reset}')
@@ -941,8 +966,32 @@ class fvmframework:
 
     def add_clock(self, name, module=None, group=None, period=None,
                   waveform=None, external=None, ignore=False, remove=False):
-        """Adds a clock to the design. 'name' can be a signal/port name or a
-        pattern, such as clk*."""
+        """
+        Add a clock signal to the design.
+
+        This method registers a clock. The clock can have various properties
+        such as period, waveform, domain association, and external status.
+
+        :param name: Name of the clock signal.
+        :type name: str
+        :param module: Optional module name associated with the clock.
+        :type module: str or None
+        :param group: Optional clock group name to classify the clock signal.
+        :type group: str or None
+        :param period: Clock period in ns.
+        :type period: float or int or None
+        :param waveform:
+            Clock waveform definition, a tuple (rise_time, fall_time) 
+            to define duty cycle. If period is 10, default waveform is (0, 5),
+            i. e. a 50% duty cycle.
+        :type waveform: tuple[float, float] or tuple[int, int] or None
+        :param external: Indicates that the clock comes from an external source.
+        :type external: bool or None
+        :param ignore: If True, this clock will be ignored.
+        :type ignore: bool or None
+        :param remove: If True, this clock will be removed.
+        :type remove: bool or None
+        """
         clock = {key: value for key, value in locals().items() if key != 'self'}
         self.logger.trace(f'adding clock: {clock}')
         self.clocks.append(clock)
@@ -951,14 +1000,24 @@ class fvmframework:
     # TODO : consider what happens when we have multiple toplevels, maybe we
     # should have the arguments (self, design/toplevel, entity)
     def blackbox(self, entity):
-        """Blackboxes all instances of an entity/module"""
+        """
+        Blackboxes all instances of a given entity or module.
+
+        :param entity: Name of the entity or module to be blackboxed.
+        :type entity: str
+        """
         self.logger.trace(f'blackboxing entity: {entity}')
         self.blackboxes.append(entity)
 
     # TODO : consider what happens when we have multiple toplevels, maybe we
     # should have the arguments (self, design/toplevel, instance)
     def blackbox_instance(self, instance):
-        """Blackboxes a specific instance of an entity/module"""
+        """
+        Blackboxes a specific instance of a given entity or module.
+
+        :param instance: Name of the instance to be blackboxed.
+        :type instance: str
+        """
         self.logger.trace(f'blackboxing instance: {instance}')
         self.blackbox_instances.append(instance)
 
@@ -967,14 +1026,40 @@ class fvmframework:
     # pylint: disable=unused-argument
     def cutpoint(self, signal, module=None, resetval=None, condition=None,
                  driver=None, wildcards_dont_match_hierarchy_separators=False):
-        """Sets a specifig signal as a cutpoint"""
+        """
+        Define a cutpoint on a specific signal in the design.
+
+        :param signal: Name of the signal to mark as a cutpoint.
+        :type signal: str
+        :param module: Optional module name that contains the signal.
+        :type module: str or None
+        :param resetval: If True, the cutpoint will take the reset value.
+        :type resetval: bool or None
+        :param driver: Optional signal or port driving this cutpoint.
+        :type driver: str or None
+        :param condition: Optional condition expression under which the cutpoint is active.
+        :type condition: str or None
+        :param wildcards_dont_match_hierarchy_separators:
+            If True, wildcard patterns in `signal` names will not match
+            hierarchy separators (typically '.').
+        :type wildcards_dont_match_hierarchy_separators: bool
+        """
         cutpoint = {key: value for key, value in locals().items() if key != 'self'}
         self.logger.trace(f'adding cutpoint: {cutpoint}')
         self.cutpoints.append(cutpoint)
     # pylint: enable=unused-argument
 
     def run(self, skip_setup=False):
-        """Run everything"""
+        """
+        Execute the full flow of the framework for all specified toplevels.
+
+        This method run the framework and, optionally, skips the setup phase,
+        resulting in the use of existing scripts, which can be defined manually
+        or generated in a previous run.
+
+        :param skip_setup: If True, the setup is skipped and existing scripts are used.
+        :type skip_setup: bool
+        """
         self.init_results()
 
         self.start_time_setup = datetime.now().isoformat()
@@ -1145,7 +1230,18 @@ class fvmframework:
         return False
 
     def set_tool_flags(self, tool, flags):
-        """Set user-defined flags for a specific tool"""
+        """
+        Set user-defined flags for a specific tool.
+
+        These flags will be used when invoking the specified tool during
+        the framework flow. This allows customizing tool behavior without
+        modifying internal scripts or commands.
+
+        :param tool: Name of the tool to set flags for.
+        :type tool: str
+        :param flags: Flags to pass to the tool.
+        :type flags: str
+        """
         self.tool_flags[tool] = flags
 
     def get_tool_flags(self, tool):

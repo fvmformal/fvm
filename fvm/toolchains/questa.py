@@ -446,7 +446,8 @@ def gen_clock_config(framework, filename, path):
             if clock["period"] is not None:
                 string += f' -period {clock["period"]}'
             if clock["waveform"] is not None:
-                string += f' -waveform {clock["waveform"]}'
+                rise, fall = clock["waveform"]
+                string += f' -waveform {rise} {fall}'
             if clock["external"] is True:
                 string += ' -virtual'
             if clock["remove"] is True:
