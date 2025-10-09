@@ -372,7 +372,7 @@ def test_add_clock_domain() :
     """Test adding a clock domain. Arguments can be contradictory, as we are just
     testing the interface here."""
     fvm = fvmframework()
-    fvm.add_clock_domain("clk", ["rst", "enable"], asynchronous=True, synchronous=True,
+    fvm.add_clock_domain(["rst", "enable"], clock_name="clk", asynchronous=True,
                          ignore=True, posedge=True, negedge=True, module="toplevel",
                          inout_clock_in="clk_in", inout_clock_out="clk_out")
     fvm.setup_design("toplevel")
@@ -381,8 +381,9 @@ def test_add_reset_domain() :
     """Test adding a reset domain. Arguments can be contradictory, as we are just
     testing the interface here."""
     fvm = fvmframework()
-    fvm.add_reset_domain("rst", active_high=True, synchronous=True, module="toplevel",
-                         port_list=["enable"], asynchronous=True, ignore=True,
+    fvm.add_reset_domain(port_list=["enable"], reset_name="rst", active_high=True,
+                         synchronous=True, module="toplevel",
+                         asynchronous=True, ignore=True,
                          active_low=True, is_set=True, no_reset=True)
     fvm.setup_design("toplevel")
 

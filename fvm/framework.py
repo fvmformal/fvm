@@ -790,8 +790,18 @@ class fvmframework:
         return self.log_counter.get_counts()
 
     def log(self, severity, string) :
-        """Make the logger visible from the outside, so we can log messages
-        from within our test files, by calling fvm.log()"""
+        """
+        Log a message from external code using the framework's logger.
+
+        This method allows external scripts or test files to log messages
+        through the framework's logging system. The severity level are
+        the loguru levels, mentioned in :meth:`set_loglevel`.
+
+        :param severity: Logging level to use. The value is case-insensitive.
+        :type severity: str
+        :param string: Message text to be logged.
+        :type string: str
+        """
         # Convert the severity to lowercase and use that as a function name (so
         # we call logger.info, logger.warning, etc.)
         # getattr gets the method by name from the specified class (in this
@@ -840,22 +850,81 @@ class fvmframework:
         return ret
 
     # TODO : check that port_list must be an actual list()
+    # TODO : change how this function is used!!!!!!
     # Disable pylint unused-argument warnings because all arguments
     # are used but with locals(), so pylint doesn't see
     # that they are used because it is done dynamically
     # pylint: disable=unused-argument
-    def add_clock_domain(self, name, port_list, asynchronous=None,
-                         synchronous=None, ignore=None, posedge=None,
-                         negedge=None, module=None, inout_clock_in=None,
-                         inout_clock_out=None):
+    def add_clock_domain(self, port_list, clock_name=None, asynchronous=None,
+                        ignore=None, posedge=None, negedge=None, module=None,
+                        inout_clock_in=None, inout_clock_out=None):
+        """
+        Add a clock domain definition to the framework.
+
+        This method registers a new clock domain with its associated ports and
+        synchronization properties.
+
+        :param port_list: List of ports belonging to the clock domain.
+        :type port_list: list[str]
+        :param clock_name: Name of the clock. If None, the port domain may be
+                        asynchronous or ignored based on other parameters.
+        :type clock_name: str or None
+        :param asynchronous: Ports that are asynchronous to all clock domains.
+                                If clock_name has been specified, the ports are
+                                considered asynchronous, but the ports' receiving
+                                clock domain is derived from clock_name.
+        :type asynchronous: bool or None
+        :param ignore: Input ports that should be ignored.
+        :type ignore: bool or None
+        :param posedge: Clocked by the positive edge of the clock signal. If both ``posedge``
+                        and ``negedge`` are specified, both edges of the clock are
+                        considered active for this domain. Default: positive edge only.
+        :type posedge: bool or None
+        :param negedge: Clocked by the negative edge of the clock signal.
+        :type negedge: bool or None
+        :param module: Optional module name to which the domain belongs.
+        :type module: str or None
+        :param inout_clock_in: Specify the **input** direction clock domain name for inout ports.
+        :type inout_clock_in: bool or None
+        :param inout_clock_out: Specify the **output** direction clock domain name for inout ports.
+        :type inout_clock_out: bool or None
+        """
         domain = {key: value for key, value in locals().items() if key != 'self'}
         self.logger.trace(f'adding clock domain: {domain}')
         self.clock_domains.append(domain)
 
     # TODO : check that port_list must be an actual list()
-    def add_reset_domain(self, name, port_list, asynchronous=None,
+    def add_reset_domain(self, port_list, name=None, asynchronous=None,
                          synchronous=None, active_high=None, active_low=None,
                          is_set=None, no_reset=None, module=None, ignore=None):
+        """
+        Adds a reset domain definition to the framework.
+
+        This function registers a new reset domain by specifying the ports that belong to it,
+        its name, and various properties such as polarity, synchronization...
+
+        :param port_list: List of ports that belong to the reset domain.
+        :type port_list: list[str]
+        :param name: Name of the reset domain. If None, the port domain may be
+                        ignored or have no reset based on other parameters.
+        :type name: str or None
+        :param asynchronous: If True, the reset signal is considered asynchronous.
+        :type asynchronous: bool or None
+        :param synchronous: If True, the reset signal is considered synchronous.
+        :type synchronous: bool or None
+        :param active_high: If True, the reset signal is active high.
+        :type active_high: bool or None
+        :param active_low: If True, the reset signal is active low.
+        :type active_low: bool or None
+        :param is_set: If True, the reset signal behaves as a set-type control instead of reset.
+        :type is_set: bool or None
+        :param no_reset: If True, indicates the port has no reset control.
+        :type no_reset: bool or None
+        :param module: Optional module name associated with the reset domain.
+        :type module: str or None
+        :param ignore: Ports ignored for reset analysis.
+        :type ignore: bool or None
+        """
         domain = {key: value for key, value in locals().items() if key != 'self'}
         self.logger.trace(f'adding reset domain: {domain}')
         self.reset_domains.append(domain)
