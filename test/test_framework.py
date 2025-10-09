@@ -4,7 +4,6 @@ from pathlib import Path
 
 # Our own imports
 from fvm import fvmframework
-import fvm
 
 # Error codes
 BAD_VALUE = {"msg": "FVM exit condition: Bad value",
@@ -181,7 +180,7 @@ def test_set_toplevels_duplicated() :
         fvm.set_toplevel(["test", "test2", "test3", "test2", "test"])
     assert pytest_wrapped_e.type == SystemExit
     assert pytest_wrapped_e.value.code == BAD_VALUE["value"]
- 
+
 def test_set_toplevels_reserved() :
     fvm = fvmframework()
     with pytest.raises(SystemExit) as pytest_wrapped_e:
