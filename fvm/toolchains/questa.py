@@ -382,8 +382,6 @@ def get_linecheck_reachability():
 
 def gen_reset_config(framework, filename, path):
     with open(path+'/'+filename, "a", encoding='utf-8') as f:
-        # TODO : let the user specify clock names, polarities, sync/async,
-        # clock domains and reset domains
         # Clock trees can be both active high and low when some logic is
         # reset when the reset is high and other logic is reset when it is
         # low.
@@ -416,7 +414,8 @@ def gen_reset_domain_config(framework, filename, path):
         for domain in framework.reset_domains:
             for signal in domain["port_list"]:
                 string = f'netlist port resetdomain {signal}'
-                string += f' -reset {domain["name"]}'
+                if domain["name"] is not None:
+                    string += f' -reset {domain["name"]}'
                 if domain["asynchronous"] is True:
                     string += ' -async'
                 if domain["synchronous"] is True:
@@ -429,6 +428,8 @@ def gen_reset_domain_config(framework, filename, path):
                     string += ' -set'
                 if domain["no_reset"] is True:
                     string += ' -no_reset'
+                if domain["module"] is not None:
+                    string += f' -module {domain["module"]}'
                 if domain["ignore"] is True:
                     string += ' -ignore}'
                 string += ' -add'
@@ -445,7 +446,8 @@ def gen_clock_config(framework, filename, path):
             if clock["period"] is not None:
                 string += f' -period {clock["period"]}'
             if clock["waveform"] is not None:
-                string += f' -waveform {clock["waveform"]}'
+                rise, fall = clock["waveform"]
+                string += f' -waveform {rise} {fall}'
             if clock["external"] is True:
                 string += ' -virtual'
             if clock["remove"] is True:
@@ -454,38 +456,28 @@ def gen_clock_config(framework, filename, path):
                 string += ' -ignore'
             print(string, file=f)
 
-# This is questa-specific
 def gen_clock_domain_config(framework, filename, path):
     with open(path+'/'+filename, "a", encoding='utf-8') as f:
         for domain in framework.clock_domains:
-            string = 'netlist port domain'
             for signal in domain["port_list"]:
-                string += f' {signal}'
-            string += f' -clock {domain["name"]} -add'
-            if domain["asynchronous"] is True:
-                string += ' -async'
-            if domain["synchronous"] is True:
-                string += ' -sync'
-            if domain["ignore"] is True:
-                string += ' -ignore'
-            if domain["posedge"] is True:
-                string += ' -posedge'
-            if domain["negedge"] is True:
-                string += ' -negedge'
-            if domain["module"] is not None:
-                string += f' -module {domain["module"]}'
-            if domain["inout_clock_in"] is not None:
-                string += f' -inout_clock_in {domain["inout_clock_in"]}'
-            if domain["inout_clock_out"] is not None:
-                string += f' -inout_clock_out {domain["inout_clock_out"]}'
-            print(string, file=f)
-        #print('netlist reset rst -active_high -async', file=f)
-        #print('netlist port domain rst -clock clk', file=f)
-        #print('netlist port domain data -clock clk', file=f)
-        #print('netlist port domain empty -clock clk', file=f)
-        #print('netlist port resetdomain data -reset rst', file=f)
-        #print('netlist port resetdomain empty -reset rst', file=f)
-        #print('netlist clock clk', file=f)
+                string = f'netlist port domain {signal}'
+                if domain["clock_name"] is not None:
+                    string += f' -clock {domain["clock_name"]} -add'
+                if domain["asynchronous"] is True:
+                    string += ' -async'
+                if domain["ignore"] is True:
+                    string += ' -ignore'
+                if domain["posedge"] is True:
+                    string += ' -posedge'
+                if domain["negedge"] is True:
+                    string += ' -negedge'
+                if domain["module"] is not None:
+                    string += f' -module {domain["module"]}'
+                if domain["inout_clock_in"] is True:
+                    string += f' -inout_clock_in'
+                if domain["inout_clock_out"] is True:
+                    string += f' -inout_clock_out'
+                print(string, file=f)
 
 def setup_resets(framework, path):
     filename = "resets.do"
