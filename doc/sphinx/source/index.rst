@@ -46,7 +46,14 @@ To learn more, go to the next section: :ref:`fv_intro`
 
 .. toctree::
    :maxdepth: 4
-   :caption: Apidoc
+   :caption: Public API
+   :hidden:
+
+   fvmframework
+
+.. toctree::
+   :maxdepth: 4
+   :caption: Internal API
    :hidden:
 
    modules
