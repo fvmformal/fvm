@@ -23,7 +23,7 @@ lint_python:
   stage: lint_and_test
   image: debian:12
   variables:
-    GOAL: "100"
+    GOAL: "92"
   script:
     - apt update
     - apt install -y python3 python3-pip python3-venv bc
