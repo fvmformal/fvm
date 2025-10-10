@@ -22,6 +22,8 @@ count_todos_in_code:
 lint_python:
   stage: lint_and_test
   image: debian:12
+  variables:
+    GOAL: "100"
   script:
     - apt update
     - apt install -y python3 python3-pip python3-venv bc
@@ -29,6 +31,13 @@ lint_python:
     - RATING=$(grep -oP 'Your code has been rated at \K[\d.]+' pylint.log)
     - PERCENTAGE=$(echo "$RATING * 10" | bc)
     - printf "lint score is %.2f %%\n" "$PERCENTAGE"
+    - |
+      if [ "$(echo "$PERCENTAGE < $GOAL" | bc)" -eq 1 ]; then
+        echo "ERROR: Lint score $PERCENTAGE is below goal $GOAL"
+        exit 1
+      else
+        echo "SUCCESS: Lint score $PERCENTAGE equal or better than goal $GOAL"
+      fi
   coverage: /lint score is ([\d]+\.[\d]+)/
 
 test_all:
