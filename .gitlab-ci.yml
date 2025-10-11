@@ -251,7 +251,7 @@ pycoverage:
     - apt update
     - apt install -y python3 python3-pip python3-venv
     - make pycoverage | tee pycoverage.log
-    - LASTFIELD=$(grep 'TOTAL' coverage.log | awk '{print $NF}')
+    - LASTFIELD=$(grep 'TOTAL' pycoverage.log | awk '{print $NF}')
     - PERCENTAGE=${LASTFIELD%\%}
     - |
       if [ "$(echo "$PERCENTAGE < $GOAL" | bc)" -eq 1 ]; then
