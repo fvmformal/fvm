@@ -3,7 +3,6 @@ loguru      # To have a logger                         (MIT license)
 argparse    # To parse input arguments                 (Python Software Foundation License)
 rich        # For really pretty printing               (MIT license)
 junit-xml   # To generate JUnit-XML reports            (MIT license)
-humanize    # To print times in human-readable format  (MIT license)
 pathlib     # To work with filesystem paths            (Apache License 2.0)
 
 # For drom2psl

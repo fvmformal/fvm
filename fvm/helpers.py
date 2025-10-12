@@ -1,7 +1,6 @@
 # Helper functions
 import os
 import sys
-from humanize.time import precisedelta
 
 def getscriptname():
     """Gets the absolute path of the called python script"""
@@ -20,10 +19,23 @@ def is_inside_venv():
 def readable_time(seconds):
     """Converts a time in seconds to the most appropriate unit"""
     if seconds <= 1:
-        ret = f"{seconds:.2f} seconds"
-    else:
-        ret = precisedelta(seconds)
-    return ret
+        return f"{seconds:.2f} seconds"
+
+    days, rem = divmod(int(seconds), 86400)
+    hours, rem = divmod(rem, 3600)
+    minutes, secs = divmod(rem, 60)
+
+    parts = []
+    if days:
+        parts.append(f"{days} days,")
+    if hours:
+        parts.append(f"{hours} hours,")
+    if minutes:
+        parts.append(f"{minutes} minutes,")
+    if secs or not parts:
+        parts.append(f"{secs} seconds")
+
+    return " ".join(parts)
 
 def insert_line_before_target(file, target_line, line_to_insert):
     with open(file, 'r', encoding="utf-8") as f:
