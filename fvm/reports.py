@@ -38,6 +38,7 @@ def get_all_steps(steps, post_steps):
     return all_steps
 
 def rich_table_to_markdown(rich_table_str):
+    """Convert a rich Table to a Markdown table."""
     rows = []
     for line in rich_table_str.splitlines():
         line = line.strip()
@@ -666,7 +667,7 @@ def generate_allure(framework, logger):
 
 
 def generate_md(framework):
-
+    """Generate a Markdown report from the framework results"""
     global_summary = []
 
     if framework.start_time_setup is None:
