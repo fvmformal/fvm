@@ -665,28 +665,14 @@ def generate_allure(framework, logger):
         directory to your $PATH'""")
 
 
-def generate_md(framework, logger):
-
+def generate_md(framework):
 
     global_summary = []
 
-    oldest_time = None
-    oldest_design = None
-    oldest_step = None
-
-    for design, steps in framework.results.items():
-        for step, data in steps.items():
-            timestamp_str = data.get('timestamp', None)
-            if timestamp_str is None:
-                continue
-            ts = datetime.fromisoformat(timestamp_str)
-
-            if oldest_time is None or ts < oldest_time:
-                oldest_time = ts
-                oldest_design = design
-                oldest_step = step
-
-    start_time = datetime.fromisoformat(framework.results[oldest_design][oldest_step]['timestamp'])
+    if framework.start_time_setup is None:
+        start_time = datetime.now()
+    else:
+        start_time = datetime.fromisoformat(framework.start_time_setup)
     stop_time = datetime.now()
 
     duration = int((stop_time - start_time).total_seconds())
@@ -753,14 +739,15 @@ def generate_md(framework, logger):
                 re.DOTALL
             )
 
-            matches = pattern.findall(framework.results[design][step]['message'])
+            if 'message' in framework.results[design][step]:
+                matches = pattern.findall(framework.results[design][step]['message'])
 
-            errors = [msg for level, msg in matches if level == "ERROR"]
+                errors = [msg for level, msg in matches if level == "ERROR"]
+                if errors:
+                    global_summary.append("Error(s):\n")
+                for e in errors:
+                    global_summary.append(f"- ERROR: {e}")
 
-            if errors:
-                global_summary.append("Error(s):\n")
-            for e in errors:
-                global_summary.append(f"- ERROR: {e}")
             if md_table_str is not None:
                 global_summary.append(md_table_str + "\n")
 
