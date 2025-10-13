@@ -245,13 +245,23 @@ def test_add_config_before_set_toplevel() :
     assert pytest_wrapped_e.type == SystemExit
     assert pytest_wrapped_e.value.code == BAD_VALUE["value"]
 
-def test_skip() :
+def test_skip_step() :
     """Test skipping a step"""
+    fvm = fvmframework()
+    fvm.skip("lint", "test")
+
+def test_skip_invalid() :
+    """Test skipping an invalid step"""
     fvm = fvmframework()
     fvm.skip("Not implemented yet", "test")
 
-def test_allow_failure() :
+def test_allow_failure_step() :
     """Test allowing failure of a step"""
+    fvm = fvmframework()
+    fvm.allow_failure("lint", "test")
+
+def test_allow_failure_invalid() :
+    """Test allowing failure of an invalid step"""
     fvm = fvmframework()
     fvm.allow_failure("Not implemented yet", "test")
 
@@ -293,6 +303,11 @@ def test_set_timeout_prove() :
     fvm = fvmframework()
     fvm.set_timeout("prove", "5m")
 
+def test_set_timeout_invalid() :
+    """Test setting a timeout with an invalid step name"""
+    fvm = fvmframework()
+    fvm.set_timeout("invalid", "5m")
+
 def test_set_coverage_goal_float() :
     """Test setting a valid coverage goal as a float"""
     fvm = fvmframework()
@@ -330,10 +345,7 @@ def test_set_coverage_goal_wrong_range_2() :
 def test_set_coverage_goal_step_invalid() :
     """Test setting a coverage goal with an invalid step name"""
     fvm = fvmframework()
-    with pytest.raises(SystemExit) as pytest_wrapped_e:
-        fvm.set_coverage_goal("wrong", 10)
-    assert pytest_wrapped_e.type == SystemExit
-    assert pytest_wrapped_e.value.code == BAD_VALUE["value"]
+    fvm.set_coverage_goal("wrong", 10)
 
 def test_formal_initialize_reset_active_high() :
     """Test formal_initialize_reset with active high reset"""
@@ -352,10 +364,20 @@ def test_set_pre_hook() :
     fvm = fvmframework()
     fvm.set_pre_hook("echo pre-hook", "xverify")
 
+def test_set_pre_hook_invalid_step() :
+    """Test setting a pre-hook with an invalid step name"""
+    fvm = fvmframework()
+    fvm.set_pre_hook("echo pre-hook", "invalid")
+
 def test_set_post_hook() :
     """Test setting a post-hook"""
     fvm = fvmframework()
     fvm.set_post_hook("echo post-hook", "xverify")
+
+def test_set_post_hook_invalid_step() :
+    """Test setting a post-hook with an invalid step name"""
+    fvm = fvmframework()
+    fvm.set_post_hook("echo post-hook", "invalid")
 
 def test_set_loglevel() :
     """Test setting the log level"""

@@ -588,6 +588,8 @@ class fvmframework:
                     which matches all designs.
         :type design: str
         """
+        if step not in self.get_steps():
+            self.logger.warning(f"Specified {step=} not in {self.get_steps()}")
         self.skip_list.append(f'{design}.{step}')
 
     def allow_failure(self, step, design='*'):
@@ -604,6 +606,8 @@ class fvmframework:
                     which matches all designs.
         :type design: str
         """
+        if step not in self.get_steps():
+            self.logger.warning(f"Specified {step=} not in {self.get_steps()}")
         self.allow_failure_list.append(f'{design}.{step}')
 
     def disable_coverage(self, covtype, design='*'):
@@ -659,6 +663,8 @@ class fvmframework:
         :return: None
         :rtype: None
         """
+        if step not in self.get_steps():
+            self.logger.warning(f"Specified {step=} not in {self.get_steps()}")
         toolchains.set_timeout(self, self.toolchain, step, timeout)
 
     def set_coverage_goal(self, step, goal):
@@ -677,18 +683,8 @@ class fvmframework:
             self.logger.error(f"{goal=} must be between 0 and 100")
             self.exit_if_required(BAD_VALUE)
 
-        valid = False
-        if step in self.steps.steps:
-            valid = True
-        elif "." in step:
-            prefix, suffix = step.split(".", 1)
-            if prefix in self.steps.post_steps and suffix in self.steps.post_steps[prefix]:
-                valid = True
-
-        if not valid:
-            self.logger.error(f"Specified {step=} not in {self.steps.steps=}"
-                              f" or {self.steps.post_steps=}")
-            self.exit_if_required(BAD_VALUE)
+        if step not in self.get_steps():
+            self.logger.warning(f"Specified {step=} not in {self.get_steps()}")
 
         toolchains.set_coverage_goal(self.toolchain, step, goal)
 
@@ -731,6 +727,8 @@ class fvmframework:
                     to all designs. Defaults to '*'.
         :type design: str
         """
+        if step not in self.get_steps():
+            self.logger.warning(f"Specified {step=} not in {self.get_steps()}")
         if design not in self.pre_hooks:
             self.pre_hooks[design] = {}
         self.pre_hooks[design][step] = hook
@@ -751,6 +749,8 @@ class fvmframework:
                     to all designs. Defaults to '*'.
         :type design: str
         """
+        if step not in self.get_steps():
+            self.logger.warning(f"Specified {step=} not in {self.get_steps()}")
         if design not in self.post_hooks:
             self.post_hooks[design] = {}
         self.post_hooks[design][step] = hook
@@ -1576,6 +1576,22 @@ class fvmframework:
                     self.exit_if_required(KEYBOARD_INTERRUPT)
 
         return err, errorcode
+
+    def get_steps(self):
+        """Generate a list of the available tool steps including post-steps.
+
+        Returns
+        -------
+        list of str
+            Combined list of steps and post-steps.
+        """
+        all_steps = []
+        for step in self.steps.steps:
+            all_steps.append(step)
+            if step in self.steps.post_steps:
+                for post_step in self.steps.post_steps[step]:
+                    all_steps.append(f"{step}.{post_step}")
+        return all_steps
 
     # ******************************************************************* #
     # ******************************************************************* #
