@@ -113,22 +113,26 @@ examplelist += ipv6
 friendlinesslist = $(addsuffix .friendliness, $(examplelist))
 
 # List with all the concepts
-conceptlist += transactions_deprecated
-conceptlist += parameterized_sequences
-conceptlist += inheriting_vunits
-conceptlist += inheriting_multiple_vunits
-conceptlist += parameterized_properties
-conceptlist += multiple_designs
-conceptlist += symbolic_constants
-conceptlist += user_defined_hdltypes
-conceptlist += user_defined_hdltypes_in_package
-conceptlist += user_defined_hdltypes_in_external_package
+conceptlist += add_drom_sources
 conceptlist += assert_to_assume
-conceptlist += defining_clocks_and_resets
-conceptlist += hooks
-conceptlist += design_configurations
 conceptlist += assertion_decomposition
+conceptlist += blackbox_example
+conceptlist += blackbox_instance
+conceptlist += cutpoint_example
+conceptlist += defining_clocks_and_resets
+conceptlist += design_configurations
+conceptlist += hooks
+conceptlist += inheriting_multiple_vunits
+conceptlist += inheriting_vunits
+conceptlist += multiple_designs
+conceptlist += parameterized_properties
+conceptlist += parameterized_sequences
 conceptlist += reachability_example
+conceptlist += symbolic_constants
+conceptlist += transactions_deprecated
+conceptlist += user_defined_hdltypes
+conceptlist += user_defined_hdltypes_in_external_package
+conceptlist += user_defined_hdltypes_in_package
 
 # examples target runs all the examples
 # concept target runs all the concepts
