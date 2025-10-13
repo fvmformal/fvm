@@ -767,7 +767,7 @@ def setup_prove_formalcover(framework, path):
     filename = "prove.formalcover.do"
     property_summary = parse_prove.parse_property_summary(f'{path}/prove/prove.log')
     inconclusives = property_summary.get('Assertions', {}).get('Inconclusive', 0)
-    with open(f"{path}/{filename}", "a", encoding='utf-8') as f:
+    with open(f"{path}/{filename}", "w", encoding='utf-8') as f:
         print('onerror exit', file=f)
         print(f"formal load db {path}/prove/propcheck.db",file=f)
         if not framework.is_disabled('observability'):
