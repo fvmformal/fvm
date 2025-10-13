@@ -388,8 +388,7 @@ def gen_reset_config(framework, filename, path):
         # Also, reset signals can drive trees of both synchronous and
         # asynchronous resets
         for reset in framework.resets:
-            reset_design, reset = reset.split('.', 1)
-            if reset_design == '*' or reset_design == framework.current_toplevel:
+            if reset["design"] == '*' or reset["design"] == framework.current_toplevel:
                 string = f'netlist reset {reset["name"]}'
                 if reset["module"] is not None:
                     string += f' -module {reset["module"]}'
@@ -414,8 +413,7 @@ def gen_reset_config(framework, filename, path):
 def gen_reset_domain_config(framework, filename, path):
     with open(path+'/'+filename, "a", encoding='utf-8') as f:
         for domain in framework.reset_domains:
-            domain_design, domain = domain.split('.', 1)
-            if domain_design == '*' or domain_design == framework.current_toplevel:
+            if domain["design"] == '*' or domain["design"] == framework.current_toplevel:
                 for signal in domain["port_list"]:
                     string = f'netlist port resetdomain {signal}'
                     if domain["name"] is not None:
@@ -442,8 +440,7 @@ def gen_reset_domain_config(framework, filename, path):
 def gen_clock_config(framework, filename, path):
     with open(path+'/'+filename, "a", encoding='utf-8') as f:
         for clock in framework.clocks:
-            clock_design, clock = clock.split('.', 1)
-            if clock_design == '*' or clock_design == framework.current_toplevel:
+            if clock["design"] == '*' or clock["design"] == framework.current_toplevel:
                 string = f'netlist clock {clock["name"]}'
                 if clock["module"] is not None:
                     string += f' -module {clock["module"]}'
@@ -465,8 +462,7 @@ def gen_clock_config(framework, filename, path):
 def gen_clock_domain_config(framework, filename, path):
     with open(path+'/'+filename, "a", encoding='utf-8') as f:
         for domain in framework.clock_domains:
-            domain_design, domain = domain.split('.', 1)
-            if domain_design == '*' or domain_design == framework.current_toplevel:
+            if domain["design"] == '*' or domain["design"] == framework.current_toplevel:
                 for signal in domain["port_list"]:
                     string = f'netlist port domain {signal}'
                     if domain["clock_name"] is not None:
@@ -604,18 +600,17 @@ def setup_prove(framework, path):
                 print(f'netlist blackbox instance {bb_instance}', file=f)
 
         for cutpoint in framework.cutpoints:
-            cutpoint_design, cutpoint_signal = cutpoint.split('.', 1)
-            if cutpoint_design == framework.current_toplevel or cutpoint_design == '*':
-                string = f'netlist cutpoint {cutpoint_signal["signal"]}'
-                if cutpoint_signal["module"] is not None:
-                    string += f' -module {cutpoint_signal["module"]}'
-                if cutpoint_signal["resetval"] is True:
+            if cutpoint["design"] == framework.current_toplevel or cutpoint["design"] == '*':
+                string = f'netlist cutpoint {cutpoint["signal"]}'
+                if cutpoint["module"] is not None:
+                    string += f' -module {cutpoint["module"]}'
+                if cutpoint["resetval"] is True:
                     string += ' -reset_value'
-                if cutpoint_signal["condition"] is not None:
-                    string += f'-cond {cutpoint_signal["condition"]}'
-                if cutpoint_signal["driver"] is not None:
-                    string += f'-driver {cutpoint_signal["driver"]}'
-                if cutpoint_signal["wildcards_dont_match_hierarchy_separators"] is True:
+                if cutpoint["condition"] is not None:
+                    string += f'-cond {cutpoint["condition"]}'
+                if cutpoint["driver"] is not None:
+                    string += f'-driver {cutpoint["driver"]}'
+                if cutpoint["wildcards_dont_match_hierarchy_separators"] is True:
                     string += '-match_local_scope'
                 print(string, file=f)
 

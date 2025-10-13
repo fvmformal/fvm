@@ -893,8 +893,9 @@ class fvmframework:
         :type inout_clock_out: bool or None
         """
         domain = {key: value for key, value in locals().items() if key != 'self'}
+        domain["design"] = design
         self.logger.trace(f'adding clock domain: {domain}')
-        self.clock_domains.append(f'{design}.{domain}')
+        self.clock_domains.append(domain)
 
     # TODO : check that port_list must be an actual list()
     def add_reset_domain(self, port_list, design='*', name=None, asynchronous=None,
@@ -932,8 +933,9 @@ class fvmframework:
         :type ignore: bool or None
         """
         domain = {key: value for key, value in locals().items() if key != 'self'}
+        domain["design"] = design
         self.logger.trace(f'adding reset domain: {domain}')
-        self.reset_domains.append(f'{design}.{domain}')
+        self.reset_domains.append(domain)
 
     def add_reset(self, name, design='*', module=None, group=None, active_low=None,
                   active_high=None, asynchronous=None, synchronous=None,
@@ -970,8 +972,9 @@ class fvmframework:
         """
         # Copy all arguments to a dict, excepting self
         reset = {key: value for key, value in locals().items() if key != 'self'}
+        reset["design"] = design
         self.logger.trace(f'adding reset: {reset}')
-        self.resets.append(f'{design}.{reset}')
+        self.resets.append(reset)
 
     def add_clock(self, name, design='*', module=None, group=None, period=None,
                   waveform=None, external=None, ignore=False, remove=False):
@@ -1005,8 +1008,9 @@ class fvmframework:
         :type remove: bool or None
         """
         clock = {key: value for key, value in locals().items() if key != 'self'}
+        clock["design"] = design
         self.logger.trace(f'adding clock: {clock}')
-        self.clocks.append(f'{design}.{clock}')
+        self.clocks.append(clock)
     # pylint: enable=unused-argument
 
     def blackbox(self, entity, design='*'):
@@ -1060,8 +1064,9 @@ class fvmframework:
         :type wildcards_dont_match_hierarchy_separators: bool
         """
         cutpoint = {key: value for key, value in locals().items() if key != 'self'}
+        cutpoint["design"] = design
         self.logger.trace(f'adding cutpoint: {cutpoint}')
-        self.cutpoints.append(f'{design}.{cutpoint}')
+        self.cutpoints.append(cutpoint)
     # pylint: enable=unused-argument
 
     def run(self, skip_setup=False):
