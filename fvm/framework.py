@@ -1075,6 +1075,7 @@ class fvmframework:
         reports.pretty_summary(self, self.logger)
         reports.generate_reports(self, self.logger)
         reports.generate_allure(self, self.logger)
+        reports.generate_md(self, self.logger)
         err = self.check_errors()
         if err :
             self.exit_if_required(CHECK_FAILED)
@@ -1263,6 +1264,7 @@ class fvmframework:
             reports.pretty_summary(self, self.logger)
             reports.generate_reports(self, self.logger)
             reports.generate_allure(self, self.logger)
+            reports.generate_md(self, self.logger)
             self.logger.error(errorcode['msg'])
             sys.exit(errorcode['value'])
 

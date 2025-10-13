@@ -1,4 +1,5 @@
 import os
+import re
 import subprocess
 import shutil
 
@@ -35,6 +36,37 @@ def get_all_steps(steps, post_steps):
             for post_step in post_steps[step]:
                 all_steps.append(f"{step}.{post_step}")
     return all_steps
+
+def rich_table_to_markdown(rich_table_str):
+    rows = []
+    for line in rich_table_str.splitlines():
+        line = line.strip()
+        if not line or line[0] in ("┏", "┡", "└", "┘", "┬", "┴", "╇", "╋"):
+            continue
+        if not any(c in line for c in ("│", "┃")):
+            continue
+
+        line = line.replace("┃", "│")
+
+        parts = line.split("│")[1:-1]
+        cells = [p.strip() for p in parts]
+
+        if any(cells):
+            rows.append(cells)
+
+    if not rows:
+        return ""
+
+    num_cols = len(rows[0])
+    for r in rows:
+        if len(r) < num_cols:
+            r.extend([""] * (num_cols - len(r)))
+
+    header = "| " + " | ".join(rows[0]) + " |"
+    separator = "| " + " | ".join(["---"] * num_cols) + " |"
+    body = ["| " + " | ".join(r) + " |" for r in rows[1:]]
+
+    return "\n".join([header, separator] + body)
 
 def pretty_summary(framework, logger):
     """Prints the final summary"""
@@ -281,7 +313,8 @@ def pretty_summary(framework, logger):
     # If framework.outdir doesn't exist, something went wrong: in that case, do
     # not try to save the HTML summary
     if os.path.isdir(framework.outdir):
-        summary_console.save_html(f'{framework.outdir}/summary.html')
+        summary_console.save_html(f'{framework.outdir}/summary.html', clear=False)
+        summary_console.save_text(f'{framework.outdir}/summary.txt')
     else:
         logger.error(f'Cannot access output directory {framework.outdir}, something went wrong')
 
@@ -630,3 +663,113 @@ def generate_allure(framework, logger):
         folder. If you are not using a venv, you should install allure by
         running 'python3 install_allure.py [install_dir], and add its bin/
         directory to your $PATH'""")
+
+
+def generate_md(framework, logger):
+
+
+    global_summary = []
+
+    oldest_time = None
+    oldest_design = None
+    oldest_step = None
+
+    for design, steps in framework.results.items():
+        for step, data in steps.items():
+            timestamp_str = data.get('timestamp', None)
+            if timestamp_str is None:
+                continue
+            ts = datetime.fromisoformat(timestamp_str)
+
+            if oldest_time is None or ts < oldest_time:
+                oldest_time = ts
+                oldest_design = design
+                oldest_step = step
+
+    start_time = datetime.fromisoformat(framework.results[oldest_design][oldest_step]['timestamp'])
+    stop_time = datetime.now()
+
+    duration = int((stop_time - start_time).total_seconds())
+
+    duration_str = helpers.readable_time(duration)
+
+    date_str = start_time.strftime("%d/%m/%Y")
+    start_str = start_time.strftime("%-H:%M:%S")
+    stop_str = stop_time.strftime("%-H:%M:%S")
+
+    global_summary.append("# FVM Report\n")
+
+    global_summary.append(date_str + "\n")
+    global_summary.append(f"Execution time: {start_str} - {stop_str} ({duration_str})\n")
+    global_summary.append(f"Toolchain: {framework.toolchain}\n")
+    global_summary.append(f"Design(s): {', '.join(framework.designs)}\n")
+
+    for design in framework.designs:
+        all_steps = get_all_steps(framework.steps.steps, framework.steps.post_steps)
+        global_summary.append(f"## Design: {design}\n")
+        for step in all_steps:
+            md_table_str = None
+            if ('status' in framework.results[design][step] and
+                framework.results[design][step]['status'] != "skip"):
+
+                # Default values
+                step_summary_txt = None
+
+                step_path = f"{framework.outdir}/{design}/{step}"
+                step_summary_md = f"{step_path}/{step}_summary.md"
+
+                step_summary = f"{step}_summary.txt"
+                if os.path.exists(f"{step_path}/{step_summary}"):
+                    step_summary_txt = f"{step_path}/{step_summary}"
+                    with open(step_summary_txt, 'r', encoding='utf-8') as f:
+                        rich_table_str = f.read()
+                    md_table_str = rich_table_to_markdown(rich_table_str)
+                    with open(step_summary_md, 'w', encoding='utf-8') as f:
+                        f.write(md_table_str)
+
+
+                if framework.results[design][step]['status'] == "pass":
+                    status = "passed"
+                elif framework.results[design][step]['status'] == "fail":
+                    status = "failed"
+
+            elif ('status' in framework.results[design][step] and
+                  framework.results[design][step]['status'] == "skip"):
+                status = "skipped"
+            else:
+                status = 'omit'
+
+            global_summary.append(f"### {design}.{step} [{status}]")
+            if "elapsed_time" in framework.results[design][step]:
+                time = framework.results[design][step]["elapsed_time"]
+                time_str_for_table = helpers.readable_time(time)
+                global_summary.append(f"Duration: {time_str_for_table}\n")
+            logfile_path = os.path.join(framework.outdir, design, step, f"{step}.log")
+            if os.path.exists(logfile_path):
+                global_summary.append(f"Log file: _{framework.outdir}/{design}/{step}/{step}.log_\n")
+
+            pattern = re.compile(
+                r"(ERROR)\s+\1.*?line='([^']+)'",
+                re.DOTALL
+            )
+
+            matches = pattern.findall(framework.results[design][step]['message'])
+
+            errors = [msg for level, msg in matches if level == "ERROR"]
+
+            if errors:
+                global_summary.append("Error(s):\n")
+            for e in errors:
+                global_summary.append(f"- ERROR: {e}")
+            if md_table_str is not None:
+                global_summary.append(md_table_str + "\n")
+
+    path = os.path.join(framework.outdir, "summary.txt")
+    if os.path.exists(path):
+        with open(path, 'r', encoding='utf-8') as f:
+            rich_table_str = f.read()
+        global_summary.append("## Summary")
+        global_summary.append(rich_table_to_markdown(rich_table_str))
+    summary_path = os.path.join(framework.outdir, "summary.md")
+    with open(summary_path, "w", encoding="utf-8") as f:
+        f.write("\n".join(global_summary))
