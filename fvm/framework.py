@@ -855,7 +855,7 @@ class fvmframework:
     # are used but with locals(), so pylint doesn't see
     # that they are used because it is done dynamically
     # pylint: disable=unused-argument
-    def add_clock_domain(self, port_list, clock_name=None, asynchronous=None,
+    def add_clock_domain(self, port_list, design='*', clock_name=None, asynchronous=None,
                         ignore=None, posedge=None, negedge=None, module=None,
                         inout_clock_in=None, inout_clock_out=None):
         """
@@ -866,6 +866,9 @@ class fvmframework:
 
         :param port_list: List of ports belonging to the clock domain.
         :type port_list: list[str]
+        :param design: Name of the design to add the clock domain for. Defaults to '*',
+                    which matches all designs.
+        :type design: str
         :param clock_name: Name of the clock. If None, the port domain may be
                         asynchronous or ignored based on other parameters.
         :type clock_name: str or None
@@ -891,10 +894,10 @@ class fvmframework:
         """
         domain = {key: value for key, value in locals().items() if key != 'self'}
         self.logger.trace(f'adding clock domain: {domain}')
-        self.clock_domains.append(domain)
+        self.clock_domains.append(f'{design}.{domain}')
 
     # TODO : check that port_list must be an actual list()
-    def add_reset_domain(self, port_list, name=None, asynchronous=None,
+    def add_reset_domain(self, port_list, design='*', name=None, asynchronous=None,
                          synchronous=None, active_high=None, active_low=None,
                          is_set=None, no_reset=None, module=None, ignore=None):
         """
@@ -905,6 +908,9 @@ class fvmframework:
 
         :param port_list: List of ports that belong to the reset domain.
         :type port_list: list[str]
+        :param design: Name of the design to add the reset domain for. Defaults to '*', 
+                    which matches all designs.
+        :type design: str
         :param name: Name of the reset domain. If None, the port domain may be
                         ignored or have no reset based on other parameters.
         :type name: str or None
@@ -927,9 +933,9 @@ class fvmframework:
         """
         domain = {key: value for key, value in locals().items() if key != 'self'}
         self.logger.trace(f'adding reset domain: {domain}')
-        self.reset_domains.append(domain)
+        self.reset_domains.append(f'{design}.{domain}')
 
-    def add_reset(self, name, module=None, group=None, active_low=None,
+    def add_reset(self, name, design='*', module=None, group=None, active_low=None,
                   active_high=None, asynchronous=None, synchronous=None,
                   external=None, ignore=None, remove=None):
         """
@@ -940,6 +946,9 @@ class fvmframework:
 
         :param name: Name of the reset signal.
         :type name: str
+        :param design: Name of the design to add the reset signal for. Defaults to '*',
+                    which matches all designs.
+        :type design: str
         :param module: Optional name of the module associated with the reset.
         :type module: str or None
         :param group: Optional reset group name to classify the reset signal.
@@ -962,9 +971,9 @@ class fvmframework:
         # Copy all arguments to a dict, excepting self
         reset = {key: value for key, value in locals().items() if key != 'self'}
         self.logger.trace(f'adding reset: {reset}')
-        self.resets.append(reset)
+        self.resets.append(f'{design}.{reset}')
 
-    def add_clock(self, name, module=None, group=None, period=None,
+    def add_clock(self, name, design='*', module=None, group=None, period=None,
                   waveform=None, external=None, ignore=False, remove=False):
         """
         Add a clock signal to the design.
@@ -974,6 +983,9 @@ class fvmframework:
 
         :param name: Name of the clock signal.
         :type name: str
+        :param design: Name of the design to add the clock for. Defaults to '*',
+                    which matches all designs.
+        :type design: str
         :param module: Optional module name associated with the clock.
         :type module: str or None
         :param group: Optional clock group name to classify the clock signal.
@@ -994,43 +1006,46 @@ class fvmframework:
         """
         clock = {key: value for key, value in locals().items() if key != 'self'}
         self.logger.trace(f'adding clock: {clock}')
-        self.clocks.append(clock)
+        self.clocks.append(f'{design}.{clock}')
     # pylint: enable=unused-argument
 
-    # TODO : consider what happens when we have multiple toplevels, maybe we
-    # should have the arguments (self, design/toplevel, entity)
-    def blackbox(self, entity):
+    def blackbox(self, entity, design='*'):
         """
         Blackboxes all instances of a given entity or module.
 
         :param entity: Name of the entity or module to be blackboxed.
         :type entity: str
+        :param design: Name of the design to add the blackbox for. Defaults to '*',
+                    which matches all designs.
+        :type design: str
         """
         self.logger.trace(f'blackboxing entity: {entity}')
-        self.blackboxes.append(entity)
+        self.blackboxes.append(f'{design}.{entity}')
 
-    # TODO : consider what happens when we have multiple toplevels, maybe we
-    # should have the arguments (self, design/toplevel, instance)
-    def blackbox_instance(self, instance):
+    def blackbox_instance(self, instance, design='*'):
         """
         Blackboxes a specific instance of a given entity or module.
 
         :param instance: Name of the instance to be blackboxed.
         :type instance: str
+        :param design: Name of the design to add the blackbox instance for. Defaults to '*',
+                    which matches all designs.
+        :type design: str
         """
         self.logger.trace(f'blackboxing instance: {instance}')
-        self.blackbox_instances.append(instance)
+        self.blackbox_instances.append(f'{design}.{instance}')
 
-    # TODO : consider what happens when we have multiple toplevels, maybe we
-    # should have the arguments (self, design/toplevel, ...and the rest)
     # pylint: disable=unused-argument
-    def cutpoint(self, signal, module=None, resetval=None, condition=None,
+    def cutpoint(self, signal, design='*', module=None, resetval=None, condition=None,
                  driver=None, wildcards_dont_match_hierarchy_separators=False):
         """
         Define a cutpoint on a specific signal in the design.
 
         :param signal: Name of the signal to mark as a cutpoint.
         :type signal: str
+        :param design: Name of the design to add the cutpoint for. Defaults to '*',
+                    which matches all designs.
+        :type design: str
         :param module: Optional module name that contains the signal.
         :type module: str or None
         :param resetval: If True, the cutpoint will take the reset value.
@@ -1046,7 +1061,7 @@ class fvmframework:
         """
         cutpoint = {key: value for key, value in locals().items() if key != 'self'}
         self.logger.trace(f'adding cutpoint: {cutpoint}')
-        self.cutpoints.append(cutpoint)
+        self.cutpoints.append(f'{design}.{cutpoint}')
     # pylint: enable=unused-argument
 
     def run(self, skip_setup=False):

@@ -388,96 +388,104 @@ def gen_reset_config(framework, filename, path):
         # Also, reset signals can drive trees of both synchronous and
         # asynchronous resets
         for reset in framework.resets:
-            string = f'netlist reset {reset["name"]}'
-            if reset["module"] is not None:
-                string += f' -module {reset["module"]}'
-            if reset["group"] is not None:
-                string += f' -group {reset["group"]}'
-            if reset["active_low"] is True:
-                string += ' -active_low'
-            if reset["active_high"] is True:
-                string += ' -active_high'
-            if reset["asynchronous"] is True:
-                string += ' -async'
-            if reset["synchronous"] is True:
-                string += ' -sync'
-            if reset["external"] is True:
-                string += ' -virtual'
-            if reset["remove"] is True:
-                string += ' -remove'
-            if reset["ignore"] is True:
-                string += ' -ignore'
-            print(string, file=f)
+            reset_design, reset = reset.split('.', 1)
+            if reset_design == '*' or reset_design == framework.current_toplevel:
+                string = f'netlist reset {reset["name"]}'
+                if reset["module"] is not None:
+                    string += f' -module {reset["module"]}'
+                if reset["group"] is not None:
+                    string += f' -group {reset["group"]}'
+                if reset["active_low"] is True:
+                    string += ' -active_low'
+                if reset["active_high"] is True:
+                    string += ' -active_high'
+                if reset["asynchronous"] is True:
+                    string += ' -async'
+                if reset["synchronous"] is True:
+                    string += ' -sync'
+                if reset["external"] is True:
+                    string += ' -virtual'
+                if reset["remove"] is True:
+                    string += ' -remove'
+                if reset["ignore"] is True:
+                    string += ' -ignore'
+                print(string, file=f)
 
 def gen_reset_domain_config(framework, filename, path):
     with open(path+'/'+filename, "a", encoding='utf-8') as f:
         for domain in framework.reset_domains:
-            for signal in domain["port_list"]:
-                string = f'netlist port resetdomain {signal}'
-                if domain["name"] is not None:
-                    string += f' -reset {domain["name"]}'
-                if domain["asynchronous"] is True:
-                    string += ' -async'
-                if domain["synchronous"] is True:
-                    string += ' -sync'
-                if domain["active_high"] is True:
-                    string += ' -active_high'
-                if domain["active_low"] is True:
-                    string += ' -active_low'
-                if domain["is_set"] is True:
-                    string += ' -set'
-                if domain["no_reset"] is True:
-                    string += ' -no_reset'
-                if domain["module"] is not None:
-                    string += f' -module {domain["module"]}'
-                if domain["ignore"] is True:
-                    string += ' -ignore}'
-                string += ' -add'
-                print(string, file=f)
+            domain_design, domain = domain.split('.', 1)
+            if domain_design == '*' or domain_design == framework.current_toplevel:
+                for signal in domain["port_list"]:
+                    string = f'netlist port resetdomain {signal}'
+                    if domain["name"] is not None:
+                        string += f' -reset {domain["name"]}'
+                    if domain["asynchronous"] is True:
+                        string += ' -async'
+                    if domain["synchronous"] is True:
+                        string += ' -sync'
+                    if domain["active_high"] is True:
+                        string += ' -active_high'
+                    if domain["active_low"] is True:
+                        string += ' -active_low'
+                    if domain["is_set"] is True:
+                        string += ' -set'
+                    if domain["no_reset"] is True:
+                        string += ' -no_reset'
+                    if domain["module"] is not None:
+                        string += f' -module {domain["module"]}'
+                    if domain["ignore"] is True:
+                        string += ' -ignore}'
+                    string += ' -add'
+                    print(string, file=f)
 
 def gen_clock_config(framework, filename, path):
     with open(path+'/'+filename, "a", encoding='utf-8') as f:
         for clock in framework.clocks:
-            string = f'netlist clock {clock["name"]}'
-            if clock["module"] is not None:
-                string += f' -module {clock["module"]}'
-            if clock["group"] is not None:
-                string += f' -group {clock["group"]} -add'
-            if clock["period"] is not None:
-                string += f' -period {clock["period"]}'
-            if clock["waveform"] is not None:
-                rise, fall = clock["waveform"]
-                string += f' -waveform {rise} {fall}'
-            if clock["external"] is True:
-                string += ' -virtual'
-            if clock["remove"] is True:
-                string += ' -remove'
-            if clock["ignore"] is True:
-                string += ' -ignore'
-            print(string, file=f)
+            clock_design, clock = clock.split('.', 1)
+            if clock_design == '*' or clock_design == framework.current_toplevel:
+                string = f'netlist clock {clock["name"]}'
+                if clock["module"] is not None:
+                    string += f' -module {clock["module"]}'
+                if clock["group"] is not None:
+                    string += f' -group {clock["group"]} -add'
+                if clock["period"] is not None:
+                    string += f' -period {clock["period"]}'
+                if clock["waveform"] is not None:
+                    rise, fall = clock["waveform"]
+                    string += f' -waveform {rise} {fall}'
+                if clock["external"] is True:
+                    string += ' -virtual'
+                if clock["remove"] is True:
+                    string += ' -remove'
+                if clock["ignore"] is True:
+                    string += ' -ignore'
+                print(string, file=f)
 
 def gen_clock_domain_config(framework, filename, path):
     with open(path+'/'+filename, "a", encoding='utf-8') as f:
         for domain in framework.clock_domains:
-            for signal in domain["port_list"]:
-                string = f'netlist port domain {signal}'
-                if domain["clock_name"] is not None:
-                    string += f' -clock {domain["clock_name"]} -add'
-                if domain["asynchronous"] is True:
-                    string += ' -async'
-                if domain["ignore"] is True:
-                    string += ' -ignore'
-                if domain["posedge"] is True:
-                    string += ' -posedge'
-                if domain["negedge"] is True:
-                    string += ' -negedge'
-                if domain["module"] is not None:
-                    string += f' -module {domain["module"]}'
-                if domain["inout_clock_in"] is True:
-                    string += f' -inout_clock_in'
-                if domain["inout_clock_out"] is True:
-                    string += f' -inout_clock_out'
-                print(string, file=f)
+            domain_design, domain = domain.split('.', 1)
+            if domain_design == '*' or domain_design == framework.current_toplevel:
+                for signal in domain["port_list"]:
+                    string = f'netlist port domain {signal}'
+                    if domain["clock_name"] is not None:
+                        string += f' -clock {domain["clock_name"]} -add'
+                    if domain["asynchronous"] is True:
+                        string += ' -async'
+                    if domain["ignore"] is True:
+                        string += ' -ignore'
+                    if domain["posedge"] is True:
+                        string += ' -posedge'
+                    if domain["negedge"] is True:
+                        string += ' -negedge'
+                    if domain["module"] is not None:
+                        string += f' -module {domain["module"]}'
+                    if domain["inout_clock_in"] is True:
+                        string += f' -inout_clock_in'
+                    if domain["inout_clock_out"] is True:
+                        string += f' -inout_clock_out'
+                    print(string, file=f)
 
 def setup_resets(framework, path):
     filename = "resets.do"
@@ -586,24 +594,30 @@ def setup_prove(framework, path):
             print(line, file=f)
 
         for blackbox in framework.blackboxes:
-            print(f'netlist blackbox {blackbox}', file=f)
+            bb_design, bb_entity = blackbox.split('.', 1)
+            if bb_design == framework.current_toplevel or bb_design == '*':
+                print(f'netlist blackbox {bb_entity}', file=f)
 
         for blackbox_instance in framework.blackbox_instances:
-            print(f'netlist blackbox instance {blackbox_instance}', file=f)
+            bb_design, bb_instance = blackbox_instance.split('.', 1)
+            if bb_design == framework.current_toplevel or bb_design == '*':
+                print(f'netlist blackbox instance {bb_instance}', file=f)
 
         for cutpoint in framework.cutpoints:
-            string = f'netlist cutpoint {cutpoint["signal"]}'
-            if cutpoint["module"] is not None:
-                string += f' -module {cutpoint["module"]}'
-            if cutpoint["resetval"] is True:
-                string += ' -reset_value'
-            if cutpoint["condition"] is not None:
-                string += f'-cond {cutpoint["condition"]}'
-            if cutpoint["driver"] is not None:
-                string += f'-driver {cutpoint["driver"]}'
-            if cutpoint["wildcards_dont_match_hierarchy_separators"] is True:
-                string += '-match_local_scope'
-            print(string, file=f)
+            cutpoint_design, cutpoint_signal = cutpoint.split('.', 1)
+            if cutpoint_design == framework.current_toplevel or cutpoint_design == '*':
+                string = f'netlist cutpoint {cutpoint_signal["signal"]}'
+                if cutpoint_signal["module"] is not None:
+                    string += f' -module {cutpoint_signal["module"]}'
+                if cutpoint_signal["resetval"] is True:
+                    string += ' -reset_value'
+                if cutpoint_signal["condition"] is not None:
+                    string += f'-cond {cutpoint_signal["condition"]}'
+                if cutpoint_signal["driver"] is not None:
+                    string += f'-driver {cutpoint_signal["driver"]}'
+                if cutpoint_signal["wildcards_dont_match_hierarchy_separators"] is True:
+                    string += '-match_local_scope'
+                print(string, file=f)
 
         print('formal compile ', end='', file=f)
         print(f'-d {framework.current_toplevel} {framework.generic_args} ', end='', file=f)
