@@ -38,6 +38,7 @@ def readable_time(seconds):
     return " ".join(parts)
 
 def insert_line_before_target(file, target_line, line_to_insert):
+    """Inserts a line before the first occurrence of target_line in file"""
     with open(file, 'r', encoding="utf-8") as f:
         lines = f.readlines()
 
@@ -51,6 +52,7 @@ def insert_line_before_target(file, target_line, line_to_insert):
         f.writelines(new_lines)
 
 def insert_line_after_target(file, target_line, line_to_insert):
+    """Inserts a line after the first occurrence of target_line in file"""
     with open(file, 'r', encoding="utf-8") as f:
         lines = f.readlines()
 

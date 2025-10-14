@@ -9,6 +9,29 @@ def generate_test_case(design_name, prefix, step, results_dir, status="passed",
                        properties = None, step_summary_html = None, html_files=None):
     """
     Generate a test case structure for reports.
+
+    :param design_name: Name of the design.
+    :type design_name: str
+    :param prefix: Prefix for the test case ID.
+    :type prefix: str
+    :param step: Name of the step.
+    :type step: str
+    :param results_dir: Directory to store results.
+    :type results_dir: str
+    :param status: Status of the test case (default is "passed").
+    :type status: str
+    :param start_time: Start time in milliseconds since epoch.
+    :type start_time: int
+    :param stop_time: Stop time in milliseconds since epoch.
+    :type stop_time: int
+    :param friendliness_score: Friendliness score (optional).
+    :type friendliness_score: float or None
+    :param properties: JSON string of properties (optional).
+    :type properties: str or None
+    :param step_summary_html: Path to HTML summary file (optional).
+    :type step_summary_html: str or None
+    :param html_files: List of additional HTML files to attach (optional).
+    :type html_files: list of str or None
     """
     test_case_uuid = str(uuid.uuid4())
     history_id = f"{prefix}.{design_name}.{step}"
@@ -183,6 +206,7 @@ def generate_test_case(design_name, prefix, step, results_dir, status="passed",
         json.dump(test_case, json_file, indent=2)
 
 def html_to_oneline(html_file):
+    """Convert an HTML file to a single line string, preserving <pre> blocks."""
     with open(html_file, "r", encoding="utf-8") as f:
         html = f.read()
 

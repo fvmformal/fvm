@@ -16,4 +16,5 @@ class logcounter:
             self.counts[level] += 1
 
     def get_counts(self):
+        """Returns the current log level counts."""
         return self.counts

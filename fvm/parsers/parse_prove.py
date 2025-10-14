@@ -3,6 +3,9 @@ import json
 from datetime import datetime
 
 def parse_targets_report(report_path):
+    """
+    Parses the targets report and extracts relevant information.
+    """
     results = {}
     current_section = None
     capture = False
@@ -38,6 +41,9 @@ def parse_targets_report(report_path):
     return summary
 
 def normalize_sections(data):
+    """
+    Normalizes section names to a standard format.
+    """
     # TODO: Check if there are more categories
     mapping = {
         "Targets Proven": "Proven",
@@ -114,6 +120,9 @@ def parse_property_summary(file_path):
     return summary
 
 def parse_properties_extended(log_file):
+    """
+    Parses the properties from a log file and categorizes them.
+    """
     results = {
         "Proven": [],
         "Covered": [],

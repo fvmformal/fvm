@@ -12,6 +12,7 @@ class steps:
         self.post_steps = {}
 
     def add_step(self, framework, step, setup, run):
+        """Adds a step to the steps dictionary. Fails if the step already exists"""
         if step in self.steps:
             framework.logger.error(f'{step=} already exists in {self.steps=}')
         self.steps[step] = {}
@@ -22,6 +23,7 @@ class steps:
     # the relevant step fails, whereas steps may be run even if the previous
     # step fails (when using the --continue flag)
     def add_post_step(self, framework, step, post_step, setup, run):
+        """Adds a post_step to the post_steps dictionary. Fails if the step does not exist"""
         if step not in self.steps:
             framework.logger.error(f'{step=} does not exist in {self.steps=}')
         if post_step in self.post_steps:
@@ -35,6 +37,7 @@ class steps:
         self.post_steps[step][post_step]["run"] = run
 
     def append_step(self, framework, target, step, setup, run):
+        """Appends a step after the target step."""
         # Fail if target not in dict
         if target not in self.steps:
             framework.logger.error(f'{target=} not in {self.steps=}, cannot insert step after it')
@@ -48,6 +51,7 @@ class steps:
         self.steps = dict(l)
 
     def prepend_step(self, framework, target, step, setup, run):
+        """Prepends a step before the target step."""
         # Fail if target not in dict
         if target not in self.steps:
             framework.logger.error(f'{target=} not in {self.steps=}, cannot insert step before it')

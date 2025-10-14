@@ -6,19 +6,25 @@ def show_step_summary(step_summary, error, warning, inconclusive=None, proven=No
     """
     Displays a table with the step summary.
 
-    Parameters:
-        step_summary: dict with the data summary:
-            {
-                "Violation": {"count": 2, "checks": {...}},
-                "Caution": {"count": 1, "checks": {...}},
-                ...
-            }
-        error: category name used as 'Error' row (e.g., 'Violation')
-        warning: category name used as 'Warning' row (e.g., 'Caution')
-        inconclusive: category name used as 'Inconclusive' row (optional)
-        proven: category name used as 'Proven' row (optional)
-        outdir: directory where the HTML file will be saved
-        step: name of the step
+    :param step_summary: dict with the data summary:
+        {
+            "Violation": {"count": 2, "checks": {...}},
+            "Caution": {"count": 1, "checks": {...}},
+            ...
+        }
+    :type step_summary: dict
+    :param error: category name used as 'Error' row (e.g., 'Violation')
+    :type error: str
+    :param warning: category name used as 'Warning' row (e.g., 'Caution')
+    :type warning: str
+    :param inconclusive: category name used as 'Inconclusive' row (optional)
+    :type inconclusive: str or None
+    :param proven: category name used as 'Proven' row (optional)
+    :type proven: str or None
+    :param outdir: directory where the HTML file will be saved
+    :type outdir: str or None
+    :param step: name of the step
+    :type step: str or None
     """
     step_summary_console = Console(force_terminal=True, force_interactive=False,
                                     record=True)
@@ -89,6 +95,16 @@ def show_step_summary(step_summary, error, warning, inconclusive=None, proven=No
     step_summary_console.save_text(f"{outdir}/{step}_summary.txt")
 
 def show_friendliness_score(score, outdir=None, step=None):
+    """
+    Displays the friendliness score in a table format.
+
+    :param score: friendliness score as a float (0 to 100)
+    :type score: float
+    :param outdir: directory where the HTML file will be saved
+    :type outdir: str or None
+    :param step: name of the step
+    :type step: str or None
+    """
 
     friendliness_console = Console(force_terminal=True, force_interactive=False,
                                 record=True)
@@ -102,6 +118,29 @@ def show_friendliness_score(score, outdir=None, step=None):
     friendliness_console.save_text(f"{outdir}/{step}_summary.txt")
 
 def show_coverage_summary(data, title="xxx", outdir=None, step=None):
+    """
+    Displays a table with the coverage summary.
+
+    :param data: list of dicts with the data summary:
+        [
+            {
+                "Status": "pass" or "fail" or "omit",
+                "Coverage Type": "toggle" or "fsm state" or ...,
+                "Intermediate Column 1": value,
+                ...
+                "Percentage": "85.00%",
+                "Goal": "80.00%"
+            },
+            ...
+        ]
+    :type data: list of dicts
+    :param title: Title of the table
+    :type title: str
+    :param outdir: directory where the HTML file will be saved
+    :type outdir: str or None
+    :param step: name of the step
+    :type step: str or None
+    """
 
     console = Console(force_terminal=True, force_interactive=False,
                         record=True)
@@ -153,6 +192,24 @@ def show_coverage_summary(data, title="xxx", outdir=None, step=None):
     console.save_text(f"{outdir}/{step}_summary.txt")
 
 def show_prove_summary(data, title="Property Summary", outdir=None, step=None):
+    """
+    Displays a table with the prove summary.
+
+    :param data: dict with the data summary:
+        {
+            "Proven": {"count": 5, "items": [...]},
+            "Vacuous": {"count": 2, "items": [...]},
+            "Fired": {"count": 1, "items": [...]},
+            ...
+        }
+    :type data: dict
+    :param title: Title of the table
+    :type title: str
+    :param outdir: directory where the HTML file will be saved
+    :type outdir: str or None
+    :param step: name of the step
+    :type step: str or None
+    """
 
     console = Console(force_terminal=True, force_interactive=False,
                         record=True)

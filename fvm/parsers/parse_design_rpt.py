@@ -2,6 +2,7 @@ import re
 import math
 
 def get_design_summary(filename):
+    """Extracts the design summary section from a design report file."""
     summary = []
     found = False
     with open(filename, "r", encoding="utf-8") as f:
@@ -17,6 +18,8 @@ def get_design_summary(filename):
     return summary
 
 def parse_design_summary(summary):
+    """Parses the design summary section and returns a list of lists with
+    category, statistic, count"""
     data = []
     for line in summary:
         match = re.match(r'^( {0,2})(.*\S)\s+(\d+)$', line)
@@ -36,6 +39,8 @@ def parse_design_summary(summary):
     return data
 
 def update_storage_structures(data):
+    """Updates the 'Storage Structures' row with the total number of
+    storage structures found in the design summary."""
     # Since the report doesn't include the total number of storage structures,
     # let's add it
     total = 0
@@ -52,6 +57,7 @@ def update_storage_structures(data):
     return data
 
 def data_from_design_summary(filename):
+    """Extracts and parses the design summary from a design report file."""
     summary = get_design_summary(filename)
     data = parse_design_summary(summary)
     data = update_storage_structures(data)

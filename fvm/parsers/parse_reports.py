@@ -1,6 +1,8 @@
 import re
 
 def parse_formal_reachability_report_to_html(input_file, output_file="report.html"):
+    """Parses a formal reachability report text file and converts it to an
+    HTML file with styling and interactivity."""
     with open(input_file, "r", encoding="utf-8") as file:
         lines = file.readlines()
 
@@ -342,6 +344,8 @@ def parse_formal_reachability_report_to_html(input_file, output_file="report.htm
         output.write("\n".join(html_content))
 
 def parse_formal_observability_report_to_html(input_file, output_file="report.html"):
+    """Parses a formal observability report text file and converts it to an
+    HTML file with styling and interactivity."""
     with open(input_file, "r", encoding="utf-8") as file:
         lines = file.readlines()
 
@@ -715,6 +719,8 @@ def parse_formal_observability_report_to_html(input_file, output_file="report.ht
         output.write("\n".join(html_content))
 
 def parse_reachability_report_to_html(input_file, output_file="report.html"):
+    """Parses a reachability report text file and converts it to an
+    HTML file with styling and interactivity."""
     with open(input_file, "r", encoding="utf-8") as file:
         lines = file.readlines()
 
@@ -894,6 +900,8 @@ def parse_reachability_report_to_html(input_file, output_file="report.html"):
         output.write("\n".join(html_content))
 
 def parse_formal_signoff_report_to_html(input_file, output_file="report.html"):
+    """Parses a formal signoff report text file and converts it to an
+    HTML file with styling and interactivity."""
     with open(input_file, "r", encoding="utf-8") as file:
         lines = file.readlines()
 
