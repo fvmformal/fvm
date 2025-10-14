@@ -46,6 +46,7 @@ LOGFORMAT_SUMMARY = '<cyan>FVM</cyan> | <green>Summary</green> | <level>{level: 
 #LOGFORMAT_TOOL = '<cyan>FVM</cyan> | <green>Tool</green> | <level>{level: <8}</level> | <level>{message}</level>'
 
 def getlogformattool(design, step, tool):
+    """Get the log format for tool messages"""
     return f'<cyan>{design}.{step}</cyan> | <green>{tool=}</green> | ' + '<level>{level: <8}</level> | <level>{message}</level>'
 
 # Create a rich console object
@@ -516,6 +517,7 @@ class fvmframework:
                 self.exit_if_required(BAD_VALUE)
 
     def init_results(self):
+        """Initialize the results structure"""
         # Initialize a dict structure for the results
         self.results = {}
         for design in self.toplevel:
@@ -782,11 +784,13 @@ class fvmframework:
         self.logger.add(sys.stderr, level=self.loglevel, format=LOGFORMAT)
 
     def set_logformat(self, logformat):
+        """ Set the logging format for the build and test framework"""
         self.logger.remove()
         self.logger.add(self.log_counter, level=0)
         self.logger.add(sys.stderr, level=self.loglevel, format=logformat)
 
     def get_log_counts(self) :
+        """Returns a dict with the number of log messages per severity level"""
         return self.log_counter.get_counts()
 
     def log(self, severity, string) :
@@ -1153,6 +1157,7 @@ class fvmframework:
                 self.list_step(design, f'{self.step}.{post_step}')
 
     def list_step(self, design, step):
+        """List a specific step for a design"""
         self.logger.trace(f'{design}.{step}')
         self.results[design][step]['status'] = 'skip'
 
@@ -1419,6 +1424,7 @@ class fvmframework:
         self.logger.error(f'{hook=} is not callable, only functions or other callable objects can be passed as hooks')
 
     def generate_psl_from_drom_sources(self, path):
+        """Generate PSL files from DROM sources, if any are specified"""
         self.logger.info(f'{self.drom_sources=}')
         if self.drom_sources:
             drom2psl_outdir = os.path.join(self.outdir, path)
