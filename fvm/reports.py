@@ -718,6 +718,8 @@ def generate_md(framework):
                     status = "passed"
                 elif framework.results[design][step]['status'] == "fail":
                     status = "failed"
+                else:
+                    status = "omit"
 
             elif ('status' in framework.results[design][step] and
                   framework.results[design][step]['status'] == "skip"):

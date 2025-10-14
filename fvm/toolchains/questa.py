@@ -568,7 +568,7 @@ def gen_reset_config(framework, filename, path):
         # Also, reset signals can drive trees of both synchronous and
         # asynchronous resets
         for reset in framework.resets:
-            if reset["design"] == '*' or reset["design"] == framework.current_toplevel:
+            if reset["design"] in (framework.current_toplevel, '*'):
                 string = f'netlist reset {reset["name"]}'
                 if reset["module"] is not None:
                     string += f' -module {reset["module"]}'
@@ -603,7 +603,7 @@ def gen_reset_domain_config(framework, filename, path):
     """
     with open(path+'/'+filename, "a", encoding='utf-8') as f:
         for domain in framework.reset_domains:
-            if domain["design"] == '*' or domain["design"] == framework.current_toplevel:
+            if domain["design"] in (framework.current_toplevel, '*'):
                 for signal in domain["port_list"]:
                     string = f'netlist port resetdomain {signal}'
                     if domain["name"] is not None:
@@ -640,7 +640,7 @@ def gen_clock_config(framework, filename, path):
     """
     with open(path+'/'+filename, "a", encoding='utf-8') as f:
         for clock in framework.clocks:
-            if clock["design"] == '*' or clock["design"] == framework.current_toplevel:
+            if clock["design"] in (framework.current_toplevel, '*'):
                 string = f'netlist clock {clock["name"]}'
                 if clock["module"] is not None:
                     string += f' -module {clock["module"]}'
@@ -672,7 +672,7 @@ def gen_clock_domain_config(framework, filename, path):
     """
     with open(path+'/'+filename, "a", encoding='utf-8') as f:
         for domain in framework.clock_domains:
-            if domain["design"] == '*' or domain["design"] == framework.current_toplevel:
+            if domain["design"] in (framework.current_toplevel, '*'):
                 for signal in domain["port_list"]:
                     string = f'netlist port domain {signal}'
                     if domain["clock_name"] is not None:
@@ -688,9 +688,9 @@ def gen_clock_domain_config(framework, filename, path):
                     if domain["module"] is not None:
                         string += f' -module {domain["module"]}'
                     if domain["inout_clock_in"] is True:
-                        string += f' -inout_clock_in'
+                        string += ' -inout_clock_in'
                     if domain["inout_clock_out"] is True:
-                        string += f' -inout_clock_out'
+                        string += ' -inout_clock_out'
                     print(string, file=f)
 
 def setup_resets(framework, path):
@@ -857,16 +857,16 @@ def setup_prove(framework, path):
 
         for blackbox in framework.blackboxes:
             bb_design, bb_entity = blackbox.split('.', 1)
-            if bb_design == framework.current_toplevel or bb_design == '*':
+            if bb_design in (framework.current_toplevel, '*'):
                 print(f'netlist blackbox {bb_entity}', file=f)
 
         for blackbox_instance in framework.blackbox_instances:
             bb_design, bb_instance = blackbox_instance.split('.', 1)
-            if bb_design == framework.current_toplevel or bb_design == '*':
+            if bb_design in (framework.current_toplevel, '*'):
                 print(f'netlist blackbox instance {bb_instance}', file=f)
 
         for cutpoint in framework.cutpoints:
-            if cutpoint["design"] == framework.current_toplevel or cutpoint["design"] == '*':
+            if cutpoint["design"] in (framework.current_toplevel, '*'):
                 string = f'netlist cutpoint {cutpoint["signal"]}'
                 if cutpoint["module"] is not None:
                     string += f' -module {cutpoint["module"]}'

@@ -1,6 +1,7 @@
-import pytest
 import os
 from pathlib import Path
+
+import pytest
 
 from fvm.drom2psl.generator import generator
 
