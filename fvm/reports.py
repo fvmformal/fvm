@@ -395,11 +395,6 @@ def generate_reports(framework, logger):
                                 url = None
                                 )
 
-            # TODO : we can have status == 'error' for when something
-            # breaks and the tests are not actually executed. Not sure we
-            # need that here, but let's keep this note just in case. We
-            # would use testcase.add_error_info if I recall correctly
-
             # output argument is an optional, non-standard field
             # TODO : maybe we could just put the first line in message and
             # all the errors in output, but Allure is supposed to render
@@ -479,79 +474,6 @@ def generate_reports(framework, logger):
     os.makedirs(framework.resultsdir, exist_ok=True)
     with open(xmlfile, 'w', encoding="utf-8") as f:
         f.write(xml_string)
-
-    # TODO : move this to generate_html_reports function
-
-    if shutil.which('allure') is not None:
-        # We normalize the path because the Popen documentation recommends
-        # to pass a fully qualified (absolute) path, and it also states
-        # that shutil.which() returns unqualified paths
-        allure_exec = os.path.abspath(shutil.which('allure'))
-        cmd = [allure_exec, 'generate', framework.resultsdir, '-o', framework.reportdir]
-        logger.info(f'Generating dashboard with {cmd=}')
-        process = subprocess.Popen (cmd,
-                                    stdout  = subprocess.PIPE,
-                                    stderr  = subprocess.PIPE,
-                                    text    = True,
-                                    bufsize = 1
-                                    )
-        # Wait for the process to complete and get the return code
-        # TODO : fail if retval is not zero
-        retval = process.wait()
-    else:
-        logger.warning("""allure is not found in $(PATH), cannot generate
-        HTML reports. If you are running inside a venv and have created the
-        venv with the Makefile, you should have allure inside your venv
-        folder. If you are not using a venv, you should install allure by
-        running 'python3 install_allure.py [install_dir], and add its bin/
-        directory to your $PATH'""")
-
-    # TODO : better manage this log
-    verbose = True
-
-    stdout_lines = []
-    stderr_lines = []
-    # TODO : the following line fails if the Allure process was not
-    # launched
-    with process.stdout as stdout, process.stderr as stderr:
-        for line in iter(stdout.readline, ''):
-            # If verbose, print to console
-            if verbose:
-                err, warn, success = framework.linecheck(line)
-                if err:
-                    logger.error(line.rstrip())
-                elif warn:
-                    logger.warning(line.rstrip())
-                elif success:
-                    logger.success(line.rstrip())
-                else:
-                    logger.info(line.rstrip())
-                    #logger.trace(line.rstrip())
-            # If not verbose, print dots
-            else:
-                print('.', end='', flush=True)
-            stdout_lines.append(line)  # Save to list
-
-        for line in iter(stderr.readline, ''):
-            # If verbose, print to console
-            if verbose:
-                err, warn, success = framework.linecheck(line)
-                if err:
-                    logger.error(line.rstrip())
-                elif warn:
-                    logger.warning(line.rstrip())
-                elif success:
-                    logger.success(line.rstrip())
-                else:
-                    logger.info(line.rstrip())
-                    #logger.trace(line.rstrip())
-            # If not verbose, print dots
-            else:
-                print('.', end='', flush=True)
-            stderr_lines.append(line)  # Save to list
-
-    # TODO : to see the report:
-    #   allure open fvm_out/dashboard
 
 def generate_allure(framework, logger):
     """
