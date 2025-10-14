@@ -594,7 +594,8 @@ def generate_allure(framework, logger):
                 shutil.rmtree(results_history)
             shutil.copytree(report_history, results_history)
         allure_exec = os.path.abspath(shutil.which('allure'))
-        cmd = [allure_exec, 'generate', '--clean', results_dir, '-o', report_dir, "--name", "FVM Report"]
+        cmd = [allure_exec, 'generate', '--clean', results_dir, '-o', report_dir,
+               "--name", "FVM Report"]
         logger.info(f'Generating dashboard with {cmd=}')
         process = subprocess.Popen (cmd,
                                     stdout  = subprocess.PIPE,
@@ -687,7 +688,7 @@ def generate_md(framework):
                 global_summary.append(f"Duration: {time_str_for_table}\n")
             logfile_path = os.path.join(framework.outdir, design, step, f"{step}.log")
             if os.path.exists(logfile_path):
-                global_summary.append(f"Log file: _{framework.outdir}/{design}/{step}/{step}.log_\n")
+                global_summary.append(f"Log file: _{logfile_path}_\n")
 
             pattern = re.compile(
                 r"(ERROR)\s+\1.*?line='([^']+)'",

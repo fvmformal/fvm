@@ -194,7 +194,8 @@ def run_qverify_step(framework, design, step):
             framework.logger.error(f"The database file does not exist: {db_file}")
         else:
             framework.logger.trace(f'command: {" ".join(cmd)=}')
-            aux_cmd_stdout, aux_cmd_stderr = framework.run_cmd(cmd, design, step, tool, framework.verbose)
+            aux_cmd_stdout, aux_cmd_stderr = framework.run_cmd(cmd, design, step, tool,
+                                                               framework.verbose)
             stdout_err += framework.logcheck(aux_cmd_stdout, design, step, tool)
             stderr_err += framework.logcheck(aux_cmd_stderr, design, step, tool)
             cmd_stdout += aux_cmd_stdout
@@ -250,16 +251,18 @@ def run_lint(framework, path):
     :rtype: tuple[str, str, int, int, str]
     """
     status = "pass"
-    run_stdout, run_stderr, stdout_err, stderr_err = run_qverify_step(framework, framework.current_toplevel, 'lint')
+    run_stdout, run_stderr, stdout_err, stderr_err = run_qverify_step(framework,
+                                                                      framework.current_toplevel,
+                                                                      'lint')
     lint_rpt_path = f'{path}/lint/lint.rpt'
     if os.path.exists(lint_rpt_path):
         lint_summary = parse_lint.parse_check_summary(lint_rpt_path)
         framework.results[framework.current_toplevel]['lint']['summary'] = lint_summary
-        tables.show_step_summary(framework.results[framework.current_toplevel]['lint']['summary'],
+        tables.show_step_summary(lint_summary,
                                  "Error", "Warning",
                                  outdir=f'{framework.outdir}/{framework.current_toplevel}/lint',
                                  step="lint")
-        if framework.results[framework.current_toplevel]['lint']['summary'].get('Error', {}).get('count', 0) > 0:
+        if lint_summary.get('Error', {}).get('count', 0) > 0:
             status = "fail"
     return run_stdout, run_stderr, stdout_err, stderr_err, status
 
@@ -317,7 +320,7 @@ def run_friendliness(framework, path):
         framework.results[framework.current_toplevel]['friendliness']['data'] = data
         framework.results[framework.current_toplevel]['friendliness']['score'] = score
         tables.show_friendliness_score(score,
-                                       outdir=f'{framework.outdir}/{framework.current_toplevel}/friendliness',
+                                       outdir=f'{path}/friendliness',
                                        step="friendliness")
 
     return run_stdout, run_stderr, stdout_err, stderr_err, status
@@ -378,9 +381,9 @@ def run_rulecheck(framework, path):
         framework.results[framework.current_toplevel][step]['summary'] = res
         tables.show_step_summary(res,
                                  "Violation", "Caution", "Inconclusive",
-                                 outdir=f'{framework.outdir}/{framework.current_toplevel}/{step}',
+                                 outdir=f'{path}/{step}',
                                  step=step)
-        if framework.results[framework.current_toplevel]['rulecheck']['summary'].get('Violation', {}).get('count', 0) > 0:
+        if res.get('Violation', {}).get('count', 0) > 0:
             status = "fail"
     return run_stdout, run_stderr, stdout_err, stderr_err, status
 
@@ -436,16 +439,18 @@ def run_xverify(framework, path):
     """
     status = "pass"
     step = 'xverify'
-    run_stdout, run_stderr, stdout_err, stderr_err = run_qverify_step(framework, framework.current_toplevel, step)
+    run_stdout, run_stderr, stdout_err, stderr_err = run_qverify_step(framework,
+                                                                      framework.current_toplevel,
+                                                                      step)
     rpt_path = f'{path}/{step}/xcheck_verify.rpt'
     if os.path.exists(rpt_path):
         res = parse_xverify.group_by_result(parse_xverify.parse_type_and_result(rpt_path))
         framework.results[framework.current_toplevel][step]['summary'] = res
-        tables.show_step_summary(framework.results[framework.current_toplevel][step]['summary'],
+        tables.show_step_summary(res,
                                  "Corruptible", "Incorruptible", "Inconclusive",
-                                 outdir=f'{framework.outdir}/{framework.current_toplevel}/{step}',
+                                 outdir=f'{path}/{step}',
                                  step=step)
-        if framework.results[framework.current_toplevel]['xverify']['summary'].get('Corruptible', {}).get('count', 0) > 0:
+        if res.get('Corruptible', {}).get('count', 0) > 0:
             status = "fail"
     return run_stdout, run_stderr, stdout_err, stderr_err, status
 
@@ -507,7 +512,9 @@ def run_reachability(framework, path):
     """
     status = "pass"
     step = 'reachability'
-    run_stdout, run_stderr, stdout_err, stderr_err = run_qverify_step(framework, framework.current_toplevel, step)
+    run_stdout, run_stderr, stdout_err, stderr_err = run_qverify_step(framework,
+                                                                      framework.current_toplevel,
+                                                                      step)
     rpt_path = f'{path}/{step}/covercheck_verify.rpt'
     html_path = f'{path}/{step}/reachability.html'
     if os.path.exists(rpt_path):
@@ -527,9 +534,9 @@ def run_reachability(framework, path):
         framework.results[framework.current_toplevel]['reachability']['summary'] = res
         title = f"Reachability Summary for Design: {framework.current_toplevel}"
         tables.show_coverage_summary(res, title=title,
-                                    outdir=f'{framework.outdir}/{framework.current_toplevel}/{step}',
+                                    outdir=f'{path}/{step}',
                                     step=step)
-        if any(row.get("Status") == "fail" for row in framework.results[framework.current_toplevel]['reachability']['summary']):
+        if any(row.get("Status") == "fail" for row in res):
             status = "goal_not_met"
     return run_stdout, run_stderr, stdout_err, stderr_err, status
 
@@ -732,16 +739,18 @@ def run_resets(framework, path):
     :rtype: tuple[str, str, int, int, str]
     """
     status = "pass"
-    run_stdout, run_stderr, stdout_err, stderr_err = run_qverify_step(framework, framework.current_toplevel, 'resets')
+    run_stdout, run_stderr, stdout_err, stderr_err = run_qverify_step(framework,
+                                                                      framework.current_toplevel,
+                                                                      'resets')
     rpt_path = f'{path}/resets/rdc.rpt'
     if os.path.exists(rpt_path):
         res = parse_resets.parse_resets_results(rpt_path)
         framework.results[framework.current_toplevel]['resets']['summary'] = res
         tables.show_step_summary(res,
                                  "Violation", "Caution",
-                                 outdir=f'{framework.outdir}/{framework.current_toplevel}/resets',
+                                 outdir=f'{path}/resets',
                                  step="resets")
-        if framework.results[framework.current_toplevel]['resets']['summary'].get('Violation', {}).get('count', 0) > 0:
+        if res.get('Violation', {}).get('count', 0) > 0:
             status = "fail"
     return run_stdout, run_stderr, stdout_err, stderr_err, status
 
@@ -804,16 +813,18 @@ def run_clocks(framework, path):
     :rtype: tuple[str, str, int, int, str]
     """
     status = "pass"
-    run_stdout, run_stderr, stdout_err, stderr_err = run_qverify_step(framework, framework.current_toplevel, 'clocks')
+    run_stdout, run_stderr, stdout_err, stderr_err = run_qverify_step(framework,
+                                                                      framework.current_toplevel,
+                                                                      'clocks')
     clocks_rpt_path = f'{path}/clocks/cdc.rpt'
     if os.path.exists(clocks_rpt_path):
         res = parse_clocks.parse_clocks_results(clocks_rpt_path)
         framework.results[framework.current_toplevel]['clocks']['summary'] = res
         tables.show_step_summary(res,
                                  "Violations", "Cautions", proven="Proven",
-                                 outdir=f'{framework.outdir}/{framework.current_toplevel}/clocks',
+                                 outdir=f'{path}/clocks',
                                  step="clocks")
-        if framework.results[framework.current_toplevel]['clocks']['summary'].get('Violations', {}).get('count', 0) > 0:
+        if res.get('Violations', {}).get('count', 0) > 0:
             status = "fail"
     return run_stdout, run_stderr, stdout_err, stderr_err, status
 
@@ -918,17 +929,19 @@ def run_prove(framework, path):
     :rtype: tuple[str, str, int, int, str]
     """
     status = "pass"
-    run_stdout, run_stderr, stdout_err, stderr_err = run_qverify_step(framework, framework.current_toplevel, 'prove')
+    run_stdout, run_stderr, stdout_err, stderr_err = run_qverify_step(framework,
+                                                                      framework.current_toplevel,
+                                                                      'prove')
     rpt_path = f'{path}/prove/formal_verify.rpt'
     if os.path.exists(rpt_path):
         res = parse_prove.property_summary(rpt_path)
         framework.results[framework.current_toplevel]['prove']['summary'] = res
         properties = parse_prove.normalize_sections(parse_prove.parse_targets_report(rpt_path))
         tables.show_prove_summary(properties,
-                                  outdir=f'{framework.outdir}/{framework.current_toplevel}/prove',
+                                  outdir=f'{path}/prove',
                                   step='prove')
-        if (framework.results[framework.current_toplevel]['prove']['summary'].get("Asserts", {}).get("Children", {}).get("Fired", {}).get("Count", 0 )> 0
-            or framework.results[framework.current_toplevel]['prove']['summary'].get("Covers", {}).get("Children", {}).get("Uncoverable", {}).get("Count", 0) > 0):
+        if (res.get("Asserts", {}).get("Children", {}).get("Fired", {}).get("Count", 0 )> 0 or
+            res.get("Covers", {}).get("Children", {}).get("Uncoverable", {}).get("Count", 0) > 0):
             status = "fail"
     return run_stdout, run_stderr, stdout_err, stderr_err, status
 
@@ -968,8 +981,13 @@ def setup_prove_simcover(framework, path):
         #     merging the UCDBs, and
         #   - It saves a UCDB file
         vcdfilename = os.path.basename(os.path.dirname(file)) + '.vcd'
-        helpers.insert_line_after_target(file, "onerror {resume}", f'vcd dumpports -file {vcdfilename} -in -out *')
-        helpers.insert_line_before_target(file, "quit -f;", f'coverage attribute -name TESTNAME -value {pathlib.Path(file).parent.name}')
+        helpers.insert_line_after_target(file,
+                                         "onerror {resume}",
+                                         f'vcd dumpports -file {vcdfilename} -in -out *')
+        helpers.insert_line_before_target(file,
+                                          "quit -f;",
+                                          f'coverage attribute -name TESTNAME -value '
+                                          f'{pathlib.Path(file).parent.name}')
         helpers.insert_line_before_target(file, "quit -f;", "coverage save sim.ucdb")
 
 def run_prove_simcover(framework, path):
@@ -1057,7 +1075,7 @@ def run_prove_simcover(framework, path):
                                      title=title,
                                      outdir=f'{framework.outdir}/{framework.current_toplevel}/prove.simcover',
                                      step='prove.simcover')
-        if any(row.get("Status") == "fail" for row in framework.results[framework.current_toplevel]['prove.simcover']['summary']):
+        if any(row.get("Status") == "fail" for row in res):
             status = "goal_not_met"
     return sum_cmd_stdout, sum_cmd_stderr, stdout_err, stderr_err, status
 
@@ -1176,9 +1194,9 @@ def run_prove_formalcover(framework, path):
             title = f"Formal Signoff Coverage Summary for Design: {framework.current_toplevel}"
             tables.show_coverage_summary(res,
                                             title=title,
-                                            outdir=f'{framework.outdir}/{framework.current_toplevel}/prove.formalcover',
+                                            outdir=f'{path}/prove.formalcover',
                                             step='prove.formalcover')
-            if any(row.get("Status") == "fail" for row in framework.results[framework.current_toplevel]['prove.formalcover']['summary']):
+            if any(row.get("Status") == "fail" for row in res):
                 status = "goal_not_met"
     return run_stdout, run_stderr, stdout_err, stderr_err, status
 

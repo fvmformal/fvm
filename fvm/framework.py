@@ -217,7 +217,8 @@ class fvmframework:
         # Exit if args.step is unrecognized
         if args.step is not None:
             if args.step not in self.steps.steps:
-                self.logger.error(f'step {args.step} not available in {self.toolchain}. Available steps are: {list(self.steps.steps.keys())}')
+                self.logger.error(f'step {args.step} not available in {self.toolchain}. '
+                                  f'Available steps are: {list(self.steps.steps.keys())}')
                 self.exit_if_required(BAD_VALUE)
 
     def set_toolchain(self, toolchain):
@@ -258,7 +259,8 @@ class fvmframework:
             self.exit_if_required(BAD_VALUE)
         extension = pathlib.Path(src).suffix
         if extension not in ['.vhd', '.VHD', '.vhdl', '.VHDL'] :
-            self.logger.warning(f'VHDL source {src=} does not have a typical VHDL extension, instead it has {extension=}')
+            self.logger.warning(f'VHDL source {src=} does not have a typical VHDL extension, '
+                                f'instead it has {extension=}')
         self.vhdl_sources.append(src)
         self.libraries_from_vhdl_sources.append(library)
         self.logger.debug(f'{self.vhdl_sources=}')
@@ -289,7 +291,8 @@ class fvmframework:
             self.exit_if_required(BAD_VALUE)
         extension = pathlib.Path(src).suffix
         if extension not in ['.psl', '.PSL'] :
-            self.logger.warning(f'PSL source {src=} does not have a typical PSL extension extension, instead it has {extension=}')
+            self.logger.warning(f'PSL source {src=} does not have a typical PSL extension, '
+                                f'instead it has {extension=}')
         self.psl_sources.append(src)
         self.logger.debug(f'{self.psl_sources=}')
 
@@ -320,7 +323,8 @@ class fvmframework:
             self.exit_if_required(BAD_VALUE)
         extension = pathlib.Path(src).suffix
         if extension not in ['.json', '.JSON', '.drom', '.wavedrom'] :
-            self.logger.warning(f'wavedrom source {src=} does not have a typical wavedrom extension, instead it has {extension=}')
+            self.logger.warning(f'wavedrom source {src=} does not have a typical wavedrom '
+                                f'extension, instead it has {extension=}')
         self.drom_sources.append(src)
         self.logger.debug(f'{self.drom_sources=}')
 
@@ -511,7 +515,8 @@ class fvmframework:
         # will not be necessary because there won't be any clashes with fvm_*
         # directories
         if 'fvm_dashboard' in toplevel or 'fvm_reports' in toplevel:
-            self.logger.error("toplevels can not have the following reserved names: fvm_dashboard, fvm_reports")
+            self.logger.error("toplevels can not have the following reserved names: "
+                            "fvm_dashboard, fvm_reports")
             self.exit_if_required(BAD_VALUE)
 
         # If a design was specified, just run that design
@@ -519,7 +524,8 @@ class fvmframework:
             if self.design in self.toplevel:
                 self.toplevel = [self.design]
             else:
-                self.logger.error(f'Specified {self.design=} not in {self.toplevel=}, did you add it with set_toplevel()?')
+                self.logger.error(f'Specified {self.design=} not in {self.toplevel=}, '
+                                  f'did you add it with set_toplevel()?')
                 self.exit_if_required(BAD_VALUE)
 
     def init_results(self):
@@ -1149,7 +1155,8 @@ class fvmframework:
         if self.step is None:
             for step in self.steps.steps:
                 if self.is_skipped(design, step):
-                    self.logger.trace(f'{step=} of {design=} skipped by skip() function, will not list')
+                    self.logger.trace(f'{step=} of {design=} skipped by skip() function, '
+                                      f'will not list')
                     self.results[design][step]['status'] = 'skip'
                 else:
                     self.list_step(design, step)
@@ -1211,7 +1218,8 @@ class fvmframework:
             self.logger.info(self.steps.steps)
             for step in self.steps.steps:
                 if self.is_skipped(design, step):
-                    self.logger.info(f'{step=} of {design=} skipped by skip() function, will not run')
+                    self.logger.info(f'{step=} of {design=} skipped by skip() function, '
+                                     f'will not run')
                     self.results[design][step]['status'] = 'skip'
                 else:
                     # TODO : allow pre_hooks to return errors and stop the run
@@ -1391,7 +1399,10 @@ class fvmframework:
         # Raise an exception if the return code is non-zero and Ctrl+C was
         # not pressed
         if retval != 0 and self.ctrl_c_pressed is False:
-            raise subprocess.CalledProcessError(retval, cmd, output=captured_stdout, stderr=captured_stderr)
+            raise subprocess.CalledProcessError(retval,
+                                                cmd,
+                                                output=captured_stdout,
+                                                stderr=captured_stderr)
 
         self.set_logformat(LOGFORMAT)
 
@@ -1423,7 +1434,8 @@ class fvmframework:
         """Run a user-specified hook"""
         if callable(hook):
             return hook(step, design)
-        self.logger.error(f'{hook=} is not callable, only functions or other callable objects can be passed as hooks')
+        self.logger.error(f'{hook=} is not callable, only functions or other callable '
+                          f'objects can be passed as hooks')
         self.exit_if_required(BAD_VALUE)
 
     def generate_psl_from_drom_sources(self, path):
@@ -1433,9 +1445,10 @@ class fvmframework:
             drom2psl_outdir = os.path.join(self.outdir, path)
             os.makedirs(drom2psl_outdir, exist_ok=True)
             generator(self.drom_sources, outdir=drom2psl_outdir)
-            self.drom_generated_psl = [pathlib.Path(src).with_suffix('.psl') for src in self.drom_sources]
+            self.drom_generated_psl = [pathlib.Path(src).with_suffix('.psl') 
+                                       for src in self.drom_sources]
 
-    def setup_design(self, design, config = None):
+    def setup_design(self, design, config=None):
         """Create the output directory and the scripts for a design, but do not
         run anything"""
         # Create the output directories, but do not throw an error if they
