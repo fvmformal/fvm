@@ -646,7 +646,7 @@ def generate_allure(framework, logger):
                 shutil.rmtree(results_history)
             shutil.copytree(report_history, results_history)
         allure_exec = os.path.abspath(shutil.which('allure'))
-        cmd = [allure_exec, 'generate', '--clean', results_dir, '-o', report_dir]
+        cmd = [allure_exec, 'generate', '--clean', results_dir, '-o', report_dir, "--name", "FVM Report"]
         logger.info(f'Generating dashboard with {cmd=}')
         process = subprocess.Popen (cmd,
                                     stdout  = subprocess.PIPE,
@@ -664,7 +664,6 @@ def generate_allure(framework, logger):
         folder. If you are not using a venv, you should install allure by
         running 'python3 install_allure.py [install_dir], and add its bin/
         directory to your $PATH'""")
-
 
 def generate_md(framework):
     """Generate a Markdown report from the framework results"""
