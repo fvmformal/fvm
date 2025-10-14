@@ -14,20 +14,16 @@ from fvm import generate_test_cases
 from fvm.parsers import parse_prove
 
 def get_all_steps(steps, post_steps):
-    """Generate a list of steps including post-steps.
+    """
+    Generate a list of steps including post-steps.
 
-    Parameters
-    ----------
-    steps : dict
-        Dictionary of steps, where keys are step names and values 
-        are dictionaries with setup/run functions.
-    post_steps : dict
-        Mapping of main steps to their associated post-steps.
+    :param steps: List of main steps.
+    :type steps: list of str
+    :param post_steps: Dictionary mapping main steps to their post-steps.
+    :type post_steps: dict of str to list of str
 
-    Returns
-    -------
-    list of str
-        Combined list of steps and post-steps.
+    :return: List of all steps including post-steps.
+    :rtype: list of str
     """
     all_steps = []
     for step in steps:
@@ -38,7 +34,15 @@ def get_all_steps(steps, post_steps):
     return all_steps
 
 def rich_table_to_markdown(rich_table_str):
-    """Convert a rich Table to a Markdown table."""
+    """
+    Convert a rich Table to a Markdown table.
+
+    :param rich_table_str: The string representation of a rich Table.
+    :type rich_table_str: str
+
+    :return: Markdown table as a string.
+    :rtype: str
+    """
     rows = []
     for line in rich_table_str.splitlines():
         line = line.strip()
@@ -70,8 +74,14 @@ def rich_table_to_markdown(rich_table_str):
     return "\n".join([header, separator] + body)
 
 def pretty_summary(framework, logger):
-    """Prints the final summary"""
+    """
+    Prints the final summary
 
+    :param framework: the FVMFramework object
+    :type framework: fvm.framework.FVMFramework
+    :param logger: the logger object
+    :type logger: loguru._logger.Logger
+    """
     console = Console(force_terminal=True, force_interactive=False,
                               record=True)
     console.rule('[bold white]FVM Summary[/bold white]')
@@ -324,7 +334,14 @@ def pretty_summary(framework, logger):
 #       - generate_text_report (not sure we really need a text report)
 #       - generate_html_report
 def generate_reports(framework, logger):
-    """Generates output reports"""
+    """
+    Generates output reports
+    
+    :param framework: the FVMFramework object
+    :type framework: fvm.framework.FVMFramework
+    :param logger: the logger object
+    :type logger: loguru._logger.Logger
+    """
 
     # For all designs:
     #   Define a TestSuite per design
@@ -537,6 +554,14 @@ def generate_reports(framework, logger):
     #   allure open fvm_out/dashboard
 
 def generate_allure(framework, logger):
+    """
+    Generates an Allure report from the framework results
+
+    :param framework: the FVMFramework object
+    :type framework: fvm.framework.FVMFramework
+    :param logger: the logger object
+    :type logger: loguru._logger.Logger
+    """
 
     dashboard_dir = os.path.join(f'{framework.outdir}', "dashboard")
     results_dir = os.path.join(dashboard_dir, "allure-results")
@@ -666,7 +691,12 @@ def generate_allure(framework, logger):
         directory to your $PATH'""")
 
 def generate_md(framework):
-    """Generate a Markdown report from the framework results"""
+    """
+    Generate a Markdown report from the framework results
+
+    :param framework: the FVMFramework object
+    :type framework: fvm.framework.FVMFramework
+    """
     global_summary = []
 
     if framework.start_time_setup is None:
@@ -759,6 +789,7 @@ def generate_md(framework):
             rich_table_str = f.read()
         global_summary.append("## Summary")
         global_summary.append(rich_table_to_markdown(rich_table_str))
+
     summary_path = os.path.join(framework.outdir, "summary.md")
     with open(summary_path, "w", encoding="utf-8") as f:
         f.write("\n".join(global_summary))

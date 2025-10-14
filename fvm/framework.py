@@ -1598,12 +1598,11 @@ class fvmframework:
         return err, errorcode
 
     def get_steps(self):
-        """Generate a list of the available tool steps including post-steps.
+        """
+        Generate a list of the available tool steps including post-steps.
 
-        Returns
-        -------
-        list of str
-            Combined list of steps and post-steps.
+        :return: List of all available steps including post-steps.
+        :rtype: list[str]
         """
         all_steps = []
         for step in self.steps.steps:

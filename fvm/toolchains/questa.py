@@ -155,7 +155,7 @@ def run_qverify_step(framework, design, step):
     :param step: the name of the step to run
     :type step: str
 
-    :returns: A tuple (cmd_stdout, cmd_stderr, stdout_err, stderr_err)
+    :return: A tuple (cmd_stdout, cmd_stderr, stdout_err, stderr_err)
     :rtype: tuple[str, str, int, int]
     """
     # If called with a specific step, run that specific step
@@ -245,7 +245,7 @@ def run_lint(framework, path):
     :param path: the path where to create the lint directory
     :type path: str
 
-    :returns: A tuple (cmd_stdout, cmd_stderr, stdout_err, stderr_err, status)
+    :return: A tuple (cmd_stdout, cmd_stderr, stdout_err, stderr_err, status)
     :rtype: tuple[str, str, int, int, str]
     """
     status = "pass"
@@ -302,7 +302,7 @@ def run_friendliness(framework, path):
     :param path: the path where to create the friendliness directory
     :type path: str
 
-    :returns: A tuple (cmd_stdout, cmd_stderr, stdout_err, stderr_err, status)
+    :return: A tuple (cmd_stdout, cmd_stderr, stdout_err, stderr_err, status)
     :rtype: tuple[str, str, int, int, str]
     """
     status = "pass"
@@ -430,7 +430,7 @@ def run_xverify(framework, path):
     :param path: the path where to create the script
     :type path: str
 
-    :returns: A tuple (cmd_stdout, cmd_stderr, stdout_err, stderr_err, status)
+    :return: A tuple (cmd_stdout, cmd_stderr, stdout_err, stderr_err, status)
     :rtype: tuple[str, str, int, int, str]
     """
     status = "pass"
@@ -501,7 +501,7 @@ def run_reachability(framework, path):
     :param path: the path where to create the script
     :type path: str
 
-    :returns: A tuple (cmd_stdout, cmd_stderr, stdout_err, stderr_err, status)
+    :return: A tuple (cmd_stdout, cmd_stderr, stdout_err, stderr_err, status)
     :rtype: tuple[str, str, int, int, str]
     """
     status = "pass"
@@ -727,7 +727,7 @@ def run_resets(framework, path):
     :param path: the path where to create the script
     :type path: str
 
-    :returns: A tuple (cmd_stdout, cmd_stderr, stdout_err, stderr_err, status)
+    :return: A tuple (cmd_stdout, cmd_stderr, stdout_err, stderr_err, status)
     :rtype: tuple[str, str, int, int, str]
     """
     status = "pass"
@@ -799,7 +799,7 @@ def run_clocks(framework, path):
     :param path: the path where to create the script
     :type path: str
 
-    :returns: A tuple (cmd_stdout, cmd_stderr, stdout_err, stderr_err, status)
+    :return: A tuple (cmd_stdout, cmd_stderr, stdout_err, stderr_err, status)
     :rtype: tuple[str, str, int, int, str]
     """
     status = "pass"
@@ -912,8 +912,8 @@ def run_prove(framework, path):
     :type framework: fvm.framework.FVMFramework
     :param path: the path where to create the script
     :type path: str
-    
-    :returns: A tuple (cmd_stdout, cmd_stderr, stdout_err, stderr_err, status)
+
+    :return: A tuple (cmd_stdout, cmd_stderr, stdout_err, stderr_err, status)
     :rtype: tuple[str, str, int, int, str]
     """
     status = "pass"
@@ -980,7 +980,7 @@ def run_prove_simcover(framework, path):
     :param path: the path where to create the script
     :type path: str
 
-    :returns: A tuple (cmd_stdout, cmd_stderr, stdout_err, stderr_err, status)
+    :return: A tuple (cmd_stdout, cmd_stderr, stdout_err, stderr_err, status)
     :rtype: tuple[str, str, int, int, str]
     """
     status = "pass"
@@ -1121,7 +1121,7 @@ def run_prove_formalcover(framework, path):
     :param path: the path where to create the script
     :type path: str
 
-    :returns: A tuple (cmd_stdout, cmd_stderr, stdout_err, stderr_err, status)
+    :return: A tuple (cmd_stdout, cmd_stderr, stdout_err, stderr_err, status)
     :rtype: tuple[str, str, int, int, str]
     """
     status = "pass"
