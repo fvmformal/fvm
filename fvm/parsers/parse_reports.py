@@ -1,3 +1,4 @@
+"""Parsers for coverage reports and convert them to HTML."""
 import re
 
 def parse_formal_reachability_report_to_html(input_file, output_file="report.html"):

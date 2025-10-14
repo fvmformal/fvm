@@ -1,3 +1,4 @@
+"""Parsers for reachability reports."""
 import re
 
 def parse_single_table(html):

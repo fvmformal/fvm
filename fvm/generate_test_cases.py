@@ -1,3 +1,4 @@
+"""Generate test case structures for reports."""
 import uuid
 import json
 import os

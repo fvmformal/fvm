@@ -1,3 +1,4 @@
+"""Report generation functions for FVM"""
 import os
 import re
 import subprocess

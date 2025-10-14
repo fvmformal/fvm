@@ -1,3 +1,4 @@
+"""Parsers for friendliness score"""
 import re
 import math
 

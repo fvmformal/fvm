@@ -1,3 +1,8 @@
+"""
+The FVM Framework
+
+Framework to run formal verification tools on VHDL designs
+"""
 # Python standard library imports
 import sys
 import os

@@ -1,3 +1,4 @@
+"""Helper functions for FVM"""
 # Helper functions
 import os
 import sys

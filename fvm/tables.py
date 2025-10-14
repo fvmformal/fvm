@@ -1,3 +1,4 @@
+"""Functions to display tables in the console and save them as HTML and text files."""
 from rich.table import Table
 from rich.console import Console
 
