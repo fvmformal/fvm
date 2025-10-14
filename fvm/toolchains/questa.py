@@ -61,6 +61,22 @@ default_flags = {
 coverage_goal = {}
 
 def define_steps(framework, steps):
+    """
+    Define the steps available in the Questa toolchain
+
+    This function is called by the framework to register the steps available
+    in this toolchain. The steps are registered in the order they are defined here,
+    so this also defines the order of execution
+
+    Each step is defined by a setup function and a run function. The setup
+    function generates the script to run the tool, while the run function
+    actually runs the tool and parses the results
+
+    :param framework: the FVMFramework object
+    :type framework: fvm.framework.FVMFramework
+    :param steps: the Steps object where the steps will be registered
+    :type steps: fvm.steps.Steps
+    """
     steps.add_step(framework, 'lint', setup_lint, run_lint)
     steps.add_step(framework, 'friendliness', setup_friendliness, run_friendliness)
     steps.add_step(framework, 'rulecheck', setup_rulecheck, run_rulecheck)
@@ -74,15 +90,31 @@ def define_steps(framework, steps):
     steps.add_post_step(framework, 'prove', 'simcover', setup_prove_simcover, run_prove_simcover)
 
 def create_f_file(filename, sources):
+    """
+    Create a .f file with the list of sources
+    
+    :param filename: the name of the .f file to create
+    :type filename: str
+    :param sources: the list of sources to include in the .f file
+    :type sources: list of str
+    """
     with open(filename, "w", encoding='utf-8') as f:
         for src in sources:
             print(src, file=f)
 
 def gencompilescript(framework, filename, path):
-    """Generate script to compile design sources
+    """
+    Generate script to compile design sources
 
     This is used as header for the other scripts, since we need to have
     a compiled netlist in order to do anything
+
+    :param framework: the FVMFramework object
+    :type framework: fvm.framework.FVMFramework
+    :param filename: the name of the script to create
+    :type filename: str
+    :param path: the path where to create the script
+    :type path: str
     """
     # TODO : we must also compile the Verilog sources, if they exist
     # TODO : we must check for the case of only-verilog designs (no VHDL files)
@@ -110,9 +142,22 @@ def gencompilescript(framework, filename, path):
             print('', file=f)
 
 def run_qverify_step(framework, design, step):
-    """Run a specific step with the Questa formal toolchain. A single function
-    can be reused for multiple steps since the tools share the same interface
-    through the qverify command line tool/wrapper"""
+    """
+    Run a specific step with the Questa formal toolchain.
+
+    A single function can be reused for multiple steps since the tools
+    share the same interface through the qverify command line tool/wrapper
+
+    :param framework: the FVMFramework object
+    :type framework: fvm.framework.FVMFramework
+    :param design: the name of the design to analyze
+    :type design: str
+    :param step: the name of the step to run
+    :type step: str
+
+    :returns: A tuple (cmd_stdout, cmd_stderr, stdout_err, stderr_err)
+    :rtype: tuple[str, str, int, int]
+    """
     # If called with a specific step, run that specific step
     # TODO : questa code should also register its run functions with the
     # steps class
@@ -157,6 +202,12 @@ def run_qverify_step(framework, design, step):
     return cmd_stdout, cmd_stderr, stdout_err, stderr_err
 
 def get_linecheck_common():
+    """
+    Common patterns for linecheck in all Questa steps
+
+    :return: A dictionary containing linecheck patterns
+    :rtype: dict[str, list[str]]
+    """
     return {
         "ignore": [
             "Errors: 0",
@@ -169,7 +220,14 @@ def get_linecheck_common():
     }
 
 def setup_lint(framework, path):
-    """Generate script to run Lint"""
+    """
+    Generate script to run Lint
+
+    :param framework: the FVMFramework object
+    :type framework: fvm.framework.FVMFramework
+    :param path: the path where to create the script
+    :type path: str
+    """
     filename = "lint.do"
     gencompilescript(framework, filename, path)
     with open(f'{path}/{filename}', "a", encoding='utf-8') as f:
@@ -179,6 +237,17 @@ def setup_lint(framework, path):
         print('exit', file=f)
 
 def run_lint(framework, path):
+    """
+    Run Lint and parse results
+
+    :param framework: the FVMFramework object
+    :type framework: fvm.framework.FVMFramework
+    :param path: the path where to create the lint directory
+    :type path: str
+
+    :returns: A tuple (cmd_stdout, cmd_stderr, stdout_err, stderr_err, status)
+    :rtype: tuple[str, str, int, int, str]
+    """
     status = "pass"
     run_stdout, run_stderr, stdout_err, stderr_err = run_qverify_step(framework, framework.current_toplevel, 'lint')
     lint_rpt_path = f'{path}/lint/lint.rpt'
@@ -194,6 +263,12 @@ def run_lint(framework, path):
     return run_stdout, run_stderr, stdout_err, stderr_err, status
 
 def get_linecheck_lint():
+    """
+    Common patterns for linecheck in the Questa lint step
+
+    :return: A dictionary containing linecheck patterns
+    :rtype: dict[str, list[str]]
+    """
     patterns = get_linecheck_common()
 
     # Make a copy to avoid modifying the original dict
@@ -202,8 +277,15 @@ def get_linecheck_lint():
     return patterns
 
 def setup_friendliness(framework, path):
-    """Generate script to compile AutoCheck, which also generates a report we
-    analyze to determine the design's formal-friendliness"""
+    """
+    Generate script to compile AutoCheck, which also generates a report we
+    analyze to determine the design's formal-friendliness
+
+    :param framework: the FVMFramework object
+    :type framework: fvm.framework.FVMFramework
+    :param path: the path where to create the script
+    :type path: str
+    """
     filename = "friendliness.do"
     gencompilescript(framework, filename, path)
     with open(path+'/'+filename, "a", encoding='utf-8') as f:
@@ -212,6 +294,17 @@ def setup_friendliness(framework, path):
         print('exit', file=f)
 
 def run_friendliness(framework, path):
+    """
+    Run AutoCheck to generate a friendliness report and parse results
+
+    :param framework: the FVMFramework object
+    :type framework: fvm.framework.FVMFramework
+    :param path: the path where to create the friendliness directory
+    :type path: str
+
+    :returns: A tuple (cmd_stdout, cmd_stderr, stdout_err, stderr_err, status)
+    :rtype: tuple[str, str, int, int, str]
+    """
     status = "pass"
     run_stdout, run_stderr, stdout_err, stderr_err = run_qverify_step(framework,
                                                    framework.current_toplevel,
@@ -229,6 +322,11 @@ def run_friendliness(framework, path):
     return run_stdout, run_stderr, stdout_err, stderr_err, status
 
 def get_linecheck_friendliness():
+    """Common patterns for linecheck in the Questa friendliness step
+
+    :return: A dictionary containing linecheck patterns
+    :rtype: dict[str, list[str]]
+    """
     patterns = get_linecheck_common()
 
     # Make a copy to avoid modifying the original dict
@@ -237,7 +335,14 @@ def get_linecheck_friendliness():
     return patterns
 
 def setup_rulecheck(framework, path):
-    """Generate script to run AutoCheck"""
+    """
+    Generate script to run AutoCheck
+
+    :param framework: the FVMFramework object
+    :type framework: fvm.framework.FVMFramework
+    :param path: the path where to create the script
+    :type path: str
+    """
     filename = "rulecheck.do"
     gencompilescript(framework, filename, path)
     with open(path+'/'+filename, "a", encoding='utf-8') as f:
@@ -250,6 +355,17 @@ def setup_rulecheck(framework, path):
         print('exit', file=f)
 
 def run_rulecheck(framework, path):
+    """
+    Run the rulecheck step and parse results
+
+    :param framework: the FVMFramework object
+    :type framework: fvm.framework.FVMFramework
+    :param path: the path where to create the script
+    :type path: str
+
+    :return: A tuple (cmd_stdout, cmd_stderr, stdout_err, stderr_err, status)
+    :rtype: tuple[str, str, int, int, str]
+    """
     status = "pass"
     step = 'rulecheck'
     run_stdout, run_stderr, stdout_err, stderr_err = run_qverify_step(framework,
@@ -268,6 +384,12 @@ def run_rulecheck(framework, path):
     return run_stdout, run_stderr, stdout_err, stderr_err, status
 
 def get_linecheck_rulecheck():
+    """
+    Common patterns for linecheck in the Questa rulecheck step
+
+    :return: A dictionary containing linecheck patterns
+    :rtype: dict[str, list[str]]
+    """
     patterns = get_linecheck_common()
 
     # Make a copy to avoid modifying the original dict
@@ -281,7 +403,14 @@ def get_linecheck_rulecheck():
     return patterns
 
 def setup_xverify(framework, path):
-    """Generate script to run X-Check"""
+    """
+    Generate script to run X-Check
+
+    :param framework: the FVMFramework object
+    :type framework: fvm.framework.FVMFramework
+    :param path: the path where to create the script
+    :type path: str
+    """
     filename = "xverify.do"
     gencompilescript(framework, filename, path)
     with open(path+'/'+filename, "a", encoding='utf-8') as f:
@@ -293,6 +422,17 @@ def setup_xverify(framework, path):
         print('exit', file=f)
 
 def run_xverify(framework, path):
+    """
+    Run the xverify step and parse results
+
+    :param framework: the FVMFramework object
+    :type framework: fvm.framework.FVMFramework
+    :param path: the path where to create the script
+    :type path: str
+
+    :returns: A tuple (cmd_stdout, cmd_stderr, stdout_err, stderr_err, status)
+    :rtype: tuple[str, str, int, int, str]
+    """
     status = "pass"
     step = 'xverify'
     run_stdout, run_stderr, stdout_err, stderr_err = run_qverify_step(framework, framework.current_toplevel, step)
@@ -309,6 +449,12 @@ def run_xverify(framework, path):
     return run_stdout, run_stderr, stdout_err, stderr_err, status
 
 def get_linecheck_xverify():
+    """
+    Common patterns for linecheck in the Questa xverify step
+
+    :return: A dictionary containing linecheck patterns
+    :rtype: dict[str, list[str]]
+    """
     patterns = get_linecheck_common()
 
     # Make a copy to avoid modifying the original dict
@@ -322,7 +468,14 @@ def get_linecheck_xverify():
     return patterns
 
 def setup_reachability(framework, path):
-    """Generate a script to run CoverCheck"""
+    """
+    Generate a script to run CoverCheck
+
+    :param framework: the FVMFramework object
+    :type framework: fvm.framework.FVMFramework
+    :param path: the path where to create the script
+    :type path: str
+    """
     filename = "reachability.do"
     # TODO : if a .ucdb file is specified as argument, run the post-simulation
     # analysis instead of the pre-simulation analysis (see
@@ -340,6 +493,17 @@ def setup_reachability(framework, path):
         print('exit', file=f)
 
 def run_reachability(framework, path):
+    """
+    Run the reachability step and parse results
+
+    :param framework: the FVMFramework object
+    :type framework: fvm.framework.FVMFramework
+    :param path: the path where to create the script
+    :type path: str
+
+    :returns: A tuple (cmd_stdout, cmd_stderr, stdout_err, stderr_err, status)
+    :rtype: tuple[str, str, int, int, str]
+    """
     status = "pass"
     step = 'reachability'
     run_stdout, run_stderr, stdout_err, stderr_err = run_qverify_step(framework, framework.current_toplevel, step)
@@ -369,6 +533,12 @@ def run_reachability(framework, path):
     return run_stdout, run_stderr, stdout_err, stderr_err, status
 
 def get_linecheck_reachability():
+    """
+    Common patterns for linecheck in the Questa reachability step
+
+    :return: A dictionary containing linecheck patterns
+    :rtype: dict[str, list[str]]
+    """
     patterns = get_linecheck_common()
 
     # Make a copy to avoid modifying the original dict
@@ -381,6 +551,16 @@ def get_linecheck_reachability():
     return patterns
 
 def gen_reset_config(framework, filename, path):
+    """
+    Generate reset configuration in the given script
+    
+    :param framework: the FVMFramework object
+    :type framework: fvm.framework.FVMFramework
+    :param filename: the name of the script to append the configuration to
+    :type filename: str
+    :param path: the path where the script is located
+    :type path: str
+    """
     with open(path+'/'+filename, "a", encoding='utf-8') as f:
         # Clock trees can be both active high and low when some logic is
         # reset when the reset is high and other logic is reset when it is
@@ -411,6 +591,16 @@ def gen_reset_config(framework, filename, path):
                 print(string, file=f)
 
 def gen_reset_domain_config(framework, filename, path):
+    """
+    Generate reset domain configuration in the given script
+
+    :param framework: the FVMFramework object
+    :type framework: fvm.framework.FVMFramework
+    :param filename: the name of the script to append the configuration to
+    :type filename: str
+    :param path: the path where the script is located
+    :type path: str
+    """
     with open(path+'/'+filename, "a", encoding='utf-8') as f:
         for domain in framework.reset_domains:
             if domain["design"] == '*' or domain["design"] == framework.current_toplevel:
@@ -438,6 +628,16 @@ def gen_reset_domain_config(framework, filename, path):
                     print(string, file=f)
 
 def gen_clock_config(framework, filename, path):
+    """
+    Generate clock configuration in the given script
+
+    :param framework: the FVMFramework object
+    :type framework: fvm.framework.FVMFramework
+    :param filename: the name of the script to append the configuration to
+    :type filename: str
+    :param path: the path where the script is located
+    :type path: str
+    """
     with open(path+'/'+filename, "a", encoding='utf-8') as f:
         for clock in framework.clocks:
             if clock["design"] == '*' or clock["design"] == framework.current_toplevel:
@@ -460,6 +660,16 @@ def gen_clock_config(framework, filename, path):
                 print(string, file=f)
 
 def gen_clock_domain_config(framework, filename, path):
+    """
+    Generate clock domain configuration in the given script
+    
+    :param framework: the FVMFramework object
+    :type framework: fvm.framework.FVMFramework
+    :param filename: the name of the script to append the configuration to
+    :type filename: str
+    :param path: the path where the script is located
+    :type path: str
+    """
     with open(path+'/'+filename, "a", encoding='utf-8') as f:
         for domain in framework.clock_domains:
             if domain["design"] == '*' or domain["design"] == framework.current_toplevel:
@@ -484,6 +694,14 @@ def gen_clock_domain_config(framework, filename, path):
                     print(string, file=f)
 
 def setup_resets(framework, path):
+    """
+    Generate script to run Reset Domain Crossing
+
+    :param framework: the FVMFramework object
+    :type framework: fvm.framework.FVMFramework
+    :param path: the path where to create the script
+    :type path: str
+    """
     filename = "resets.do"
     # We first write the header to compile the netlist and then append
     # (mode "a") the tool-specific instructions
@@ -501,6 +719,17 @@ def setup_resets(framework, path):
         print('exit', file=f)
 
 def run_resets(framework, path):
+    """
+    Run the resets step and parse results
+
+    :param framework: the FVMFramework object
+    :type framework: fvm.framework.FVMFramework
+    :param path: the path where to create the script
+    :type path: str
+
+    :returns: A tuple (cmd_stdout, cmd_stderr, stdout_err, stderr_err, status)
+    :rtype: tuple[str, str, int, int, str]
+    """
     status = "pass"
     run_stdout, run_stderr, stdout_err, stderr_err = run_qverify_step(framework, framework.current_toplevel, 'resets')
     rpt_path = f'{path}/resets/rdc.rpt'
@@ -516,6 +745,12 @@ def run_resets(framework, path):
     return run_stdout, run_stderr, stdout_err, stderr_err, status
 
 def get_linecheck_resets():
+    """
+    Common patterns for linecheck in the Questa resets step
+
+    :return: A dictionary containing linecheck patterns
+    :rtype: dict[str, list[str]]
+    """
     patterns = get_linecheck_common()
 
     # Make a copy to avoid modifying the original dict
@@ -525,7 +760,14 @@ def get_linecheck_resets():
     return patterns
 
 def setup_clocks(framework, path):
-    """Generate script to run Clock Domain Crossing"""
+    """
+    Generate script to run Clock Domain Crossing
+    
+    :param framework: the FVMFramework object
+    :type framework: fvm.framework.FVMFramework
+    :param path: the path where to create the script
+    :type path: str
+    """
     filename = "clocks.do"
     # We first write the header to compile the netlist  and then append
     # (mode "a") the tool-specific instructions
@@ -549,6 +791,17 @@ def setup_clocks(framework, path):
         print('exit', file=f)
 
 def run_clocks(framework, path):
+    """
+    Run the clocks step and parse results
+
+    :param framework: the FVMFramework object
+    :type framework: fvm.framework.FVMFramework
+    :param path: the path where to create the script
+    :type path: str
+
+    :returns: A tuple (cmd_stdout, cmd_stderr, stdout_err, stderr_err, status)
+    :rtype: tuple[str, str, int, int, str]
+    """
     status = "pass"
     run_stdout, run_stderr, stdout_err, stderr_err = run_qverify_step(framework, framework.current_toplevel, 'clocks')
     clocks_rpt_path = f'{path}/clocks/cdc.rpt'
@@ -564,6 +817,12 @@ def run_clocks(framework, path):
     return run_stdout, run_stderr, stdout_err, stderr_err, status
 
 def get_linecheck_clocks():
+    """
+    Common patterns for linecheck in the Questa clocks step
+
+    :return: A dictionary containing linecheck patterns
+    :rtype: dict[str, list[str]]
+    """
     patterns = get_linecheck_common()
 
     # Make a copy to avoid modifying the original dict
@@ -574,7 +833,14 @@ def get_linecheck_clocks():
     return patterns
 
 def setup_prove(framework, path):
-    """Generate script to run PropCheck"""
+    """
+    Generate script to run PropCheck
+    
+    :param framework: the FVMFramework object
+    :type framework: fvm.framework.FVMFramework
+    :param path: the path where to create the script
+    :type path: str
+    """
     filename = "prove.do"
     # TODO : can we also compile the PSL files using a .f file?
     gencompilescript(framework, filename, path)
@@ -639,6 +905,17 @@ def setup_prove(framework, path):
         print('exit', file=f)
 
 def run_prove(framework, path):
+    """
+    Run the prove step and parse results
+    
+    :param framework: the FVMFramework object
+    :type framework: fvm.framework.FVMFramework
+    :param path: the path where to create the script
+    :type path: str
+    
+    :returns: A tuple (cmd_stdout, cmd_stderr, stdout_err, stderr_err, status)
+    :rtype: tuple[str, str, int, int, str]
+    """
     status = "pass"
     run_stdout, run_stderr, stdout_err, stderr_err = run_qverify_step(framework, framework.current_toplevel, 'prove')
     rpt_path = f'{path}/prove/formal_verify.rpt'
@@ -655,6 +932,12 @@ def run_prove(framework, path):
     return run_stdout, run_stderr, stdout_err, stderr_err, status
 
 def get_linecheck_prove():
+    """
+    Common patterns for linecheck in the Questa prove step
+
+    :return: A dictionary containing linecheck patterns
+    :rtype: dict[str, list[str]]
+    """
     patterns = get_linecheck_common()
 
     # Make a copy to avoid modifying the original dict
@@ -668,6 +951,14 @@ def get_linecheck_prove():
     return patterns
 
 def setup_prove_simcover(framework, path):
+    """
+    Modify the replay.vsim.do files to dump UCDB files and waveforms
+
+    :param framework: the FVMFramework object
+    :type framework: fvm.framework.FVMFramework
+    :param path: the path where to create the script
+    :type path: str
+    """
     replay_files = glob.glob(path + '/prove/qsim_tb/*/replay.vsim.do')
     for file in replay_files:
         # Modify the replay.vsim.do so:
@@ -681,6 +972,17 @@ def setup_prove_simcover(framework, path):
         helpers.insert_line_before_target(file, "quit -f;", "coverage save sim.ucdb")
 
 def run_prove_simcover(framework, path):
+    """
+    Run the prove.simcover step and parse results
+
+    :param framework: the FVMFramework object
+    :type framework: fvm.framework.FVMFramework
+    :param path: the path where to create the script
+    :type path: str
+
+    :returns: A tuple (cmd_stdout, cmd_stderr, stdout_err, stderr_err, status)
+    :rtype: tuple[str, str, int, int, str]
+    """
     status = "pass"
     sum_cmd_stdout, sum_cmd_stderr = '', ''
     stdout_err, stderr_err = 0, 0
@@ -759,6 +1061,12 @@ def run_prove_simcover(framework, path):
     return sum_cmd_stdout, sum_cmd_stderr, stdout_err, stderr_err, status
 
 def get_linecheck_prove_simcover():
+    """
+    Common patterns for linecheck in the Questa prove.simcover step
+
+    :return: A dictionary containing linecheck patterns
+    :rtype: dict[str, list[str]]
+    """
 
     patterns = get_linecheck_common()
 
@@ -773,6 +1081,14 @@ def get_linecheck_prove_simcover():
     return patterns
 
 def setup_prove_formalcover(framework, path):
+    """
+    Generate script to run formal coverage after prove
+
+    :param framework: the FVMFramework object
+    :type framework: fvm.framework.FVMFramework
+    :param path: the path where to create the script
+    :type path: str
+    """
     filename = "prove.formalcover.do"
     property_summary = parse_prove.parse_property_summary(f'{path}/prove/prove.log')
     inconclusives = property_summary.get('Assertions', {}).get('Inconclusive', 0)
@@ -797,6 +1113,17 @@ def setup_prove_formalcover(framework, path):
         print('exit', file=f)
 
 def run_prove_formalcover(framework, path):
+    """
+    Run the prove.formalcover step and parse results
+
+    :param framework: the FVMFramework object
+    :type framework: fvm.framework.FVMFramework
+    :param path: the path where to create the script
+    :type path: str
+
+    :returns: A tuple (cmd_stdout, cmd_stderr, stdout_err, stderr_err, status)
+    :rtype: tuple[str, str, int, int, str]
+    """
     status = "pass"
     run_stdout, run_stderr, stdout_err, stderr_err = run_qverify_step(framework,
                                                                       framework.current_toplevel,
@@ -855,6 +1182,12 @@ def run_prove_formalcover(framework, path):
     return run_stdout, run_stderr, stdout_err, stderr_err, status
 
 def get_linecheck_prove_formalcover():
+    """
+    Common patterns for linecheck in the Questa prove.formalcover step
+
+    :return: A dictionary containing linecheck patterns
+    :rtype: dict[str, list[str]]
+    """
     patterns = get_linecheck_common()
 
     # Make a copy to avoid modifying the original dict
@@ -868,7 +1201,24 @@ def get_linecheck_prove_formalcover():
     return patterns
 
 def set_timeout(framework, step, timeout):
-    """Set the timeout for a specific step"""
+    """
+    Set the timeout for a specific step
+
+    The timeout should be provided as a string combining a number and a unit:
+
+    - ``s`` for seconds (e.g., "1s")
+    - ``m`` for minutes (e.g., "10m")
+    - ``h`` for hours (e.g., "1h")
+    - ``d`` for days (e.g., "2d")
+
+    :param framework: the FVMFramework object
+    :type framework: fvm.framework.FVMFramework
+    :param step: the step to set the timeout for. One of "rulecheck",
+                 "xverify", "reachability", "prove"
+    :type step: str
+    :param timeout: Timeout value as a string with a number and unit.
+    :type timeout: str
+    """
     timeout_value = f" -timeout {timeout} "
     if step == "rulecheck":
         framework.tool_flags["autocheck verify"] += timeout_value
@@ -880,12 +1230,28 @@ def set_timeout(framework, step, timeout):
         framework.tool_flags["formal verify"] += timeout_value
 
 def set_coverage_goal(step, goal):
-    """Set the coverage goal for a specific step"""
+    """
+    Set the coverage goal for a specific step
+    
+    :param step: the step to set the coverage goal for
+    :type step: str
+    :param goal: Coverage goal value, must be between 0 and 100
+    :type goal: int or float
+    """
     coverage_goal[step] = goal
 
 def generics_to_args(generics):
-    """Converts a dict with generic:value pairs to the argument we have to
-    pass to the tools"""
+    """
+    Converts a dict with generic:value pairs to the argument we have to
+    pass to the tools
+
+    :param generics: A dictionary with generic names as keys and their values
+                     as values
+    :type generics: dict[str, str]
+
+    :return: A string with the generics formatted as tool arguments
+    :rtype: str
+    """
     string = ''
     for i in generics:
         string += f'-g {i}={generics[i]} '
@@ -894,6 +1260,17 @@ def generics_to_args(generics):
 def formal_initialize_reset(framework, reset, active_high=True, cycles=1):
     """
     Initialize reset for formal steps.
+
+    :param framework: the FVMFramework object
+    :type framework: fvm.framework.FVMFramework
+    :param reset: the name of the reset signal
+    :type reset: str
+    :param active_high: True if the reset is active high, False if it is
+                        active low. Defaults to True.
+    :type active_high: bool
+    :param cycles: number of cycles to keep the reset active at the start
+                   of the formal analysis
+    :type cycles: int
     """
     if active_high:
         line = f'formal init {{{reset}=1;##{cycles+1};{reset}=0}}'
