@@ -50,10 +50,13 @@ inputs_and_expected_outputs = [
 
 @pytest.mark.parametrize("file,expected", examples_and_retvals)
 def test_retval(file, expected):
+    """Test return value of generator function."""
     retval = generator(file)
     assert retval == expected
 
 def remove_comments(file, comment_string = "--"):
+    """Remove lines starting with comment_string from a file and return
+    the result as a list of lines."""
     comments_removed = []
 
     with open(file, 'r', encoding="utf-8") as f:
@@ -64,6 +67,7 @@ def remove_comments(file, comment_string = "--"):
     return comments_removed
 
 def compare_files_ignoring_comments(file1, file2):
+    """Compare two files ignoring lines starting with comment_string."""
     # We need this function because in the CI, the input path that appears in
     # the comment of generated .psl files will be in a subdirectory of /build,
     # which will not match our expected output files
@@ -71,6 +75,8 @@ def compare_files_ignoring_comments(file1, file2):
 
 @pytest.mark.parametrize("file,expected", inputs_and_expected_outputs)
 def test_output_matches_expected(file, expected):
+    """Test that the output of the generator matches the expected output,
+    ignoring comments."""
     # retval should be False if the generator found no errors
     # filecmp.cmp should return True if actual and expected outputs are equal
     outdir = os.path.join(os.getcwd(), "test", "drom2psl")
