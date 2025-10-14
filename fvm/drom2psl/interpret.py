@@ -383,13 +383,13 @@ def get_signal_value(wave, data, cycle):
     else:
         datalist = []
 
-    if digit == 'p' or digit == 'P' or digit == 'n' or digit == 'N':
+    if digit in ['p', 'P', 'n', 'N']:
         value = '-'
         warning(f'{value=} not an appropriate value for a non-clock signal, ignoring')
-    elif digit == '<' or digit == '>':
+    elif digit in ['<', '>']:
         value = '-'
         error("Stretching/widening operators > and < not supported")
-    elif (digit == '.' or digit == '|') and cycle == 0:
+    elif digit in ['.', '|'] and cycle == 0:
         error("""Cannot repeat previous value if there is no previous
         value: '.' and '|' are not supported on the first clock cycle""")
     elif digit == '.':
@@ -404,9 +404,9 @@ def get_signal_value(wave, data, cycle):
         value = 'Z'
     elif digit == 'x':
         value = '-'
-    elif digit == '0' or digit == 'l' or digit == 'L':
+    elif digit in ['0', 'l', 'L']:
         value = '0'
-    elif digit == '1' or digit == 'h' or digit == 'H' :
+    elif digit in ['1', 'h', 'H']:
         value = '1'
     elif digit in datadigits:
 

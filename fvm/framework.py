@@ -1134,8 +1134,6 @@ class fvmframework:
 
         if config is not None:
             design = f'{design}.{config["name"]}'
-        else:
-            design = design
 
         # List all available/selected steps/tools
         # Call the list_step() function for each available step
@@ -1195,8 +1193,6 @@ class fvmframework:
 
         if config is not None:
             design = f'{design}.{config["name"]}'
-        else:
-            design = design
 
         self.current_toplevel = design
 
@@ -1422,6 +1418,7 @@ class fvmframework:
         if callable(hook):
             return hook(step, design)
         self.logger.error(f'{hook=} is not callable, only functions or other callable objects can be passed as hooks')
+        self.exit_if_required(BAD_VALUE)
 
     def generate_psl_from_drom_sources(self, path):
         """Generate PSL files from DROM sources, if any are specified"""
