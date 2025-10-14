@@ -1,3 +1,4 @@
+"""Tests for the drom2psl generator"""
 import os
 from pathlib import Path
 
