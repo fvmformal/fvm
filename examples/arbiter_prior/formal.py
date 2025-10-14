@@ -19,8 +19,8 @@ fvm.set_toplevel("olo_base_arb_prio")
 fvm.add_config("olo_base_arb_prio", "config_width_3_latency_0", {"Width_g": 64, "Latency_g": 1})
 
 fvm.add_clock("Clk")
-fvm.add_clock_domain(["Out_Grant", "Rst"], "Clk")
+fvm.add_clock_domain(["Out_Grant", "Rst"], clock_name="Clk")
 fvm.add_reset("Rst", asynchronous=True, active_high=True)
-fvm.add_reset_domain(["Out_Grant"], "Rst")
+fvm.add_reset_domain(["Out_Grant"], name="Rst")
 
 fvm.run()

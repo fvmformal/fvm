@@ -17,14 +17,14 @@ if fvm.toolchain == "sby":
     fvm.set_tool_flags("ghdl", fvm.get_tool_flags("ghdl") + " -frelaxed")
 
 fvm.add_clock("In_Clk", period = 10)
-fvm.add_clock_domain(["In_Ready", "In_Rst", "In_Data", "In_Valid"], "In_Clk")
+fvm.add_clock_domain(["In_Ready", "In_Rst", "In_Data", "In_Valid"], clock_name="In_Clk")
 fvm.add_clock("Out_Clk", period = 13.5)
-fvm.add_clock_domain(["Out_Ready", "Out_Rst"], "Out_Clk")
+fvm.add_clock_domain(["Out_Ready", "Out_Rst"], clock_name="Out_Clk")
 
 fvm.add_reset("In_Rst", asynchronous=True, active_high=True)
-fvm.add_reset_domain(["In_Ready", "In_Rst", "In_Data", "In_Valid"], "In_Rst")
+fvm.add_reset_domain(["In_Ready", "In_Rst", "In_Data", "In_Valid"], name="In_Rst")
 fvm.add_reset("Out_Rst", asynchronous=True, active_high=True)
-fvm.add_reset_domain(["Out_Ready"], "Out_Rst")
+fvm.add_reset_domain(["Out_Ready"], name="Out_Rst")
 
 fvm.allow_failure("xverify")
 fvm.set_coverage_goal("reachability", 80)
