@@ -12,7 +12,7 @@ from junit_xml import TestSuite, TestCase, to_xml_report_string
 
 from fvm import helpers
 from fvm import generate_test_cases
-from fvm.parsers import parse_prove
+from fvm.toolchains.questa.parsers import parse_prove
 
 def get_all_steps(steps, post_steps):
     """
