@@ -7,12 +7,16 @@ def show_step_summary(step_summary, error, warning, inconclusive=None, proven=No
     """
     Displays a table with the step summary.
 
-    :param step_summary: dict with the data summary:
-        {
-            "Violation": {"count": 2, "checks": {...}},
-            "Caution": {"count": 1, "checks": {...}},
-            ...
-        }
+    :param step_summary: dict with the data summary
+
+        Example structure::
+
+            {
+                "Violation": {"count": 2, "checks": {...}},
+                "Caution": {"count": 1, "checks": {...}},
+                ...
+            }
+
     :type step_summary: dict
     :param error: category name used as 'Error' row (e.g., 'Violation')
     :type error: str
@@ -122,18 +126,22 @@ def show_coverage_summary(data, title="xxx", outdir=None, step=None):
     """
     Displays a table with the coverage summary.
 
-    :param data: list of dicts with the data summary:
-        [
-            {
-                "Status": "pass" or "fail" or "omit",
-                "Coverage Type": "toggle" or "fsm state" or ...,
-                "Intermediate Column 1": value,
+    :param data: list of dicts with the data summary
+
+        Example structure::
+
+            [
+                {
+                    "Status": "pass" or "fail" or "omit",
+                    "Coverage Type": "toggle" or "fsm state" or ...,
+                    "Intermediate Column 1": value,
+                    ...
+                    "Percentage": "85.00%",
+                    "Goal": "80.00%"
+                },
                 ...
-                "Percentage": "85.00%",
-                "Goal": "80.00%"
-            },
-            ...
-        ]
+            ]
+
     :type data: list of dicts
     :param title: Title of the table
     :type title: str
@@ -196,13 +204,17 @@ def show_prove_summary(data, title="Property Summary", outdir=None, step=None):
     """
     Displays a table with the prove summary.
 
-    :param data: dict with the data summary:
-        {
-            "Proven": {"count": 5, "items": [...]},
-            "Vacuous": {"count": 2, "items": [...]},
-            "Fired": {"count": 1, "items": [...]},
-            ...
-        }
+    :param data: dict with the data summary
+
+        Example structure::
+
+            {
+                "Proven": {"count": 5, "items": [...]},
+                "Vacuous": {"count": 2, "items": [...]},
+                "Fired": {"count": 1, "items": [...]},
+                ...
+            }
+
     :type data: dict
     :param title: Title of the table
     :type title: str

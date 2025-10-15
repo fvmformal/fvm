@@ -14,13 +14,16 @@ def parse_check_summary(file_path):
     :param file_path: Path to the lint summary file to parse.
     :type file_path: str
     :return: Dictionary containing counts and check details for each category.
-             Example structure:
-             {
-                 "Error": {"count": int},
-                 "Warning": {"count": int, "checks": {"check_name": int, ...}},
-                 "Info": {"count": int, "checks": {"check_name": int, ...}},
-                 "Resolved": {"count": int}
-             }
+
+        Example structure::
+
+            {
+                "Error": {"count": int},
+                "Warning": {"count": int, "checks": {"check_name": int, ...}},
+                "Info": {"count": int, "checks": {"check_name": int, ...}},
+                "Resolved": {"count": int}
+            }
+
     :rtype: dict
     """
     with open(file_path, "r", encoding="utf-8") as file:
