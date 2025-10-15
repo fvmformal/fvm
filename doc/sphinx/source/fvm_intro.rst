@@ -155,8 +155,16 @@ For example, from the following `.json` file:
    ],
  }
 
-The following PSL file is generated:
 
+Which corresponds to the following waveform diagram:
+
+.. image:: _static/wishbone_classic_read.svg
+   :alt: A graphical summary of the FVM
+   :width: 50%
+   :align: center
+
+
+The following PSL file is generated:
 
 .. code-block::
 
