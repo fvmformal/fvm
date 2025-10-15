@@ -172,34 +172,39 @@ def run_qverify_step(framework, design, step):
     cmd_stdout, cmd_stderr = "", ""
     stdout_err, stderr_err = 0, 0
 
-    if framework.guinorun is True :
-        framework.logger.info(f'{framework.guinorun=}, will not run {step=} with {tool=}')
-        open_gui = True
-    else :
-        framework.logger.trace(f'command: {" ".join(cmd)=}')
-        cmd_stdout, cmd_stderr = framework.run_cmd(cmd, design, step, tool, framework.verbose)
-        stdout_err += framework.logcheck(cmd_stdout, design, step, tool)
-        stderr_err += framework.logcheck(cmd_stderr, design, step, tool)
-
-        if framework.gui :
+    if framework.check_tool(wrapper, quiet=True):
+        if framework.guinorun is True :
+            framework.logger.info(f'{framework.guinorun=}, will not run {step=} with {tool=}')
             open_gui = True
-    # TODO : maybe run the GUI processes without blocking
-    # the rest of the steps? For that we would probably
-    # need to pass another option to run_cmd
-    if open_gui:
-        framework.logger.info(f'{step=}, {tool=}, opening results with GUI')
-        db_file = f'{report_path}/{tool}.db'
-        cmd = [wrapper, db_file]
-        if not os.path.exists(db_file):
-            framework.logger.error(f"The database file does not exist: {db_file}")
-        else:
+        else :
             framework.logger.trace(f'command: {" ".join(cmd)=}')
-            aux_cmd_stdout, aux_cmd_stderr = framework.run_cmd(cmd, design, step, tool,
-                                                               framework.verbose)
-            stdout_err += framework.logcheck(aux_cmd_stdout, design, step, tool)
-            stderr_err += framework.logcheck(aux_cmd_stderr, design, step, tool)
-            cmd_stdout += aux_cmd_stdout
-            cmd_stderr += aux_cmd_stderr
+            cmd_stdout, cmd_stderr = framework.run_cmd(cmd, design, step, tool, framework.verbose)
+            stdout_err += framework.logcheck(cmd_stdout, design, step, tool)
+            stderr_err += framework.logcheck(cmd_stderr, design, step, tool)
+
+            if framework.gui :
+                open_gui = True
+        # TODO : maybe run the GUI processes without blocking
+        # the rest of the steps? For that we would probably
+        # need to pass another option to run_cmd
+        if open_gui:
+            framework.logger.info(f'{step=}, {tool=}, opening results with GUI')
+            db_file = f'{report_path}/{tool}.db'
+            cmd = [wrapper, db_file]
+            if not os.path.exists(db_file):
+                framework.logger.error(f"The database file does not exist: {db_file}")
+            else:
+                framework.logger.trace(f'command: {" ".join(cmd)=}')
+                aux_cmd_stdout, aux_cmd_stderr = framework.run_cmd(cmd, design, step, tool,
+                                                                framework.verbose)
+                stdout_err += framework.logcheck(aux_cmd_stdout, design, step, tool)
+                stderr_err += framework.logcheck(aux_cmd_stderr, design, step, tool)
+                cmd_stdout += aux_cmd_stdout
+                cmd_stderr += aux_cmd_stderr
+    else :
+        framework.logger.error(f'{wrapper} not found in PATH, cannot run {step=} with {tool=}')
+        stdout_err += 1
+        stderr_err += 1
 
     return cmd_stdout, cmd_stderr, stdout_err, stderr_err
 
@@ -1016,25 +1021,30 @@ def run_prove_simcover(framework, path):
     # the relevant variables. Used to avoid code duplication
     def simcover_run(tool):
         nonlocal timestamp, elapsed_time, stdout_err, stderr_err, sum_cmd_stdout, sum_cmd_stderr
-        cmd_stdout, cmd_stderr = framework.run_cmd(cmd, design, 'prove.simcover',
-                                                tool, framework.verbose, path)
-        elapsed_time += framework.results[design]['prove.simcover']['elapsed_time']
-        if timestamp is None:
-            timestamp = framework.results[design]['prove.simcover']['timestamp']
+        if framework.check_tool(tool, quiet=True):
+            cmd_stdout, cmd_stderr = framework.run_cmd(cmd, design, 'prove.simcover',
+                                                    tool, framework.verbose, path)
+            elapsed_time += framework.results[design]['prove.simcover']['elapsed_time']
+            if timestamp is None:
+                timestamp = framework.results[design]['prove.simcover']['timestamp']
 
-        stdout_err += framework.logcheck(cmd_stdout, design, 'prove.simcover', tool)
-        stderr_err += framework.logcheck(cmd_stderr, design, 'prove.simcover', tool)
+            stdout_err += framework.logcheck(cmd_stdout, design, 'prove.simcover', tool)
+            stderr_err += framework.logcheck(cmd_stderr, design, 'prove.simcover', tool)
 
-        sum_cmd_stdout += cmd_stdout
-        sum_cmd_stderr += cmd_stderr
-        framework.results[design]['prove.simcover']['timestamp'] = timestamp
-        framework.results[design]['prove.simcover']['elapsed_time'] = elapsed_time
+            sum_cmd_stdout += cmd_stdout
+            sum_cmd_stderr += cmd_stderr
+            framework.results[design]['prove.simcover']['timestamp'] = timestamp
+            framework.results[design]['prove.simcover']['elapsed_time'] = elapsed_time
+        else:
+            framework.logger.error(f'{tool} not found in PATH, cannot run prove.simcover with {tool=}')
+            stdout_err += 1
+            stderr_err += 1
 
     # Run all the simulations to generate the UCDB files
     for file in replay_files:
         path = pathlib.Path(file).parent
         cmd = ['./replay.scr']
-        simcover_run('vsim')
+        simcover_run('csh')
         ucdb_files.append(f'{path}/sim.ucdb')
 
     # If we have any UCDB files, merge them and generate reports
@@ -1045,7 +1055,7 @@ def run_prove_simcover(framework, path):
         os.makedirs(simcover_path, exist_ok=True)
         cmd = ['vcover', 'merge', '-out', f'{simcover_path}/simcover.ucdb']
         cmd = cmd + ucdb_files
-        simcover_run('vcover merge')
+        simcover_run('vcover')
 
         path = simcover_path
         # Generate reports only if the merge was successful
@@ -1053,13 +1063,13 @@ def run_prove_simcover(framework, path):
             # Generate a csv coverage report
             cmd = ['vcover', 'report', '-csv', '-hierarchical', 'simcover.ucdb',
                 '-output', 'simulation_coverage.log']
-            simcover_run('vcover report')
+            simcover_run('vcover')
 
             # Generate an html coverage report
             cmd = ['vcover', 'report', '-html', '-annotate', '-details',
                 '-testdetails', '-codeAll', '-multibitverbose', '-out',
                 'simcover', 'simcover.ucdb']
-            simcover_run('vcover report')
+            simcover_run('vcover')
 
     # Generate summary table
     coverage_path = f'{path}/simulation_coverage.log'

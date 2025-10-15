@@ -1,5 +1,7 @@
 """Unit tests for fvmframework class"""
 from pathlib import Path
+import os
+import shutil
 
 # Third party imports
 import pytest
@@ -10,7 +12,7 @@ from fvm import fvmframework
 # Error codes
 BAD_VALUE = {"msg": "FVM exit condition: Bad value",
              "value" : 3}
-ERROR_IN_LOG = {"msg": "FVM exit condition: Error detected during tool execution",
+ERROR_IN_TOOL = {"msg": "FVM exit condition: Error detected during tool execution",
                  "value": 4}
 GOAL_NOT_MET = {"msg": "FVM exit condition: User goal not met",
                 "value": 5}
@@ -174,6 +176,66 @@ def test_check_if_tools_exist() :
     assert exists == True
     exists = fvm.check_tool("notfoundtool")
     assert exists == False
+
+def test_qverify_not_in_path(monkeypatch):
+    """Test simulating that a required tool is not in PATH"""
+
+    monkeypatch.delenv("PATH", raising=False)
+
+    fvm = fvmframework()
+    fvm.add_vhdl_source("examples/counter/counter.vhd")
+    fvm.set_toplevel("counter")
+
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        fvm.run()
+    assert pytest_wrapped_e.type == SystemExit
+    assert pytest_wrapped_e.value.code == ERROR_IN_TOOL["value"]
+
+def test_remove_csh_from_path(monkeypatch):
+    """Simulate that csh is not available, regardless of PATH"""
+
+    # Save the original function before patching
+    real_which = shutil.which
+
+    # Simulate that 'csh' is not found
+    monkeypatch.setattr(shutil, "which", lambda x: None if x == "csh" else real_which(x))
+
+    # Now any call to which("csh") returns None
+    assert shutil.which("csh") is None
+
+    fvm = fvmframework()
+    fvm.add_vhdl_source("examples/counter/counter.vhd")
+    fvm.set_toplevel("counter")
+    fvm.step = "prove"
+
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        fvm.run()
+
+    assert pytest_wrapped_e.type == SystemExit
+    assert pytest_wrapped_e.value.code == ERROR_IN_TOOL["value"]
+
+def test_remove_vcover_from_path(monkeypatch):
+    """Simulate that vcover is not available, regardless of PATH"""
+
+    # Save the original function before patching
+    real_which = shutil.which
+
+    # Simulate that 'vcover' is not found
+    monkeypatch.setattr(shutil, "which", lambda x: None if x == "vcover" else real_which(x))
+
+    # Now any call to which("vcover") returns None
+    assert shutil.which("vcover") is None
+
+    fvm = fvmframework()
+    fvm.add_vhdl_source("examples/counter/counter.vhd")
+    fvm.set_toplevel("counter")
+    fvm.step = "prove"
+
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        fvm.run()
+
+    assert pytest_wrapped_e.type == SystemExit
+    assert pytest_wrapped_e.value.code == ERROR_IN_TOOL["value"]
 
 def test_set_prefix() :
     """Test setting a valid prefix"""

@@ -438,7 +438,7 @@ class fvmframework:
         self.list_psl_sources()
         self.list_drom_sources()
 
-    def check_tool(self, tool):
+    def check_tool(self, tool, quiet=False):
         """
         Check whether a tool name is available in the system PATH.
 
@@ -456,7 +456,8 @@ class fvmframework:
             self.logger.warning(f'{tool=} not found in PATH')
             ret = False
         else :
-            self.logger.success(f'{tool=} found at {path=}')
+            if not quiet :
+                self.logger.success(f'{tool=} found at {path=}')
             ret = True
         return ret
 
@@ -1551,6 +1552,7 @@ class fvmframework:
         if step in self.steps.steps:
             run_stdout, run_stderr, stdout_err, stderr_err, status = self.steps.steps[step]["run"](self, path)
             logfile = f'{path}/{step}/{step}.log'
+            os.makedirs(f'{path}/{step}', exist_ok=True)
             self.logger.info(f'{step=}, finished, output written to {logfile}')
             with open(logfile, 'w', encoding='utf-8') as f :
                 f.write(run_stdout)
@@ -1595,6 +1597,7 @@ class fvmframework:
                     console.rule(f'[bold white]{design}.{step}.{post_step}[/bold white]')
                     run_stdout, run_stderr, stdout_err, stderr_err, status = self.steps.post_steps[step][post_step]["run"](self, path)
                     logfile = f'{path}/{step}.{post_step}/{step}.{post_step}.log'
+                    os.makedirs(f'{path}/{step}.{post_step}', exist_ok=True)
                     self.logger.info(f'{step}.{post_step}, finished, output written to {logfile}')
                     with open(logfile, 'w', encoding='utf-8') as f :
                         f.write(run_stdout)
