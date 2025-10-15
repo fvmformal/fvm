@@ -219,7 +219,6 @@ def show_prove_summary(data, title="Property Summary", outdir=None, step=None):
     if not data:
         return
 
-    # TODO: Check if there are more categories
     category_colors = {
         "Proven": "bold green",
         "Vacuous": "bold yellow",

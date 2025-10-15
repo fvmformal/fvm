@@ -7,19 +7,17 @@ import glob
 import pathlib
 import shutil
 
-# TODO : are this parsers questa-specific or could they be made configurable?
-# should they be moved to someplace like toolchains/questa/parsers?
-from fvm.parsers import parse_formal_signoff
-from fvm.parsers import parse_reachability
-from fvm.parsers import parse_reports
-from fvm.parsers import parse_simcover
-from fvm.parsers import parse_lint
-from fvm.parsers import parse_rulecheck
-from fvm.parsers import parse_xverify
-from fvm.parsers import parse_resets
-from fvm.parsers import parse_clocks
-from fvm.parsers import parse_prove
-from fvm.parsers import parse_design_rpt
+from fvm.toolchains.questa_pkg.parsers import parse_formal_signoff
+from fvm.toolchains.questa_pkg.parsers import parse_reachability
+from fvm.toolchains.questa_pkg.parsers import parse_reports
+from fvm.toolchains.questa_pkg.parsers import parse_simcover
+from fvm.toolchains.questa_pkg.parsers import parse_lint
+from fvm.toolchains.questa_pkg.parsers import parse_rulecheck
+from fvm.toolchains.questa_pkg.parsers import parse_xverify
+from fvm.toolchains.questa_pkg.parsers import parse_resets
+from fvm.toolchains.questa_pkg.parsers import parse_clocks
+from fvm.toolchains.questa_pkg.parsers import parse_prove
+from fvm.toolchains.questa_pkg.parsers import parse_design_rpt
 from fvm import helpers
 from fvm import tables
 
@@ -30,18 +28,17 @@ from fvm import tables
 
 # For the Questa tools, each tool is run through a wrapper which is the actual
 # command that must be run in the command-line
-# TODO : Not sure we really need this dict, although it is a nice summary
 tools = {
-        # step           : ["tool",       "wrapper"],
-        "lint"           : ["lint",       "qverify"],
-        "friendliness"   : ["autocheck",  "qverify"],
-        "rulecheck"      : ["autocheck",  "qverify"],
-        "xverify"        : ["xcheck",     "qverify"],
-        "reachability"   : ["covercheck", "qverify"],
-        "resets"         : ["rdc",        "qverify"],
-        "clocks"         : ["cdc",        "qverify"],
-        "prove"          : ["propcheck",  "qverify"],
-        "prove.formalcover"          : ["propcheck",  "qverify"], # TODO : Decide if this is OK
+        # step              : ["tool",       "wrapper"],
+        "lint"              : ["lint",       "qverify"],
+        "friendliness"      : ["autocheck",  "qverify"],
+        "rulecheck"         : ["autocheck",  "qverify"],
+        "xverify"           : ["xcheck",     "qverify"],
+        "reachability"      : ["covercheck", "qverify"],
+        "resets"            : ["rdc",        "qverify"],
+        "clocks"            : ["cdc",        "qverify"],
+        "prove"             : ["propcheck",  "qverify"],
+        "prove.formalcover" : ["propcheck",  "qverify"],
 #        "simulate"       : ["vsim", "vsim"],
 #        "createemptylib" : ["vlib", "vlib"],
 #        "compilevhdl"    : ["vcom", "vcom"],
