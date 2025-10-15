@@ -397,7 +397,7 @@ def generate_xml_report(framework, logger):
             # all the errors in output, but Allure is supposed to render
             # the full message even if it has more than one line of text
             if status == 'fail':
-                logger.info(f'{design}.{step} failed')
+                logger.trace(f'{design}.{step} failed')
                 message = framework.results[design][step]['message']
                 #print(f'{message=}')
                 testcase.add_failure_info(message = "Error in tool log",
@@ -456,16 +456,16 @@ def generate_xml_report(framework, logger):
 
     if os.path.isdir(framework.resultsdir):
         timestamp = datetime.now().isoformat()
-        logger.info(f'Results directory already exists, moving it from '
+        logger.trace(f'Results directory already exists, moving it from '
                     f'{framework.resultsdir} to {framework.outdir}/fvm_history/{timestamp}')
         shutil.move(framework.resultsdir, f'{framework.outdir}/fvm_history/{timestamp}')
         os.makedirs(framework.resultsdir, exist_ok=True)
         historydir = f'{framework.reportdir}/history'
         if os.path.isdir(historydir):
-            logger.info(f'Report history directory already exists, moving it from '
+            logger.trace(f'Report history directory already exists, moving it from '
                         f'{historydir} to {framework.resultsdir}/history')
             shutil.move(historydir, f'{framework.resultsdir}/history')
-            logger.info(f'Removing old report directory at {framework.resultsdir}')
+            logger.trace(f'Removing old report directory at {framework.resultsdir}')
             shutil.rmtree(framework.reportdir)
 
     os.makedirs(framework.resultsdir, exist_ok=True)
@@ -592,7 +592,7 @@ def generate_html_report(framework, logger):
         allure_exec = os.path.abspath(shutil.which('allure'))
         cmd = [allure_exec, 'generate', '--clean', results_dir, '-o', report_dir,
                "--name", "FVM Report"]
-        logger.info(f'Generating dashboard with {cmd=}')
+        logger.trace(f'Generating dashboard with {cmd=}')
         process = subprocess.Popen (cmd,
                                     stdout  = subprocess.PIPE,
                                     stderr  = subprocess.PIPE,
@@ -610,7 +610,7 @@ def generate_html_report(framework, logger):
         running 'python3 install_allure.py [install_dir], and add its bin/
         directory to your $PATH'""")
 
-def generate_text_report(framework):
+def generate_text_report(framework, logger):
     """
     Generate a Markdown report from the framework results
 
@@ -710,6 +710,7 @@ def generate_text_report(framework):
         global_summary.append("## Summary")
         global_summary.append(rich_table_to_markdown(rich_table_str))
 
-    summary_path = os.path.join(framework.outdir, "summary.md")
-    with open(summary_path, "w", encoding="utf-8") as f:
+    report_path = os.path.join(framework.outdir, "text_report.md")
+    logger.trace(f'Generating text report at {report_path}')
+    with open(report_path, "w", encoding="utf-8") as f:
         f.write("\n".join(global_summary))

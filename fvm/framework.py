@@ -144,12 +144,12 @@ class fvmframework:
         # Are we being called from inside a script or from stdin?
         self.is_interactive = helpers.is_interactive()
         if self.is_interactive:
-            self.logger.info('Running interactively')
+            self.logger.trace('Running interactively')
         else:
-            self.logger.info('Running from within a script')
+            self.logger.trace('Running from within a script')
 
         self.scriptname = helpers.getscriptname()
-        self.logger.info(f'{self.scriptname=}')
+        self.logger.trace(f'{self.scriptname=}')
 
         # Let's define a prefix for our test results, in case the user wants to
         # run different formal.py files and create a report that includes all
@@ -165,10 +165,10 @@ class fvmframework:
         # Users can also set a prefix using fvmframwork.set_prefix(prefix)
         if self.is_interactive:
             self.prefix = os.path.basename(self.scriptname)+'_interactive'
-            self.logger.info(f'Running interactively, {self.prefix=}')
+            self.logger.trace(f'Running interactively, {self.prefix=}')
         else:
             self.prefix = os.path.basename(os.path.dirname(self.scriptname))
-            self.logger.info(f'Running inside a script, {self.prefix=}')
+            self.logger.trace(f'Running inside a script, {self.prefix=}')
 
         # Rest of instance variables
         # TODO : this is getting a bit big, we could consider restructuring
@@ -209,10 +209,10 @@ class fvmframework:
             self.logger.error(f'{self.toolchain=} not supported')
             self.exit_if_required(BAD_VALUE)
         self.tool_flags = toolchains.get_default_flags(self.toolchain)
-        self.logger.info(f'{self.tool_flags=}')
+        self.logger.debug(f'{self.tool_flags=}')
         self.steps = steps()
         toolchains.define_steps(self, self.steps, self.toolchain)
-        self.logger.info(f'{steps=}')
+        self.logger.debug(f'{steps=}')
 
         # Exit if args.step is unrecognized
         if args.step is not None:
@@ -253,7 +253,7 @@ class fvmframework:
                         Defaults to ``"work"``.
         :type library: str
         """
-        self.logger.info(f'Adding VHDL source: {src}')
+        self.logger.trace(f'Adding VHDL source: {src}')
         if not os.path.exists(src) :
             self.logger.error(f'VHDL source not found: {src}')
             self.exit_if_required(BAD_VALUE)
@@ -271,7 +271,7 @@ class fvmframework:
 
         This method clears the internal list of VHDL sources.
         """
-        self.logger.info('Removing all VHDL sources')
+        self.logger.trace('Removing all VHDL sources')
         self.vhdl_sources = []
 
     def add_psl_source(self, src):
@@ -285,7 +285,7 @@ class fvmframework:
         :param src: Path to the PSL source file.
         :type src: str
         """
-        self.logger.info(f'Adding PSL source: {src}')
+        self.logger.trace(f'Adding PSL source: {src}')
         if not os.path.exists(src) :
             self.logger.error(f'PSL source not found: {src}')
             self.exit_if_required(BAD_VALUE)
@@ -302,7 +302,7 @@ class fvmframework:
 
         This method clears the internal list of PSL sources.
         """
-        self.logger.info('Removing all PSL sources')
+        self.logger.trace('Removing all PSL sources')
         self.psl_sources = []
 
     def add_drom_source(self, src):
@@ -317,7 +317,7 @@ class fvmframework:
         :param src: Path to the Wavedrom source file.
         :type src: str
         """
-        self.logger.info(f'Adding wavedrom source: {src}')
+        self.logger.trace(f'Adding wavedrom source: {src}')
         if not os.path.exists(src) :
             self.logger.error(f'wavedrom source not found: {src}')
             self.exit_if_required(BAD_VALUE)
@@ -334,7 +334,7 @@ class fvmframework:
 
         This method clears the internal list of Wavedrom sources.
         """
-        self.logger.info('Removing all wavedrom sources')
+        self.logger.trace('Removing all wavedrom sources')
         self.drom_sources = []
 
     def add_vhdl_sources(self, globstr, library="work"):
@@ -1100,7 +1100,7 @@ class fvmframework:
 
         self.logger.info(f'Designs: {self.toplevel}')
         for design in self.toplevel:
-            self.logger.info(f'Running {design=}')
+            self.logger.trace(f'Running {design=}')
             if self.list:
                 self.list_design(design)
             else:
@@ -1109,7 +1109,7 @@ class fvmframework:
         reports.pretty_summary(self, self.logger)
         reports.generate_xml_report(self, self.logger)
         reports.generate_html_report(self, self.logger)
-        reports.generate_text_report(self)
+        reports.generate_text_report(self, self.logger)
         err = self.check_errors()
         if err :
             self.exit_if_required(CHECK_FAILED)
@@ -1209,7 +1209,7 @@ class fvmframework:
         # Call the run_step() function for each available step
         # If a 'step' argument is specified, just run that specific step
         if self.step is None:
-            self.logger.info(self.steps.steps)
+            self.logger.trace(self.steps.steps)
             for step in self.steps.steps:
                 if self.is_skipped(design, step):
                     self.logger.info(f'{step=} of {design=} skipped by skip() function, '
@@ -1293,7 +1293,7 @@ class fvmframework:
             reports.pretty_summary(self, self.logger)
             reports.generate_xml_report(self, self.logger)
             reports.generate_html_report(self, self.logger)
-            reports.generate_text_report(self)
+            reports.generate_text_report(self, self.logger)
             self.logger.error(errorcode['msg'])
             sys.exit(errorcode['value'])
 
@@ -1434,7 +1434,7 @@ class fvmframework:
 
     def generate_psl_from_drom_sources(self, path):
         """Generate PSL files from DROM sources, if any are specified"""
-        self.logger.info(f'{self.drom_sources=}')
+        self.logger.debug(f'{self.drom_sources=}')
         if self.drom_sources:
             drom2psl_outdir = os.path.join(self.outdir, path)
             os.makedirs(drom2psl_outdir, exist_ok=True)
