@@ -73,9 +73,23 @@ def sum_coverage_data(coverage_results):
     grand_total_covered = 0
     grand_total = 0
 
+    # Mapping to normalize coverage type names between different tools
+    normalize_names = {
+        "Branches": "Branch",
+        "Conditions": "Condition",
+        "Expressions": "Expression",
+        "FSM States": "FSM State",
+        "FSM Transitions": "FSM Transition",
+        "Statments" : "Statement",  # To catch a questa typo
+        "Statements": "Statement",
+        "Toggles": "Toggle",
+        "Covergroup Bins": "Covergroup Bin",
+    }
+
     # Summing coverage data for each instance
     for entry in coverage_results:
         for key, value in entry["coverage"].items():
+            key = normalize_names.get(key, key) # Normalize key if needed
             if key in ["Assertions", "Directives"]:
                 continue  # Exclude Assertions and Directives from the totals
 
@@ -145,3 +159,45 @@ def unified_format_table(table, goal=90.0):
         final_data.append(new_row)
 
     return final_data
+
+def merge_coverage(sim_cov, reach_cov):
+    """The simulation coverage results after excluding the unreachable elements"""
+    merged = []
+
+    reach_map = {r['Coverage Type'].lower(): r for r in reach_cov}
+
+    for s in sim_cov:
+        cov_type = s['Coverage Type']
+        key = cov_type.lower()
+        r = reach_map.get(key)
+
+        unreachable = r['Unreachable'] if r else 0
+        excluded = unreachable
+
+        total = s['Total']
+        effective_total = total - excluded
+        hits = s['Hits']
+        misses = max(s['Misses'] - excluded, 0)
+
+        if effective_total > 0:
+            percentage_value = hits / effective_total * 100
+            percentage = f"{percentage_value:.1f}%"
+        else:
+            percentage_value = 0.0
+            percentage = "N/A"
+
+        goal = float(s['Goal'].strip('%'))
+        status = 'pass' if percentage_value >= goal else 'fail'
+
+        merged.append({
+            'Coverage Type': cov_type,
+            'Total': total,
+            'Misses': misses,
+            'Excluded': excluded,
+            'Hits': hits,
+            'Percentage': percentage,
+            'Goal': s['Goal'],
+            'Status': status
+        })
+
+    return merged

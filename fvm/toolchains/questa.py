@@ -58,6 +58,8 @@ default_flags = {
 
 coverage_goal = {}
 
+setup_toplevel = None
+
 def define_steps(framework, steps):
     """
     Define the steps available in the Questa toolchain
@@ -517,8 +519,35 @@ def run_reachability(framework, path):
     run_stdout, run_stderr, stdout_err, stderr_err = run_qverify_step(framework,
                                                                       framework.current_toplevel,
                                                                       step)
-    rpt_path = f'{path}/{step}/covercheck_verify.rpt'
-    html_path = f'{path}/{step}/reachability.html'
+
+    # Default goal is 90% if not specified otherwise
+    goal = coverage_goal.get(step, 90.0)
+    res = parse_reachability_summary(f'{path}/{step}', goal=goal)
+    if res is not None:
+        framework.results[framework.current_toplevel]['reachability']['summary'] = res
+        title = f"Reachability Summary for Design: {framework.current_toplevel}"
+        tables.show_coverage_summary(res, title=title,
+                                    outdir=f'{path}/{step}',
+                                    step=step)
+        if any(row.get("Status") == "fail" for row in res):
+            status = "goal_not_met"
+    return run_stdout, run_stderr, stdout_err, stderr_err, status
+
+def parse_reachability_summary(path, goal=90.0):
+    """
+    Helper function to deduplicate code in reachability parsing
+
+    :param path: the path of the reports
+    :type path: str
+    :param goal: coverage goal
+    :type goal: int or float
+
+    :return: result dict of the parsing
+    :rtype: dict
+    """
+    rpt_path = f'{path}/covercheck_verify.rpt'
+    html_path = f'{path}/reachability.html'
+    res = None
     if os.path.exists(rpt_path):
         parse_reports.parse_reachability_report_to_html(rpt_path, html_path)
         reachability_html = html_path
@@ -529,18 +558,9 @@ def run_reachability(framework, path):
             html_content = f.read()
 
         table = parse_reachability.parse_single_table(html_content)
-        # Default goal is 90% if not specified otherwise
-        goal = coverage_goal.get(step, 90.0)
         res = parse_reachability.unified_format_table(parse_reachability.add_total_row(table),
                                                       goal=goal)
-        framework.results[framework.current_toplevel]['reachability']['summary'] = res
-        title = f"Reachability Summary for Design: {framework.current_toplevel}"
-        tables.show_coverage_summary(res, title=title,
-                                    outdir=f'{path}/{step}',
-                                    step=step)
-        if any(row.get("Status") == "fail" for row in res):
-            status = "goal_not_met"
-    return run_stdout, run_stderr, stdout_err, stderr_err, status
+    return res
 
 def get_linecheck_reachability():
     """
@@ -856,6 +876,9 @@ def setup_prove(framework, path):
     :type path: str
     """
     filename = "prove.do"
+    # We need to save the current toplevel to use it in the setup
+    # of the post-steps.
+    set_setup_toplevel(framework.current_toplevel)
     # TODO : can we also compile the PSL files using a .f file?
     gencompilescript(framework, filename, path)
     # Only add the clocks since we don't want to add any extra constraint
@@ -991,6 +1014,21 @@ def setup_prove_simcover(framework, path):
                                           f'coverage attribute -name TESTNAME -value '
                                           f'{pathlib.Path(file).parent.name}')
         helpers.insert_line_before_target(file, "quit -f;", "coverage save sim.ucdb")
+    
+    simcover_path = f"{path}/prove.simcover"
+    os.makedirs(simcover_path, exist_ok=True)
+
+    # Generate the script to exclude unreachable code from simulation coverage
+    gencompilescript(framework, 'prove.simcover/reachability_exclusions.do', path)
+    print(framework.current_toplevel)
+    with open(simcover_path+'/reachability_exclusions.do', "a", encoding='utf-8') as f:
+        for line in framework.init_reset:
+            print(line, file=f)
+        print(f'covercheck load ucdb {simcover_path}/simcover.ucdb', file=f)
+        print(f'covercheck compile {framework.get_tool_flags("covercheck compile")} -d '
+              f'{get_setup_toplevel()} {framework.generic_args}', file=f)
+        print(f'covercheck verify {framework.get_tool_flags("covercheck verify")}', file=f)
+        print('exit', file=f)
 
 def run_prove_simcover(framework, path):
     """
@@ -1004,6 +1042,7 @@ def run_prove_simcover(framework, path):
     :return: A tuple (cmd_stdout, cmd_stderr, stdout_err, stderr_err, status)
     :rtype: tuple[str, str, int, int, str]
     """
+    step = 'prove.simcover'
     status = "pass"
     sum_cmd_stdout, sum_cmd_stderr = '', ''
     stdout_err, stderr_err = 0, 0
@@ -1068,22 +1107,49 @@ def run_prove_simcover(framework, path):
                 'simcover', 'simcover.ucdb']
             simcover_run('vcover')
 
-    # Generate summary table
-    coverage_path = f'{path}/simulation_coverage.log'
-    if os.path.exists(coverage_path):
-        coverage_data = parse_simcover.parse_coverage_report(coverage_path)
-        # Default goal is 90% if not specified otherwise
-        goal = coverage_goal.get("prove.simcover", 90.0)
-        res = parse_simcover.unified_format_table(parse_simcover.sum_coverage_data(coverage_data),
-                                                  goal=goal)
-        framework.results[design]['prove.simcover']['summary'] = res
-        title = f"Simulation Coverage Summary for Design: {framework.current_toplevel}"
-        tables.show_coverage_summary(framework.results[design]['prove.simcover']['summary'],
-                                     title=title,
-                                     outdir=f'{framework.outdir}/{framework.current_toplevel}/prove.simcover',
-                                     step='prove.simcover')
-        if any(row.get("Status") == "fail" for row in res):
-            status = "goal_not_met"
+            # Generate summary table
+            coverage_path = f'{simcover_path}/simulation_coverage.log'
+            if os.path.exists(coverage_path):
+                coverage_data = parse_simcover.parse_coverage_report(coverage_path)
+                # Default goal is 90% if not specified otherwise
+                goal = coverage_goal.get("prove.simcover", 90.0)
+                res = parse_simcover.unified_format_table(parse_simcover.
+                                                          sum_coverage_data(coverage_data),
+                                                                            goal=goal)
+                framework.results[design]['prove.simcover']['summary'] = res
+                title = f"Simulation Coverage Summary for Design: {design}"
+                tables.show_coverage_summary(framework.results[design][step]['summary'],
+                                            title=title,
+                                            outdir=f'{framework.outdir}/{design}/prove.simcover',
+                                            step=step)
+                if any(row.get("Status") == "fail" for row in res):
+                    status = "goal_not_met"
+
+                # Reachability analysis of uncovered code
+                path = None
+                cmd = ['qverify', '-c', '-od', f'{simcover_path}',
+                       '-do', f'{simcover_path}/reachability_exclusions.do']
+                simcover_run('qverify')
+
+                goal = 0.0
+                res2 = parse_reachability_summary(simcover_path, goal=goal)
+                if res2 is not None:
+                    title = f"Reachability of Simulation Coverage Misses for Design: {design}"
+                    tables.show_coverage_summary(res2, title=title,
+                                                outdir=f'{simcover_path}',
+                                                step=step)
+
+                    res3 = parse_simcover.merge_coverage(res, res2)
+                    title = f"Simulation Coverage After Exclusions for Design: {design}"
+                    tables.show_coverage_summary(res3, title=title,
+                                                outdir=f'{simcover_path}',
+                                                step=step)
+                    framework.results[design]['prove.simcover']['summary'] = res3
+                    if any(row.get("Status") == "fail" for row in res3):
+                        status = "goal_not_met"
+                    else:
+                        status = "pass"
+
     return sum_cmd_stdout, sum_cmd_stderr, stdout_err, stderr_err, status
 
 def get_linecheck_prove_simcover():
@@ -1100,7 +1166,8 @@ def get_linecheck_prove_simcover():
     patterns = {k: v.copy() for k, v in patterns.items()}
 
     patterns["ignore"] += [
-        "Note: (vsim-12126) Error and warning message counts have been restored"
+        "Note: (vsim-12126) Error and warning message counts have been restored",
+        "Coverage Type           Active        Witness   Inconclusive    Unreachable"
         ]
     patterns["warning"] += ["inconclusive", "inconclusives"]
 
@@ -1265,6 +1332,20 @@ def set_coverage_goal(step, goal):
     :type goal: int or float
     """
     coverage_goal[step] = goal
+
+def set_setup_toplevel(toplevel):
+    """
+    Save the toplevel used in the post-step
+    """
+    global setup_toplevel
+    setup_toplevel = toplevel
+
+def get_setup_toplevel():
+    """
+    Get the toplevel used in the post-step
+    """
+    global setup_toplevel
+    return setup_toplevel
 
 def generics_to_args(generics):
     """
