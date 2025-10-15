@@ -25,8 +25,6 @@ KEYBOARD_INTERRUPT = {"msg": "FVM exit condition: Keyboard interrupt",
 #fvm = fvmframework(loglevel="TRACE")
 #fvm.set_loglevel("TRACE")
 
-# TODO improve tests, check output values, and parameterize
-
 def test_set_toolchain() :
     """Test setting a toolchain that exists"""
     fvm = fvmframework()

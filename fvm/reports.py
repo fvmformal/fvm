@@ -330,11 +330,7 @@ def pretty_summary(framework, logger):
     else:
         logger.error(f'Cannot access output directory {framework.outdir}, something went wrong')
 
-# TODO: separate functionality in at least two functions, maybe three:
-#       - generate_xml_report
-#       - generate_text_report (not sure we really need a text report)
-#       - generate_html_report
-def generate_reports(framework, logger):
+def generate_xml_report(framework, logger):
     """
     Generates output reports
     
@@ -476,7 +472,7 @@ def generate_reports(framework, logger):
     with open(xmlfile, 'w', encoding="utf-8") as f:
         f.write(xml_string)
 
-def generate_allure(framework, logger):
+def generate_html_report(framework, logger):
     """
     Generates an Allure report from the framework results
 
@@ -614,7 +610,7 @@ def generate_allure(framework, logger):
         running 'python3 install_allure.py [install_dir], and add its bin/
         directory to your $PATH'""")
 
-def generate_md(framework):
+def generate_text_report(framework):
     """
     Generate a Markdown report from the framework results
 

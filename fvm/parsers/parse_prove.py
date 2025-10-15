@@ -45,7 +45,6 @@ def normalize_sections(data):
     """
     Normalizes section names to a standard format.
     """
-    # TODO: Check if there are more categories
     mapping = {
         "Targets Proven": "Proven",
         "Targets Vacuously Proven": "Vacuous",

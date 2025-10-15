@@ -866,8 +866,6 @@ class fvmframework:
 
         return ret
 
-    # TODO : check that port_list must be an actual list()
-    # TODO : change how this function is used!!!!!!
     # Disable pylint unused-argument warnings because all arguments
     # are used but with locals(), so pylint doesn't see
     # that they are used because it is done dynamically
@@ -914,7 +912,6 @@ class fvmframework:
         self.logger.trace(f'adding clock domain: {domain}')
         self.clock_domains.append(domain)
 
-    # TODO : check that port_list must be an actual list()
     def add_reset_domain(self, port_list, design='*', name=None, asynchronous=None,
                          synchronous=None, active_high=None, active_low=None,
                          is_set=None, no_reset=None, module=None, ignore=None):
@@ -1110,9 +1107,9 @@ class fvmframework:
                 self.run_design(design, skip_setup)
 
         reports.pretty_summary(self, self.logger)
-        reports.generate_reports(self, self.logger)
-        reports.generate_allure(self, self.logger)
-        reports.generate_md(self)
+        reports.generate_xml_report(self, self.logger)
+        reports.generate_html_report(self, self.logger)
+        reports.generate_text_report(self)
         err = self.check_errors()
         if err :
             self.exit_if_required(CHECK_FAILED)
@@ -1151,8 +1148,6 @@ class fvmframework:
         # List all available/selected steps/tools
         # Call the list_step() function for each available step
         # If a 'step' argument is specified, just list that specific step
-        # TODO : the list code is duplicated below, we could think of some way
-        # of deduplicating it
         if self.step is None:
             for step in self.steps.steps:
                 if self.is_skipped(design, step):
@@ -1213,8 +1208,6 @@ class fvmframework:
         # Run all available/selected steps/tools
         # Call the run_step() function for each available step
         # If a 'step' argument is specified, just run that specific step
-        # TODO : the run code is duplicated below, we could think of some way
-        # of deduplicating it
         if self.step is None:
             self.logger.info(self.steps.steps)
             for step in self.steps.steps:
@@ -1298,9 +1291,9 @@ class fvmframework:
             pass
         else:
             reports.pretty_summary(self, self.logger)
-            reports.generate_reports(self, self.logger)
-            reports.generate_allure(self, self.logger)
-            reports.generate_md(self)
+            reports.generate_xml_report(self, self.logger)
+            reports.generate_html_report(self, self.logger)
+            reports.generate_text_report(self)
             self.logger.error(errorcode['msg'])
             sys.exit(errorcode['value'])
 

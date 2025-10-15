@@ -30,18 +30,17 @@ from fvm import tables
 
 # For the Questa tools, each tool is run through a wrapper which is the actual
 # command that must be run in the command-line
-# TODO : Not sure we really need this dict, although it is a nice summary
 tools = {
-        # step           : ["tool",       "wrapper"],
-        "lint"           : ["lint",       "qverify"],
-        "friendliness"   : ["autocheck",  "qverify"],
-        "rulecheck"      : ["autocheck",  "qverify"],
-        "xverify"        : ["xcheck",     "qverify"],
-        "reachability"   : ["covercheck", "qverify"],
-        "resets"         : ["rdc",        "qverify"],
-        "clocks"         : ["cdc",        "qverify"],
-        "prove"          : ["propcheck",  "qverify"],
-        "prove.formalcover"          : ["propcheck",  "qverify"], # TODO : Decide if this is OK
+        # step              : ["tool",       "wrapper"],
+        "lint"              : ["lint",       "qverify"],
+        "friendliness"      : ["autocheck",  "qverify"],
+        "rulecheck"         : ["autocheck",  "qverify"],
+        "xverify"           : ["xcheck",     "qverify"],
+        "reachability"      : ["covercheck", "qverify"],
+        "resets"            : ["rdc",        "qverify"],
+        "clocks"            : ["cdc",        "qverify"],
+        "prove"             : ["propcheck",  "qverify"],
+        "prove.formalcover" : ["propcheck",  "qverify"],
 #        "simulate"       : ["vsim", "vsim"],
 #        "createemptylib" : ["vlib", "vlib"],
 #        "compilevhdl"    : ["vcom", "vcom"],
