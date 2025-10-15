@@ -159,4 +159,5 @@ Running the tools
 Finally, let's run our `formal.py` script!
 
 .. code-block:: zsh
+
    python3 formal.py
