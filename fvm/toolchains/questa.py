@@ -1020,7 +1020,6 @@ def setup_prove_simcover(framework, path):
 
     # Generate the script to exclude unreachable code from simulation coverage
     gencompilescript(framework, 'prove.simcover/reachability_exclusions.do', path)
-    print(framework.current_toplevel)
     with open(simcover_path+'/reachability_exclusions.do', "a", encoding='utf-8') as f:
         for line in framework.init_reset:
             print(line, file=f)
