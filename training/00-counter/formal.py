@@ -1,6 +1,6 @@
-from src.builder.framework import fvmframework
+from src.builder.framework import FvmFramework
 
-fvm = fvmframework()
+fvm = FvmFramework()
 fvm.add_vhdl_source("examples/00-counter/counter.vhd")
 fvm.set_toplevel("counter")
 fvm.run()

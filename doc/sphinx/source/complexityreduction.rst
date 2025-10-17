@@ -45,22 +45,22 @@ hold for any possible value of the 64-bit counter's output.
 How to do it
 ------------
 
-Just use the function :py:func:`fvm.fvmframework.cutpoint` and pass to it at
+Just use the function :py:func:`fvm.FvmFramework.cutpoint` and pass to it at
 least the signal you want to cutpoint. Use it for all the signals you need to
 convert into free variables. If needed, a python :code:`for` loop can be used
 to apply the function to multiple signals.
 
 .. code-block:: python
 
-   from fvm import FVMFramework
+   from fvm import FvmFramework
 
    fvm.add_psl_source("concepts/cutpoint_example/counter.psl")
-   fvm = fvmframework()
+   fvm = FvmFramework()
    fvm.cutpoint("Q")
 
 The function can receive more arguments than just the signal name so don't
 forget to check the function documentation:
-:py:func:`fvm.fvmframework.cutpoint`
+:py:func:`fvm.FvmFramework.cutpoint`
 
 Example
 -------
@@ -108,26 +108,26 @@ How to do it
    Add links to public repo
 
 If you want to blackbox all instances of a specific entity, use the function
-:py:func:`fvm.fvmframework.blackbox` and pass to it the entity name.
+:py:func:`fvm.FvmFramework.blackbox` and pass to it the entity name.
 
 .. code-block:: python
 
-   from fvm import fvmframework
+   from fvm import FvmFramework
 
-   fvm = fvmframework()
+   fvm = FvmFramework()
    fvm.add_vhdl_sources("concepts/blackbox_instance/*.vhd")
    fvm.set_toplevel('dualcounter')
    fvm.blackbox('counter')
 
 If you want to blackbox a specific instance of an entity, you need to use the
-function :py:func:`fvm.fvmframework.blackbox_instance`, providing the entity
+function :py:func:`fvm.FvmFramework.blackbox_instance`, providing the entity
 name as argument.
 
 .. code-block:: python
 
-   from fvm import fvmframework
+   from fvm import FvmFramework
 
-   fvm = fvmframework()
+   fvm = FvmFramework()
    fvm.add_vhdl_sources("concepts/blackbox_instance/*.vhd")
    fvm.set_toplevel('dualcounter')
    fvm.blackbox_instance('counter0')
@@ -167,10 +167,10 @@ In the :file:`formal.py` script:
 
 .. code-block:: python
 
-   from fvm import FVMFramework
+   from fvm import FvmFramework
 
    fvm.add_psl_source("concepts/cutpoint_example/counter.psl")
-   fvm = fvmframework()
+   fvm = FvmFramework()
    fvm.cutpoint("Q")
 
 In your PSL properties:

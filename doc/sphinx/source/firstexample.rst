@@ -64,9 +64,9 @@ a single PSL line.
 
 .. code-block:: python
 
-   from fvm import fvmframework
+   from fvm import FvmFramework
 
-   fvm = fvmframework()
+   fvm = FvmFramework()
    fvm.add_vhdl_source("examples/countervunit/counter.vhd")
    fvm.set_toplevel("counter")
    fvm.run()
@@ -145,9 +145,9 @@ Explain that we just have to add a single line to our script
 .. code-block:: python
    :emphasize-lines: 5
 
-   from fvm import fvmframework
+   from fvm import FvmFramework
 
-   fvm = fvmframework()
+   fvm = FvmFramework()
    fvm.add_vhdl_source("examples/countervunit/counter.vhd")
    fvm.add_psl_source("examples/countervunit/counter_properties.psl")
    fvm.set_toplevel("counter")
