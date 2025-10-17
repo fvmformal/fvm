@@ -54,7 +54,7 @@ to apply the function to multiple signals.
 
    from fvm import FvmFramework
 
-   fvm.add_psl_source("concepts/cutpoint_example/counter.psl")
+   fvm.add_vhdl_source("concepts/cutpoint_example/counter.vhd")
    fvm = FvmFramework()
    fvm.cutpoint("Q")
 
@@ -169,7 +169,7 @@ In the :file:`formal.py` script:
 
    from fvm import FvmFramework
 
-   fvm.add_psl_source("concepts/cutpoint_example/counter.psl")
+   fvm.add_vhdl_source("concepts/cutpoint_example/counter.vhd")
    fvm = FvmFramework()
    fvm.cutpoint("Q")
 
