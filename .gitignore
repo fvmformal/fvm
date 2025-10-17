@@ -28,4 +28,4 @@ results.xml
 .coverage
 modelsim.ini
 vish_stacktrace.vstf
-
+doc/sphinx/build

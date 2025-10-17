@@ -3,6 +3,11 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+.. Add your content using ``reStructuredText`` syntax. See the
+   `reStructuredText <https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_
+   documentation for details.
+
+
 .. _index:
 
 Welcome to FVM!
@@ -14,11 +19,6 @@ barriers** for formal verification.
 In other words, **let's make Formal Verification easier!**
 
 To learn more, go to the next section: :ref:`fv_intro`
-
-.. todo::
-    Add your content using ``reStructuredText`` syntax. See the
-    `reStructuredText <https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_
-    documentation for details.
 
 .. toctree::
    :maxdepth: 4
@@ -38,10 +38,16 @@ To learn more, go to the next section: :ref:`fv_intro`
 
 .. toctree::
    :maxdepth: 4
-   :caption: Examples
+   :caption: Concepts
    :hidden:
 
    concepts
+
+.. toctree::
+   :maxdepth: 4
+   :caption: Examples
+   :hidden:
+
    examples
 
 .. toctree::
@@ -76,3 +82,4 @@ To learn more, go to the next section: :ref:`fv_intro`
 
    license
    acknowledgement
+   publications

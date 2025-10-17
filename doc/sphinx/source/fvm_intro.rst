@@ -42,7 +42,7 @@ A graphical summary of the FVM can be found below:
    :alt: A graphical summary of the FVM
 
 The methodology steps
-~~~~~~~~~~~~~~~~~~~~~
+---------------------
 
 As FVM is a methodology, it starts by defining a number of steps to perform:
 
@@ -64,9 +64,9 @@ available:
 
 
 The build and test framework
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+----------------------------
 
-The *FVM framework* acts as an abstraction layer that interfaces with the
+The **FVM framework** acts as an abstraction layer that interfaces with the
 formal tools. Each formal tool may require different configurations and
 commands, and FVM manages that for you, while also providing sensible defaults
 for tool options.
@@ -81,7 +81,7 @@ automatically calls the different formal tools, collects the relevant metrics,
 and generates the reports.
 
 Supported toolchains
-^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~
 
 Currently, just the Questa Formal Tools (and Questa Simulator, for the
 `simcover` step) are supported
@@ -116,8 +116,8 @@ The following table relates each FVM step with the relevant Questa tool
      - QuestaSim
 
 
-Drom2psl
-~~~~~~~~
+drom2psl
+--------
 
 ``drom2psl`` is a package provided with FVM that aims to reduce the learning
 curve and necessary effort to define formal properties.
@@ -190,9 +190,10 @@ The following PSL file is generated:
 
 
 Repository of examples
-~~~~~~~~~~~~~~~~~~~~~~
+----------------------
 
-To ease the learning curve, Formal Verification of multiple designs are
-provided. These designs are ordered so the FVM can be learn by working through
+To ease the learning curve, examples on how to formally verify a number of
+designs of increasing complexity are
+provided. These designs are ordered so the FVM can be learned by working through
 them. See :ref:`examples` for more information.
 

@@ -50,11 +50,14 @@ extensions = [
     "sphinx.ext.viewcode",      # Add links to source code
     "sphinx.ext.todo",          # Allow todonotes
     "sphinxcontrib.mermaid",    # To have mermaid diagrams
+    "sphinxcontrib.bibtex",     # To use bibtex
     #"sphinx_autodoc_typehints", # Show type hints
     #"sphinx.ext.coverage",      # Report documentation coverage (we are not
       #using it, because when using autodoc, coverage believes everything is
       #documented)
 ]
+
+bibtex_bibfiles = ['bib/publications.bib'] # For sphinxcontrib-bibtex
 
 autodoc_typehints = "description"  # Type hints appear in descriptions
 

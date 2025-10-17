@@ -1,6 +1,6 @@
 .. _examples:
 
-Examples
+Repository of Examples
 ======================================
 
 The repository of examples is really nice
@@ -9,10 +9,10 @@ Suggested order
 ---------------
 
 Easy examples
-~~~~~~~~~~~~~
+-------------
 
 Example 1
-^^^^^^^^^
+~~~~~~~~~
 
 Let's verify a simple counter!
 
@@ -21,25 +21,25 @@ Please find the code of the design in INSERT LINK
 Bla bla bla. Please note that ble ble ble
 
 Example 2
-^^^^^^^^^
+~~~~~~~~~
 
 OK examples
-~~~~~~~~~~~
+-----------
 
 Example 3
-^^^^^^^^^
+~~~~~~~~~
 
 Medium examples
-~~~~~~~~~~~~~~~
+---------------
 
 Example 4
-^^^^^^^^^
+~~~~~~~~~
 
 Difficult examples
-~~~~~~~~~~~~~~~~~~
+------------------
 
 Example 5
-^^^^^^^^^
+~~~~~~~~~
 
 Whatever
 

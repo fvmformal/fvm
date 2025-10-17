@@ -27,6 +27,7 @@ poetry2setup = "^1.1.0"
 sphinx = "^7.4"
 sphinx-rtd-theme = "^3.0.2"
 sphinxcontrib-mermaid = "^1.0.0"
+sphinxcontrib-bibtex = "^2.6.5"
 
 [build-system]
 requires = ["poetry-core"]
