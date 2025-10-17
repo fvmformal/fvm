@@ -1,6 +1,6 @@
 """This module defines the steps class, which is used to manage the steps
 and post_steps of the verification process."""
-class steps:
+class Steps:
     """This class defines a data structure in which to store the steps and
     provides functions to manage it (such as adding steps and post_steps)"""
 

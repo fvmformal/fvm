@@ -27,7 +27,7 @@ from rich.console import Console
 from fvm import logcounter
 from fvm import helpers
 from fvm import reports
-from fvm.steps import steps
+from fvm.steps import Steps
 from fvm.toolchains import toolchains
 from fvm.drom2psl.generator import generator
 
@@ -125,7 +125,7 @@ class fvmframework:
             self.loglevel = "INFO"
 
         # Create logger counter
-        self.log_counter = logcounter.logcounter()
+        self.log_counter = logcounter.LogCounter()
 
         # Clean logger format and handlers
         self.logger.remove()
@@ -210,9 +210,9 @@ class fvmframework:
             self.exit_if_required(BAD_VALUE)
         self.tool_flags = toolchains.get_default_flags(self.toolchain)
         self.logger.debug(f'{self.tool_flags=}')
-        self.steps = steps()
+        self.steps = Steps()
         toolchains.define_steps(self, self.steps, self.toolchain)
-        self.logger.debug(f'{steps=}')
+        self.logger.debug(f'{self.steps=}')
 
         # Exit if args.step is unrecognized
         if args.step is not None:

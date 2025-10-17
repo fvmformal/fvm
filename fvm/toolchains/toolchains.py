@@ -9,7 +9,7 @@ import importlib
 # To add a toolchain, add it to this list and create a file with the same name
 # and .py extension in the toolchains folder
 toolchains = ['questa', 'sby']
-default_toolchain = 'questa'
+DEFAULT_TOOLCHAIN = 'questa'
 
 def get_toolchain():
     """
@@ -21,7 +21,7 @@ def get_toolchain():
     :return: toolchain name
     :rtype: str
     """
-    toolchain = os.getenv('FVM_TOOLCHAIN', default_toolchain)
+    toolchain = os.getenv('FVM_TOOLCHAIN', DEFAULT_TOOLCHAIN)
     return toolchain
 
 def get_default_flags(toolchain):

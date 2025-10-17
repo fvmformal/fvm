@@ -1,5 +1,5 @@
 """Log counter for tracking log levels in FVM"""
-class logcounter:
+class LogCounter:
     """Class to count the number of log messages at each level."""
     def __init__(self):
         self.counts = {
