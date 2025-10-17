@@ -1,6 +1,6 @@
-from fvm import fvmframework
+from fvm import FvmFramework
 
-fvm = fvmframework()
+fvm = FvmFramework()
 fvm.add_vhdl_sources("examples/uart_tx/*.vhd")
 fvm.add_psl_sources("concepts/inheriting_vunits/uart_tx_sequence.psl")
 fvm.add_psl_sources("concepts/symbolic_constants/uart_tx.psl")

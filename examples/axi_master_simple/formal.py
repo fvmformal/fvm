@@ -1,8 +1,8 @@
-from fvm import fvmframework
+from fvm import FvmFramework
 import subprocess
 import os
 
-fvm = fvmframework()
+fvm = FvmFramework()
 
 subprocess.run(['git', 'clone', '--recurse-submodules=:src', '--branch 3.0.1', 'https://github.com/open-logic/open-logic'])
 

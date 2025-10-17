@@ -1,8 +1,8 @@
-from fvm import fvmframework
+from fvm import FvmFramework
 import subprocess
 import os
 
-fvm = fvmframework()
+fvm = FvmFramework()
 
 subprocess.run(['git', 'clone', 
 'https://github.com/nullobject/sdram-fpga'])

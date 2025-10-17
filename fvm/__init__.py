@@ -1,1 +1,1 @@
-from fvm.framework import fvmframework
+from fvm.framework import FvmFramework

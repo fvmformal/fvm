@@ -1,6 +1,6 @@
-from fvm import fvmframework
+from fvm import FvmFramework
 
-fvm = fvmframework()
+fvm = FvmFramework()
 fvm.add_vhdl_source("concepts/cutpoint_example/counter.vhd")
 fvm.add_psl_source("concepts/cutpoint_example/counter.psl")
 fvm.set_toplevel("counter")

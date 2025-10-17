@@ -1,6 +1,6 @@
-from fvm import fvmframework
+from fvm import FvmFramework
 
-fvm = fvmframework()
+fvm = FvmFramework()
 fvm.add_vhdl_source("concepts/user_defined_hdltypes/colors.vhd")
 fvm.add_psl_source("concepts/user_defined_hdltypes/colors.psl")
 fvm.set_toplevel("colors")

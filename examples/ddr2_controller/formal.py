@@ -1,9 +1,9 @@
-from fvm import fvmframework
+from fvm import FvmFramework
 import requests
 import os
 import tarfile
 
-fvm = fvmframework()
+fvm = FvmFramework()
 
 ## The following code is used to download and extract the GRLIB IP Library
 ## The extracted files are then added to the FVM framework

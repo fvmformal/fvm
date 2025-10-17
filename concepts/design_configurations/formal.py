@@ -1,6 +1,6 @@
-from fvm import fvmframework
+from fvm import FvmFramework
 
-fvm = fvmframework()
+fvm = FvmFramework()
 fvm.add_vhdl_sources("examples/countervunit/*.vhd")
 fvm.add_psl_source("examples/countervunit/counter_properties.psl")
 fvm.set_toplevel("counter")

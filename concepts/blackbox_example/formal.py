@@ -1,6 +1,6 @@
-from fvm import fvmframework
+from fvm import FvmFramework
 
-fvm = fvmframework()
+fvm = FvmFramework()
 fvm.add_vhdl_sources("concepts/blackbox_instance/*.vhd")
 fvm.add_psl_source("concepts/blackbox_instance/dualcounter.psl")
 fvm.set_toplevel('dualcounter')

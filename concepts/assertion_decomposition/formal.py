@@ -1,6 +1,6 @@
-from fvm import fvmframework
+from fvm import FvmFramework
 
-fvm = fvmframework()
+fvm = FvmFramework()
 fvm.add_vhdl_sources("examples/linearinterpolator/*.vhd")
 fvm.add_psl_sources("concepts/assertion_decomposition/*.psl")
 fvm.set_toplevel("interpolator")

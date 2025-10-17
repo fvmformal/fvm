@@ -421,7 +421,7 @@ def generate_xml_report(framework, logger):
         testsuites.append(testsuite)
 
     # If the output directory doesn't exist, it is because there was an
-    # error in fvmframework.setup(). But we will generate the directory and
+    # error in FvmFramework.setup(). But we will generate the directory and
     # the report nevertheless, because CI tools may depend on the report
     # being there.
     xml_string = to_xml_report_string(testsuites, prettyprint=True)

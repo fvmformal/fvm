@@ -1,7 +1,7 @@
-fvmframework
+FvmFramework
 ============
 
-the fvmframework class is the intended interface for users.
+the FvmFramework class is the intended interface for users.
 
 .. note::
 

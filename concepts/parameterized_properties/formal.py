@@ -1,6 +1,6 @@
-from fvm import fvmframework
+from fvm import FvmFramework
 
-fvm = fvmframework()
+fvm = FvmFramework()
 fvm.add_vhdl_sources("examples/uart_tx/*.vhd")
 fvm.add_psl_sources("concepts/parameterized_properties/*.psl")
 fvm.set_toplevel("uart_tx")

@@ -62,7 +62,7 @@ def getlogformattool(design, step, tool):
 # False
 console = Console(force_terminal=True, force_interactive=False)
 
-class fvmframework:
+class FvmFramework:
     """This class defines the FVM framework"""
 
     def __init__(self):

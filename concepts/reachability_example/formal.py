@@ -1,6 +1,6 @@
-from fvm import fvmframework
+from fvm import FvmFramework
 
-fvm = fvmframework()
+fvm = FvmFramework()
 fvm.add_vhdl_source("concepts/reachability_example/counter.vhd")
 fvm.add_psl_sources("concepts/reachability_example/*.psl")
 fvm.set_toplevel("counter")
