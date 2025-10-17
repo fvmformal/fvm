@@ -49,7 +49,7 @@ To learn more, go to the next section: :ref:`fv_intro`
    :caption: Public API
    :hidden:
 
-   FvmFramework
+   fvmframework
    commandline
    drom2psl
 
