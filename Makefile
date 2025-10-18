@@ -78,7 +78,7 @@ $(REQS_DIR)/fvm_installed: $(VENV_DIR)/venv_created reqs
 
 # Lint the python code
 lint: dev-reqs
-	$(VENV_ACTIVATE) pylint --output-format=colorized test/*.py fvm/*.py fvm/*/*.py || pylint-exit $$?
+	$(VENV_ACTIVATE) pylint --output-format=colorized --recursive=y test/ src/ || pylint-exit $$?
 
 # List the tests
 list-tests: reqs dev-reqs
@@ -212,7 +212,7 @@ todo: $(VENV_DIR)/venv_created
 # Generate documentation
 # TODO : move anybadge to dev-reqs
 docs: dev-reqs
-	$(VENV_ACTIVATE) sphinx-apidoc -o doc/sphinx/source fvm
+	$(VENV_ACTIVATE) sphinx-apidoc -o doc/sphinx/source src/fvm
 	$(VENV_ACTIVATE) make -C doc/sphinx/ html
 	mkdir -p badges
 	rm -f badges/undocumented.svg
