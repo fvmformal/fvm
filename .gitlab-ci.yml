@@ -101,7 +101,7 @@ run_concepts_questa: &run_concepts_questa
     #- mkdir -p fvm_out/dashboard/allure-results
   script:
     - make venv
-    - uv run --dev make PYTHON="coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN" $DESIGN
+    - source .venv/bin/activate && uv run --dev make PYTHON="coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN" $DESIGN
   after_script:
     - mv fvm_out/dashboard/allure-report fvm_out/dashboard/allure-report.$TOOLCHAIN.$DESIGN
   artifacts:
