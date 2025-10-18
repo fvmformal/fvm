@@ -100,6 +100,7 @@ run_concepts_questa: &run_concepts_questa
     #- mv executor.json fvm_out/fvm_results
     #- mkdir -p fvm_out/dashboard/allure-results
   script:
+    - make dev-reqs
     - make PYTHON="coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN" $DESIGN
   after_script:
     - mv fvm_out/dashboard/allure-report fvm_out/dashboard/allure-report.$TOOLCHAIN.$DESIGN
@@ -157,6 +158,7 @@ run_examples_questa:
     - export SALT_LICENSE_SERVER=29000@popote.us.es
     - yum install -y python39 java-1.8.0-openjdk
   script:
+    - make dev-reqs
     - make PYTHON="coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN" $DESIGN
     - source .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.lint -m examples.countervunit.formal -s lint
     - make clean
@@ -185,6 +187,7 @@ run_options_questa:
     - export SALT_LICENSE_SERVER=29000@popote.us.es
     - yum install -y python39 java-1.8.0-openjdk
   script:
+    - make dev-reqs
     - make install
     - . .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.hooks.verbose concepts/hooks/formal.py -v
     - . .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.hooks.list concepts/hooks/formal.py -l
