@@ -83,7 +83,7 @@ lint: dev-reqs
 
 # List the tests
 list-tests: reqs dev-reqs
-	$(VENV_ACTIVATE) pytest --collect-only
+	$(VENV_ACTIVATE) --dev pytest --collect-only
 
 # Run the tests
 test: fvm dev-reqs
