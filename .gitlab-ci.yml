@@ -14,7 +14,7 @@ count_todos_in_code:
     GOAL: "60"
   script:
     - apt update
-    - apt install -y python3 python3-pip python3-venv bc
+    - apt install -y python3 python3-pip python3-venv bc curl
     - curl -LsSf https://astral.sh/uv/install.sh | sh
     - make todo | tee todo.log
     - TODOS=$(grep -oP 'TODOs=\K[\d]+' todo.log)
@@ -38,7 +38,7 @@ lint_python:
     GOAL: "92"
   script:
     - apt update
-    - apt install -y python3 python3-pip python3-venv bc
+    - apt install -y python3 python3-pip python3-venv bc curl
     - curl -LsSf https://astral.sh/uv/install.sh | sh
     - make lint | tee pylint.log
     - RATING=$(grep -oP 'Your code has been rated at \K[\d.]+' pylint.log)
@@ -58,7 +58,7 @@ test_all:
   image: debian:12
   script:
     - apt update
-    - apt install -y python3 python3-pip python3-venv
+    - apt install -y python3 python3-pip python3-venv curl
     - curl -LsSf https://astral.sh/uv/install.sh | sh
     - make test
     - mv .coverage .coverage.pytest
@@ -220,7 +220,7 @@ full_dashboard:
   image: debian:12
   script:
     - apt update
-    - apt install -y python3 python3-pip python3-venv default-jdk
+    - apt install -y python3 python3-pip python3-venv default-jdk curl
     - curl -LsSf https://astral.sh/uv/install.sh | sh
     - mv results.xml fvm_out/fvm_results
     - make report
@@ -237,7 +237,7 @@ apidoc:
     GOAL: 98
   script:
     - apt update
-    - apt install -y python3 python3-pip python3-venv bc
+    - apt install -y python3 python3-pip python3-venv bc curl
     - curl -LsSf https://astral.sh/uv/install.sh | sh
     - make docs 2>&1 | tee docs.log
     - UNDOCUMENTED=$(grep -oP 'Total undocumented members= \K[\d]+' docs.log)
@@ -277,7 +277,7 @@ pycoverage:
     GOAL: "92"
   script:
     - apt update
-    - apt install -y python3 python3-pip python3-venv bc
+    - apt install -y python3 python3-pip python3-venv bc curl
     - curl -LsSf https://astral.sh/uv/install.sh | sh
     - make pycoverage | tee pycoverage.log
     - LASTFIELD=$(grep 'TOTAL' pycoverage.log | awk '{print $NF}')
