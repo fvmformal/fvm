@@ -79,7 +79,7 @@ $(REQS_DIR)/fvm_installed: $(VENV_DIR)/venv_created reqs
 
 # Lint the python code
 lint: dev-reqs
-	$(VENV_ACTIVATE) pylint --output-format=colorized --recursive=y test/ src/ || pylint-exit $$?
+	$(VENV_ACTIVATE) --dev pylint --output-format=colorized --recursive=y test/ src/ || $(VENV_ACTIVATE) --dev pylint-exit $$?
 
 # List the tests
 list-tests: reqs dev-reqs
