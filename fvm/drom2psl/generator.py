@@ -264,14 +264,22 @@ def generator(filename, outdir = None, verbose_psl = True, debug = False,
             groups.append('')
 
         for groupname in groups:
-            sequence_name = f'{vunit_name}_{groupname}'
-
-            vunit += f'  sequence {sequence_name} (\n'
+            if groupname == '':
+                sequence_name = f'{vunit_name}'
+            else:
+                sequence_name = f'{vunit_name}_{groupname}'
 
             # Get group arguments
             group_arguments = get_group_arguments(groupname, flattened_signal)
             ic(group_arguments)
-            vunit += format_group_arguments(group_arguments)
+
+            # If there are no group arguments, we don't want to print the
+            # parentheses
+            if len(group_arguments) == 0:
+                vunit += f'  sequence {sequence_name}\n'
+            else:
+                vunit += f'  sequence {sequence_name} (\n'
+                vunit += format_group_arguments(group_arguments)
 
             # If we are in the last element, we don't want a semicolon
             # so we remove the last two characters: ';\n', then we add the \n
@@ -280,7 +288,10 @@ def generator(filename, outdir = None, verbose_psl = True, debug = False,
                 vunit = vunit[:-2]
                 vunit += '\n'
 
-            vunit +=  '  ) is {\n'
+            if len(group_arguments) == 0:
+                vunit += '  is {\n'
+            else:
+                vunit +=  '  ) is {\n'
 
             prev_line = ''
             prev_cycles = 0

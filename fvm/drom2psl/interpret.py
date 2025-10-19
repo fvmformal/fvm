@@ -298,15 +298,33 @@ def get_group_arguments(groupname, flattened_signal):
                 # Remove duplicated arguments without losing ordering
                 deduplicated_data = list(dict.fromkeys(non_paren_data))
                 ic(deduplicated_data)
+                data_after_exclusion = exclude_data_types(deduplicated_data)
                 # Create a new list with each argument and its datatype
-                args_with_type = [[d, datatype] for d in deduplicated_data]
+                args_with_type = [[d, datatype] for d in data_after_exclusion]
                 ic(args_with_type)
                 group_arguments.extend(args_with_type)
     return group_arguments
 
+def exclude_data_types(datalist):
+    """Exclude VHDL types from a data list"""
+    new_datalist = []
+    for data in datalist:
+        if isinstance(data, int):
+            pass
+        elif data.startswith("0x"):
+            pass
+        elif re.match(r'^[01]+$', data):
+            pass
+        else:
+            new_datalist.append(data)
+
+    return new_datalist
+
 def remove_parentheses(string):
     """Removes anything between parentheses, including the parentheses, from a
     string"""
+    if isinstance(string, int):
+        return string
     return re.sub(r'\([^)]*\)', '', string).strip()
 
 def data2list(wavelane_data):
@@ -424,8 +442,16 @@ def get_signal_value(wave, data, cycle):
         # list, there is a data for us to use. If the pointer is outside, then
         # we don't have anything to compare to so we'll consider it a don't
         # care
+        # Here differentiate between integer, binary, hex, and argument,
         if position < len(data):
-            value = datalist[position]
+            if isinstance(datalist[position], int):
+                value = (datalist[position], "int")
+            elif datalist[position].startswith("0x"):
+                value = (datalist[position], "hex")
+            elif re.match(r'^[01]+$', datalist[position]):
+                value = (datalist[position], "bin")
+            else:
+                value = (datalist[position], "arg")
         else:
             value = '-'
     else:
@@ -434,15 +460,23 @@ def get_signal_value(wave, data, cycle):
 
     return value
 
-# TODO : here we are converting 0/1/etc to std_ulogic '0'/'1'/etc, but in the
-# future we could receive the hdltype as argument, to support different
-# datatypes, such as integer
 def adapt_value_to_hdltype(value):
     # For std_logic, just add a couple of single quotes to the character
     if value in ['0', '1', 'L', 'H', 'W', 'X', 'Z', 'U', '-']:
         ret = "'"+value+"'"
+    # binary
+    elif isinstance(value, tuple) and len(value) > 1 and value[1] == "bin":
+        ret = f'"{value[0]}"'
+    # hexadecimal
+    elif isinstance(value, tuple) and len(value) > 1 and value[1] == "hex":
+        ret = f'x"{value[0][2:]}"'
+    # integer
+    elif isinstance(value, tuple) and len(value) > 1 and value[1] == "int":
+        ret = f'{value[0]}'
     # Any other values (such as those specified in the 'data' fields) are
     # returned without modification
+    elif isinstance(value, tuple) and len(value) > 1 and value[1] == "arg":
+        ret = f'{value[0]}'
     else:
         ret = value
     return ret
