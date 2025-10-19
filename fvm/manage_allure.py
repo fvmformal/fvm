@@ -1,0 +1,104 @@
+import os
+import sys
+import zipfile
+import urllib.request
+import shutil
+import argparse
+from pathlib import Path
+
+DEFAULT_ALLURE_VERSION = "2.32.0"
+
+def get_allure_zip_path(allure_version, install_dir):
+    """"Get the path to the downloaded zip file"""
+    return os.path.join(install_dir, f"allure-{allure_version}.zip")
+
+def get_allure_dir(allure_version, install_dir):
+    """Get the path to the allure directory"""
+    return os.path.join(install_dir, f'allure-{allure_version}')
+
+def get_allure_bin_path(allure_version, install_dir):
+    """Get the path to the allure executable"""
+    return os.path.join(install_dir, f'allure-{allure_version}', "bin", "allure")
+
+def download_allure(allure_version, install_dir):
+    """Download a specific allure release"""
+    allure_download_url = f"https://github.com/allure-framework/allure2/releases/download/{allure_version}/allure-{allure_version}.zip"
+    allure_zip_path = get_allure_zip_path(allure_version, install_dir)
+    print(f"""  Downloading Allure {allure_version} from {allure_download_url}, writing it to {allure_zip_path}""")
+    urllib.request.urlretrieve(allure_download_url, allure_zip_path)
+
+def extract_allure(allure_version, install_dir):
+    """Extract the allure zip file"""
+    # If a previous installation exists, remove it
+    allure_dir = get_allure_dir(allure_version, install_dir)
+    if Path(allure_dir).exists():
+        shutil.rmtree(allure_dir)
+
+    print("  Extracting Allure...")
+    allure_zip_path = get_allure_zip_path(allure_version, install_dir)
+    with zipfile.ZipFile(allure_zip_path, "r") as zip_ref:
+        zip_ref.extractall(install_dir)
+
+    os.remove(allure_zip_path)
+
+def make_allure_executable(allure_version, install_dir):
+    """Make the allure binary executable if necessary"""
+    allure_bin = get_allure_bin_path(allure_version, install_dir)
+    if sys.platform != "win32":
+        os.chmod(allure_bin, 0o755)
+
+def create_parser():
+    """Create argument parser"""
+    parser = argparse.ArgumentParser(description="Install Allure CLI.")
+    parser.add_argument(
+        "allure_version",
+        nargs="?",
+        default=DEFAULT_ALLURE_VERSION,
+        help="Specific version to download (default: %(default)s)",
+    )
+    parser.add_argument(
+        "install_dir",
+        nargs="?",
+        default=os.getcwd(),
+        help="Directory to install Allure (default: .)",
+    )
+    parser.add_argument('-f', '--force', default=False, action='store_true',
+        help='Install Allure even if it exists in the target directory. (default: %(default)s)'
+    )
+    return parser
+
+def install_allure(allure_version, install_dir):
+    """Install allure"""
+    download_allure(allure_version, install_dir)
+    extract_allure(allure_version, install_dir)
+    make_allure_executable(allure_version, install_dir)
+
+def ensure_allure(allure_version, install_dir):
+    """Install allure, but only if it is not already installed in the specified
+    directory"""
+    allure_bin = Path(f'{install_dir}/allure-{allure_version}/bin/allure')
+    if not allure_bin.exists():
+        install_allure(allure_version, install_dir)
+
+def main():
+    """Main function; to use when the python script is directly executed"""
+    parser = create_parser()
+    args = parser.parse_args()
+    print(f'install_allure.py: {args=}')
+    allure_version = args.allure_version
+    install_dir = args.install_dir
+    force = args.force
+
+    if not os.path.exists(install_dir):
+        os.makedirs(install_dir)
+
+    if force:
+        print(f"  Installing Allure at {install_dir}/allure-{allure_version}/bin/allure")
+        install_allure(allure_version, install_dir)
+    else:
+        print(f"  Ensuring Allure is at {install_dir}/allure-{allure_version}/bin/allure")
+        ensure_allure(allure_version, install_dir)
+
+if __name__ == "__main__":
+    main()
+
