@@ -1124,30 +1124,31 @@ def run_prove_simcover(framework, path):
                 if any(row.get("Status") == "fail" for row in res):
                     status = "goal_not_met"
 
-                # Reachability analysis of uncovered code
-                path = None
-                cmd = ['qverify', '-c', '-od', f'{simcover_path}',
-                       '-do', f'{simcover_path}/reachability_exclusions.do']
-                simcover_run('qverify')
+                # Reachability analysis of uncovered code if there are misses
+                if any(row.get("Misses", 0) > 0 for row in res):
+                    path = None
+                    cmd = ['qverify', '-c', '-od', f'{simcover_path}',
+                        '-do', f'{simcover_path}/reachability_exclusions.do']
+                    simcover_run('qverify')
 
-                goal = 0.0
-                res2 = parse_reachability_summary(simcover_path, goal=goal)
-                if res2 is not None:
-                    title = f"Reachability of Simulation Coverage Misses for Design: {design}"
-                    tables.show_coverage_summary(res2, title=title,
-                                                outdir=f'{simcover_path}',
-                                                step=step)
+                    goal = 0.0
+                    res2 = parse_reachability_summary(simcover_path, goal=goal)
+                    if res2 is not None:
+                        title = f"Reachability of Simulation Coverage Misses for Design: {design}"
+                        tables.show_coverage_summary(res2, title=title,
+                                                    outdir=f'{simcover_path}',
+                                                    step=step)
 
-                    res3 = parse_simcover.merge_coverage(res, res2)
-                    title = f"Simulation Coverage After Exclusions for Design: {design}"
-                    tables.show_coverage_summary(res3, title=title,
-                                                outdir=f'{simcover_path}',
-                                                step=step)
-                    framework.results[design]['prove.simcover']['summary'] = res3
-                    if any(row.get("Status") == "fail" for row in res3):
-                        status = "goal_not_met"
-                    else:
-                        status = "pass"
+                        res3 = parse_simcover.merge_coverage(res, res2)
+                        title = f"Simulation Coverage After Exclusions for Design: {design}"
+                        tables.show_coverage_summary(res3, title=title,
+                                                    outdir=f'{simcover_path}',
+                                                    step=step)
+                        framework.results[design]['prove.simcover']['summary'] = res3
+                        if any(row.get("Status") == "fail" for row in res3):
+                            status = "goal_not_met"
+                        else:
+                            status = "pass"
 
     return sum_cmd_stdout, sum_cmd_stderr, stdout_err, stderr_err, status
 
