@@ -6,7 +6,8 @@
 # for example: make VENV_DIR=my_venv examples
 # If VENV_DIR is unset, no venv will be used: make VENV_DIR= examples
 VENV_DIR ?= .venv
-VENV_ACTIVATE ?= . $(VENV_DIR)/bin/activate &&
+#VENV_ACTIVATE ?= . $(VENV_DIR)/bin/activate &&
+VENV_ACTIVATE ?= uv run $(UVFLAGS)
 PYTHON ?= python3
 
 # If VENV_DIR is unset, set REQS_DIR to . so the files "reqs_installed" and
