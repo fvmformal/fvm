@@ -62,7 +62,7 @@ fvm: install
 ALLURE_VERSION=2.32.0
 $(REQS_DIR)/reqs_installed: $(VENV_DIR)/venv_created
 	$(VENV_ACTIVATE) uv sync --no-dev
-	$(VENV_ACTIVATE) python3 fvm/manage_allure.py --allure_version $(ALLURE_VERSION) --install_dir $(VENV_DIR)
+	$(VENV_ACTIVATE) python3 src/fvm/manage_allure.py --allure_version $(ALLURE_VERSION) --install_dir $(VENV_DIR)
 	$(VENV_ACTIVATE) pip3 install click
 	echo "export PATH=\$$PATH:$(realpath $(VENV_DIR))/allure-$(ALLURE_VERSION)/bin" >> $(VENV_DIR)/bin/activate
 	touch $@
