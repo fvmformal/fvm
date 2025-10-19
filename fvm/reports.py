@@ -78,8 +78,8 @@ def pretty_summary(framework, logger):
     """
     Prints the final summary
 
-    :param framework: the FVMFramework object
-    :type framework: fvm.framework.FVMFramework
+    :param framework: the FvmFramework object
+    :type framework: fvm.framework.FvmFramework
     :param logger: the logger object
     :type logger: loguru._logger.Logger
     """
@@ -334,8 +334,8 @@ def generate_xml_report(framework, logger):
     """
     Generates output reports
     
-    :param framework: the FVMFramework object
-    :type framework: fvm.framework.FVMFramework
+    :param framework: the FvmFramework object
+    :type framework: fvm.framework.FvmFramework
     :param logger: the logger object
     :type logger: loguru._logger.Logger
     """
@@ -476,8 +476,8 @@ def generate_html_report(framework, logger):
     """
     Generates an Allure report from the framework results
 
-    :param framework: the FVMFramework object
-    :type framework: fvm.framework.FVMFramework
+    :param framework: the FvmFramework object
+    :type framework: fvm.framework.FvmFramework
     :param logger: the logger object
     :type logger: loguru._logger.Logger
     """
@@ -614,8 +614,8 @@ def generate_text_report(framework, logger):
     """
     Generate a Markdown report from the framework results
 
-    :param framework: the FVMFramework object
-    :type framework: fvm.framework.FVMFramework
+    :param framework: the FvmFramework object
+    :type framework: fvm.framework.FvmFramework
     """
     global_summary = []
 

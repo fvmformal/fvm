@@ -43,8 +43,8 @@ def define_steps(framework, steps, toolchain):
     Import the corresponding toolchain module and call its define_steps function
     to define the steps in the framework.
 
-    :param framework: the FVMFramework object
-    :type framework: fvm.framework.FVMFramework
+    :param framework: the FvmFramework object
+    :type framework: fvm.framework.FvmFramework
     :param steps: the Steps object where the steps will be registered
     :type steps: fvm.steps.Steps
     :param toolchain: toolchain name
@@ -58,8 +58,8 @@ def set_timeout(framework, toolchain, step, timeout):
     Import the corresponding toolchain module and call its set_timeout function
     to set the timeout for a specific step.
 
-    :param framework: the FVMFramework object
-    :type framework: fvm.framework.FVMFramework
+    :param framework: the FvmFramework object
+    :type framework: fvm.framework.FvmFramework
     :param toolchain: toolchain name
     :type toolchain: str
     :param step: step name
@@ -103,8 +103,8 @@ def formal_initialize_reset(framework, toolchain, reset, active_high=True, cycle
     Import the corresponding toolchain module and call its formal_initialize_reset
     function to initialize the design with a reset sequence.
 
-    :param framework: the FVMFramework object
-    :type framework: fvm.framework.FVMFramework
+    :param framework: the FvmFramework object
+    :type framework: fvm.framework.FvmFramework
     :param toolchain: toolchain name
     :type toolchain: str
     :param reset: reset signal name
@@ -122,8 +122,8 @@ def get_linecheck_patterns(framework, step=None):
     Import the corresponding toolchain module and call its
     get_linecheck_{step} function to obtain patterns.
 
-    :param framework: the FVMFramework object
-    :type framework: fvm.framework.FVMFramework
+    :param framework: the FvmFramework object
+    :type framework: fvm.framework.FvmFramework
     :param step: step name (optional)
     :type step: str or None
     """
