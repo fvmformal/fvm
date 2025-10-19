@@ -24,7 +24,9 @@ def download_allure(allure_version, install_dir):
     """Download a specific allure release"""
     allure_download_url = f"https://github.com/allure-framework/allure2/releases/download/{allure_version}/allure-{allure_version}.zip"
     allure_zip_path = get_allure_zip_path(allure_version, install_dir)
+    allure_dir = get_allure_dir(allure_version, install_dir)
     print(f"""  Downloading Allure {allure_version} from {allure_download_url}, writing it to {allure_zip_path}""")
+    Path(install_dir).mkdir(parents=True, exist_ok=True)
     urllib.request.urlretrieve(allure_download_url, allure_zip_path)
 
 def extract_allure(allure_version, install_dir):
