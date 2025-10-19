@@ -16,6 +16,7 @@ count_todos_in_code:
     - apt update
     - apt install -y python3 python3-pip python3-venv bc curl
     - curl -LsSf https://astral.sh/uv/install.sh | sh
+    - export PATH="$HOME/.local/bin:$PATH"
     - make todo | tee todo.log
     - TODOS=$(grep -oP 'TODOs=\K[\d]+' todo.log)
     - |
@@ -40,6 +41,7 @@ lint_python:
     - apt update
     - apt install -y python3 python3-pip python3-venv bc curl
     - curl -LsSf https://astral.sh/uv/install.sh | sh
+    - export PATH="$HOME/.local/bin:$PATH"
     - make lint | tee pylint.log
     - RATING=$(grep -oP 'Your code has been rated at \K[\d.]+' pylint.log)
     - PERCENTAGE=$(echo "$RATING * 10" | bc)
@@ -60,6 +62,7 @@ test_all:
     - apt update
     - apt install -y python3 python3-pip python3-venv curl
     - curl -LsSf https://astral.sh/uv/install.sh | sh
+    - export PATH="$HOME/.local/bin:$PATH"
     - make test
     - mv .coverage .coverage.pytest
   artifacts:
@@ -94,6 +97,7 @@ run_concepts_questa: &run_concepts_questa
     - export SALT_LICENSE_SERVER=29000@popote.us.es
     - yum install -y git python39 java-1.8.0-openjdk
     - curl -LsSf https://astral.sh/uv/install.sh | sh
+    - export PATH="$HOME/.local/bin:$PATH"
     # TODO : the following 6 lines don't work, we should create the file from
     # inside the python code (see issue #165)
     #- echo '{"name":"GitLab CI with runner ${CI_RUNNER_ID}","type":"gitlab","reportName":"Allure Report (without history for now)",' > executor.json
@@ -132,6 +136,7 @@ run_concepts_questa: &run_concepts_questa
     - source /home/salas/fosshdl/env.rc
     - export FVM_TOOLCHAIN=sby
     - curl -LsSf https://astral.sh/uv/install.sh | sh
+    - export PATH="$HOME/.local/bin:$PATH"
 
 run_examples_questa:
   <<: *run_concepts_questa
@@ -163,6 +168,7 @@ run_examples_questa:
     - export SALT_LICENSE_SERVER=29000@popote.us.es
     - yum install -y python39 java-1.8.0-openjdk
     - curl -LsSf https://astral.sh/uv/install.sh | sh
+    - export PATH="$HOME/.local/bin:$PATH"
   script:
     - make venv
     - source .venv/bin/activate && uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.lint -m examples.countervunit.formal -s lint
@@ -192,6 +198,7 @@ run_options_questa:
     - export SALT_LICENSE_SERVER=29000@popote.us.es
     - yum install -y python39 java-1.8.0-openjdk
     - curl -LsSf https://astral.sh/uv/install.sh | sh
+    - export PATH="$HOME/.local/bin:$PATH"
   script:
     - make venv
     - . .venv/bin/activate && uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.hooks.verbose concepts/hooks/formal.py -v
@@ -222,6 +229,7 @@ full_dashboard:
     - apt update
     - apt install -y python3 python3-pip python3-venv default-jdk curl
     - curl -LsSf https://astral.sh/uv/install.sh | sh
+    - export PATH="$HOME/.local/bin:$PATH"
     - mv results.xml fvm_out/fvm_results
     - make report
     - make updated_report
@@ -239,6 +247,7 @@ apidoc:
     - apt update
     - apt install -y python3 python3-pip python3-venv bc curl
     - curl -LsSf https://astral.sh/uv/install.sh | sh
+    - export PATH="$HOME/.local/bin:$PATH"
     - make docs 2>&1 | tee docs.log
     - UNDOCUMENTED=$(grep -oP 'Total undocumented members= \K[\d]+' docs.log)
     - |
@@ -279,6 +288,7 @@ pycoverage:
     - apt update
     - apt install -y python3 python3-pip python3-venv bc curl
     - curl -LsSf https://astral.sh/uv/install.sh | sh
+    - export PATH="$HOME/.local/bin:$PATH"
     - make pycoverage | tee pycoverage.log
     - LASTFIELD=$(grep 'TOTAL' pycoverage.log | awk '{print $NF}')
     - PERCENTAGE=${LASTFIELD%\%}
