@@ -336,6 +336,7 @@ class FvmFramework:
         """
         self.logger.trace('Removing all wavedrom sources')
         self.drom_sources = []
+        self.drom_generated_psl = []
 
     def add_vhdl_sources(self, globstr, library="work"):
         """
@@ -1438,9 +1439,10 @@ class FvmFramework:
         if self.drom_sources:
             drom2psl_outdir = os.path.join(self.outdir, path)
             os.makedirs(drom2psl_outdir, exist_ok=True)
-            generator(self.drom_sources, outdir=drom2psl_outdir)
-            self.drom_generated_psl = [pathlib.Path(src).with_suffix('.psl') 
-                                       for src in self.drom_sources]
+            for drom_source in self.drom_sources:
+                generator(drom_source, outdir=drom2psl_outdir)
+                self.drom_generated_psl.append(os.path.join(drom2psl_outdir,
+                                             pathlib.Path(drom_source).with_suffix('.psl').name))
 
     def setup_design(self, design, config=None):
         """Create the output directory and the scripts for a design, but do not
@@ -1450,7 +1452,6 @@ class FvmFramework:
         os.makedirs(self.outdir, exist_ok=True)
         os.makedirs(self.flexlm_logdir, exist_ok=True)
         self.current_toplevel = design
-        self.generate_psl_from_drom_sources(os.path.join(self.current_toplevel, 'drom2psl'))
 
         if config is not None:
             extra_path = f'.{config["name"]}'
@@ -1459,6 +1460,7 @@ class FvmFramework:
             extra_path = ''
             self.generic_args = ''
 
+        self.generate_psl_from_drom_sources(os.path.join(self.current_toplevel+extra_path, 'drom2psl'))
         path = f'{self.outdir}/{self.current_toplevel}'+extra_path
         self.current_path = path
 
