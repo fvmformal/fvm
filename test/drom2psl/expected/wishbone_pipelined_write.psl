@@ -16,8 +16,8 @@ vunit wishbone_pipelined_write {
     ((Master.cyc = '0') and (Master.stb = '0'))[*]  -- 0 or more cycles
   };
 
-  sequence wishbone_pipelined_write_Slave (
-  ) is {
+  sequence wishbone_pipelined_write_Slave
+  is {
     ((Slave.ack = '0') and (Slave.err = '0'))[*2:inf];  -- 2 or more cycles
     ((Slave.ack = '1') and (Slave.err = '0'))[*1];  -- 1 cycle
     ((Slave.ack = '0') and (Slave.err = '0'))[*]  -- 0 or more cycles

@@ -5,7 +5,7 @@
 
 vunit uart_tx {
 
-  sequence uart_tx_ (
+  sequence uart_tx (
     hdltype std_ulogic_vector(7 downto 0) data
   ) is {
     ((tx = '0'))[*1];  -- 1 cycle
