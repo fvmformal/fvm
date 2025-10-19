@@ -12,6 +12,7 @@ from junit_xml import TestSuite, TestCase, to_xml_report_string
 
 from fvm import helpers
 from fvm import generate_test_cases
+from fvm import manage_allure
 from fvm.toolchains.questa_pkg.parsers import parse_prove
 
 def get_all_steps(steps, post_steps):
@@ -576,7 +577,13 @@ def generate_html_report(framework, logger):
             else:
                 status = 'omit'
 
-    if shutil.which('allure') is not None:
+    # TODO: We should get allure_version and allure_install_dir from the
+    # framework, so the users may change it if they want
+    allure_version = manage_allure.DEFAULT_ALLURE_VERSION
+    allure_install_dir = "~/.cache/fvm/"
+    manage_allure.ensure_allure(allure_version, allure_install_dir)
+    allure_exec = manage_allure.get_allure_bin_path(allure_version, allure_install_dir)
+    if allure_exec.exists():
         # We normalize the path because the Popen documentation recommends
         # to pass a fully qualified (absolute) path, and it also states
         # that shutil.which() returns unqualified paths
@@ -589,7 +596,6 @@ def generate_html_report(framework, logger):
             if os.path.exists(results_history):
                 shutil.rmtree(results_history)
             shutil.copytree(report_history, results_history)
-        allure_exec = os.path.abspath(shutil.which('allure'))
         cmd = [allure_exec, 'generate', '--clean', results_dir, '-o', report_dir,
                "--name", "FVM Report"]
         logger.trace(f'Generating dashboard with {cmd=}')
@@ -603,12 +609,7 @@ def generate_html_report(framework, logger):
         # TODO : fail if retval is not zero
         retval = process.wait()
     else:
-        logger.warning("""allure is not found in $(PATH), cannot generate
-        HTML reports. If you are running inside a venv and have created the
-        venv with the Makefile, you should have allure inside your venv
-        folder. If you are not using a venv, you should install allure by
-        running 'python3 install_allure.py [install_dir], and add its bin/
-        directory to your $PATH'""")
+        logger.error("""Cannot find the allure executable, but the framework should have installed it""")
 
 def generate_text_report(framework, logger):
     """

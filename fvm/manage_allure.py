@@ -51,14 +51,12 @@ def create_parser():
     """Create argument parser"""
     parser = argparse.ArgumentParser(description="Install Allure CLI.")
     parser.add_argument(
-        "allure_version",
-        nargs="?",
+        "-v", "--allure_version",
         default=DEFAULT_ALLURE_VERSION,
         help="Specific version to download (default: %(default)s)",
     )
     parser.add_argument(
-        "install_dir",
-        nargs="?",
+        "-d", "--install_dir",
         default=os.getcwd(),
         help="Directory to install Allure (default: .)",
     )

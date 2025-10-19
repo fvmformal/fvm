@@ -57,11 +57,17 @@ fvm: install
 # click is needed when using sby, so it is installed in the venv here for
 # convenience, but is not a dependency of FVM, so it is installed with just a
 # pip command
+#
+# TODO : now we don't really need to install allure into the venv, but we are
+# leaving it here for now so the targets report/updated_report/newreport/show
+# continue working. Those targets should probably better be managed by the
+# framework?
+ALLURE_VERSION=2.32.0
 $(REQS_DIR)/reqs_installed: $(VENV_DIR)/venv_created
 	$(VENV_ACTIVATE) poetry install --no-root
-	$(VENV_ACTIVATE) python3 install_allure.py $(VENV_DIR)
+	$(VENV_ACTIVATE) python3 fvm/manage_allure.py --allure_version $(ALLURE_VERSION) --install_dir $(VENV_DIR)
 	$(VENV_ACTIVATE) pip3 install click
-	echo "export PATH=\$$PATH:$(realpath $(VENV_DIR))/allure/bin" >> $(VENV_DIR)/bin/activate
+	echo "export PATH=\$$PATH:$(realpath $(VENV_DIR))/allure-$(ALLURE_VERSION)/bin" >> $(VENV_DIR)/bin/activate
 	touch $@
 
 # Instead of $(VENV_ACTIVATE) pip3 install -r dev-requirements.txt -q,
