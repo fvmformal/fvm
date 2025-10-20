@@ -9,7 +9,7 @@ stages:
 
 count_todos_in_code:
   stage: lint_and_test
-  image: debian:12
+  image: registry.woden.us.es/containers/debian:12
   variables:
     GOAL: "60"
   script:
@@ -34,7 +34,7 @@ count_todos_in_code:
 
 lint_python:
   stage: lint_and_test
-  image: debian:12
+  image: registry.woden.us.es/containers/debian:12
   variables:
     GOAL: "92"
   script:
@@ -57,7 +57,7 @@ lint_python:
 
 test_all:
   stage: lint_and_test
-  image: debian:12
+  image: registry.woden.us.es/containers/debian:12
   script:
     - apt update
     - apt install -y python3 python3-pip python3-venv curl
@@ -77,7 +77,7 @@ test_all:
 
 #generate_matrixes:
 #  stage: lint_and_test
-#  image: debian:12
+#  image: registry.woden.us.es/containers/debian:12
 #  script:
 #    - export CONCEPTS=$(make list-concepts | tr '\n' ',')
 #    - export EXAMPLES=$(make list-concepts | tr '\n' ',')
@@ -224,7 +224,7 @@ run_options_questa:
 
 full_dashboard:
   stage: doc
-  image: debian:12
+  image: registry.woden.us.es/containers/debian:12
   script:
     - apt update
     - apt install -y python3 python3-pip python3-venv default-jdk curl
@@ -240,7 +240,7 @@ full_dashboard:
 
 apidoc:
   stage: doc
-  image: debian:12
+  image: registry.woden.us.es/containers/debian:12
   variables:
     GOAL: 98
   script:
@@ -268,7 +268,7 @@ apidoc:
 # it with a long expiry date
 #save_history:
 #  stage: history
-#  image: debian:12
+#  image: registry.woden.us.es/containers/debian:12
 #  script:
 #    - mv fvm_out/fvm_report/history history
 #  artifacts:
@@ -281,7 +281,7 @@ apidoc:
 # TODO : merge coverage files from previous stages
 pycoverage:
   stage: coverage
-  image: debian:12
+  image: registry.woden.us.es/containers/debian:12
   variables:
     GOAL: "92"
   script:
