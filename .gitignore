@@ -29,3 +29,7 @@ results.xml
 modelsim.ini
 vish_stacktrace.vstf
 doc/sphinx/build
+badges/*.svg
+doc/sphinx/undocumented_count.txt
+src/fvm.egg-info
+uv.lock
