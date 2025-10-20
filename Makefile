@@ -8,6 +8,7 @@
 VENV_DIR ?= .venv
 #VENV_ACTIVATE ?= . $(VENV_DIR)/bin/activate &&
 VENV_ACTIVATE ?= uv run $(UVFLAGS)
+ALLURE_INSTALL_DIR ?= ~/.cache/fvm
 PYTHON ?= python3
 
 # If VENV_DIR is unset, set REQS_DIR to . so the files "reqs_installed" and
@@ -62,9 +63,7 @@ fvm: install
 ALLURE_VERSION=2.32.0
 $(REQS_DIR)/reqs_installed: $(VENV_DIR)/venv_created
 	$(VENV_ACTIVATE) uv sync --no-dev
-	$(VENV_ACTIVATE) python3 src/fvm/manage_allure.py --allure_version $(ALLURE_VERSION) --install_dir $(VENV_DIR)
 	$(VENV_ACTIVATE) pip3 install click
-	echo "export PATH=\$$PATH:$(realpath $(VENV_DIR))/allure-$(ALLURE_VERSION)/bin" >> $(VENV_DIR)/bin/activate
 	touch $@
 
 # Install all dependencies, including development dependencies
@@ -185,17 +184,21 @@ $(VENV_DIR)/venv_created:
 # We already do this in the python code, but sometimes something fails and
 # still we want to generate reports, so let's have a manual option here
 newreport: reqs
+	$(VENV_ACTIVATE) python3 src/fvm/manage_allure.py --allure_version $(ALLURE_VERSION) --install_dir $(ALLURE_INSTALL_DIR)
 	~/.cache/fvm/allure-$(ALLURE_VERSION)/bin/allure generate fvm_out/fvm_results --clean -o fvm_out/fvm_report
 
 report: reqs
+	$(VENV_ACTIVATE) python3 src/fvm/manage_allure.py --allure_version $(ALLURE_VERSION) --install_dir $(ALLURE_INSTALL_DIR)
 	~/.cache/fvm/allure-$(ALLURE_VERSION)/bin/allure generate fvm_out/fvm_results -o fvm_out/fvm_report
 	
 updated_report: reqs
+	$(VENV_ACTIVATE) python3 src/fvm/manage_allure.py --allure_version $(ALLURE_VERSION) --install_dir $(ALLURE_INSTALL_DIR)
 	~/.cache/fvm/allure-$(ALLURE_VERSION)/bin/allure generate fvm_out/dashboard/allure-results -o fvm_out/dashboard/allure-report
 
 # TODO : probably we should do this in the python code, for example providing
 # an executable python file called fvm_show or similar
 show: reqs
+	$(VENV_ACTIVATE) python3 src/fvm/manage_allure.py --allure_version $(ALLURE_VERSION) --install_dir $(ALLURE_INSTALL_DIR)
 	~/.cache/fvm/allure-$(ALLURE_VERSION)/bin/allure open fvm_out/fvm_report
 
 # Count TODOs in code
