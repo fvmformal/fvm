@@ -185,18 +185,18 @@ $(VENV_DIR)/venv_created:
 # We already do this in the python code, but sometimes something fails and
 # still we want to generate reports, so let's have a manual option here
 newreport: reqs
-	$(VENV_ACTIVATE) allure generate fvm_out/fvm_results --clean -o fvm_out/fvm_report
+	~/.cache/fvm/allure-$(ALLURE_VERSION)/bin/allure generate fvm_out/fvm_results --clean -o fvm_out/fvm_report
 
 report: reqs
-	$(VENV_ACTIVATE) allure generate fvm_out/fvm_results -o fvm_out/fvm_report
+	~/.cache/fvm/allure-$(ALLURE_VERSION)/bin/allure generate fvm_out/fvm_results -o fvm_out/fvm_report
 	
 updated_report: reqs
-	$(VENV_ACTIVATE) allure generate fvm_out/dashboard/allure-results -o fvm_out/dashboard/allure-report
+	~/.cache/fvm/allure-$(ALLURE_VERSION)/bin/allure generate fvm_out/dashboard/allure-results -o fvm_out/dashboard/allure-report
 
 # TODO : probably we should do this in the python code, for example providing
 # an executable python file called fvm_show or similar
 show: reqs
-	$(VENV_ACTIVATE) allure open fvm_out/fvm_report
+	~/.cache/fvm/allure-$(ALLURE_VERSION)/bin/allure open fvm_out/fvm_report
 
 # Count TODOs in code
 # Since each line in the recipe is run in a separate shell, to define a
