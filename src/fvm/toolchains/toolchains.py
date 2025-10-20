@@ -13,10 +13,12 @@ DEFAULT_TOOLCHAIN = 'questa'
 
 def get_toolchain():
     """
-    Get the toolchain from a specific environment variable. In the future,
-    if the environment variable is not set, we plan to auto-detect which tools
-    are available in the PATH and assign the first we find (with some
-    priority)
+    Get the toolchain from a specific environment variable. If the environment
+    variable is not set, the value of DEFAULT_TOOLCHAIN is returned.
+
+    In the future, if the environment variable is not set, we plan to
+    auto-detect which tools are available in the PATH and assign the first we
+    find (with some priority)
 
     :return: toolchain name
     :rtype: str
