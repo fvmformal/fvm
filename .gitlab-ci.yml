@@ -9,12 +9,14 @@ stages:
 
 count_todos_in_code:
   stage: lint_and_test
-  image: debian:12
+  image: registry.woden.us.es/containers/debian:12
   variables:
     GOAL: "60"
   script:
     - apt update
-    - apt install -y python3 python3-pip python3-venv bc
+    - apt install -y python3 python3-pip python3-venv bc curl
+    - curl -LsSf https://astral.sh/uv/install.sh | sh
+    - export PATH="$HOME/.local/bin:$PATH"
     - make todo | tee todo.log
     - TODOS=$(grep -oP 'TODOs=\K[\d]+' todo.log)
     - |
@@ -32,12 +34,14 @@ count_todos_in_code:
 
 lint_python:
   stage: lint_and_test
-  image: debian:12
+  image: registry.woden.us.es/containers/debian:12
   variables:
     GOAL: "92"
   script:
     - apt update
-    - apt install -y python3 python3-pip python3-venv bc
+    - apt install -y python3 python3-pip python3-venv bc curl
+    - curl -LsSf https://astral.sh/uv/install.sh | sh
+    - export PATH="$HOME/.local/bin:$PATH"
     - make lint | tee pylint.log
     - RATING=$(grep -oP 'Your code has been rated at \K[\d.]+' pylint.log)
     - PERCENTAGE=$(echo "$RATING * 10" | bc)
@@ -53,10 +57,12 @@ lint_python:
 
 test_all:
   stage: lint_and_test
-  image: debian:12
+  image: registry.woden.us.es/containers/debian:12
   script:
     - apt update
-    - apt install -y python3 python3-pip python3-venv
+    - apt install -y python3 python3-pip python3-venv curl
+    - curl -LsSf https://astral.sh/uv/install.sh | sh
+    - export PATH="$HOME/.local/bin:$PATH"
     - make test
     - mv .coverage .coverage.pytest
   artifacts:
@@ -71,7 +77,7 @@ test_all:
 
 #generate_matrixes:
 #  stage: lint_and_test
-#  image: debian:12
+#  image: registry.woden.us.es/containers/debian:12
 #  script:
 #    - export CONCEPTS=$(make list-concepts | tr '\n' ',')
 #    - export EXAMPLES=$(make list-concepts | tr '\n' ',')
@@ -90,6 +96,8 @@ run_concepts_questa: &run_concepts_questa
     - unset LM_LICENSE_FILE
     - export SALT_LICENSE_SERVER=29000@popote.us.es
     - yum install -y git python39 java-1.8.0-openjdk
+    - curl -LsSf https://astral.sh/uv/install.sh | sh
+    - export PATH="$HOME/.local/bin:$PATH"
     # TODO : the following 6 lines don't work, we should create the file from
     # inside the python code (see issue #165)
     #- echo '{"name":"GitLab CI with runner ${CI_RUNNER_ID}","type":"gitlab","reportName":"Allure Report (without history for now)",' > executor.json
@@ -100,7 +108,8 @@ run_concepts_questa: &run_concepts_questa
     #- mv executor.json fvm_out/fvm_results
     #- mkdir -p fvm_out/dashboard/allure-results
   script:
-    - make PYTHON="coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN" $DESIGN
+    - make venv
+    - source .venv/bin/activate && make UVFLAGS=--dev PYTHON="coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN" $DESIGN
   after_script:
     - mv fvm_out/dashboard/allure-report fvm_out/dashboard/allure-report.$TOOLCHAIN.$DESIGN
   artifacts:
@@ -126,6 +135,8 @@ run_concepts_questa: &run_concepts_questa
     - DEBIAN_FRONTEND=noninteractive apt update && apt install -y python3 python3-pip python3-venv
     - source /home/salas/fosshdl/env.rc
     - export FVM_TOOLCHAIN=sby
+    - curl -LsSf https://astral.sh/uv/install.sh | sh
+    - export PATH="$HOME/.local/bin:$PATH"
 
 run_examples_questa:
   <<: *run_concepts_questa
@@ -156,19 +167,21 @@ run_examples_questa:
     - unset LM_LICENSE_FILE
     - export SALT_LICENSE_SERVER=29000@popote.us.es
     - yum install -y python39 java-1.8.0-openjdk
+    - curl -LsSf https://astral.sh/uv/install.sh | sh
+    - export PATH="$HOME/.local/bin:$PATH"
   script:
-    - make PYTHON="coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN" $DESIGN
-    - source .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.lint -m examples.countervunit.formal -s lint
+    - make venv
+    - source .venv/bin/activate && uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.lint -m examples.countervunit.formal -s lint
     - make clean
-    - source .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.rulecheck --m examples.countervunit.formal -s friendliness
+    - source .venv/bin/activate && uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.rulecheck --m examples.countervunit.formal -s friendliness
     - make clean
-    - source .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.reachability --m examples.countervunit.formal -s reachability
+    - source .venv/bin/activate && uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.reachability --m examples.countervunit.formal -s reachability
     - make clean
-    - source .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.resets --m examples.countervunit.formal -s resets
+    - source .venv/bin/activate && uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.resets --m examples.countervunit.formal -s resets
     - make clean
 #    - coverage run -m examples.countervunit.formal -s clocks
 #    - make clean
-    - source .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.prove --m examples.countervunit.formal -s prove
+    - source .venv/bin/activate && uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.prove --m examples.countervunit.formal -s prove
     - make clean
   artifacts:
     when: always
@@ -184,16 +197,18 @@ run_options_questa:
     - unset LM_LICENSE_FILE
     - export SALT_LICENSE_SERVER=29000@popote.us.es
     - yum install -y python39 java-1.8.0-openjdk
+    - curl -LsSf https://astral.sh/uv/install.sh | sh
+    - export PATH="$HOME/.local/bin:$PATH"
   script:
-    - make install
-    - . .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.hooks.verbose concepts/hooks/formal.py -v
-    - . .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.hooks.list concepts/hooks/formal.py -l
-    - . .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.design_configurations.list concepts/design_configurations/formal.py -l
-    - . .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.hooks.outdir concepts/hooks/formal.py -o fvm_out_2
-    - . .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.hooks.design concepts/hooks/formal.py -d counter
-    - . .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.hooks.prove concepts/hooks/formal.py -s prove
-    - . .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.hooks.prove_list concepts/hooks/formal.py -s prove -l
-    - . .venv/bin/activate && coverage run --data-file=.coverage.$TOOLCHAIN.vunits.continue concepts/inheriting_vunits_fail/formal.py -c
+    - make venv
+    - . .venv/bin/activate && uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.hooks.verbose concepts/hooks/formal.py -v
+    - . .venv/bin/activate && uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.hooks.list concepts/hooks/formal.py -l
+    - . .venv/bin/activate && uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.design_configurations.list concepts/design_configurations/formal.py -l
+    - . .venv/bin/activate && uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.hooks.outdir concepts/hooks/formal.py -o fvm_out_2
+    - . .venv/bin/activate && uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.hooks.design concepts/hooks/formal.py -d counter
+    - . .venv/bin/activate && uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.hooks.prove concepts/hooks/formal.py -s prove
+    - . .venv/bin/activate && uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.hooks.prove_list concepts/hooks/formal.py -s prove -l
+    - . .venv/bin/activate && uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.vunits.continue concepts/inheriting_vunits_fail/formal.py -c
     - make clean
   artifacts:
     when: always
@@ -209,10 +224,12 @@ run_options_questa:
 
 full_dashboard:
   stage: doc
-  image: debian:12
+  image: registry.woden.us.es/containers/debian:12
   script:
     - apt update
-    - apt install -y python3 python3-pip python3-venv default-jdk
+    - apt install -y python3 python3-pip python3-venv default-jdk curl
+    - curl -LsSf https://astral.sh/uv/install.sh | sh
+    - export PATH="$HOME/.local/bin:$PATH"
     - mv results.xml fvm_out/fvm_results
     - make report
     - make updated_report
@@ -223,12 +240,14 @@ full_dashboard:
 
 apidoc:
   stage: doc
-  image: debian:12
+  image: registry.woden.us.es/containers/debian:12
   variables:
     GOAL: 98
   script:
     - apt update
-    - apt install -y python3 python3-pip python3-venv bc
+    - apt install -y python3 python3-pip python3-venv bc curl
+    - curl -LsSf https://astral.sh/uv/install.sh | sh
+    - export PATH="$HOME/.local/bin:$PATH"
     - make docs 2>&1 | tee docs.log
     - UNDOCUMENTED=$(grep -oP 'Total undocumented members= \K[\d]+' docs.log)
     - |
@@ -249,7 +268,7 @@ apidoc:
 # it with a long expiry date
 #save_history:
 #  stage: history
-#  image: debian:12
+#  image: registry.woden.us.es/containers/debian:12
 #  script:
 #    - mv fvm_out/fvm_report/history history
 #  artifacts:
@@ -262,12 +281,14 @@ apidoc:
 # TODO : merge coverage files from previous stages
 pycoverage:
   stage: coverage
-  image: debian:12
+  image: registry.woden.us.es/containers/debian:12
   variables:
     GOAL: "92"
   script:
     - apt update
-    - apt install -y python3 python3-pip python3-venv bc
+    - apt install -y python3 python3-pip python3-venv bc curl
+    - curl -LsSf https://astral.sh/uv/install.sh | sh
+    - export PATH="$HOME/.local/bin:$PATH"
     - make pycoverage | tee pycoverage.log
     - LASTFIELD=$(grep 'TOTAL' pycoverage.log | awk '{print $NF}')
     - PERCENTAGE=${LASTFIELD%\%}

@@ -6,9 +6,10 @@
 # for example: make VENV_DIR=my_venv examples
 # If VENV_DIR is unset, no venv will be used: make VENV_DIR= examples
 VENV_DIR ?= .venv
-VENV_ACTIVATE ?= . $(VENV_DIR)/bin/activate &&
+#VENV_ACTIVATE ?= . $(VENV_DIR)/bin/activate &&
+VENV_ACTIVATE ?= uv run $(UVFLAGS)
+ALLURE_INSTALL_DIR ?= ~/.cache/fvm
 PYTHON ?= python3
-POETRY_VERSION ?= 1.8.5
 
 # If VENV_DIR is unset, set REQS_DIR to . so the files "reqs_installed" and
 # "dev-reqs_installed" can be created
@@ -39,7 +40,7 @@ all:
 	@echo   "make realclean    -> remove temporary files and python venv"
 
 # reqs and dev-reqs depend on a file we create inside the venv, so we can avoid
-# calling "pip3 install ..." or "poetry install..." if the requirements have
+# calling "pip3 install ..." or "uv install..." if the requirements have
 # already been installed
 reqs: $(REQS_DIR)/reqs_installed
 
@@ -49,12 +50,9 @@ install: $(REQS_DIR)/fvm_installed
 
 fvm: install
 
-# Instead of $(VENV_ACTIVATE) pip3 install -r requirements.txt -q,
-#   we are managing our dependencies with python poetry
-# We must specify --no-root to poetry install: if we don't, it will install the
-# fvm too, and we want to do that separately
-# 
-# click is needed when using sby, so it is installed in the venv here for
+# Install dependencies, but not development dependencies
+#
+# Click is needed when using sby, so it is installed in the venv here for
 # convenience, but is not a dependency of FVM, so it is installed with just a
 # pip command
 #
@@ -64,32 +62,27 @@ fvm: install
 # framework?
 ALLURE_VERSION=2.32.0
 $(REQS_DIR)/reqs_installed: $(VENV_DIR)/venv_created
-	$(VENV_ACTIVATE) poetry install --no-root
-	$(VENV_ACTIVATE) python3 fvm/manage_allure.py --allure_version $(ALLURE_VERSION) --install_dir $(VENV_DIR)
+	$(VENV_ACTIVATE) uv sync --no-dev
 	$(VENV_ACTIVATE) pip3 install click
-	echo "export PATH=\$$PATH:$(realpath $(VENV_DIR))/allure-$(ALLURE_VERSION)/bin" >> $(VENV_DIR)/bin/activate
 	touch $@
 
-# Instead of $(VENV_ACTIVATE) pip3 install -r dev-requirements.txt -q,
-#   we are managing our dependencies with python poetry
+# Install all dependencies, including development dependencies
 $(REQS_DIR)/dev-reqs_installed: $(VENV_DIR)/venv_created
-	$(VENV_ACTIVATE) poetry install --with dev
+	$(VENV_ACTIVATE) uv sync
 	touch $@
 
-# Install the FVM. For now we use python poetry to install it (poetry install)
-# instead of just pip, since we don't have yet a setup.py
-# It is also good for development to manage our dependencies with poetry
+# Install the FVM
 $(REQS_DIR)/fvm_installed: $(VENV_DIR)/venv_created reqs
-	$(VENV_ACTIVATE) poetry install
+	$(VENV_ACTIVATE) uv pip install -e .
 	touch $@
 
 # Lint the python code
 lint: dev-reqs
-	$(VENV_ACTIVATE) pylint --output-format=colorized test/*.py fvm/*.py fvm/*/*.py || pylint-exit $$?
+	$(VENV_ACTIVATE) --dev pylint --output-format=colorized --recursive=y test/ src/ || $(VENV_ACTIVATE) --dev pylint-exit $$?
 
 # List the tests
 list-tests: reqs dev-reqs
-	$(VENV_ACTIVATE) pytest --collect-only
+	$(VENV_ACTIVATE) --dev pytest --collect-only
 
 # Run the tests
 test: fvm dev-reqs
@@ -185,25 +178,28 @@ venv: $(VENV_DIR)/venv_created
 $(VENV_DIR)/venv_created:
 	python3 -m venv $(VENV_DIR)
 	$(VENV_ACTIVATE) python3 -m ensurepip --upgrade
-	$(VENV_ACTIVATE) pip3 install poetry==$(POETRY_VERSION)
-	$(VENV_ACTIVATE) poetry config keyring.enabled false
+	$(VENV_ACTIVATE) pip3 install uv
 	touch $@
 
 # We already do this in the python code, but sometimes something fails and
 # still we want to generate reports, so let's have a manual option here
 newreport: reqs
-	$(VENV_ACTIVATE) allure generate fvm_out/fvm_results --clean -o fvm_out/fvm_report
+	$(VENV_ACTIVATE) python3 src/fvm/manage_allure.py --allure_version $(ALLURE_VERSION) --install_dir $(ALLURE_INSTALL_DIR)
+	~/.cache/fvm/allure-$(ALLURE_VERSION)/bin/allure generate fvm_out/fvm_results --clean -o fvm_out/fvm_report
 
 report: reqs
-	$(VENV_ACTIVATE) allure generate fvm_out/fvm_results -o fvm_out/fvm_report
+	$(VENV_ACTIVATE) python3 src/fvm/manage_allure.py --allure_version $(ALLURE_VERSION) --install_dir $(ALLURE_INSTALL_DIR)
+	~/.cache/fvm/allure-$(ALLURE_VERSION)/bin/allure generate fvm_out/fvm_results -o fvm_out/fvm_report
 	
 updated_report: reqs
-	$(VENV_ACTIVATE) allure generate fvm_out/dashboard/allure-results -o fvm_out/dashboard/allure-report
+	$(VENV_ACTIVATE) python3 src/fvm/manage_allure.py --allure_version $(ALLURE_VERSION) --install_dir $(ALLURE_INSTALL_DIR)
+	~/.cache/fvm/allure-$(ALLURE_VERSION)/bin/allure generate fvm_out/dashboard/allure-results -o fvm_out/dashboard/allure-report
 
 # TODO : probably we should do this in the python code, for example providing
 # an executable python file called fvm_show or similar
 show: reqs
-	$(VENV_ACTIVATE) allure open fvm_out/fvm_report
+	$(VENV_ACTIVATE) python3 src/fvm/manage_allure.py --allure_version $(ALLURE_VERSION) --install_dir $(ALLURE_INSTALL_DIR)
+	~/.cache/fvm/allure-$(ALLURE_VERSION)/bin/allure open fvm_out/fvm_report
 
 # Count TODOs in code
 # Since each line in the recipe is run in a separate shell, to define a
@@ -220,7 +216,7 @@ todo: $(VENV_DIR)/venv_created
 # Generate documentation
 # TODO : move anybadge to dev-reqs
 docs: dev-reqs
-	$(VENV_ACTIVATE) sphinx-apidoc -o doc/sphinx/source fvm
+	$(VENV_ACTIVATE) sphinx-apidoc -o doc/sphinx/source src/fvm
 	$(VENV_ACTIVATE) make -C doc/sphinx/ html
 	mkdir -p badges
 	rm -f badges/undocumented.svg

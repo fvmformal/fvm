@@ -84,7 +84,7 @@ def main():
     """Main function; to use when the python script is directly executed"""
     parser = create_parser()
     args = parser.parse_args()
-    print(f'install_allure.py: {args=}')
+    print(f'manage_allure.py: {args=}')
     allure_version = args.allure_version
     install_dir = args.install_dir
     force = args.force
