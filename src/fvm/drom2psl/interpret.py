@@ -255,17 +255,49 @@ def flatten (group, signal, flattened=None, hierarchyseparator="."):
     return flattened, ok
 
 def get_wavelane_name(wavelane):
+    """Get the `name` field of a wavelane
+
+    :param wavelane: wavelane whose name we want to get
+    :type wavelane: dict
+
+    :return: name of the wavelane
+    :rtype: string
+    """
     return wavelane[NAME]
 
 def get_wavelane_wave(wavelane):
+    """Get the `wave` field of a wavelane
+
+    :param wavelane: wavelane whose wave we want to get
+    :type wavelane: dict
+
+    :return: wave field of the wavelane
+    :rtype: string
+    """
     return wavelane[WAVE]
 
 def get_wavelane_data(wavelane):
+    """Get the `data` field of a wavelane, if it exists
+
+    :param wavelane: wavelane whose data we want to get
+    :type wavelane: dict
+
+    :return: data field of the wavelane
+    :rtype: can be list or a string, use data2list to ensure it is a list
+    """
     if DATA in wavelane:
         return wavelane[DATA]
     return None
 
 def get_wavelane_type(wavelane):
+    """Get the `type` field of a wavelane, if it exists
+
+    :param wavelane: wavelane whose type we want to get
+    :type wavelane: dict
+
+    :return: type field of the wavelane
+    :rtype: string
+    """
     if TYPE in wavelane:
         ret = wavelane[TYPE]
     else:
@@ -277,6 +309,22 @@ def get_wavelane_type(wavelane):
     return ret
 
 def get_group_arguments(groupname, flattened_signal):
+    """Get the arguments of a group
+
+    A group is a set of wavelanes which are grouped together in the .json, and
+    its arguments are all values in the `data` field of its wavelanes that are
+    not literal values. For example if a wavelane inside a group has a data
+    field that is ``[0, 127, addr, 42]`` then ``addr`` is an argument for the
+    group.
+
+    :param groupname: name of the group
+    :type groupname: string
+    :param flattened_signal: a flattened signal
+    :type flattened_signal: string
+
+    :returns: a list of arguments for the group
+    :rtype: list
+    """
     group_arguments = []
     for wavelane in flattened_signal:
         name = get_wavelane_name(wavelane)
@@ -337,6 +385,22 @@ def data2list(wavelane_data):
     return ret
 
 def get_clock_value(wavelane, cycle):
+    """
+    Get the value of the clock during a specific cycle of the wavelane. This
+    value is not an electronic signal value (such as zero, one, rising_edge,
+    etc) but a binary coded value that tells us if that cycle is to be repeated
+    or not:
+      - ``1``: Do once
+      - ``0``: Repeat zero or more times
+
+    :param wavelane: wavelane of the clock signal
+    :type wavelane: dict
+    :param cycle: clock cycle
+    :type cycle: integer
+
+    :returns: clock repeat value (``0`` or ``1``)
+    :rtype: int
+    """
     wave = get_wavelane_wave(wavelane)
     digit = wave[cycle]
     clkdigits = ['p', 'P', 'n', 'N', '.', '|']
@@ -393,6 +457,7 @@ def gen_sere_repetition(num_cycles, or_more, add_semicolon = False, comments = T
 
 # TODO : assignments could be tailored to the datatypes
 def get_signal_value(wave, data, cycle):
+    """Get value of signal at a specific clock cycle"""
     datadigits = ['=', '2', '3', '4', '5', '6', '7', '8', '9']
     digit = wave[cycle]
     ic(data, type(data))
@@ -461,6 +526,24 @@ def get_signal_value(wave, data, cycle):
     return value
 
 def adapt_value_to_hdltype(value):
+    """
+    Adds the necessary characters (such as simple or double quotes, ``0x``,
+    etc) to convert a literal value to a properly formated VHDL datatype
+
+    The input value can be either a single character with a valid
+    ``std_ulogic`` value, or `(value, type)` tuple where `type` is one of
+    the following:
+      - ``"bin"`` (binary)
+      - ``"hex"`` (hexadecimal)
+      - ``"int"`` (integer)
+      - ``"arg"`` (argument)
+
+    :param value: value to convert
+    :type value: single-char str or tuple
+
+    :returns: adapted value
+    :rtype: str
+    """
     # For std_logic, just add a couple of single quotes to the character
     if value in ['0', '1', 'L', 'H', 'W', 'X', 'Z', 'U', '-']:
         ret = "'"+value+"'"

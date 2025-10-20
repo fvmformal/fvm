@@ -1,3 +1,10 @@
+"""
+Manage allure as external non-python dependency.
+
+This module manages the installation of Allure Report, and only installs it if
+it is not already in the target installation directory. Both allure version and
+installation directory can be specified.
+"""
 import os
 import sys
 import zipfile

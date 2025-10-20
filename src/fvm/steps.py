@@ -5,6 +5,7 @@ class Steps:
     provides functions to manage it (such as adding steps and post_steps)"""
 
     def __init__(self):
+        """Class constructor"""
         # Dictionaries are ordered since python 3.7, so we can just insert the
         # steps in the order in which we want it them run. For earlier python
         # versions we could use OrderedDict, but FVM doesn't work with python <
