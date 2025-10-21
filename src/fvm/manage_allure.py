@@ -56,6 +56,24 @@ def make_allure_executable(allure_version, install_dir):
     if sys.platform != "win32":
         os.chmod(allure_bin, 0o755)
 
+def change_logo(allure_version, install_dir):
+    """Change Allure logo to FVM logo"""
+    # TODO: FVM logo path could change?
+    allure_yml = f'{install_dir}/allure-{allure_version}/config/allure.yml'
+    styles_css = f'{install_dir}/allure-{allure_version}/plugins/custom-logo-plugin/static/styles.css'
+    logo_src = os.path.join('doc', 'sphinx', 'source', '_static', 'android-chrome-192x192.png')
+    logo_dst = f'{install_dir}/allure-{allure_version}/plugins/custom-logo-plugin/static/fvm_logo.png'
+    shutil.copy2(logo_src, logo_dst)
+    with open(allure_yml, "a") as f:
+        print("  - custom-logo-plugin", file=f)
+    with open(styles_css, "w") as f:
+        print(".side-nav__brand {   background: url('fvm_logo.png') no-repeat center center !important;", file=f)
+        print("  margin: 0 auto !important;", file=f)
+        print("  height: 40px;", file=f)
+        print("  Background-size: contain !important; } ", file=f)
+        print("", file=f)
+        print(".side-nav__brand span{   display: none } ", file=f)
+
 def create_parser():
     """Create argument parser"""
     parser = argparse.ArgumentParser(description="Install Allure CLI.")
@@ -79,6 +97,7 @@ def install_allure(allure_version, install_dir):
     download_allure(allure_version, install_dir)
     extract_allure(allure_version, install_dir)
     make_allure_executable(allure_version, install_dir)
+    change_logo(allure_version, install_dir)
 
 def ensure_allure(allure_version, install_dir):
     """Install allure, but only if it is not already installed in the specified
