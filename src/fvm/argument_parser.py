@@ -1,6 +1,14 @@
+"""Creates an argument parser for the FVM Framework using argparse"""
+
 import argparse
 
 def create_parser():
+    """
+    Create an argument parser
+
+    :returns: argument parser fot eh
+    :rtype: class 'argparse.ArgumentParser'
+    """
     # Configure the argument parser
     parser = argparse.ArgumentParser(description='Run the formal tools')
     parser.add_argument('-v', '--verbose', default=False, action='store_true',
