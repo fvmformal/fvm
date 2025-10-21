@@ -98,6 +98,9 @@ class FvmFramework:
         self.cont = args.cont
         self.gui = args.gui
         self.guinorun = args.guinorun
+        self.show = args.show
+        self.shownorun = args.shownorun
+        self.globalshow = args.globalshow
         self.flexlm_logdir = os.path.join(self.outdir, ".flexlm.log")
         self.env = os.environ.copy()
         self.env["FLEXLM_DIAGNOSTICS_PATH"] = self.flexlm_logdir
@@ -1084,17 +1087,18 @@ class FvmFramework:
         self.start_time_setup = datetime.now().isoformat()
 
         self.logger.info(f'Designs: {self.toplevel}')
-        for design in self.toplevel:
-            self.logger.trace(f'Running {design=}')
-            if self.list:
-                self.list_design(design)
-            else:
-                self.run_design(design, skip_setup)
+        if self.shownorun is False and self.globalshow is False:
+            for design in self.toplevel:
+                self.logger.trace(f'Running {design=}')
+                if self.list:
+                    self.list_design(design)
+                else:
+                    self.run_design(design, skip_setup)
 
-        reports.pretty_summary(self, self.logger)
-        reports.generate_xml_report(self, self.logger)
+            reports.pretty_summary(self, self.logger)
+            reports.generate_xml_report(self, self.logger)
+            reports.generate_text_report(self, self.logger)
         reports.generate_html_report(self, self.logger)
-        reports.generate_text_report(self, self.logger)
         err = self.check_errors()
         if err :
             self.exit_if_required(CHECK_FAILED)

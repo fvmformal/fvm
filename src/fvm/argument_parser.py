@@ -27,5 +27,11 @@ def create_parser():
             help='Show tool results with GUI after tool execution. (default: %(default)s)')
     parser.add_argument('-n', '--guinorun', default=False, action='store_true',
             help='Show already existing tool results with GUI, without running the tools again. (default: %(default)s)')
+    parser.add_argument('--show', default=False, action='store_true',
+            help='Show the HTML dashboard after execution. (default: %(default)s)')
+    parser.add_argument('--shownorun', default=False, action='store_true',
+            help='Show the existing HTML dashboard, without running. (default: %(default)s)')
+    parser.add_argument('--globalshow', default=False, action='store_true',
+            help='Show the existing HTML dashboard of every design, without running. (default: %(default)s)')
 
     return parser

@@ -3,6 +3,7 @@ import os
 import re
 import subprocess
 import shutil
+import signal
 
 from pathlib import Path
 from datetime import datetime
@@ -485,98 +486,97 @@ def generate_html_report(framework, logger):
     """
 
     dashboard_dir = os.path.join(f'{framework.outdir}', "dashboard")
-    results_dir = os.path.join(dashboard_dir, "allure-results")
-    report_dir = os.path.join(dashboard_dir, "allure-report")
-
-    if os.path.isdir(results_dir):
-        for item in os.listdir(results_dir):
-            item_path = os.path.join(results_dir, item)
-
-            if os.path.isdir(item_path):
-                shutil.rmtree(item_path)
-            else:
-                os.remove(item_path)
-
+    results_dir = os.path.join(dashboard_dir, framework.prefix, "results")
+    report_dir = os.path.join(dashboard_dir, framework.prefix, "report")
     os.makedirs(dashboard_dir, exist_ok=True)
-    os.makedirs(results_dir, exist_ok=True)
-    os.makedirs(report_dir, exist_ok=True)
+    if framework.globalshow is False and framework.shownorun is False:
+        if os.path.isdir(results_dir):
+            for item in os.listdir(results_dir):
+                item_path = os.path.join(results_dir, item)
 
-    for design in framework.designs:
-        all_steps = get_all_steps(framework.steps.steps, framework.steps.post_steps)
-        for step in all_steps:
+                if os.path.isdir(item_path):
+                    shutil.rmtree(item_path)
+                else:
+                    os.remove(item_path)
 
-            if ('status' in framework.results[design][step] and
-                framework.results[design][step]['status'] != "skip"):
+        os.makedirs(results_dir, exist_ok=True)
 
-                # Default values
-                step_summary_html = None
-                html_files = []
-                status = framework.results[design][step]['status']
-                start_time = int(datetime.now().timestamp() * 1000)
-                stop_time = start_time
-                friendliness_score = None
-                properties = None
+        for design in framework.designs:
+            all_steps = get_all_steps(framework.steps.steps, framework.steps.post_steps)
+            for step in all_steps:
 
-                step_path = f"{framework.outdir}/{design}/{step}"
-                step_summary = f"{step}_summary.html"
-                if os.path.exists(f"{step_path}/{step_summary}"):
-                    step_summary_html = f"{step_path}/{step_summary}"
+                if ('status' in framework.results[design][step] and
+                    framework.results[design][step]['status'] != "skip"):
 
-                if os.path.exists(step_path):
-                    html_files = [
-                        os.path.join(step_path, f)
-                        for f in os.listdir(step_path)
-                        if f.endswith(".html") and f != step_summary
-                    ]
+                    # Default values
+                    step_summary_html = None
+                    html_files = []
+                    status = framework.results[design][step]['status']
+                    start_time = int(datetime.now().timestamp() * 1000)
+                    stop_time = start_time
+                    friendliness_score = None
+                    properties = None
 
-                if framework.results[design][step]['status'] == "pass":
-                    status = "passed"
-                elif framework.results[design][step]['status'] == "fail":
-                    status = "failed"
+                    step_path = f"{framework.outdir}/{design}/{step}"
+                    step_summary = f"{step}_summary.html"
+                    if os.path.exists(f"{step_path}/{step_summary}"):
+                        step_summary_html = f"{step_path}/{step_summary}"
 
-                if 'timestamp' in framework.results[design][step]:
-                    start_time_str = framework.results[design][step]['timestamp']
-                    start_time_obj = datetime.fromisoformat(start_time_str)
+                    if os.path.exists(step_path):
+                        html_files = [
+                            os.path.join(step_path, f)
+                            for f in os.listdir(step_path)
+                            if f.endswith(".html") and f != step_summary
+                        ]
+
+                    if framework.results[design][step]['status'] == "pass":
+                        status = "passed"
+                    elif framework.results[design][step]['status'] == "fail":
+                        status = "failed"
+
+                    if 'timestamp' in framework.results[design][step]:
+                        start_time_str = framework.results[design][step]['timestamp']
+                        start_time_obj = datetime.fromisoformat(start_time_str)
+                        start_time_sec = start_time_obj.timestamp()
+                        start_time = int(start_time_sec * 1000)
+                        stop_time = start_time + framework.results[design][step]["elapsed_time"] * 1000
+
+                    if step == 'friendliness' and 'score' in framework.results[design][step]:
+                        friendliness_score = framework.results[design][step]['score']
+
+                    if step == 'prove':
+                        path = f'{framework.outdir}/{design}/{step}/{step}.log'
+                        if os.path.exists(path):
+                            properties = parse_prove.parse_properties_extended(path)
+
+                    generate_test_cases.generate_test_case(design,
+                                                        prefix=framework.prefix,
+                                                        results_dir=results_dir,
+                                                        status=status,
+                                                        start_time=start_time,
+                                                        stop_time=stop_time,
+                                                        step=step,
+                                                        friendliness_score=friendliness_score,
+                                                        properties=properties,
+                                                        step_summary_html=step_summary_html,
+                                                        html_files=html_files
+                                                        )
+                elif ('status' in framework.results[design][step] and
+                    framework.results[design][step]['status'] == "skip"):
+                    status = "skipped"
+                    start_time_str = datetime.now().isoformat()
+                    start_time_obj = datetime.fromisoformat(framework.start_time_setup)
                     start_time_sec = start_time_obj.timestamp()
                     start_time = int(start_time_sec * 1000)
-                    stop_time = start_time + framework.results[design][step]["elapsed_time"] * 1000
-
-                if step == 'friendliness' and 'score' in framework.results[design][step]:
-                    friendliness_score = framework.results[design][step]['score']
-
-                if step == 'prove':
-                    path = f'{framework.outdir}/{design}/{step}/{step}.log'
-                    if os.path.exists(path):
-                        properties = parse_prove.parse_properties_extended(path)
-
-                generate_test_cases.generate_test_case(design,
-                                                       prefix=framework.prefix,
-                                                       results_dir=results_dir,
-                                                       status=status,
-                                                       start_time=start_time,
-                                                       stop_time=stop_time,
-                                                       step=step,
-                                                       friendliness_score=friendliness_score,
-                                                       properties=properties,
-                                                       step_summary_html=step_summary_html,
-                                                       html_files=html_files
-                                                       )
-            elif ('status' in framework.results[design][step] and
-                  framework.results[design][step]['status'] == "skip"):
-                status = "skipped"
-                start_time_str = datetime.now().isoformat()
-                start_time_obj = datetime.fromisoformat(framework.start_time_setup)
-                start_time_sec = start_time_obj.timestamp()
-                start_time = int(start_time_sec * 1000)
-                generate_test_cases.generate_test_case(design,
-                                                       prefix=framework.prefix,
-                                                       results_dir=results_dir,
-                                                       status=status,
-                                                       start_time=start_time,
-                                                       stop_time=start_time,
-                                                       step=step)
-            else:
-                status = 'omit'
+                    generate_test_cases.generate_test_case(design,
+                                                        prefix=framework.prefix,
+                                                        results_dir=results_dir,
+                                                        status=status,
+                                                        start_time=start_time,
+                                                        stop_time=start_time,
+                                                        step=step)
+                else:
+                    status = 'omit'
 
     # TODO: We should get allure_version and allure_install_dir from the
     # framework, so the users may change it if they want
@@ -584,33 +584,98 @@ def generate_html_report(framework, logger):
     allure_install_dir = str(Path("~/.cache/fvm/").expanduser())
     manage_allure.ensure_allure(allure_version, allure_install_dir)
     allure_exec = Path(manage_allure.get_allure_bin_path(allure_version, allure_install_dir))
-    if allure_exec.exists():
-        # We normalize the path because the Popen documentation recommends
-        # to pass a fully qualified (absolute) path, and it also states
-        # that shutil.which() returns unqualified paths
 
-        # Copy history if it exists
-        report_history = os.path.join(report_dir, "history")
-        results_history = os.path.join(results_dir, "history")
-        if os.path.exists(report_history):
-            # Delete new_history if it exists
-            if os.path.exists(results_history):
-                shutil.rmtree(results_history)
-            shutil.copytree(report_history, results_history)
-        cmd = [allure_exec, 'generate', '--clean', results_dir, '-o', report_dir,
-               "--name", "FVM Report"]
-        logger.trace(f'Generating dashboard with {cmd=}')
-        process = subprocess.Popen (cmd,
-                                    stdout  = subprocess.PIPE,
-                                    stderr  = subprocess.PIPE,
-                                    text    = True,
-                                    bufsize = 1
-                                    )
-        # Wait for the process to complete and get the return code
-        # TODO : fail if retval is not zero
-        retval = process.wait()
+    if allure_exec.exists():
+        if framework.globalshow:
+            # Report with all designs
+            global_results_dir = os.path.join(dashboard_dir, "allure-results")
+            global_report_dir = os.path.join(dashboard_dir, "allure-report")
+            copy_results_to_allure_results(dashboard_dir, global_results_dir)
+            if os.listdir(global_results_dir):
+                generate_allure(global_results_dir, global_report_dir, allure_exec, logger)
+                show_allure(global_report_dir, allure_exec, logger)
+            else:
+                logger.error("No results found to generate the global report")
+        else:
+            if framework.shownorun is False:
+                # Copy history if it exists
+                report_history = os.path.join(report_dir, "history")
+                results_history = os.path.join(results_dir, "history")
+                if os.path.exists(report_history):
+                    # Delete new_history if it exists
+                    if os.path.exists(results_history):
+                        shutil.rmtree(results_history)
+                    shutil.copytree(report_history, results_history)
+                if os.path.exists(results_dir):
+                    retval = generate_allure(results_dir, report_dir, allure_exec, logger)
+            # TODO : fail if retval is not zero
+            if framework.show or framework.shownorun:
+                if os.path.exists(report_dir):
+                    show_allure(report_dir, allure_exec, logger)
+                else:
+                    logger.error("No report found to show")
+
     else:
         logger.error("""Cannot find the allure executable, but the framework should have installed it""")
+
+def generate_allure(res_dir, rep_dir, allure_exec, logger):
+    """Generate an Allure report"""
+    cmd = [allure_exec, 'generate', '--clean', res_dir, '-o', rep_dir,
+        "--name", "FVM Report"]
+    logger.trace(f'Generating dashboard with {cmd=}')
+    process = subprocess.Popen (cmd,
+                                stdout  = subprocess.PIPE,
+                                stderr  = subprocess.PIPE,
+                                text    = True,
+                                bufsize = 1
+                                )
+    retval = process.wait()
+    # Replace Allure favicon with FVM favicon
+    shutil.copy2("doc/sphinx/source/_static/favicon.ico", f'{rep_dir}/favicon.ico')
+    return retval
+
+def show_allure(dir, allure_exec, logger):
+    """Show an Allure report"""
+    cmd = [allure_exec, 'open', dir]
+    logger.trace(f'Opening dashboard with {cmd=}')
+    process = subprocess.Popen (cmd,
+                                stdout  = subprocess.PIPE,
+                                stderr  = subprocess.PIPE,
+                                text    = True,
+                                bufsize = 1
+                                )
+    logger.info(f'Opening dashboard. Close with Ctrl+C')
+
+    # We need to close the allure process when receiving SIGINT
+    def handle_sigint_allure(signum, frame):
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
+        logger.info(f'Closing dashboard')
+        os.killpg(os.getpgid(process.pid), signal.SIGINT)
+
+    signal.signal(signal.SIGINT, handle_sigint_allure)
+    retval = process.wait()
+    return retval
+
+def copy_results_to_allure_results(base_dir, dst_dir):
+    """
+    Copy all files in the 'results' subfolders of the subdirectories
+    to the allure_results folder in base_dir, overwriting them if they exist.
+    Ignore the allure_results and allure_report folders.
+    """
+    exclude_dirs = {"allure_results", "allure_report"}
+
+    if os.path.isdir(dst_dir):
+        shutil.rmtree(dst_dir)
+    os.makedirs(dst_dir)
+    for root, dirs, files in os.walk(base_dir):
+        dirs[:] = [d for d in dirs if d not in exclude_dirs]
+
+        # If current directory ends with "/results"
+        if os.path.basename(root) == "results":
+            for file in files:
+                src = os.path.join(root, file)
+                dst = os.path.join(dst_dir, file)
+                shutil.copy2(src, dst)
 
 def generate_text_report(framework, logger):
     """
