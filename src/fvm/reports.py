@@ -630,8 +630,9 @@ def generate_allure(res_dir, rep_dir, allure_exec, logger):
                                 bufsize = 1
                                 )
     retval = process.wait()
-    # Replace Allure favicon with FVM favicon
-    shutil.copy2("doc/sphinx/source/_static/favicon.ico", f'{rep_dir}/favicon.ico')
+    # Replace Allure favicon with FVM favicon only if Allure favicon exists
+    if os.path.exists(f'{rep_dir}/favicon.ico'):
+        shutil.copy2("doc/sphinx/source/_static/favicon.ico", f'{rep_dir}/favicon.ico')
     return retval
 
 def show_allure(dir, allure_exec, logger):
