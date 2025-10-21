@@ -49,6 +49,7 @@ extensions = [
     "sphinx.ext.napoleon",      # Support Google/NumPy-style docstrings
     "sphinx.ext.viewcode",      # Add links to source code
     "sphinx.ext.todo",          # Allow todonotes
+    "sphinxarg.ext",            # Allow automatic documentation of arparse parsers
     "sphinxcontrib.mermaid",    # To have mermaid diagrams
     "sphinxcontrib.bibtex",     # To use bibtex
     #"sphinx_autodoc_typehints", # Show type hints
