@@ -111,17 +111,17 @@ run_concepts_questa: &run_concepts_questa
     - make venv
     - source .venv/bin/activate && make UVFLAGS=--dev PYTHON="coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN" $DESIGN
   after_script:
-    - mv fvm_out/dashboard/allure-report fvm_out/dashboard/allure-report.$TOOLCHAIN.$DESIGN
+    - mv fvm_out/dashboard/$DESIGN/report fvm_out/dashboard/$DESIGN/report.$TOOLCHAIN.$DESIGN
   artifacts:
     when: always
     paths:
       - .coverage.$TOOLCHAIN.$DESIGN
       - fvm_out/fvm_results/*.xml
       - fvm_out/fvm_results/executor.json
-      - fvm_out/dashboard/allure-results/*.html
-      - fvm_out/dashboard/allure-results/*.json
-      - fvm_out/dashboard/allure-results/*.log
-      - fvm_out/dashboard/allure-report.$TOOLCHAIN.$DESIGN
+      - fvm_out/dashboard/$DESIGN/results/*.html
+      - fvm_out/dashboard/$DESIGN/results/*.json
+      - fvm_out/dashboard/$DESIGN/results/*.log
+      - fvm_out/dashboard/$DESIGN/report.$TOOLCHAIN.$DESIGN
     reports:
       junit:
         - fvm_out/fvm_results/*.xml

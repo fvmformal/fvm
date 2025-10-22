@@ -190,7 +190,7 @@ newreport: reqs
 report: reqs
 	$(VENV_ACTIVATE) python3 src/fvm/manage_allure.py --allure_version $(ALLURE_VERSION) --install_dir $(ALLURE_INSTALL_DIR)
 	~/.cache/fvm/allure-$(ALLURE_VERSION)/bin/allure generate fvm_out/fvm_results -o fvm_out/fvm_report
-	
+
 updated_report: reqs
 	$(VENV_ACTIVATE) python3 src/fvm/manage_allure.py --allure_version $(ALLURE_VERSION) --install_dir $(ALLURE_INSTALL_DIR)
 	~/.cache/fvm/allure-$(ALLURE_VERSION)/bin/allure generate fvm_out/dashboard/allure-results -o fvm_out/dashboard/allure-report
