@@ -825,12 +825,13 @@ class FvmFramework:
         self.logger.remove()
         self.logger.add(sys.stderr, level=self.loglevel, format=LOGFORMAT_SUMMARY)
 
-        self.logger.info(f'Got {msg_counts["TRACE"]=} trace messages')
-        self.logger.info(f'Got {msg_counts["DEBUG"]=} debug messages')
-        self.logger.info(f'Got {msg_counts["INFO"]=} info messages')
+        if self.verbose :
+            self.logger.info(f'Got {msg_counts["TRACE"]=} trace messages')
+            self.logger.info(f'Got {msg_counts["DEBUG"]=} debug messages')
+            self.logger.info(f'Got {msg_counts["INFO"]=} info messages')
         if msg_counts['SUCCESS'] > 0 :
             self.logger.success(f'Got {msg_counts["SUCCESS"]=} success messages')
-        else :
+        elif self.verbose :
             self.logger.info(f'Got {msg_counts["SUCCESS"]=} success messages')
         if msg_counts['WARNING'] > 0 :
             self.logger.warning(f'Got {msg_counts["WARNING"]=} warning messages')
@@ -844,7 +845,7 @@ class FvmFramework:
         if msg_counts['CRITICAL'] > 0 :
             self.logger.critical(f'Got {msg_counts["CRITICAL"]=} critical messages')
             ret = True
-        else :
+        elif self.verbose :
             self.logger.success(f'Got {msg_counts["CRITICAL"]=} critical messages')
 
         # Restore the original log format and loglevel
@@ -1101,7 +1102,8 @@ class FvmFramework:
         reports.generate_html_report(self, self.logger)
         err = self.check_errors()
         if err :
-            self.exit_if_required(CHECK_FAILED)
+            self.logger.error(CHECK_FAILED['msg'])
+            sys.exit(CHECK_FAILED['value'])
 
     def list_design(self, design):
         """List all available/selected methodology steps for a design"""
