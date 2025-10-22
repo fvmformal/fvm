@@ -6,7 +6,7 @@ def create_parser():
     """
     Create an argument parser
 
-    :returns: argument parser fot eh
+    :returns: Argument parser for the FVM Framework
     :rtype: class 'argparse.ArgumentParser'
     """
     # Configure the argument parser
