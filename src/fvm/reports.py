@@ -489,7 +489,7 @@ def generate_html_report(framework, logger):
     results_dir = os.path.join(dashboard_dir, framework.prefix, "results")
     report_dir = os.path.join(dashboard_dir, framework.prefix, "report")
     os.makedirs(dashboard_dir, exist_ok=True)
-    if framework.globalshow is False and framework.shownorun is False:
+    if framework.showall is False and framework.shownorun is False:
         if os.path.isdir(results_dir):
             for item in os.listdir(results_dir):
                 item_path = os.path.join(results_dir, item)
@@ -586,7 +586,7 @@ def generate_html_report(framework, logger):
     allure_exec = Path(manage_allure.get_allure_bin_path(allure_version, allure_install_dir))
 
     if allure_exec.exists():
-        if framework.globalshow:
+        if framework.showall:
             # Report with all designs
             global_results_dir = os.path.join(dashboard_dir, "allure-results")
             global_report_dir = os.path.join(dashboard_dir, "allure-report")

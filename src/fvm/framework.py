@@ -100,7 +100,7 @@ class FvmFramework:
         self.guinorun = args.guinorun
         self.show = args.show
         self.shownorun = args.shownorun
-        self.globalshow = args.globalshow
+        self.showall = args.showall
         self.flexlm_logdir = os.path.join(self.outdir, ".flexlm.log")
         self.env = os.environ.copy()
         self.env["FLEXLM_DIAGNOSTICS_PATH"] = self.flexlm_logdir
@@ -1087,7 +1087,7 @@ class FvmFramework:
         self.start_time_setup = datetime.now().isoformat()
 
         self.logger.info(f'Designs: {self.toplevel}')
-        if self.shownorun is False and self.globalshow is False:
+        if self.shownorun is False and self.showall is False:
             for design in self.toplevel:
                 self.logger.trace(f'Running {design=}')
                 if self.list:

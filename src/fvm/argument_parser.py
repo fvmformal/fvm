@@ -31,7 +31,7 @@ def create_parser():
             help='Show the HTML dashboard after execution of the formal tools. (default: %(default)s)')
     parser.add_argument('--shownorun', default=False, action='store_true',
             help='Show the existing HTML dashboard, without running the formal tools. (default: %(default)s)')
-    parser.add_argument('--globalshow', default=False, action='store_true',
+    parser.add_argument('--showall', default=False, action='store_true',
             help='Show the existing HTML dashboard of every design in the output directory, without running the formal tools. (default: %(default)s)')
 
     return parser
