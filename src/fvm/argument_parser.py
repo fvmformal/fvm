@@ -19,6 +19,8 @@ def create_parser():
             help='Continue with next steps even if errors are detected. (default: %(default)s)')
     parser.add_argument('-v', '--verbose', default=False, action='store_true',
             help='Show full tool outputs. (default: %(default)s)')
+    parser.add_argument('-q', '--quiet', default=False, action='store_true',
+            help='Show only error tool outputs. (default: %(default)s)')
     parser.add_argument('-l', '--list', default=False, action='store_true',
             help='Only list available methodology steps, but do not execute them. (default: %(default)s)')
     parser.add_argument('-o', '--outdir', default = "fvm_out",

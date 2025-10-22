@@ -89,6 +89,7 @@ class FvmFramework:
         self.logger = logger
         self.logger.trace(f'{args=}')
         self.verbose = args.verbose
+        self.quiet = args.quiet
         self.list = args.list
         self.outdir = args.outdir
         self.resultsdir = f'{self.outdir}/fvm_results'  # For the .xml results
@@ -108,6 +109,8 @@ class FvmFramework:
         # Make loglevel an instance variable
         if self.verbose :
             self.loglevel = "TRACE"
+        elif self.quiet:
+            self.loglevel = "ERROR"
         else :
             self.loglevel = "INFO"
 
