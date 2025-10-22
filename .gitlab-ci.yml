@@ -89,6 +89,8 @@ run_concepts_questa: &run_concepts_questa
   image: registry.woden.us.es/containers/questa:2025.1_2
   variables:
     TOOLCHAIN: "questa"
+  tags:
+    - fast
   parallel:
     matrix:
       - DESIGN: [transactions_deprecated, parameterized_sequences, inheriting_vunits, inheriting_multiple_vunits, parameterized_properties, multiple_designs, symbolic_constants, user_defined_hdltypes, user_defined_hdltypes_in_package, user_defined_hdltypes_in_external_package, assert_to_assume, defining_clocks_and_resets, hooks, design_configurations, assertion_decomposition, reachability_example]
@@ -161,6 +163,8 @@ run_examples_questa:
 .run_steps_independently_questa:
   stage: examples
   image: registry.woden.us.es/containers/questa:2025.1_2
+  tags:
+    - fast
   variables:
     TOOLCHAIN: "questa"
   before_script:
@@ -191,6 +195,8 @@ run_examples_questa:
 run_options_questa:
   stage: concepts
   image: registry.woden.us.es/containers/questa:2025.1_2
+  tags:
+    - fast
   variables:
     TOOLCHAIN: "questa"
   before_script:
