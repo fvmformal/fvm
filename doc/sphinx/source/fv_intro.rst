@@ -33,10 +33,11 @@ Formal Verification is (among other things) good for:
 
 - Triggering hard-to-find bugs
 - Reaching hard-to-find cases
-- Performing breadth-first searches, instead of depth-first searches
-
-.. todo::
-  add more...
+- Bug hunting during the early stages of the design process
+- Performing breadth-first searches, instead of depth-first searches. This
+  means that, instead of running very long simulations and hoping to find bugs,
+  formal verification exhaustively checks all posibilities during a small
+  number of clock cycles.
 
 What does Formal Verfication struggle with?
 -------------------------------------------
@@ -45,9 +46,7 @@ Formal Verification may struggle with:
 
 - Wide multiplicators
 - Designs that have big latencies
-
-.. todo::
-  add more...
+- Memories ("small" memories may have thousands of state bits)
 
 Fortunately, there are techniques that can be used to help with these cases,
 see section :ref:`complexityreduction`

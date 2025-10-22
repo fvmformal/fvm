@@ -41,6 +41,8 @@ To learn more, go to the next section: :ref:`fv_intro`
    :caption: Concepts
    :hidden:
 
+   directives
+   metrics
    concepts
 
 .. toctree::
