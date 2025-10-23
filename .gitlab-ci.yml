@@ -110,7 +110,6 @@ run_concepts_questa: &run_concepts_questa
     #- mv executor.json fvm_out/fvm_results
     #- mkdir -p fvm_out/dashboard/allure-results
   script:
-    - make venv
     - source .venv/bin/activate && make UVFLAGS=--dev PYTHON="coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN" $DESIGN
   after_script:
     - mv fvm_out/dashboard/$DESIGN/report fvm_out/dashboard/$DESIGN/report.$TOOLCHAIN.$DESIGN
@@ -174,7 +173,6 @@ run_examples_questa:
     - curl -LsSf https://astral.sh/uv/install.sh | sh
     - export PATH="$HOME/.local/bin:$PATH"
   script:
-    - make venv
     - source .venv/bin/activate && uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.lint -m examples.countervunit.formal -s lint
     - make clean
     - source .venv/bin/activate && uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.rulecheck --m examples.countervunit.formal -s friendliness
@@ -206,7 +204,6 @@ run_options_questa:
     - curl -LsSf https://astral.sh/uv/install.sh | sh
     - export PATH="$HOME/.local/bin:$PATH"
   script:
-    - make venv
     - . .venv/bin/activate && uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.hooks.verbose concepts/hooks/formal.py -v
     - . .venv/bin/activate && uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.hooks.list concepts/hooks/formal.py -l
     - . .venv/bin/activate && uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.design_configurations.list concepts/design_configurations/formal.py -l
