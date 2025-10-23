@@ -65,7 +65,7 @@ examplelist += ipv6
 friendlinesslist = $(addsuffix .friendliness, $(examplelist))
 
 # List with all the concepts
-conceptlist += add_drom_sources
+conceptlist += adding_drom_sources
 conceptlist += assert_to_assume
 conceptlist += assertion_decomposition
 conceptlist += blackbox_example
