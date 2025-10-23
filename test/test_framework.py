@@ -175,27 +175,6 @@ def test_check_if_tools_exist() :
     exists = fvm.check_tool("notfoundtool")
     assert exists == False
 
-def test_qverify_not_in_path(monkeypatch):
-    """Test simulating that 'qverify' is not in PATH"""
-
-    # Save the original function before patching
-    real_which = shutil.which
-
-    # Simulate that 'qverify' is not found
-    monkeypatch.setattr(shutil, "which", lambda x: None if x == "qverify" else real_which(x))
-
-    # Quick check (optional)
-    assert shutil.which("qverify") is None
-
-    fvm = FvmFramework()
-    fvm.add_vhdl_source("examples/counter/counter.vhd")
-    fvm.set_toplevel("counter")
-
-    with pytest.raises(SystemExit) as pytest_wrapped_e:
-        fvm.run()
-    assert pytest_wrapped_e.type == SystemExit
-    assert pytest_wrapped_e.value.code == ERROR_IN_TOOL["value"]
-
 def test_remove_csh_from_path(monkeypatch):
     """Simulate that csh is not available, regardless of PATH"""
 
@@ -264,6 +243,27 @@ def test_remove_vcover_from_path_and_test_shownorun(monkeypatch):
     with monkeypatch.context() as m:
         m.setattr(subprocess, "Popen", fake_popen)
         fvm2.run()
+
+def test_qverify_not_in_path(monkeypatch):
+    """Test simulating that 'qverify' is not in PATH"""
+
+    # Save the original function before patching
+    real_which = shutil.which
+
+    # Simulate that 'qverify' is not found
+    monkeypatch.setattr(shutil, "which", lambda x: None if x == "qverify" else real_which(x))
+
+    # Quick check (optional)
+    assert shutil.which("qverify") is None
+
+    fvm = FvmFramework()
+    fvm.add_vhdl_source("examples/counter/counter.vhd")
+    fvm.set_toplevel("counter")
+
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        fvm.run()
+    assert pytest_wrapped_e.type == SystemExit
+    assert pytest_wrapped_e.value.code == ERROR_IN_TOOL["value"]
 
 def test_shownorun_fail():
     """Test --shownorun argument"""
