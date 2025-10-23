@@ -64,9 +64,9 @@ def change_logo(allure_version, install_dir):
     logo_src = os.path.join('doc', 'sphinx', 'source', '_static', 'android-chrome-192x192.png')
     logo_dst = f'{install_dir}/allure-{allure_version}/plugins/custom-logo-plugin/static/fvm_logo.png'
     shutil.copy2(logo_src, logo_dst)
-    with open(allure_yml, "a") as f:
+    with open(allure_yml, "a", encoding='utf-8') as f:
         print("  - custom-logo-plugin", file=f)
-    with open(styles_css, "w") as f:
+    with open(styles_css, "w", encoding='utf-8') as f:
         print(".side-nav__brand {   background: url('fvm_logo.png') no-repeat center center !important;", file=f)
         print("  margin: 0 auto !important;", file=f)
         print("  height: 40px;", file=f)

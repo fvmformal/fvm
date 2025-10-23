@@ -635,9 +635,9 @@ def generate_allure(res_dir, rep_dir, allure_exec, logger):
         shutil.copy2("doc/sphinx/source/_static/favicon.ico", f'{rep_dir}/favicon.ico')
     return retval
 
-def show_allure(dir, allure_exec, logger):
+def show_allure(directory, allure_exec, logger):
     """Show an Allure report"""
-    cmd = [allure_exec, 'open', dir]
+    cmd = [allure_exec, 'open', directory]
     logger.trace(f'Opening dashboard with {cmd=}')
     process = subprocess.Popen (cmd,
                                 stdout  = subprocess.PIPE,
@@ -645,12 +645,11 @@ def show_allure(dir, allure_exec, logger):
                                 text    = True,
                                 bufsize = 1
                                 )
-    logger.info(f'Opening dashboard. Close with Ctrl+C')
+    logger.info('Opening dashboard. Close with Ctrl+C')
 
     # We need to close the allure process when receiving SIGINT
     def handle_sigint_allure(signum, frame):
         signal.signal(signal.SIGINT, signal.SIG_IGN)
-        logger.info(f'Closing dashboard')
         os.killpg(os.getpgid(process.pid), signal.SIGINT)
 
     signal.signal(signal.SIGINT, handle_sigint_allure)
