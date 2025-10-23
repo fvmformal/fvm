@@ -110,7 +110,7 @@ run_concepts_questa: &run_concepts_questa
     #- mv executor.json fvm_out/fvm_results
     #- mkdir -p fvm_out/dashboard/allure-results
   script:
-    - source .venv/bin/activate && make UVFLAGS=--dev PYTHON="coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN" $DESIGN
+    - make UVFLAGS=--dev PYTHON="coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN" $DESIGN
   after_script:
     - mv fvm_out/dashboard/$DESIGN/report fvm_out/dashboard/$DESIGN/report.$TOOLCHAIN.$DESIGN
   artifacts:
@@ -173,17 +173,17 @@ run_examples_questa:
     - curl -LsSf https://astral.sh/uv/install.sh | sh
     - export PATH="$HOME/.local/bin:$PATH"
   script:
-    - source .venv/bin/activate && uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.lint -m examples.countervunit.formal -s lint
+    - uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.lint -m examples.countervunit.formal -s lint
     - make clean
-    - source .venv/bin/activate && uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.rulecheck --m examples.countervunit.formal -s friendliness
+    - uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.rulecheck --m examples.countervunit.formal -s friendliness
     - make clean
-    - source .venv/bin/activate && uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.reachability --m examples.countervunit.formal -s reachability
+    - uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.reachability --m examples.countervunit.formal -s reachability
     - make clean
-    - source .venv/bin/activate && uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.resets --m examples.countervunit.formal -s resets
+    - uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.resets --m examples.countervunit.formal -s resets
     - make clean
 #    - coverage run -m examples.countervunit.formal -s clocks
 #    - make clean
-    - source .venv/bin/activate && uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.prove --m examples.countervunit.formal -s prove
+    - uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.prove --m examples.countervunit.formal -s prove
     - make clean
   artifacts:
     when: always
@@ -204,14 +204,14 @@ run_options_questa:
     - curl -LsSf https://astral.sh/uv/install.sh | sh
     - export PATH="$HOME/.local/bin:$PATH"
   script:
-    - . .venv/bin/activate && uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.hooks.verbose concepts/hooks/formal.py -v
-    - . .venv/bin/activate && uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.hooks.list concepts/hooks/formal.py -l
-    - . .venv/bin/activate && uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.design_configurations.list concepts/design_configurations/formal.py -l
-    - . .venv/bin/activate && uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.hooks.outdir concepts/hooks/formal.py -o fvm_out_2
-    - . .venv/bin/activate && uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.hooks.design concepts/hooks/formal.py -d counter
-    - . .venv/bin/activate && uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.hooks.prove concepts/hooks/formal.py -s prove
-    - . .venv/bin/activate && uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.hooks.prove_list concepts/hooks/formal.py -s prove -l
-    - . .venv/bin/activate && uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.vunits.continue concepts/inheriting_vunits_fail/formal.py -c
+    - uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.hooks.verbose concepts/hooks/formal.py -v
+    - uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.hooks.list concepts/hooks/formal.py -l
+    - uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.design_configurations.list concepts/design_configurations/formal.py -l
+    - uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.hooks.outdir concepts/hooks/formal.py -o fvm_out_2
+    - uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.hooks.design concepts/hooks/formal.py -d counter
+    - uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.hooks.prove concepts/hooks/formal.py -s prove
+    - uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.hooks.prove_list concepts/hooks/formal.py -s prove -l
+    - uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.vunits.continue concepts/inheriting_vunits_fail/formal.py -c
     - make clean
   artifacts:
     when: always
