@@ -1,29 +1,19 @@
 .PHONY: all install fvm lint list-tests test test-verbose concepts examples pycoverage venv clean realclean
 
-# Everything runs inside a python venv, since it is the recommended way of
-# managing python dependencies.
-# The default VENV_DIR can be changed by passing a different value to Makefile,
-# for example: make VENV_DIR=my_venv examples
-# If VENV_DIR is unset, no venv will be used: make VENV_DIR= examples
-VENV_DIR ?= .venv
-#VENV_ACTIVATE ?= . $(VENV_DIR)/bin/activate &&
-VENV_ACTIVATE ?= uv run $(UVFLAGS)
-ALLURE_INSTALL_DIR ?= ~/.cache/fvm
+# Everything is managed by uv. "uv run" automatically creates a venv and
+# populates it with the required dependencies and our fvm module. If the --dev
+# flag is passed to it, it includes also the development dependencies.
+UV_RUN ?= uv run $(UVFLAGS)
+
+# Which is our python executable
 PYTHON ?= python3
 
-# If VENV_DIR is unset, set REQS_DIR to . so the files "reqs_installed" and
-# "dev-reqs_installed" can be created
-REQS_DIR := $(if $(VENV_DIR), $(VENV_DIR), .)
-
-# If VENV_DIR is unset, unset also VENV_ACTIVATE
-VENV_ACTIVATE := $(if $(VENV_DIR), $(VENV_ACTIVATE), )
+# Where to install Allure Report, and which version to install
+ALLURE_VERSION=2.32.0
+ALLURE_INSTALL_DIR ?= ~/.cache/fvm
 
 all:
 	@echo usage:
-	@echo   "make venv         -> create python virtual environment"
-	@echo   "make reqs         -> install dependencies"
-	@echo   "make dev-reqs     -> install development dependencies"
-	@echo   "make install      -> install the FVM"
 	@echo   "make lint         -> pass pylint over the python code"
 	@echo   "make list-tests   -> list all the tests"
 	@echo   "make test         -> run the tests"
@@ -39,58 +29,21 @@ all:
 	@echo   "make clean        -> remove temporary files"
 	@echo   "make realclean    -> remove temporary files and python venv"
 
-# reqs and dev-reqs depend on a file we create inside the venv, so we can avoid
-# calling "pip3 install ..." or "uv install..." if the requirements have
-# already been installed
-reqs: $(REQS_DIR)/reqs_installed
-
-dev-reqs: $(REQS_DIR)/dev-reqs_installed
-
-install: $(REQS_DIR)/fvm_installed
-
-fvm: install
-
-# Install dependencies, but not development dependencies
-#
-# Click is needed when using sby, so it is installed in the venv here for
-# convenience, but is not a dependency of FVM, so it is installed with just a
-# pip command
-#
-# TODO : now we don't really need to install allure into the venv, but we are
-# leaving it here for now so the targets report/updated_report/newreport/show
-# continue working. Those targets should probably better be managed by the
-# framework?
-ALLURE_VERSION=2.32.0
-$(REQS_DIR)/reqs_installed: $(VENV_DIR)/venv_created
-	$(VENV_ACTIVATE) uv sync --no-dev
-	$(VENV_ACTIVATE) pip3 install click
-	touch $@
-
-# Install all dependencies, including development dependencies
-$(REQS_DIR)/dev-reqs_installed: $(VENV_DIR)/venv_created
-	$(VENV_ACTIVATE) uv sync
-	touch $@
-
-# Install the FVM
-$(REQS_DIR)/fvm_installed: $(VENV_DIR)/venv_created reqs
-	$(VENV_ACTIVATE) uv pip install -e .
-	touch $@
-
 # Lint the python code
-lint: dev-reqs
-	$(VENV_ACTIVATE) --dev pylint --output-format=colorized --recursive=y test/ src/ || $(VENV_ACTIVATE) --dev pylint-exit $$?
+lint:
+	$(UV_RUN) --dev pylint --output-format=colorized --recursive=y test/ src/ || $(UV_RUN) --dev pylint-exit $$?
 
 # List the tests
-list-tests: reqs dev-reqs
-	$(VENV_ACTIVATE) --dev pytest --collect-only
+list-tests:
+	$(UV_RUN) --dev pytest --collect-only
 
 # Run the tests
-test: fvm dev-reqs
-	$(VENV_ACTIVATE) coverage run -m pytest -v --junit-xml="results.xml"
+test:
+	$(UV_RUN) coverage run -m pytest -v --junit-xml="results.xml"
 
 # Run the tests in verbose mode
-test-verbose: fvm dev-reqs
-	$(VENV_ACTIVATE) coverage run -m pytest -v -s --junit-xml="results.xml"
+test-verbose:
+	$(UV_RUN) coverage run -m pytest -v -s --junit-xml="results.xml"
 
 # List with all the examples
 examplelist += counter
@@ -147,81 +100,60 @@ list-concepts:
 	@echo $(conceptlist)
 
 # Generic rules to run examples and concepts
-%: examples/% fvm
-	$(VENV_ACTIVATE) $(PYTHON) examples/$@/formal.py
+%: examples/%
+	$(UV_RUN) $(PYTHON) examples/$@/formal.py
 
-%.friendliness: examples/% fvm
-	$(VENV_ACTIVATE) $(PYTHON) examples/$*/formal.py -s friendliness
+%.friendliness: examples/%
+	$(UV_RUN) $(PYTHON) examples/$*/formal.py -s friendliness
 
-%: concepts/% fvm
-	$(VENV_ACTIVATE) $(PYTHON) concepts/$@/formal.py
+%: concepts/%
+	$(UV_RUN) $(PYTHON) concepts/$@/formal.py
 
 # Calculate python code coverage
-pycoverage: dev-reqs
-	$(VENV_ACTIVATE) coverage combine
-	$(VENV_ACTIVATE) coverage report -m
-	$(VENV_ACTIVATE) coverage html
-	$(VENV_ACTIVATE) coverage xml
+pycoverage:
+	$(UV_RUN) coverage combine
+	$(UV_RUN) coverage report -m
+	$(UV_RUN) coverage html
+	$(UV_RUN) coverage xml
 
 # Run everything
 testall: test concepts examples
 
-# Create python venv if it doesn't exist
-venv: $(VENV_DIR)/venv_created
-
-# When creating the venv, we use the system's python (we can't use the venv's
-# python because it doesn't exist yet)
-# Some linux distros don't automatically add pip inside new venvs (Rocky Linux
-# 8, I'm looking at you), so let's also tell python that we want to have pipa
-#
-# $(realpath PATH) converts a relative path into an absolute one
-$(VENV_DIR)/venv_created:
-	python3 -m venv $(VENV_DIR)
-	$(VENV_ACTIVATE) python3 -m ensurepip --upgrade
-	$(VENV_ACTIVATE) pip3 install uv
-	touch $@
-
 # We already do this in the python code, but sometimes something fails and
 # still we want to generate reports, so let's have a manual option here
-newreport: reqs
-	$(VENV_ACTIVATE) python3 src/fvm/manage_allure.py --allure_version $(ALLURE_VERSION) --install_dir $(ALLURE_INSTALL_DIR)
-	~/.cache/fvm/allure-$(ALLURE_VERSION)/bin/allure generate fvm_out/fvm_results --clean -o fvm_out/fvm_report
+newreport:
+	$(UV_RUN) python3 src/fvm/manage_allure.py --allure_version $(ALLURE_VERSION) --install_dir $(ALLURE_INSTALL_DIR)
+	$(ALLURE_INSTALL_DIR)/allure-$(ALLURE_VERSION)/bin/allure generate fvm_out/fvm_results --clean -o fvm_out/fvm_report
 
-report: reqs
-	$(VENV_ACTIVATE) python3 src/fvm/manage_allure.py --allure_version $(ALLURE_VERSION) --install_dir $(ALLURE_INSTALL_DIR)
-	~/.cache/fvm/allure-$(ALLURE_VERSION)/bin/allure generate fvm_out/fvm_results -o fvm_out/fvm_report
+report:
+	$(UV_RUN) python3 src/fvm/manage_allure.py --allure_version $(ALLURE_VERSION) --install_dir $(ALLURE_INSTALL_DIR)
+	$(ALLURE_INSTALL_DIR)/allure-$(ALLURE_VERSION)/bin/allure generate fvm_out/fvm_results -o fvm_out/fvm_report
 
-updated_report: reqs
-	$(VENV_ACTIVATE) python3 src/fvm/manage_allure.py --allure_version $(ALLURE_VERSION) --install_dir $(ALLURE_INSTALL_DIR)
-	~/.cache/fvm/allure-$(ALLURE_VERSION)/bin/allure generate fvm_out/dashboard/allure-results -o fvm_out/dashboard/allure-report
+updated_report:
+	$(UV_RUN) python3 src/fvm/manage_allure.py --allure_version $(ALLURE_VERSION) --install_dir $(ALLURE_INSTALL_DIR)
+	$(ALLURE_INSTALL_DIR)/allure-$(ALLURE_VERSION)/bin/allure generate fvm_out/dashboard/allure-results -o fvm_out/dashboard/allure-report
 
-# TODO : probably we should do this in the python code, for example providing
-# an executable python file called fvm_show or similar
-show: reqs
-	$(VENV_ACTIVATE) python3 src/fvm/manage_allure.py --allure_version $(ALLURE_VERSION) --install_dir $(ALLURE_INSTALL_DIR)
-	~/.cache/fvm/allure-$(ALLURE_VERSION)/bin/allure open fvm_out/fvm_report
+show:
+	$(UV_RUN) python3 src/fvm/manage_allure.py --allure_version $(ALLURE_VERSION) --install_dir $(ALLURE_INSTALL_DIR)
+	$(ALLURE_INSTALL_DIR)/allure-$(ALLURE_VERSION)/bin/allure open fvm_out/fvm_report
 
 # Count TODOs in code
 # Since each line in the recipe is run in a separate shell, to define a
 # variable and be able to read its value later we need to use GNU Make's $eval
-# TODO : move anybadge to dev-reqs
 TODOs := $(shell grep -r TODO * | grep -v grep | wc -l)
-todo: $(VENV_DIR)/venv_created
-	$(VENV_ACTIVATE) pip3 install anybadge
+todo:
 	mkdir -p badges
 	rm -f badges/todo.svg
 	@echo "TODOs=$(TODOs)"
-	@$(VENV_ACTIVATE) anybadge --value=$(TODOs) --label=TODOs --file=badges/todo.svg 1=green 10=yellow 20=orange 30=tomato 999=red
+	@$(UV_RUN) anybadge --value=$(TODOs) --label=TODOs --file=badges/todo.svg 1=green 10=yellow 20=orange 30=tomato 999=red
 
 # Generate documentation
-# TODO : move anybadge to dev-reqs
-docs: dev-reqs
-	$(VENV_ACTIVATE) sphinx-apidoc -o doc/sphinx/source src/fvm
-	$(VENV_ACTIVATE) make -C doc/sphinx/ html
+docs:
+	$(UV_RUN) sphinx-apidoc -o doc/sphinx/source src/fvm
+	$(UV_RUN) make -C doc/sphinx/ html
 	mkdir -p badges
 	rm -f badges/undocumented.svg
-	$(VENV_ACTIVATE) pip3 install anybadge
-	$(VENV_ACTIVATE) anybadge --value=`cat doc/sphinx/undocumented_count.txt` --label=undocumented --file=badges/undocumented.svg 1=green 10=yellow 20=orange 30=tomato 999=red
+	$(UV_RUN) anybadge --value=`cat doc/sphinx/undocumented_count.txt` --label=undocumented --file=badges/undocumented.svg 1=green 10=yellow 20=orange 30=tomato 999=red
 
 # Remove generated files
 clean:
