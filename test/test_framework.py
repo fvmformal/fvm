@@ -176,9 +176,16 @@ def test_check_if_tools_exist() :
     assert exists == False
 
 def test_qverify_not_in_path(monkeypatch):
-    """Test simulating that a required tool is not in PATH"""
+    """Test simulating that 'qverify' is not in PATH"""
 
-    monkeypatch.delenv("PATH", raising=False)
+    # Save the original function before patching
+    real_which = shutil.which
+
+    # Simulate that 'qverify' is not found
+    monkeypatch.setattr(shutil, "which", lambda x: None if x == "qverify" else real_which(x))
+
+    # Quick check (optional)
+    assert shutil.which("qverify") is None
 
     fvm = FvmFramework()
     fvm.add_vhdl_source("examples/counter/counter.vhd")
