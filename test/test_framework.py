@@ -1,7 +1,7 @@
 """Unit tests for FvmFramework class"""
 from pathlib import Path
-import os
 import shutil
+import subprocess
 
 # Third party imports
 import pytest
@@ -205,6 +205,7 @@ def test_remove_csh_from_path(monkeypatch):
     fvm.add_vhdl_source("examples/counter/counter.vhd")
     fvm.set_toplevel("counter")
     fvm.step = "prove"
+    fvm.skip("prove.formalcover")
 
     with pytest.raises(SystemExit) as pytest_wrapped_e:
         fvm.run()
@@ -228,12 +229,53 @@ def test_remove_vcover_from_path(monkeypatch):
     fvm.add_vhdl_source("examples/counter/counter.vhd")
     fvm.set_toplevel("counter")
     fvm.step = "prove"
+    fvm.skip("prove.formalcover")
 
     with pytest.raises(SystemExit) as pytest_wrapped_e:
         fvm.run()
 
     assert pytest_wrapped_e.type == SystemExit
     assert pytest_wrapped_e.value.code == ERROR_IN_TOOL["value"]
+
+def test_shownorun(monkeypatch):
+    """Test --shownorun argument"""
+    fvm = FvmFramework()
+    fvm.add_vhdl_source("examples/counter/counter.vhd")
+    fvm.set_toplevel("counter")
+    fvm.shownorun = True
+
+    # Fake subprocess.Popen
+    class DummyProc:
+        def wait(self): return 0
+
+    def fake_popen(*a, **kw):
+        print(f"Simulating Popen: {a}")
+        return DummyProc()
+
+    # Only fake subprocess in this test
+    with monkeypatch.context() as m:
+        m.setattr(subprocess, "Popen", fake_popen)
+        fvm.run()
+
+def test_showall(monkeypatch):
+    """Test --showall argument"""
+    fvm = FvmFramework()
+    fvm.add_vhdl_source("examples/counter/counter.vhd")
+    fvm.set_toplevel("counter")
+    fvm.showall = True
+
+    # Fake subprocess.Popen
+    class DummyProc:
+        def wait(self): return 0
+
+    def fake_popen(*a, **kw):
+        print(f"Simulating Popen: {a}")
+        return DummyProc()
+
+    # Only fake subprocess in this test
+    with monkeypatch.context() as m:
+        m.setattr(subprocess, "Popen", fake_popen)
+        fvm.run()
 
 def test_set_prefix() :
     """Test setting a valid prefix"""
