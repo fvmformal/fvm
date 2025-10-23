@@ -27,6 +27,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "anybadge>=1.16.0",
     "coverage>=7.10.7",
     "pylint>=3.3.8",
     "pylint-exit>=1.2.0",
