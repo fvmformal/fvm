@@ -59,10 +59,10 @@ def make_allure_executable(allure_version, install_dir):
 def change_logo(allure_version, install_dir):
     """Change Allure logo to FVM logo"""
     # TODO: FVM logo path could change?
-    allure_yml = f'{install_dir}/allure-{allure_version}/config/allure.yml'
-    styles_css = f'{install_dir}/allure-{allure_version}/plugins/custom-logo-plugin/static/styles.css'
+    allure_yml = os.path.join(install_dir, f'allure-{allure_version}', 'config', 'allure.yml')
+    styles_css = os.path.join(install_dir, f'allure-{allure_version}', 'plugins', 'custom-logo-plugin', 'static', 'styles.css')
     logo_src = os.path.join('doc', 'sphinx', 'source', '_static', 'android-chrome-192x192.png')
-    logo_dst = f'{install_dir}/allure-{allure_version}/plugins/custom-logo-plugin/static/fvm_logo.png'
+    logo_dst = os.path.join(install_dir, f'allure-{allure_version}', 'plugins', 'custom-logo-plugin', 'static', 'fvm_logo.png')
     shutil.copy2(logo_src, logo_dst)
     with open(allure_yml, "a", encoding='utf-8') as f:
         print("  - custom-logo-plugin", file=f)
@@ -102,7 +102,7 @@ def install_allure(allure_version, install_dir):
 def ensure_allure(allure_version, install_dir):
     """Install allure, but only if it is not already installed in the specified
     directory"""
-    allure_bin = Path(f'{install_dir}/allure-{allure_version}/bin/allure')
+    allure_bin = Path(os.path.join(install_dir, f'allure-{allure_version}', 'bin', 'allure'))
     if not allure_bin.exists():
         install_allure(allure_version, install_dir)
 
@@ -119,10 +119,10 @@ def main():
         os.makedirs(install_dir)
 
     if force:
-        print(f"  Installing Allure at {install_dir}/allure-{allure_version}/bin/allure")
+        print(f"  Installing Allure at {os.path.join(install_dir, f'allure-{allure_version}', 'bin', 'allure')}")
         install_allure(allure_version, install_dir)
     else:
-        print(f"  Ensuring Allure is at {install_dir}/allure-{allure_version}/bin/allure")
+        print(f"  Ensuring Allure is at {os.path.join(install_dir, f'allure-{allure_version}', 'bin', 'allure')}")
         ensure_allure(allure_version, install_dir)
 
 if __name__ == "__main__":

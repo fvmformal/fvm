@@ -5,7 +5,7 @@ import os
 import shutil
 import re
 
-def generate_test_case(design_name, prefix, step, results_dir, status="passed",
+def generate_test_case(design_name, prefix, step, results_dir, status="passed", outdir=None,
                        start_time=None, stop_time=None, friendliness_score=None,
                        properties = None, step_summary_html = None, html_files=None):
     """
@@ -38,7 +38,7 @@ def generate_test_case(design_name, prefix, step, results_dir, status="passed",
     history_id = f"{prefix}.{design_name}.{step}"
     test_case_id = f"{prefix}.{design_name}.{step}_id"
 
-    full_name = f"fvm_out/{design_name}/{step}/{step}.log"
+    full_name = os.path.join(outdir, design_name, step, f"{step}.log")
     name = f"{design_name}.{step}"
 
     if step_summary_html is not None:
@@ -110,8 +110,8 @@ def generate_test_case(design_name, prefix, step, results_dir, status="passed",
 
     # Add standard output attachment
     attachment_uuid = str(uuid.uuid4())
-    attachment = f"{results_dir}/{attachment_uuid}-attachment.log"
-    original_file = f"fvm_out/{design_name}/{step}/{step}.log"
+    attachment = os.path.join(results_dir, f"{attachment_uuid}-attachment.log")
+    original_file = os.path.join(outdir, design_name, step, f"{step}.log")
     if os.path.exists(original_file):
         shutil.copy(original_file, attachment)
 
@@ -127,7 +127,7 @@ def generate_test_case(design_name, prefix, step, results_dir, status="passed",
     if html_files:
         for original_file in html_files:
             attachment_uuid = str(uuid.uuid4())
-            attachment = f"{results_dir}/{attachment_uuid}-attachment.html"
+            attachment = os.path.join(results_dir, f"{attachment_uuid}-attachment.html")
             if os.path.exists(original_file):
                 shutil.copy(original_file, attachment)
                 attachments.append(
@@ -202,7 +202,7 @@ def generate_test_case(design_name, prefix, step, results_dir, status="passed",
     if status.lower() != "skipped":
         test_case["attachments"] = attachments
 
-    output_file = f"{results_dir}/{test_case_uuid}-result.json"
+    output_file = os.path.join(results_dir, f"{test_case_uuid}-result.json")
     with open(output_file, 'w', encoding="utf-8") as json_file:
         json.dump(test_case, json_file, indent=2)
 

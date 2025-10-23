@@ -92,8 +92,7 @@ class FvmFramework:
         self.quiet = args.quiet
         self.list = args.list
         self.outdir = args.outdir
-        self.resultsdir = f'{self.outdir}/fvm_results'  # For the .xml results
-        self.reportdir = f'{self.outdir}/fvm_report'  # For the Allure dashboard
+        self.resultsdir = os.path.join(self.outdir, 'fvm_results')  # For the .xml results
         self.design = args.design
         self.step = args.step
         self.cont = args.cont
@@ -1454,7 +1453,7 @@ class FvmFramework:
             self.generic_args = ''
 
         self.generate_psl_from_drom_sources(os.path.join(self.current_toplevel+extra_path, 'drom2psl'))
-        path = f'{self.outdir}/{self.current_toplevel}'+extra_path
+        path = os.path.join(self.outdir, self.current_toplevel+extra_path)
         self.current_path = path
 
         os.makedirs(path, exist_ok=True)
@@ -1535,12 +1534,12 @@ class FvmFramework:
         console.rule(f'[bold white]{design}.{step}[/bold white]')
         err = False
         errorcode = {}
-        self.current_path = f'{self.outdir}/{self.current_toplevel}'
+        self.current_path = os.path.join(self.outdir, self.current_toplevel)
         path = self.current_path
         if step in self.steps.steps:
             run_stdout, run_stderr, stdout_err, stderr_err, status = self.steps.steps[step]["run"](self, path)
-            logfile = f'{path}/{step}/{step}.log'
-            os.makedirs(f'{path}/{step}', exist_ok=True)
+            logfile = os.path.join(path, step, f"{step}.log")
+            os.makedirs(os.path.join(path, step), exist_ok=True)
             self.logger.info(f'{step=}, finished, output written to {logfile}')
             with open(logfile, 'w', encoding='utf-8') as f :
                 f.write(run_stdout)
@@ -1575,7 +1574,7 @@ class FvmFramework:
     def run_post_step(self, design, step):
         """Run post processing for a specific step of the methodology"""
         self.logger.trace(f'run_post_step, {design=}, {step=})')
-        self.current_path = f'{self.outdir}/{self.current_toplevel}'
+        self.current_path = os.path.join(self.outdir, self.current_toplevel)
         path = self.current_path
         err = False
         errorcode = {}
@@ -1584,8 +1583,8 @@ class FvmFramework:
                 if not self.is_skipped(design, f'{step}.{post_step}'):
                     console.rule(f'[bold white]{design}.{step}.{post_step}[/bold white]')
                     run_stdout, run_stderr, stdout_err, stderr_err, status = self.steps.post_steps[step][post_step]["run"](self, path)
-                    logfile = f'{path}/{step}.{post_step}/{step}.{post_step}.log'
-                    os.makedirs(f'{path}/{step}.{post_step}', exist_ok=True)
+                    logfile = os.path.join(path, f"{step}.{post_step}", f"{step}.{post_step}.log")
+                    os.makedirs(os.path.join(path, f"{step}.{post_step}"), exist_ok=True)
                     self.logger.info(f'{step}.{post_step}, finished, output written to {logfile}')
                     with open(logfile, 'w', encoding='utf-8') as f :
                         f.write(run_stdout)

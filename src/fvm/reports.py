@@ -328,8 +328,8 @@ def pretty_summary(framework, logger):
     # If framework.outdir doesn't exist, something went wrong: in that case, do
     # not try to save the HTML summary
     if os.path.isdir(framework.outdir):
-        summary_console.save_html(f'{framework.outdir}/summary.html', clear=False)
-        summary_console.save_text(f'{framework.outdir}/summary.txt')
+        summary_console.save_html(os.path.join(framework.outdir, 'summary.html'), clear=False)
+        summary_console.save_text(os.path.join(framework.outdir, 'summary.txt'))
     else:
         logger.error(f'Cannot access output directory {framework.outdir}, something went wrong')
 
@@ -391,7 +391,7 @@ def generate_xml_report(framework, logger):
                                 category = step,
                                 file = framework.scriptname,
                                 line = None,
-                                log = f'{framework.outdir}/{design}/{step}/{step}.log',
+                                log = os.path.join(framework.outdir, design, step, f'{step}.log'),
                                 url = None
                                 )
 
@@ -442,7 +442,7 @@ def generate_xml_report(framework, logger):
     if xmlfile.startswith('_'):
         xmlfile = xmlfile[1:]
     xmlfile, extension = os.path.splitext(xmlfile)
-    xmlfile = f'{framework.resultsdir}/{xmlfile}'
+    xmlfile = os.path.join(framework.resultsdir, xmlfile)
     xmlfile = xmlfile + '.xml'
 
     # If the results directory exist, try to enable Allure history
@@ -450,26 +450,16 @@ def generate_xml_report(framework, logger):
     #   1. Move the already-existing results directory out of the way. We
     #   will create a new name for it using a timestamp
     #   2. Create a new results directory
-    #   3. If a reportdir exits, copy its history to the new results
-    #   directory
-    #   4. Remove the reportdir
-    #   5. Generate the XML results in the new results directory
+    #   3. Generate the XML results in the new results directory
     # This should make the history available so the next call to "allure
     # generate" can find it
 
     if os.path.isdir(framework.resultsdir):
         timestamp = datetime.now().isoformat()
         logger.trace(f'Results directory already exists, moving it from '
-                    f'{framework.resultsdir} to {framework.outdir}/fvm_history/{timestamp}')
-        shutil.move(framework.resultsdir, f'{framework.outdir}/fvm_history/{timestamp}')
+                    f'{framework.resultsdir} to {os.path.join(framework.outdir, "fvm_history", timestamp)}')
+        shutil.move(framework.resultsdir, os.path.join(framework.outdir, "fvm_history", timestamp))
         os.makedirs(framework.resultsdir, exist_ok=True)
-        historydir = f'{framework.reportdir}/history'
-        if os.path.isdir(historydir):
-            logger.trace(f'Report history directory already exists, moving it from '
-                        f'{historydir} to {framework.resultsdir}/history')
-            shutil.move(historydir, f'{framework.resultsdir}/history')
-            logger.trace(f'Removing old report directory at {framework.resultsdir}')
-            shutil.rmtree(framework.reportdir)
 
     os.makedirs(framework.resultsdir, exist_ok=True)
     with open(xmlfile, 'w', encoding="utf-8") as f:
@@ -517,10 +507,10 @@ def generate_html_report(framework, logger):
                     friendliness_score = None
                     properties = None
 
-                    step_path = f"{framework.outdir}/{design}/{step}"
+                    step_path = os.path.join(framework.outdir, design, step)
                     step_summary = f"{step}_summary.html"
-                    if os.path.exists(f"{step_path}/{step_summary}"):
-                        step_summary_html = f"{step_path}/{step_summary}"
+                    if os.path.exists(os.path.join(step_path, step_summary)):
+                        step_summary_html = os.path.join(step_path, step_summary)
 
                     if os.path.exists(step_path):
                         html_files = [
@@ -545,7 +535,7 @@ def generate_html_report(framework, logger):
                         friendliness_score = framework.results[design][step]['score']
 
                     if step == 'prove':
-                        path = f'{framework.outdir}/{design}/{step}/{step}.log'
+                        path = os.path.join(framework.outdir, design, step, f'{step}.log')
                         if os.path.exists(path):
                             properties = parse_prove.parse_properties_extended(path)
 
@@ -553,6 +543,7 @@ def generate_html_report(framework, logger):
                                                         prefix=framework.prefix,
                                                         results_dir=results_dir,
                                                         status=status,
+                                                        outdir=framework.outdir,
                                                         start_time=start_time,
                                                         stop_time=stop_time,
                                                         step=step,
@@ -572,6 +563,7 @@ def generate_html_report(framework, logger):
                                                         prefix=framework.prefix,
                                                         results_dir=results_dir,
                                                         status=status,
+                                                        outdir=framework.outdir,
                                                         start_time=start_time,
                                                         stop_time=start_time,
                                                         step=step)
@@ -631,8 +623,9 @@ def generate_allure(res_dir, rep_dir, allure_exec, logger):
                                 )
     retval = process.wait()
     # Replace Allure favicon with FVM favicon only if Allure favicon exists
-    if os.path.exists(f'{rep_dir}/favicon.ico'):
-        shutil.copy2("doc/sphinx/source/_static/favicon.ico", f'{rep_dir}/favicon.ico')
+    if os.path.exists(os.path.join(rep_dir, 'favicon.ico')):
+        shutil.copy2(os.path.join("doc", "sphinx", "source", "_static", "favicon.ico"),
+                     os.path.join(rep_dir, 'favicon.ico'))
     return retval
 
 def show_allure(directory, allure_exec, logger):
@@ -718,12 +711,12 @@ def generate_text_report(framework, logger):
                 # Default values
                 step_summary_txt = None
 
-                step_path = f"{framework.outdir}/{design}/{step}"
-                step_summary_md = f"{step_path}/{step}_summary.md"
+                step_path = os.path.join(framework.outdir, design, step)
+                step_summary_md = os.path.join(step_path, f"{step}_summary.md")
 
                 step_summary = f"{step}_summary.txt"
-                if os.path.exists(f"{step_path}/{step_summary}"):
-                    step_summary_txt = f"{step_path}/{step_summary}"
+                if os.path.exists(os.path.join(step_path, step_summary)):
+                    step_summary_txt = os.path.join(step_path, step_summary)
                     with open(step_summary_txt, 'r', encoding='utf-8') as f:
                         rich_table_str = f.read()
                     md_table_str = rich_table_to_markdown(rich_table_str)
