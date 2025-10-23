@@ -213,8 +213,11 @@ def test_remove_csh_from_path(monkeypatch):
     assert pytest_wrapped_e.type == SystemExit
     assert pytest_wrapped_e.value.code == ERROR_IN_TOOL["value"]
 
-def test_remove_vcover_from_path(monkeypatch):
-    """Simulate that vcover is not available, regardless of PATH"""
+def test_remove_vcover_from_path_and_test_shownorun(monkeypatch):
+    """
+    Simulate that vcover is not available, regardless of PATH.
+    Also test that shownorun mode works.
+    """
 
     # Save the original function before patching
     real_which = shutil.which
@@ -237,12 +240,10 @@ def test_remove_vcover_from_path(monkeypatch):
     assert pytest_wrapped_e.type == SystemExit
     assert pytest_wrapped_e.value.code == ERROR_IN_TOOL["value"]
 
-def test_shownorun(monkeypatch):
-    """Test --shownorun argument"""
-    fvm = FvmFramework()
-    fvm.add_vhdl_source("examples/counter/counter.vhd")
-    fvm.set_toplevel("counter")
-    fvm.shownorun = True
+    fvm2 = FvmFramework()
+    fvm2.add_vhdl_source("examples/counter/counter.vhd")
+    fvm2.set_toplevel("counter")
+    fvm2.shownorun = True
 
     # Fake subprocess.Popen
     class DummyProc:
@@ -255,7 +256,7 @@ def test_shownorun(monkeypatch):
     # Only fake subprocess in this test
     with monkeypatch.context() as m:
         m.setattr(subprocess, "Popen", fake_popen)
-        fvm.run()
+        fvm2.run()
 
 def test_shownorun_fail():
     """Test --shownorun argument"""
