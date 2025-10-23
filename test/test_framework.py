@@ -220,7 +220,7 @@ def test_remove_csh_from_path(monkeypatch):
     assert pytest_wrapped_e.type == SystemExit
     assert pytest_wrapped_e.value.code == ERROR_IN_TOOL["value"]
 
-def test_remove_vcover_from_path_and_test_shownorun(monkeypatch):
+def test_remove_vcover_from_path(monkeypatch):
     """
     Simulate that vcover is not available, regardless of PATH.
     Also test that shownorun mode works.
@@ -309,6 +309,35 @@ def test_set_prefix_no_str() :
     assert pytest_wrapped_e.type == SystemExit
     assert pytest_wrapped_e.value.code == BAD_VALUE["value"]
     assert fvm.prefix != 2
+
+def test_set_vhdl_std() :
+    """Test setting a valid VHDL standard"""
+    fvm = FvmFramework()
+    fvm.set_vhdl_std("93")
+    assert fvm.vhdlstd == "93"
+
+def test_set_vhdl_std_invalid() :
+    """Test setting an invalid VHDL standard"""
+    fvm = FvmFramework()
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        fvm.set_vhdl_std("invalid")
+    assert pytest_wrapped_e.type == SystemExit
+    assert pytest_wrapped_e.value.code == BAD_VALUE["value"]
+
+def test_set_vhdl_std_integer() :
+    """Test setting an invalid VHDL standard"""
+    fvm = FvmFramework()
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        fvm.set_vhdl_std(93)
+    assert pytest_wrapped_e.type == SystemExit
+    assert pytest_wrapped_e.value.code == BAD_VALUE["value"]
+
+def test_get_vhdl_std() :
+    """Test getting the current VHDL standard"""
+    fvm = FvmFramework()
+    fvm.set_vhdl_std("2002")
+    vhdlstd = fvm.get_vhdl_std()
+    assert vhdlstd == "2002"
 
 def test_set_toplevel() :
     """Test setting a valid toplevel"""

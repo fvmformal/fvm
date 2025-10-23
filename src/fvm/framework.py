@@ -468,6 +468,32 @@ class FvmFramework:
             self.exit_if_required(BAD_VALUE)
         self.prefix = prefix
 
+    def set_vhdl_std(self, vhdlstd):
+        """
+        Set the VHDL standard version for the framework.
+
+        This method allows specifying the VHDL standard version to be used
+        during compilation, default is "2008". Supported versions are "87", "93",
+        "2002", and "2008".
+
+        :param vhdlstd: VHDL standard version as a string.
+        :type vhdlstd: str
+        """
+        allowed_standards = ["87", "93", "2002", "2008"]
+        if vhdlstd not in allowed_standards:
+            self.logger.error(f'Specified {vhdlstd=} not in {allowed_standards=}')
+            self.exit_if_required(BAD_VALUE)
+        self.vhdlstd = vhdlstd
+
+    def get_vhdl_std(self):
+        """
+        Get the current VHDL standard version.
+
+        :return: The current VHDL standard version.
+        :rtype: str
+        """
+        return self.vhdlstd
+
     def set_toplevel(self, toplevel):
         """
         Set the name of the toplevel module.
