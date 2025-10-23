@@ -257,6 +257,20 @@ def test_shownorun(monkeypatch):
         m.setattr(subprocess, "Popen", fake_popen)
         fvm.run()
 
+def test_shownorun_fail():
+    """Test --shownorun argument"""
+    fvm = FvmFramework()
+    fvm.add_vhdl_source("examples/counter/counter.vhd")
+    fvm.set_toplevel("counter")
+    fvm.shownorun = True
+    fvm.outdir = "doesnt_exist"
+
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        fvm.run()
+
+    assert pytest_wrapped_e.type == SystemExit
+    assert pytest_wrapped_e.value.code == CHECK_FAILED["value"]
+
 def test_showall(monkeypatch):
     """Test --showall argument"""
     fvm = FvmFramework()
@@ -276,6 +290,20 @@ def test_showall(monkeypatch):
     with monkeypatch.context() as m:
         m.setattr(subprocess, "Popen", fake_popen)
         fvm.run()
+
+def test_showall_fail():
+    """Test --showall argument"""
+    fvm = FvmFramework()
+    fvm.add_vhdl_source("examples/counter/counter.vhd")
+    fvm.set_toplevel("counter")
+    fvm.showall = True
+    fvm.outdir = "doesnt_exist_2"
+
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        fvm.run()
+
+    assert pytest_wrapped_e.type == SystemExit
+    assert pytest_wrapped_e.value.code == CHECK_FAILED["value"]
 
 def test_set_prefix() :
     """Test setting a valid prefix"""
