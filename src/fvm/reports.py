@@ -573,7 +573,7 @@ def generate_html_report(framework, logger):
     # TODO: We should get allure_version and allure_install_dir from the
     # framework, so the users may change it if they want
     allure_version = manage_allure.DEFAULT_ALLURE_VERSION
-    allure_install_dir = str(Path("~/.cache/fvm/").expanduser())
+    allure_install_dir = os.path.join(os.path.expanduser("~"), ".cache", "fvm")
     manage_allure.ensure_allure(allure_version, allure_install_dir)
     allure_exec = Path(manage_allure.get_allure_bin_path(allure_version, allure_install_dir))
 
