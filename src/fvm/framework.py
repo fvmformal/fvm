@@ -167,7 +167,9 @@ class FvmFramework:
         self.start_time_setup = None
         self.init_reset = []
         self.vhdl_sources = []
-        self.libraries_from_vhdl_sources = []
+        self.verilog_sources = []
+        self.systemverilog_sources = []
+        self.libraries_from_hdl_sources = []
         self.psl_sources = []
         self.drom_sources = []
         self.drom_generated_psl = []
@@ -251,8 +253,54 @@ class FvmFramework:
             self.logger.warning(f'VHDL source {src=} does not have a typical VHDL extension, '
                                 f'instead it has {extension=}')
         self.vhdl_sources.append(src)
-        self.libraries_from_vhdl_sources.append(library)
+        self.libraries_from_hdl_sources.append(library)
         self.logger.debug(f'{self.vhdl_sources=}')
+
+    def add_verilog_source(self, src, library="work"):
+        """
+        Add a single Verilog source file to the framework.
+
+        This method registers a Verilog source file for later compilation. It 
+        checks whether the file exists and validates its extension. Non-standard 
+        extensions trigger a warning but are still accepted.
+
+        :param src: Path to the Verilog source file.
+        :type src: str
+        """
+        self.logger.trace(f'Adding Verilog source: {src}')
+        if not os.path.exists(src) :
+            self.logger.error(f'Verilog source not found: {src}')
+            self.exit_if_required(BAD_VALUE)
+        extension = pathlib.Path(src).suffix
+        if extension not in ['.v', '.V'] :
+            self.logger.warning(f'Verilog source {src=} does not have a typical Verilog '
+                                f'extension, instead it has {extension=}')
+        self.verilog_sources.append(src)
+        self.libraries_from_hdl_sources.append(library)
+        self.logger.debug(f'{self.verilog_sources=}')
+
+    def add_systemverilog_source(self, src, library="work"):
+        """
+        Add a single SystemVerilog source file to the framework.
+
+        This method registers a SystemVerilog source file for later compilation. 
+        It checks whether the file exists and validates its extension. Non-standard 
+        extensions trigger a warning but are still accepted.
+
+        :param src: Path to the SystemVerilog source file.
+        :type src: str
+        """
+        self.logger.trace(f'Adding SystemVerilog source: {src}')
+        if not os.path.exists(src) :
+            self.logger.error(f'SystemVerilog source not found: {src}')
+            self.exit_if_required(BAD_VALUE)
+        extension = pathlib.Path(src).suffix
+        if extension not in ['.v', '.V', '.sv', '.SV', '.svh', '.SVH'] :
+            self.logger.warning(f'SystemVerilog source {src=} does not have a typical '
+                                f'SystemVerilog extension, instead it has {extension=}')
+        self.systemverilog_sources.append(src)
+        self.libraries_from_hdl_sources.append(library)
+        self.logger.debug(f'{self.systemverilog_sources=}')
 
     def clear_vhdl_sources(self):
         """

@@ -119,7 +119,7 @@ def gencompilescript(framework, filename, path):
 
     with open(os.path.join(path, filename), "w", encoding='utf-8') as f:
         print('onerror exit', file=f)
-        ordered_libraries = OrderedDict.fromkeys(framework.libraries_from_vhdl_sources)
+        ordered_libraries = OrderedDict.fromkeys(framework.libraries_from_hdl_sources)
         for lib in ordered_libraries:
             lib_dir = os.path.join(library_path, lib)
             print(f'if {{[file exists {lib_dir}]}} {{', file=f)
@@ -127,14 +127,33 @@ def gencompilescript(framework, filename, path):
             print('}', file=f)
             print(f'vlib {framework.get_tool_flags("vlib")} {lib_dir}', file=f)
             print(f'vmap {framework.get_tool_flags("vmap")} {lib} {lib_dir}', file=f)
-            lib_sources = [src for src, library in zip(framework.vhdl_sources,
-                                                       framework.libraries_from_vhdl_sources)
-                                                       if library == lib]
-            f_file_path = os.path.join(path, f'{lib}_design.f')
-            create_f_file(f_file_path, lib_sources)
-            print(f'vcom {framework.get_tool_flags("vcom")} -{framework.vhdlstd} '
-                  f'-work {lib} -autoorder -f {f_file_path}', file=f)
-            print('', file=f)
+            if framework.vhdl_sources:
+                lib_sources = [src for src, library in zip(framework.vhdl_sources,
+                                                        framework.libraries_from_hdl_sources)
+                                                        if library == lib]
+                f_file_path = os.path.join(path, f'{lib}_design.f')
+                create_f_file(f_file_path, lib_sources)
+                print(f'vcom {framework.get_tool_flags("vcom")} -{framework.vhdlstd} '
+                    f'-work {lib} -autoorder -f {f_file_path}', file=f)
+                print('', file=f)
+            if framework.verilog_sources:
+                lib_sources = [src for src, library in zip(framework.verilog_sources,
+                                                        framework.libraries_from_hdl_sources)
+                                                        if library == lib]
+                f_file_path = os.path.join(path, f'{lib}_verilog_design.f')
+                create_f_file(f_file_path, lib_sources)
+                print(f'vlog {framework.get_tool_flags("vlog")} -work {lib} -f {f_file_path}',
+                      file=f)
+                print('', file=f)
+            if framework.systemverilog_sources:
+                lib_sources = [src for src, library in zip(framework.systemverilog_sources,
+                                                        framework.libraries_from_hdl_sources)
+                                                        if library == lib]
+                f_file_path = os.path.join(path, f'{lib}_systemverilog_design.f')
+                create_f_file(f_file_path, lib_sources)
+                print(f'vlog {framework.get_tool_flags("vlog")} -work {lib} -sv -f {f_file_path}',
+                      file=f)
+                print('', file=f)
 
 def run_qverify_step(framework, design, step):
     """
