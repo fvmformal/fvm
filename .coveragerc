@@ -1,6 +1,6 @@
 [run]
 # Only collect coverage from our source directory
-source = fvm
+source = src
 #omit =
 #    # Exclude from coverage all code in /usr (third-party libraries)
 #    /usr/*
