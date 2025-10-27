@@ -7,19 +7,19 @@ import glob
 import pathlib
 import shutil
 
-from fvm.toolchains.questa_pkg.parsers import parse_formal_signoff
-from fvm.toolchains.questa_pkg.parsers import parse_reachability
-from fvm.toolchains.questa_pkg.parsers import parse_reports
-from fvm.toolchains.questa_pkg.parsers import parse_simcover
-from fvm.toolchains.questa_pkg.parsers import parse_lint
-from fvm.toolchains.questa_pkg.parsers import parse_rulecheck
-from fvm.toolchains.questa_pkg.parsers import parse_xverify
-from fvm.toolchains.questa_pkg.parsers import parse_resets
-from fvm.toolchains.questa_pkg.parsers import parse_clocks
-from fvm.toolchains.questa_pkg.parsers import parse_prove
-from fvm.toolchains.questa_pkg.parsers import parse_design_rpt
-from fvm import helpers
-from fvm import tables
+from fvmframework.toolchains.questa_pkg.parsers import parse_formal_signoff
+from fvmframework.toolchains.questa_pkg.parsers import parse_reachability
+from fvmframework.toolchains.questa_pkg.parsers import parse_reports
+from fvmframework.toolchains.questa_pkg.parsers import parse_simcover
+from fvmframework.toolchains.questa_pkg.parsers import parse_lint
+from fvmframework.toolchains.questa_pkg.parsers import parse_rulecheck
+from fvmframework.toolchains.questa_pkg.parsers import parse_xverify
+from fvmframework.toolchains.questa_pkg.parsers import parse_resets
+from fvmframework.toolchains.questa_pkg.parsers import parse_clocks
+from fvmframework.toolchains.questa_pkg.parsers import parse_prove
+from fvmframework.toolchains.questa_pkg.parsers import parse_design_rpt
+from fvmframework import helpers
+from fvmframework import tables
 
 # For the Questa tools, each tool is run through a wrapper which is the actual
 # command that must be run in the command-line
@@ -68,7 +68,7 @@ def define_steps(framework, steps):
     actually runs the tool and parses the results
 
     :param framework: the FvmFramework object
-    :type framework: fvm.framework.FvmFramework
+    :type framework: fvmframework.framework.FvmFramework
     :param steps: the Steps object where the steps will be registered
     :type steps: fvm.steps.Steps
     """
@@ -105,7 +105,7 @@ def gencompilescript(framework, filename, path):
     a compiled netlist in order to do anything
 
     :param framework: the FvmFramework object
-    :type framework: fvm.framework.FvmFramework
+    :type framework: fvmframework.framework.FvmFramework
     :param filename: the name of the script to create
     :type filename: str
     :param path: the path where to create the script
@@ -163,7 +163,7 @@ def run_qverify_step(framework, design, step):
     share the same interface through the qverify command line tool/wrapper
 
     :param framework: the FvmFramework object
-    :type framework: fvm.framework.FvmFramework
+    :type framework: fvmframework.framework.FvmFramework
     :param design: the name of the design to analyze
     :type design: str
     :param step: the name of the step to run
@@ -244,7 +244,7 @@ def setup_lint(framework, path):
     Generate script to run Lint
 
     :param framework: the FvmFramework object
-    :type framework: fvm.framework.FvmFramework
+    :type framework: fvmframework.framework.FvmFramework
     :param path: the path where to create the script
     :type path: str
     """
@@ -261,7 +261,7 @@ def run_lint(framework, path):
     Run Lint and parse results
 
     :param framework: the FvmFramework object
-    :type framework: fvm.framework.FvmFramework
+    :type framework: fvmframework.framework.FvmFramework
     :param path: the path where to create the lint directory
     :type path: str
 
@@ -304,7 +304,7 @@ def setup_friendliness(framework, path):
     analyze to determine the design's formal-friendliness
 
     :param framework: the FvmFramework object
-    :type framework: fvm.framework.FvmFramework
+    :type framework: fvmframework.framework.FvmFramework
     :param path: the path where to create the script
     :type path: str
     """
@@ -320,7 +320,7 @@ def run_friendliness(framework, path):
     Run AutoCheck to generate a friendliness report and parse results
 
     :param framework: the FvmFramework object
-    :type framework: fvm.framework.FvmFramework
+    :type framework: fvmframework.framework.FvmFramework
     :param path: the path where to create the friendliness directory
     :type path: str
 
@@ -361,7 +361,7 @@ def setup_rulecheck(framework, path):
     Generate script to run AutoCheck
 
     :param framework: the FvmFramework object
-    :type framework: fvm.framework.FvmFramework
+    :type framework: fvmframework.framework.FvmFramework
     :param path: the path where to create the script
     :type path: str
     """
@@ -381,7 +381,7 @@ def run_rulecheck(framework, path):
     Run the rulecheck step and parse results
 
     :param framework: the FvmFramework object
-    :type framework: fvm.framework.FvmFramework
+    :type framework: fvmframework.framework.FvmFramework
     :param path: the path where to create the script
     :type path: str
 
@@ -429,7 +429,7 @@ def setup_xverify(framework, path):
     Generate script to run X-Check
 
     :param framework: the FvmFramework object
-    :type framework: fvm.framework.FvmFramework
+    :type framework: fvmframework.framework.FvmFramework
     :param path: the path where to create the script
     :type path: str
     """
@@ -448,7 +448,7 @@ def run_xverify(framework, path):
     Run the xverify step and parse results
 
     :param framework: the FvmFramework object
-    :type framework: fvm.framework.FvmFramework
+    :type framework: fvmframework.framework.FvmFramework
     :param path: the path where to create the script
     :type path: str
 
@@ -496,7 +496,7 @@ def setup_reachability(framework, path):
     Generate a script to run CoverCheck
 
     :param framework: the FvmFramework object
-    :type framework: fvm.framework.FvmFramework
+    :type framework: fvmframework.framework.FvmFramework
     :param path: the path where to create the script
     :type path: str
     """
@@ -518,7 +518,7 @@ def run_reachability(framework, path):
     Run the reachability step and parse results
 
     :param framework: the FvmFramework object
-    :type framework: fvm.framework.FvmFramework
+    :type framework: fvmframework.framework.FvmFramework
     :param path: the path where to create the script
     :type path: str
 
@@ -596,7 +596,7 @@ def gen_reset_config(framework, filename, path):
     Generate reset configuration in the given script
     
     :param framework: the FvmFramework object
-    :type framework: fvm.framework.FvmFramework
+    :type framework: fvmframework.framework.FvmFramework
     :param filename: the name of the script to append the configuration to
     :type filename: str
     :param path: the path where the script is located
@@ -636,7 +636,7 @@ def gen_reset_domain_config(framework, filename, path):
     Generate reset domain configuration in the given script
 
     :param framework: the FvmFramework object
-    :type framework: fvm.framework.FvmFramework
+    :type framework: fvmframework.framework.FvmFramework
     :param filename: the name of the script to append the configuration to
     :type filename: str
     :param path: the path where the script is located
@@ -673,7 +673,7 @@ def gen_clock_config(framework, filename, path):
     Generate clock configuration in the given script
 
     :param framework: the FvmFramework object
-    :type framework: fvm.framework.FvmFramework
+    :type framework: fvmframework.framework.FvmFramework
     :param filename: the name of the script to append the configuration to
     :type filename: str
     :param path: the path where the script is located
@@ -705,7 +705,7 @@ def gen_clock_domain_config(framework, filename, path):
     Generate clock domain configuration in the given script
     
     :param framework: the FvmFramework object
-    :type framework: fvm.framework.FvmFramework
+    :type framework: fvmframework.framework.FvmFramework
     :param filename: the name of the script to append the configuration to
     :type filename: str
     :param path: the path where the script is located
@@ -739,7 +739,7 @@ def setup_resets(framework, path):
     Generate script to run Reset Domain Crossing
 
     :param framework: the FvmFramework object
-    :type framework: fvm.framework.FvmFramework
+    :type framework: fvmframework.framework.FvmFramework
     :param path: the path where to create the script
     :type path: str
     """
@@ -764,7 +764,7 @@ def run_resets(framework, path):
     Run the resets step and parse results
 
     :param framework: the FvmFramework object
-    :type framework: fvm.framework.FvmFramework
+    :type framework: fvmframework.framework.FvmFramework
     :param path: the path where to create the script
     :type path: str
 
@@ -807,7 +807,7 @@ def setup_clocks(framework, path):
     Generate script to run Clock Domain Crossing
     
     :param framework: the FvmFramework object
-    :type framework: fvm.framework.FvmFramework
+    :type framework: fvmframework.framework.FvmFramework
     :param path: the path where to create the script
     :type path: str
     """
@@ -838,7 +838,7 @@ def run_clocks(framework, path):
     Run the clocks step and parse results
 
     :param framework: the FvmFramework object
-    :type framework: fvm.framework.FvmFramework
+    :type framework: fvmframework.framework.FvmFramework
     :param path: the path where to create the script
     :type path: str
 
@@ -882,7 +882,7 @@ def setup_prove(framework, path):
     Generate script to run PropCheck
 
     :param framework: the FvmFramework object
-    :type framework: fvm.framework.FvmFramework
+    :type framework: fvmframework.framework.FvmFramework
     :param path: the path where to create the script
     :type path: str
     """
@@ -957,7 +957,7 @@ def run_prove(framework, path):
     Run the prove step and parse results
     
     :param framework: the FvmFramework object
-    :type framework: fvm.framework.FvmFramework
+    :type framework: fvmframework.framework.FvmFramework
     :param path: the path where to create the script
     :type path: str
 
@@ -1005,7 +1005,7 @@ def setup_prove_simcover(framework, path):
     Modify the replay.vsim.do files to dump UCDB files and waveforms
 
     :param framework: the FvmFramework object
-    :type framework: fvm.framework.FvmFramework
+    :type framework: fvmframework.framework.FvmFramework
     :param path: the path where to create the script
     :type path: str
     """
@@ -1045,7 +1045,7 @@ def run_prove_simcover(framework, path):
     Run the prove.simcover step and parse results
 
     :param framework: the FvmFramework object
-    :type framework: fvm.framework.FvmFramework
+    :type framework: fvmframework.framework.FvmFramework
     :param path: the path where to create the script
     :type path: str
 
@@ -1189,7 +1189,7 @@ def setup_prove_formalcover(framework, path):
     Generate script to run formal coverage after prove
 
     :param framework: the FvmFramework object
-    :type framework: fvm.framework.FvmFramework
+    :type framework: fvmframework.framework.FvmFramework
     :param path: the path where to create the script
     :type path: str
     """
@@ -1221,7 +1221,7 @@ def run_prove_formalcover(framework, path):
     Run the prove.formalcover step and parse results
 
     :param framework: the FvmFramework object
-    :type framework: fvm.framework.FvmFramework
+    :type framework: fvmframework.framework.FvmFramework
     :param path: the path where to create the script
     :type path: str
 
@@ -1316,7 +1316,7 @@ def set_timeout(framework, step, timeout):
     - ``d`` for days (e.g., "2d")
 
     :param framework: the FvmFramework object
-    :type framework: fvm.framework.FvmFramework
+    :type framework: fvmframework.framework.FvmFramework
     :param step: the step to set the timeout for. One of "rulecheck",
                  "xverify", "reachability", "prove"
     :type step: str
@@ -1380,7 +1380,7 @@ def formal_initialize_reset(framework, reset, active_high=True, cycles=1):
     Initialize reset for formal steps.
 
     :param framework: the FvmFramework object
-    :type framework: fvm.framework.FvmFramework
+    :type framework: fvmframework.framework.FvmFramework
     :param reset: the name of the reset signal
     :type reset: str
     :param active_high: True if the reset is active high, False if it is

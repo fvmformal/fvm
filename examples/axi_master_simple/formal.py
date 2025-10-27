@@ -1,4 +1,4 @@
-from fvm import FvmFramework
+from fvmframework import FvmFramework
 import subprocess
 import os
 

@@ -12,11 +12,11 @@ from typing import Dict
 from icecream import ic
 
 # Import our own constant definitions
-from fvm.drom2psl.definitions import (SIGNAL, WAVELANE, GROUP, STRING, NAME,
+from fvmframework.drom2psl.definitions import (SIGNAL, WAVELANE, GROUP, STRING, NAME,
                                       WAVE, DATA, TYPE)
 
 # Import our own logging functions
-from fvm.drom2psl.basiclogging import warning, error
+from fvmframework.drom2psl.basiclogging import warning, error
 
 def get_signal(dictionary):
     """

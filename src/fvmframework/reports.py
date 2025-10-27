@@ -12,10 +12,10 @@ from rich.table import Table
 from rich.measure import Measurement
 from junit_xml import TestSuite, TestCase, to_xml_report_string
 
-from fvm import helpers
-from fvm import generate_test_cases
-from fvm import manage_allure
-from fvm.toolchains.questa_pkg.parsers import parse_prove
+from fvmframework import helpers
+from fvmframework import generate_test_cases
+from fvmframework import manage_allure
+from fvmframework.toolchains.questa_pkg.parsers import parse_prove
 
 def get_all_steps(steps, post_steps):
     """

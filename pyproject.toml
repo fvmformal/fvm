@@ -3,7 +3,7 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "fvm"
+name = "fvmframework"
 version = "0.1.0"
 description = "A Formal Verification Methodology for ASIC and FPGA designs"
 authors = [

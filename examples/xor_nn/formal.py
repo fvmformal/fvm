@@ -1,4 +1,4 @@
-from fvm import FvmFramework
+from fvmframework import FvmFramework
 
 fvm = FvmFramework()
 fvm.add_vhdl_sources("examples/xor_nn/*.vhd")

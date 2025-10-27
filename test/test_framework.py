@@ -7,7 +7,7 @@ import subprocess
 import pytest
 
 # Our own imports
-from fvm import FvmFramework
+from fvmframework import FvmFramework
 
 # Error codes
 BAD_VALUE = {"msg": "FVM exit condition: Bad value",

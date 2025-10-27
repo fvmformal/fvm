@@ -52,7 +52,7 @@ to apply the function to multiple signals.
 
 .. code-block:: python
 
-   from fvm import FvmFramework
+   from fvmframework import FvmFramework
 
    fvm.add_vhdl_source("concepts/cutpoint_example/counter.vhd")
    fvm = FvmFramework()
@@ -112,7 +112,7 @@ If you want to blackbox all instances of a specific entity, use the function
 
 .. code-block:: python
 
-   from fvm import FvmFramework
+   from fvmframework import FvmFramework
 
    fvm = FvmFramework()
    fvm.add_vhdl_sources("concepts/blackbox_instance/*.vhd")
@@ -125,7 +125,7 @@ name as argument.
 
 .. code-block:: python
 
-   from fvm import FvmFramework
+   from fvmframework import FvmFramework
 
    fvm = FvmFramework()
    fvm.add_vhdl_sources("concepts/blackbox_instance/*.vhd")
@@ -167,7 +167,7 @@ In the :file:`formal.py` script:
 
 .. code-block:: python
 
-   from fvm import FvmFramework
+   from fvmframework import FvmFramework
 
    fvm.add_vhdl_source("concepts/cutpoint_example/counter.vhd")
    fvm = FvmFramework()

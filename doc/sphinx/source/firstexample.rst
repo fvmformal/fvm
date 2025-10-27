@@ -64,7 +64,7 @@ a single PSL line.
 
 .. code-block:: python
 
-   from fvm import FvmFramework
+   from fvmframework import FvmFramework
 
    fvm = FvmFramework()
    fvm.add_vhdl_source("examples/countervunit/counter.vhd")
@@ -145,7 +145,7 @@ Explain that we just have to add a single line to our script
 .. code-block:: python
    :emphasize-lines: 5
 
-   from fvm import FvmFramework
+   from fvmframework import FvmFramework
 
    fvm = FvmFramework()
    fvm.add_vhdl_source("examples/countervunit/counter.vhd")

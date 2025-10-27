@@ -25,13 +25,13 @@ import yaml
 import wavedrom
 
 # Import the wavedrom definitions we need
-from fvm.drom2psl.definitions import GROUP, WAVE, NAME
+from fvmframework.drom2psl.definitions import GROUP, WAVE, NAME
 
 # Import our own functions to traverse the dictionary
-from fvm.drom2psl.traverse import traverse
+from fvmframework.drom2psl.traverse import traverse
 
 # Import our own functions to interpret the dictionary
-from fvm.drom2psl.interpret import (get_signal, check_wavelane, get_type,
+from fvmframework.drom2psl.interpret import (get_signal, check_wavelane, get_type,
                                     get_group_name, flatten, get_wavelane_wave,
                                     get_wavelane_name, get_wavelane_data,
                                     get_group_arguments, get_clock_value,
@@ -39,7 +39,7 @@ from fvm.drom2psl.interpret import (get_signal, check_wavelane, get_type,
                                     get_signal_value, adapt_value_to_hdltype)
 
 # Import our own logging functions
-from fvm.drom2psl.basiclogging import info, error #, warning
+from fvmframework.drom2psl.basiclogging import info, error #, warning
 
 def generator(filename, outdir = None, verbose_psl = True, debug = False,
               do_traverse = False):

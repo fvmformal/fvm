@@ -31,5 +31,5 @@ vish_stacktrace.vstf
 doc/sphinx/build
 badges/*.svg
 doc/sphinx/undocumented_count.txt
-src/fvm.egg-info
+src/fvmframework.egg-info
 uv.lock

@@ -10,7 +10,7 @@ import sys
 from typing import Dict
 
 # Import our own constant definitions
-from fvm.drom2psl.definitions import SIGNAL, EDGE, ASSIGN, CONFIG
+from fvmframework.drom2psl.definitions import SIGNAL, EDGE, ASSIGN, CONFIG
 
 def traverse(prefix, element):
     """
