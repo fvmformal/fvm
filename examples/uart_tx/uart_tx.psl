@@ -132,6 +132,6 @@ vunit uart_tx_properties (uart_tx(Behavioral)) {
     cover {transmission_and_rest[*3]};
 
   cover_end_of_transmission: 
-    cover {estado = b_stop; estado = reposo};
+    cover {state = b_stop; state = reposo};
 
 }

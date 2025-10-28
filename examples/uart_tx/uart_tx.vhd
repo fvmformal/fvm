@@ -16,8 +16,8 @@ end uart_tx;
 
 architecture Behavioral of uart_tx is
 
-  type tipoestado is (reposo, sampledata, b_start, B_0, B_1, B_2, B_3, B_4, B_5, B_6, B_7, B_paridad, B_stop);
-  signal estado, p_estado: tipoestado;
+  type typestate is (reposo, sampledata, b_start, B_0, B_1, B_2, B_3, B_4, B_5, B_6, B_7, B_paridad, B_stop);
+  signal state, n_state: typestate;
 
   signal cont, p_cont: integer range 0 to BIT_DURATION-1;
   signal datai, p_datai: std_logic_vector (7 downto 0);
@@ -27,40 +27,40 @@ begin
   sinc: process(clk, rst)
   begin
     if(rst='1')then
-      estado<=reposo;
+      state<=reposo;
       cont<=0;
       datai<=(others=>'0');
     elsif(clk='1' and clk'event) then
-      estado<=p_estado;
+      state<=n_state;
       cont<=p_cont;
       datai<=p_datai;
     end if;
   end process;
 
-  comb: process(estado, cont, data, datai, empty)
+  comb: process(state, cont, data, datai, empty)
   begin
-    p_estado<=estado;
+    n_state<=state;
     p_cont<=cont;
     p_datai<=datai;
     rd_en <= '0';
-    case estado is
+    case state is
       when reposo=>
         TX<='1';
         p_cont <= 0;
         if(empty='0')then
           rd_en <= '1';
-          p_estado<=sampledata;
+          n_state<=sampledata;
         end if;
       when sampledata=>
         TX<='1';
         p_datai<=data;
-        p_estado<=b_start;
+        n_state<=b_start;
         p_cont<= 0;
       when b_start=>
         TX<='0';
         if(cont=BIT_DURATION-1)then
           p_cont<= 0;
-          p_estado<=b_0;
+          n_state<=b_0;
         else
           p_cont<=cont+1;
         end if;
@@ -68,7 +68,7 @@ begin
         TX<=datai(0);
         if(cont=BIT_DURATION-1)then
           p_cont<= 0;
-          p_estado<=b_1;
+          n_state<=b_1;
         else
           p_cont<=cont+1;
         end if;
@@ -76,7 +76,7 @@ begin
         TX<=datai(1);
         if(cont=BIT_DURATION-1)then
           p_cont<= 0;
-          p_estado<=b_2;
+          n_state<=b_2;
         else
           p_cont<=cont+1;
         end if;
@@ -84,7 +84,7 @@ begin
         TX<=datai(2);
         if(cont=BIT_DURATION-1)then
           p_cont<= 0;
-          p_estado<=b_3;
+          n_state<=b_3;
         else
           p_cont<=cont+1;
         end if;
@@ -92,7 +92,7 @@ begin
         TX<=datai(3);
         if(cont=BIT_DURATION-1)then
           p_cont<= 0;
-          p_estado<=b_4;
+          n_state<=b_4;
         else
           p_cont<=cont+1;
         end if;
@@ -100,7 +100,7 @@ begin
         TX<=datai(4);
         if(cont=BIT_DURATION-1)then
           p_cont<= 0;
-          p_estado<=b_5;
+          n_state<=b_5;
         else
           p_cont<=cont+1;
         end if;
@@ -108,7 +108,7 @@ begin
         TX<=datai(5);
         if(cont=BIT_DURATION-1)then
           p_cont<= 0;
-          p_estado<=b_6;
+          n_state<=b_6;
         else
           p_cont<=cont+1;
         end if;
@@ -116,7 +116,7 @@ begin
         TX<=datai(6);
         if(cont=BIT_DURATION-1)then
           p_cont<=0;
-          p_estado<=b_7;
+          n_state<=b_7;
         else
           p_cont<=cont+1;
         end if;
@@ -124,7 +124,7 @@ begin
         TX<=datai(7);
         if(cont=BIT_DURATION-1)then
           p_cont<=0;
-          p_estado<=b_paridad;
+          n_state<=b_paridad;
         else
           p_cont<=cont+1;
         end if;
@@ -132,7 +132,7 @@ begin
         TX<=datai(0) xor datai(1) xor datai(2) xor datai(3) xor datai(4) xor datai(5) xor datai(6) xor datai(7);
         if(cont=BIT_DURATION-1)then
           p_cont<=0;
-          p_estado<=b_stop;
+          n_state<=b_stop;
         else
           p_cont<=cont+1;
         end if;
@@ -140,7 +140,7 @@ begin
         TX<='1';
         if(cont=BIT_DURATION-1)then
           p_cont<=0;
-          p_estado<= reposo;
+          n_state<= reposo;
         else
           p_cont<=cont+1;
         end if;
