@@ -9,7 +9,7 @@ The FvmFramework class is the intended interface for users.
 
    At the moment, only the FvmFramework class is documented in the Public API
 
-.. autoclass:: fvm.FvmFramework
+.. autoclass:: fvmframework.FvmFramework
    :members:
    :undoc-members:
    :show-inheritance:
