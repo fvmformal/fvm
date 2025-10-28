@@ -76,9 +76,6 @@ Writing the properties
 
 Let's write the properties!
 
-.. todo::
-  Explain the vunit
-
 .. code-block:: vhdl
 
    -- Default clock for PSL assertions
@@ -106,9 +103,9 @@ maintain it for portability between toolchains.
 
 Since no assume is needed for the counter inputs, we can start directly with the assertions.
 This property asserts that the counter output will never exceed the counter's maximum 
-count, i.e. the property will fail if overflows occur and the counter does not go to 0.
-Although these types of properties do not assert the functionality of the design, they are 
-very useful for quickly finding counterexamples when there is an error in the design.
+count, i.e. the property will fail if overflows occur. Although these types of properties
+do not assert the functionality of the design, they are very useful for quickly finding
+counterexamples when there is an error in the design.
 
 .. code-block:: vhdl
 
@@ -140,7 +137,8 @@ any testbench. Additionally, we can add how the design behaves when reset.
 Adding the properties to `formal.py`
 ------------------------------------
 
-Explain that we just have to add a single line to our script
+By just adding a line to `formal.py`, we can add the properties and start using the steps
+with non-automated formal tools.
 
 .. code-block:: python
    :emphasize-lines: 5
