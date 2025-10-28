@@ -173,6 +173,7 @@ class FvmFramework:
         self.psl_sources = []
         self.drom_sources = []
         self.drom_generated_psl = []
+        self.generic_args = ''
         self.skip_list = []
         self.allow_failure_list = []
         self.disabled_coverage = []
