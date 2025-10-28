@@ -390,8 +390,9 @@ def get_clock_value(wavelane, cycle):
     value is not an electronic signal value (such as zero, one, rising_edge,
     etc) but a binary coded value that tells us if that cycle is to be repeated
     or not:
-      - ``1``: Do once
-      - ``0``: Repeat zero or more times
+
+    - ``1``: Do once
+    - ``0``: Repeat zero or more times
 
     :param wavelane: wavelane of the clock signal
     :type wavelane: dict
@@ -533,10 +534,11 @@ def adapt_value_to_hdltype(value):
     The input value can be either a single character with a valid
     ``std_ulogic`` value, or `(value, type)` tuple where `type` is one of
     the following:
-      - ``"bin"`` (binary)
-      - ``"hex"`` (hexadecimal)
-      - ``"int"`` (integer)
-      - ``"arg"`` (argument)
+
+    - ``"bin"`` (binary)
+    - ``"hex"`` (hexadecimal)
+    - ``"int"`` (integer)
+    - ``"arg"`` (argument)
 
     :param value: value to convert
     :type value: single-char str or tuple
