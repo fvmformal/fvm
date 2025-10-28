@@ -45,11 +45,11 @@ packages = ["src"]
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 
-[[tool.uv.index]]
+#[[tool.uv.index]]
 ## For testing, use TestPyPI
-name = "testpypi"
-url = "https://test.pypi.org/simple"
-publish-url = "https://test.pypi.org/legacy/"
+#name = "testpypi"
+#url = "https://test.pypi.org/simple"
+#publish-url = "https://test.pypi.org/legacy/"
 ## For actual releases, use PyPI
 #name = "pypi"
 #url = "https://pypi.org/simple"
