@@ -45,7 +45,7 @@ Again, it's very convenient to define a function with round-robin behavior,
 since it's very simple. Let's try creating a sequence with `drom2psl`.
 We want to ensure that if there has been a valid grant before, the next grant
 (whenever it happens) will be successful. The function that predicts the round
-robin needs the request and the last grant.
+robin needs the request and the last grant as inputs.
 
 .. image:: _static/examples/rr_arbiter.svg
 
@@ -83,20 +83,90 @@ that predicts it.
 OK examples
 -----------
 
-Example 3
-~~~~~~~~~
+UART transmitter
+~~~~~~~~~~~~~~~~
+
+This example is still simple, but it already includes a state machine,
+albeit one with very linear behavior. In this example, we can see how covers
+can be very useful for several reasons: exploring the different states of
+a state machine, validating functionality with a cover of the transmission,
+or early design learning by making a cover with the final result.
+
+.. code-block:: vhdl
+
+   cover_start_of_transmission: 
+      cover {state = b_start};
+
+   sequence transmission is {
+      TX=STARTBIT[*5];
+      TX=databits(0)[*5]; TX=databits(1)[*5];
+      TX=databits(2)[*5]; TX=databits(3)[*5];
+      TX=databits(4)[*5]; TX=databits(5)[*5];
+      TX=databits(6)[*5]; TX=databits(7)[*5];
+      TX=paritybit[*5]; TX=STOPBIT[*5]
+   };
+
+   cover_one_transmission:
+      cover transmission;
+
+   cover_end_of_transmission: 
+      cover {state = b_stop; state = reposo};
+
+Axi-4 Lite Slave
+~~~~~~~~~~~~~~~~~
+
+This Axi Slave has a state machine that is no longer as linear (it has both
+TX and RX) and also has quite a few interfaces. This makes writing sequences
+for reuse more important, both in terms of speed and clarity. The code snippet
+shows how code can be reused and made more readable for writing:
+
+.. code-block:: vhdl
+
+   sequence W_handshake is {                                                   
+      S_AxiLite_WValid = '1' and S_AxiLite_WReady = '1'
+   };
+
+   sequence W_interface (
+      hdltype std_logic Wr;
+      hdltype std_logic_vector(AxiDataWidth_g - 1 downto 0) WrData;
+      hdltype std_logic_vector((AxiDataWidth_g/8) - 1 downto 0) ByteEna
+      ) is {                                                                        
+      Rb_Wr = Wr and 
+      Rb_WrData = WrData and 
+      Rb_ByteEna = ByteEna 
+   };
+
+   assert_W_after_handshake: 
+      assert always ( {W_handshake} |=> 
+                      {W_interface('1', prev(S_AxiLite_WData), prev(S_AxiLite_WStrb))}
+                     ) abort Rst;
 
 Medium examples
 ---------------
 
-Example 4
-~~~~~~~~~
+SDRAM controller
+~~~~~~~~~~~~~~~~
+
+Linear interpolator
+~~~~~~~~~~~~~~~~~~~~
+
+Synchronous FIFO
+~~~~~~~~~~~~~~~~~
+
+Intermediate examples
+----------------------
+
+32-bit divider
+~~~~~~~~~~~~~~~
+
+Asynchronous FIFO
+~~~~~~~~~~~~~~~~~
 
 Difficult examples
 ------------------
 
-Example 5
-~~~~~~~~~
+IPv6 transceiver
+~~~~~~~~~~~~~~~~~
 
 Whatever
 
