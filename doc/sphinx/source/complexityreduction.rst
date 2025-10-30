@@ -203,11 +203,31 @@ Memory abstraction
 Definition
 ----------
 
+The formal tool uses an abstract model that captures only the essential
+behavior of the memory. We can **blackbox** a memory or **cutpoint** some of
+the memory outputs to abstract the necessary memory.
+
 When to use it
 --------------
 
+When memory is very large and cannot be reduced, memory abstraction is a good
+option. There are several use cases:
+
+- Sometimes, we don't care about the data itself and only need to focus on
+  the control logic. In this case, **blackboxing memory** is recommended to
+  reduce state space.
+
+- If we want to verify data integrity but this is impractical due to memory
+  size, we can check only a randomly selected memory location and **cutpoint
+  the rest of memory locations**.
+
+- We can blackbox the entire memory and create an **abstract model** to
+  recreate the expected functionality of the memory (or some of its locations).
+
 How to do it
 ------------
+
+We can use cutpoint and blackboxes as seen in the previous sections.
 
 Example
 -------
@@ -219,15 +239,44 @@ Structural reduction
 Definition
 ----------
 
+**Reduce the design size** whenever possible without affecting the
+functionalities we want to verify. This can be achieved using assumptions or
+parameters/generics.
+
 When to use it
 --------------
+
+There are many use cases for this: the design is very large and can be **reduced
+without affecting functionality** (for example, a FIFO of depth 1024 vs. a FIFO
+of depth 16), **reducing waiting times** in designs that cause cycles where nothing
+happens, **reducing the values that signals can take** with assumes to reduce the
+state space... It is a basic, but fundamental technique.
 
 How to do it
 ------------
 
+From `formal.py` we can add different configurations with
+:py:func:`fvmframework.FvmFramework.add_config`:
+
+.. code-block:: python
+
+   from fvmframework import FvmFramework
+
+   fvm = FvmFramework()
+   fvm.add_vhdl_sources("open-logic/src/base/vhdl/*.vhd")
+   fvm.add_vhdl_sources("examples/fifo_sync/*.vhd")
+   fvm.add_psl_sources("examples/fifo_sync/*.psl")
+
+   fvm.set_toplevel("olo_base_fifo_sync")
+   fvm.add_config("olo_base_fifo_sync", "config_width_8_depth_8", {"Width_g": 8, "Depth_g": 8})
+
+From the PSL file we can add the `assumes`.
+
 Example
 -------
 
+There are examples of symbolic constants in `<examples/fifo_sync>`,
+`<examples/fifo_async>`, and `<examples/div32>`.
 
 Data independence
 =================
@@ -235,15 +284,40 @@ Data independence
 Definition
 ----------
 
+The correctness of a design does not depend on the actual data values. So it
+doesn't matter to us whether the data bus is 128-bit, 32-bit, or 8-bit.
+
 When to use it
 --------------
+
+When we don't care about the value of the data and all we want to check is,
+for example, if the transport of that data is correct, the control logic is
+correct... For example, reducing the data width of a FIFO, the actual
+operation of the FIFO will not change at all if the data is 64 bits or 3 bits.
 
 How to do it
 ------------
 
+From `formal.py` we can add different configurations with
+:py:func:`fvmframework.FvmFramework.add_config`:
+
+.. code-block:: python
+
+   from fvmframework import FvmFramework
+
+   fvm = FvmFramework()
+   fvm.add_vhdl_sources("open-logic/src/base/vhdl/*.vhd")
+   fvm.add_vhdl_sources("examples/fifo_sync/*.vhd")
+   fvm.add_psl_sources("examples/fifo_sync/*.psl")
+
+   fvm.set_toplevel("olo_base_fifo_sync")
+   fvm.add_config("olo_base_fifo_sync", "config_width_8_depth_8", {"Width_g": 8, "Depth_g": 8})
+
 Example
 -------
 
+There are examples of symbolic constants in `<examples/fifo_sync>` and
+`<examples/fifo_async>`.
 
 .. _symbolic-constants:
 
