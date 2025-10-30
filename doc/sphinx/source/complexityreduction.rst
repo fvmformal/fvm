@@ -45,7 +45,7 @@ hold for any possible value of the 64-bit counter's output.
 How to do it
 ------------
 
-Just use the function :py:func:`fvm.FvmFramework.cutpoint` and pass to it at
+Just use the function :py:func:`fvmframework.FvmFramework.cutpoint` and pass to it at
 least the signal you want to cutpoint. Use it for all the signals you need to
 convert into free variables. If needed, a python :code:`for` loop can be used
 to apply the function to multiple signals.
@@ -60,7 +60,7 @@ to apply the function to multiple signals.
 
 The function can receive more arguments than just the signal name so don't
 forget to check the function documentation:
-:py:func:`fvm.FvmFramework.cutpoint`
+:py:func:`fvmframework.FvmFramework.cutpoint`
 
 Example
 -------
@@ -108,7 +108,7 @@ How to do it
    Add links to public repo
 
 If you want to blackbox all instances of a specific entity, use the function
-:py:func:`fvm.FvmFramework.blackbox` and pass to it the entity name.
+:py:func:`fvmframework.FvmFramework.blackbox` and pass to it the entity name.
 
 .. code-block:: python
 
@@ -120,7 +120,7 @@ If you want to blackbox all instances of a specific entity, use the function
    fvm.blackbox('counter')
 
 If you want to blackbox a specific instance of an entity, you need to use the
-function :py:func:`fvm.FvmFramework.blackbox_instance`, providing the entity
+function :py:func:`fvmframework.FvmFramework.blackbox_instance`, providing the entity
 name as argument.
 
 .. code-block:: python
@@ -177,19 +177,17 @@ In your PSL properties:
 
 .. code-block:: VHDL
 
-    signal cnt : unsigned(1 downto 0) := (others => '0');
+   signal cnt: integer range 0 to 3;
 
-    assume_initial_Q: assume Q = 0;
-    assume_rst_Q: assume always ( {rst = '1'}                        |=> {Q = 0} );
-    assume_s1: assume always ( {Q = 0 and rst = '0'}                 |=> {Q = MAX_COUNT/2} );
-    assume_s2: assume always ( {Q = MAX_COUNT/2 and rst = '0'}       |=> {Q = (MAX_COUNT - 1)} );
-    assume_s3: assume always ( {Q = (MAX_COUNT - 1) and rst = '0'}   |=> {Q = MAX_COUNT} );
-    assume_s4: assume always ( {Q = MAX_COUNT and rst = '0'}         |=> {Q = 0} );
+   assume_initial_cnt: assume cnt = 0;
+   assume_cnt_rst: assume always (         {rst = '1'} |=> {cnt = 0} );
+   assume_cnt_increasing: assume always (  {cnt /= 3 and rst = '0'} |=> {cnt-prev(cnt) = 1} );
+   assume_cnt_overflow: assume always (    {cnt=3}     |=> {cnt=0} ) abort rst;
 
-    assume_cnt_0: assume always ( {Q = 0}                 |-> {cnt = "00"} );
-    assume_cnt_1: assume always ( {Q = MAX_COUNT/2}       |-> {cnt = "01"} );
-    assume_cnt_2: assume always ( {Q = (MAX_COUNT - 1)}   |-> {cnt = "10"} );
-    assume_cnt_3: assume always ( {Q = MAX_COUNT}         |-> {cnt = "11"} );
+   assume_Q_zero: assume always            ( {cnt=0} |-> {Q = 0} );
+   assume_Q_inbetween: assume always       ( {cnt=1} |-> {Q > 0 and Q < MAX_COUNT-1} );
+   assume_Q_max_minus_one: assume always   ( {cnt=2} |-> {Q = MAX_COUNT-1} );
+   assume_Q_max_minus: assume always       ( {cnt=3} |-> {Q = MAX_COUNT} );
 
 .. todo::
 
@@ -247,21 +245,72 @@ Example
 -------
 
 
+.. _symbolic-constants:
+
 Symbolic constants
 ==================
 
 Definition
 ----------
 
+Force the tool to make some data signal constant in time, but let it choose
+any value it wants. Using this, we can prove a property for all possible data
+values without taking a lot of time.
+
 When to use it
 --------------
+
+There are two main use cases: 
+
+- It allows us to check **all possible data values**. For example, in the case of a
+  buffer, instead of saying that if the data input equals 1, the data output will
+  equal 1, we can say that if the input equals the symbolic constant ``data``, the
+  output will equal ``data``. This way, we'll be covering all possible cases, and
+  it won't take much time.
+
+- The second use case is that it serves as a reference within properties.
+  That is, when the time reference between two parts of the property is
+  undefined, operators like ``prev`` cannot be used to reference previous points in
+  time, but we can use the symbolic constant to reference the first point in time and
+  use it in the second point in time. This is better understood in the example below.
 
 How to do it
 ------------
 
+Symbolic constants in PSL are defined with an assumption, where it starts with
+`true` so that at time 0, ``last_grant = prev(last_grant)`` is not evaluated,
+which would cause problems in some formal solvers. With this, we have a
+constant that can take any possible value.
+
+As seen in the example, the sequence ``last_valid_grant`` has an indefinite
+duration; it can last 2 cycles, 100 cycles, or infinitely many cycles. If we
+knew it lasted 2 cycles, instead of using the symbolic constant ``last_grant``,
+we could write ``Out_Grant = round_robin_arbiter(In_Req, prev(Out_Grant))``, but
+since there is no fixed time reference, the symbolic constant ``last_grant`` is
+also being used for that purpose.
+
+.. code-block:: vhdl
+
+
+   signal last_grant : std_logic_vector(Width_g-1 downto 0);
+   assume always ( {true} |=> {last_grant = prev(last_grant)} );
+
+   sequence last_valid_grant (
+      hdltype std_logic_vector(63 downto 0) last_grant
+   ) is {
+      ((Out_Ready = '1') and (Out_Valid = '1') and (Out_Grant = last_grant))[*1];  -- 1 cycle
+      ((Out_Ready = '0') or (Out_Valid = '0'))[*];  -- 0 or more cycles
+      ((Out_Ready = '1') and (Out_Valid = '1'))[*1]  -- 1 cycle
+   };
+
+   assert always ( {last_valid_grant(last_grant)} |->
+                   {Out_Grant = round_robin_arbiter(In_Req, last_grant) } ) abort Rst;
+
 Example
 -------
 
+There are examples of symbolic constants in `<examples/arbiter_rr>`,
+`<examples/fifo_sync>`, `<examples/fifo_async>`, and `<examples/ipv6>`.
 
 Assertion decomposition / property simplification
 =================================================
