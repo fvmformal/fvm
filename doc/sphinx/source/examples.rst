@@ -78,7 +78,8 @@ This is the generated PSL:
 With this, we can ensure that if we have a grant and then we have another (it
 can happen in any possible cycle), the grant will be equal to the function
 that predicts it. We can verify that the property holds true for all possible
-values by creating a symbolic constant ``last_grant``.
+values by creating a symbolic constant ``last_grant`` (explained in
+:ref:`symbolic-constants` in :ref:`complexityreduction`).
 
 .. code-block:: vhdl
 
