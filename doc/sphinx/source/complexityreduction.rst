@@ -392,15 +392,42 @@ Assertion decomposition / property simplification
 Definition
 ----------
 
+**Simplify a property** so that the formal tool can solve it more easily. The
+most common way is to divide it into several properties.
+
 When to use it
 --------------
+
+When you see that **a property is taking a long time** and doesn't seem to be
+progressing over time, the best thing to do is reread the property and simplify
+it if possible.
 
 How to do it
 ------------
 
+The usual approach is to divide it into several properties. An academic but
+clear example is instead of writing:
+
+.. code-block:: vhdl
+
+   assert always ( {a; b} |-> {c and d} );
+
+We can write:
+
+.. code-block:: vhdl
+
+   assert always ( {a; b} |-> {c} );
+   assert always ( {a; b} |-> {d} );
+
+That doesn't mean that the properties are always separated, since it can be
+more readable when compacted into one property; it means that if the first
+property is intractable for formal tools, one of the possible solutions is to
+separate it.
+
 Example
 -------
 
+There is an example in `<concepts/assertion_decomposition>`.
 
 Hierarchical verification
 =========================
@@ -408,11 +435,29 @@ Hierarchical verification
 Definition
 ----------
 
+When the toplevel or higher levels of hierarchy are unfeasible for formal
+verification tools, verify the necessary submodules separately.
+
 When to use it
 --------------
 
+When, at the toplevel, the result of the ``friendliness`` step is very negative
+and the ``reachability`` result leaves many **inconclusives**, it's a sign that
+the toplevel is too complex to verify everything, though some things might be
+verifiable.
+
+This isn't a very serious problem because submodules are **underconstrained**;
+that is, their inputs are unrestricted because they aren't connected at the
+toplevel. Underconstraining ensures that if a property is met, it will also be
+met at the toplevel. The problem is that counterexamples can be erroneous
+because they might be due to an invalid input. Therefore, **bugs will never
+escape**, although some time might be lost due to false alarms.
+
 How to do it
 ------------
+
+With :py:func:`fvmframework.FvmFramework.set_toplevel` we can change the module
+we are working on.
 
 Example
 -------
