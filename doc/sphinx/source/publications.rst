@@ -1,14 +1,11 @@
 Publications
 ============
 
-The following are the publications related to FVM.
+Please find below the publications related to FVM, and the specific bibtex
+entries to cite them in papers or reports.
 
-
-
-If you are using the FVM in
-an academic context, please cite the methodology as:
-verify academic
-How to cite the FVM:
+If you are using the FVM in an academic context, please cite the methodology
+:cite:p:`FVM_methodology`.
 
 .. rubric:: Journal articles
 
@@ -21,13 +18,12 @@ The main paper describing the methodology:
 
    FVM_methodology
 
-.. literalinclude:: bib/publications.bib
+.. literalinclude:: bib/02_fvm_2025ojcs.bib
    :language: bibtex
-   :lines: 1-7
 
 .. rubric:: Conference proceedings
 
-Preliminary work towards the FVM was presented at SEFUW2025
+Preliminary work towards the FVM was presented at SEFUW2025:
 
 .. bibliography::
    :filter: False
@@ -36,6 +32,5 @@ Preliminary work towards the FVM was presented at SEFUW2025
 
    towards_FVM
 
-.. literalinclude:: bib/publications.bib
+.. literalinclude:: bib/01_fvm_2025sefuw.bib
    :language: bibtex
-   :lines: 9-17

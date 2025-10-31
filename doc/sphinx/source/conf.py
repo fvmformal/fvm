@@ -58,7 +58,9 @@ extensions = [
       #documented)
 ]
 
-bibtex_bibfiles = ['bib/publications.bib'] # For sphinxcontrib-bibtex
+from pathlib import Path
+bibdir = Path('bib/')
+bibtex_bibfiles = list(bibdir.glob('*.bib')) #['bib/publications.bib'] # For sphinxcontrib-bibtex
 
 autodoc_typehints = "description"  # Type hints appear in descriptions
 
