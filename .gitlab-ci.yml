@@ -330,7 +330,9 @@ website:
     - apk add lftp openssh
     - mkdir ~/.ssh
     - echo "institucional.us.es ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHQ6I6yxtNPZrW3bRpoXlDV+6QywmEp4j0ReeZETQGzi" >> ~/.ssh/known_hosts
-    - cd doc/website && lftp -p 22 -u $FTP_USERNAME,$FTP_PASSWORD $FTP_HOST -e "mirror -R -e . ; quit"
+    - mv doc/website public
+    - mv doc/sphinx/build/html public/doc
+    - cd public && lftp -p 22 -u $FTP_USERNAME,$FTP_PASSWORD $FTP_HOST -e "mirror -R -e . ; quit"
 
 # Deploy to gitlab pages
 # This is done only on the main branch: if not, pages would be overwritten by
@@ -346,7 +348,8 @@ pages:
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
   script:
-    - mv doc/sphinx/build/html public
+    - mv doc/website public
+    - mv doc/sphinx/build/html public/doc
     - echo Publishing gitlab pages
   artifacts:
     paths:
