@@ -3,12 +3,14 @@
 Your first example
 ==================
 
-Talk about the counter, for example
+Let's do our first example!
 
-The design
-----------
+We will explain some things as we go, so let's dive in :)
 
-This is the design
+The design: a simple VHDL counter
+---------------------------------
+
+We want to formally verify a simple VHDL counter, whose code is as follows:
 
 .. code-block:: vhdl
 
@@ -19,9 +21,9 @@ This is the design
    entity counter is
       generic ( MAX_COUNT : integer := 128 );
       port ( clk: in  std_logic;
-            rst: in  std_logic;
-            Q:   out unsigned(7 downto 0)
-            );
+             rst: in  std_logic;
+             Q:   out unsigned(7 downto 0)
+           );
    end counter;
 
    architecture behavioral of counter is
@@ -53,10 +55,12 @@ This is the design
 
    end behavioral;
 
-Writing the `formal.py` script
+Save this file as ``counter.vhd``
+
+Writing the ``formal.py`` script
 ------------------------------
 
-Now, let's write the `formal.py` script for the FVM framework!
+Now, let's write the ``formal.py`` script for the FVM framework!
 
 We write the first version of the script before having the properties, this way
 we can start leveraging the automatic formal tools even when we haven't written
@@ -67,23 +71,107 @@ a single PSL line.
    from fvmframework import FvmFramework
 
    fvm = FvmFramework()
-   fvm.add_vhdl_source("examples/countervunit/counter.vhd")
+   fvm.add_vhdl_source("counter.vhd")
    fvm.set_toplevel("counter")
    fvm.run()
+
+Running the formal tools
+------------------------
+
+Running the FVM steps using the FVM Framework is as easy as running the
+``formal.py`` script:
+
+.. code-block:: zsh
+
+   python3 formal.py
+
+.. note::
+
+   Make sure you have the FVM installed and the ``venv``, if needed, activated.
+   See the :ref:`installation` section for details.
+
+Since we don't have written any properties, we will just see the results of
+running the automated tools over our design. For each of the FVM steps you will
+see any warnings and errors given by the relevant tool and a summary of the
+step. After all the steps run you will see a final summary that will look like
+this:
+
+.. raw:: html
+   :file: _static/counter_noproperties.html
+
+Let's explain the results:
+
+* ``lint``: Result is ``ok``, no issues detected.
+* ``friendliness``: The design has a very high formal-friendliness score, which
+  makes it very suitable for formal verification.
+* ``rulecheck``: ``ok``, no issues detected.
+* ``xverify``: Result is ``2I``. If we scroll up to see the summary of the
+  step, we'll notice that ``I`` means `Incorruptible` in this case, which is
+  equivalent to a warning and means that ``X`` values can appear in a signal,
+  but they will not propagate. The user can always consult the documentation of
+  the relevant tool (in this case Questa X-Check) for more detailed
+  information.
+* ``reachability``: 100% of the design is reachable, which is good news.
+* ``resets``: ``ok``, no Reset Domain Crossing issues detected.
+* ``clocks``: ``ok``, no Clock Domain Crossing issues detected.
+* ``prove``: Since we haven't written any properties yet, there are no
+  assumptions, no assertions and no cover statements.
+
+  * ``prove.formalcover``: This post-step fails, since formal coverage cannot
+    be computed if there are no properties. That is the reason why its result
+    is also ``N/A``. If we scroll up to see the results of the post-step, we
+    will see the following error message:
+
+    .. code-block::
+
+       ERROR detected in step='prove.formalcover', tool='propcheck', line='# Fatal   : No proven/inconclusive properties found for formal coverage computation.  [formal-414]'
+
+  * ``prove.simcover``: This post-step doesn't run any simulation since there
+    are neither falling assertions nor reached cover directives. Its result is
+    also ``N/A``
+
+So, everything seems to work fine but, as expected, we need some properties to
+correctly run the ``prove`` steps and its sub-steps.
 
 Writing the properties
 ----------------------
 
-Let's write the properties!
+Now that we know how to run the FVM, let's write the properties for the
+counter!
+
+We will write the following to a file named ``counter_properties.psl``
+
+.. seealso::
+
+   In formal verification, we use three main keywords when writing properties:
+   ``assume``, ``assert`` and ``cover``. See the :ref:`directives` section for
+   more information.
+
+In PSL, we write Verification Units, and we do that using the ``vunit`` keyword
+(*not to be confused with the VUnit test framework*). These `vunits` are binded
+to either an VHDL entity (if we only need to work with the ports of the entity)
+or to an VHDL entity and architecture pair (when we also need to work with the
+internal signals of the entity). In this case, we can just bind the ``vunit``
+with the properties, named ``counter_properties``, to the entity ``counter``:
+
+.. code-block:: vhdl
+
+   vunit counter_properties (counter) {
+
+The first step is to specify the default clock domain to use, to avoid having
+to include the clock domain in every property. This is highly recommended for
+designs with a single clock:
 
 .. code-block:: vhdl
 
    -- Default clock for PSL assertions
    default clock is rising_edge(clk);
 
-The first step is to specify the default clock domain to use, to avoid having to 
-include the clock domain in every property. This is highly recommended for designs 
-with a single clock.
+Now, let's write our first assumption. In formal verification, a reset is
+usually required in the first cycle to limit the number of possible initial
+states. Although many tools automatically infer this, it is good practice to
+explicitly write it for portability between toolchains. So, we will ``assume``
+that, on the first clock cycle, our counter is being reset:
 
 .. code-block:: vhdl
 
@@ -92,20 +180,25 @@ with a single clock.
    -- first clock cycle
    assume_initial_reset: assume rst = '1';
 
-In formal verification, a reset is required in the first cycle to limit the number of 
-possible states to start with. Although many tools infer this, it's good practice to 
-maintain it for portability between toolchains.
+Since no assumptions are needed for the rest of the counter inputs, we can
+start writing assertions.
+
+The following property will ``assert`` that the counter output will never
+exceed the counter's maximum count, i.e. the property will fail if overflows
+occur. This property is similar to `firewall assertions` in simulation: it is
+not checking for the full expected correct functionality but is checking for
+error conditions instead. These kind of properties are very useful for quickly
+finding counterexamples when there is an error in the design:
 
 .. code-block:: vhdl
 
    -- Assert we do not go over the maximum
    never_go_over_the_maximum: assert always (Q <= MAX_COUNT);
 
-Since no assume is needed for the counter inputs, we can start directly with the assertions.
-This property asserts that the counter output will never exceed the counter's maximum 
-count, i.e. the property will fail if overflows occur. Although these types of properties
-do not assert the functionality of the design, they are very useful for quickly finding
-counterexamples when there is an error in the design.
+Now we'll write a property that does actually check the functionality of the
+design. The following will ``assert`` that if there hasn't been a reset in the
+current or previous cycle and the last counter output wasn't the maximum count,
+the counter output will have increased by 1:
 
 .. code-block:: vhdl
 
@@ -115,9 +208,13 @@ counterexamples when there is an error in the design.
    -- 3) If last value wasn't MAX_COUNT
    always_count_up: assert always (not (rst = '1') and (not prev(rst) = '1') and (prev(Q) /= MAX_COUNT)) -> (Q-prev(Q) = 1);
 
-This property does assert the functionality of the design. It asserts that if there hasn't 
-been a reset in this or the previous cycle and the last counter output wasn't the maximum 
-count, the counter output will have increased by 1.
+To complement the assertions, it's always helpful to have ``cover`` directives:
+each one will generate a trace of the design covering the specified scenario,
+or will result in a proof that it cannot be covered. For this design, covering
+the overflow to zero is enough; this way, we'll see how the counter reaches the
+maximum count without having to write any simulation testbench.  Additionally,
+we can also ``cover`` the case when the design is reset, to see its behavior
+when suddenly reset:
 
 .. code-block:: vhdl
 
@@ -129,10 +226,43 @@ count, the counter output will have increased by 1.
    -- Same as above but adding reset behavior.
    cover_overflow_to_zero_and_reset: cover {Q = MAX_COUNT ; Q = 0; [*]; rst = '1'; [*]; Q = MAX_COUNT ; Q = 0};
 
-To complement the assertions, it's always helpful to have covers that show us a trace 
-validating the design's main use cases. In this case, covering the overflow to 0 is 
-enough; this way, we'll see how the counter reaches the maximum count without having to write 
-any testbench. Additionally, we can add how the design behaves when reset.
+Since we have finished writing the properties, we must just make sure that we
+are closing the ``vunit``:
+
+.. code-block:: vhdl
+
+   }
+
+The full ``counter_properties.psl`` should look like this:
+
+.. code-block:: vhdl
+
+   vunit counter_properties (counter) {
+
+    -- Default clock for PSL assertions
+    default clock is rising_edge(clk);
+
+    -- Assert we do not go over the maximum
+    never_go_over_the_maximum: assert always (Q <= MAX_COUNT);
+
+    -- Assert the counter is always counting up, but only:
+    -- 1) If it's not the first clock cycle
+    -- 2) If it hasn't just been reset
+    -- 3) If last value wasn't MAX_COUNT
+    always_count_up: assert always (not (rst = '1') and (not prev(rst) = '1') and (prev(Q) /= MAX_COUNT)) -> (Q-prev(Q) = 1);
+
+    -- Cover the overflow -> zero case
+    -- What we write here has to be a sequence inside curly braces {}, even if
+    -- we only have one element (for example, { Q = MAX_COUNT }
+    cover_overflow_to_zero: cover {Q = MAX_COUNT ; Q = 0};
+    cover_overflow_to_zero_and_reset: cover {Q = MAX_COUNT ; Q = 0; [*]; rst = '1'; [*]; Q = MAX_COUNT ; Q = 0};
+
+    -- Force a reset in the first clock cycle
+    -- Since we don't have an 'always', this assumption only applies to the
+    -- first clock cycle
+    assume_initial_reset: assume rst = '1';
+
+    }
 
 Adding the properties to `formal.py`
 ------------------------------------
@@ -146,16 +276,35 @@ with non-automated formal tools.
    from fvmframework import FvmFramework
 
    fvm = FvmFramework()
-   fvm.add_vhdl_source("examples/countervunit/counter.vhd")
-   fvm.add_psl_source("examples/countervunit/counter_properties.psl")
+   fvm.add_vhdl_source("counter.vhd")
+   fvm.add_psl_source("counter_properties.psl")
    fvm.set_toplevel("counter")
    fvm.run()
 
-Running the tools
------------------
+Running the formal tools again
+------------------------------
 
-Finally, let's run our `formal.py` script!
+Finally, let's run our `formal.py` script again!
 
 .. code-block:: zsh
 
    python3 formal.py
+
+Now, our results are better:
+
+.. raw:: html
+   :file: _static/counter_properties.html
+
+In the ``prove`` step we can see that, as we have written, we have 1
+assumption, 2 assertions which have been proven, and 2 covers that have been
+covered.
+
+Also, our formal code coverage (code observed by our properties) and our
+simulation code coverage (code executing by simulating the covered ``cover``
+statements) are both 100%
+
+With a small number of lines of code we have fully formally verified an 8-bit
+counter, which testifies to how powerful formal verification is. Formal
+verification can tackle even more big designs, so continue reading to learn
+more!
+
