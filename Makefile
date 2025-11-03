@@ -140,7 +140,9 @@ show:
 # Count TODOs in code
 # Since each line in the recipe is run in a separate shell, to define a
 # variable and be able to read its value later we need to use GNU Make's $eval
-TODOs := $(shell grep -r TODO * | grep -v grep | wc -l)
+# We substract 5 lines that are in the Makefile but are part of this target
+# and not actually things that need to be done
+TODOs := $(shell echo `grep -r TODO * | grep -v grep | wc -l` - 5 | bc)
 todo:
 	mkdir -p badges
 	rm -f badges/todo.svg
