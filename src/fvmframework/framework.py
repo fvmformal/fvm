@@ -56,8 +56,6 @@ def getlogformattool(design, step, tool):
     return f'<cyan>{design}.{step}</cyan> | <green>{tool=}</green> | ' + '<level>{level: <8}</level> | <level>{message}</level>'
 
 # Create a rich console object
-# TODO: force_terminal should enable color inside gitlab CI, but may break
-# non-color terminals? maybe we should use environment variables instead? see https://rich.readthedocs.io/en/stable/console.html#environment-variables
 # For CI systems that support colors but where we don't want any interactivity
 # (such as gitlab-ci), we set force_terminal to True and force_interactive to
 # False
@@ -160,8 +158,6 @@ class FvmFramework:
             self.logger.trace(f'Running inside a script, {self.prefix=}')
 
         # Rest of instance variables
-        # TODO : this is getting a bit big, we could consider restructuring
-        # this, maybe defining a structure per toplevel
         self.toplevel = []
         self.current_toplevel = ''
         self.start_time_setup = None
@@ -576,10 +572,7 @@ class FvmFramework:
             else:
                 self.toplevel = toplevel
 
-        # TODO : in the future, the design output dirs may have the library
-        # name, such as libname.design or libname/design, so that error message
-        # will not be necessary because there won't be any clashes with fvm_*
-        # directories
+        # Disallow clashes with fvm_* directories
         if 'fvm_dashboard' in toplevel or 'fvm_reports' in toplevel:
             self.logger.error("toplevels can not have the following reserved names: "
                             "fvm_dashboard, fvm_reports")
@@ -853,9 +846,7 @@ class FvmFramework:
         :param loglevel: Logging level to set for the framework.
         :type loglevel: str
         """
-        # TODO : maybe we will just remove some of these loglevels as valid
-        # options if we end up using those log levels to indicate normal
-        # operation of our framework
+
         self.logger.remove()
         self.loglevel = loglevel
         self.logger.add(self.log_counter, level=0)
@@ -1284,8 +1275,6 @@ class FvmFramework:
                                      f'will not run')
                     self.results[design][step]['status'] = 'skip'
                 else:
-                    # TODO : allow pre_hooks to return errors and stop the run
-                    # if they fail
                     self.run_pre_hook(design, step)
                     err, errorcode = self.run_step(design, step)
                     if err:
@@ -1293,8 +1282,6 @@ class FvmFramework:
                     err, errorcode = self.run_post_step(design, step)
                     if err:
                         self.exit_if_required(errorcode)
-                    # TODO : allow post_hooks to return errors and stop the run
-                    # if they fail
                     self.run_post_hook(design, step)
         else:
             self.run_pre_hook(design, self.step)
@@ -1490,8 +1477,6 @@ class FvmFramework:
             if step in hooks['*']:
                 self.run_hook(hooks['*'][step], step, design)
 
-    # TODO: not sure if we need to let the user pass arguments, I don't think
-    # it will be necessary for now
     def run_hook(self, hook, step, design):
         """Run a user-specified hook"""
         if callable(hook):

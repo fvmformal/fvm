@@ -111,9 +111,6 @@ def gencompilescript(framework, filename, path):
     :param path: the path where to create the script
     :type path: str
     """
-    # TODO : we must also compile the Verilog sources, if they exist
-    # TODO : we must check for the case of only-verilog designs (no VHDL files)
-    # TODO : we must check for the case of only-VHDL designs (no verilog files)
     library_path = os.path.join(framework.outdir, "libraries")
     os.makedirs(library_path, exist_ok=True)
 
@@ -172,9 +169,6 @@ def run_qverify_step(framework, design, step):
     :return: A tuple (cmd_stdout, cmd_stderr, stdout_err, stderr_err)
     :rtype: tuple[str, str, int, int]
     """
-    # If called with a specific step, run that specific step
-    # TODO : questa code should also register its run functions with the
-    # steps class
     path = framework.current_path
     report_path = os.path.join(path, step)
     tool = tools[step][0]
@@ -197,9 +191,6 @@ def run_qverify_step(framework, design, step):
 
             if framework.gui :
                 open_gui = True
-        # TODO : maybe run the GUI processes without blocking
-        # the rest of the steps? For that we would probably
-        # need to pass another option to run_cmd
         if open_gui:
             framework.logger.info(f'{step=}, {tool=}, opening results with GUI')
             db_file = os.path.join(report_path, f'{tool}.db')
@@ -234,7 +225,7 @@ def get_linecheck_common():
             "Error (0)",
             "Warning (0)",
         ],
-        "error": ["error", "fatal", "errors"],
+        "error": ["error", "fatal", "errors", "environment variable not set"],
         "warning": ["warning", "warnings"],
         "success": [],
     }
@@ -820,11 +811,9 @@ def setup_clocks(framework, path):
     gen_reset_config(framework, filename, path)
     gen_reset_domain_config(framework, filename, path)
     with open(os.path.join(path, filename), "a", encoding='utf-8') as f:
-        # TODO : also look at reconvergence, and other warnings detected
-        #print('netlist clock clk -period 50', file=f)
-
-        # Enable reconvergence to remove warning [hdl-271]
-        # TODO : add option to disable reconvergence?
+        # Enable reconvergence to remove warning [hdl-271] and because we want
+        # the tool to detect everything it can detect (default behavior is to
+        # not do the reconvergence analysis)
         print('cdc reconvergence on', file=f)
         print(f'cdc run -d {framework.current_toplevel} {framework.get_tool_flags("cdc run")} '
               f'{framework.generic_args}', file=f)
@@ -890,7 +879,6 @@ def setup_prove(framework, path):
     # We need to save the current toplevel to use it in the setup
     # of the post-steps.
     set_setup_toplevel(framework.current_toplevel)
-    # TODO : can we also compile the PSL files using a .f file?
     gencompilescript(framework, filename, path)
     # Only add the clocks since we don't want to add any extra constraint
     # Also, adding the clock domain make propcheck throw errors because

@@ -456,7 +456,6 @@ def gen_sere_repetition(num_cycles, or_more, add_semicolon = False, comments = T
                 text += f'  -- {num_cycles} or more cycles'
     return text
 
-# TODO : assignments could be tailored to the datatypes
 def get_signal_value(wave, data, cycle):
     """Get value of signal at a specific clock cycle"""
     datadigits = ['=', '2', '3', '4', '5', '6', '7', '8', '9']

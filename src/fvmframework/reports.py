@@ -395,14 +395,11 @@ def generate_xml_report(framework, logger):
                                 url = None
                                 )
 
-            # output argument is an optional, non-standard field
-            # TODO : maybe we could just put the first line in message and
-            # all the errors in output, but Allure is supposed to render
-            # the full message even if it has more than one line of text
+            # output argument is an optional, non-standard field, so we'll set
+            # it to None
             if status == 'fail':
                 logger.trace(f'{design}.{step} failed')
                 message = framework.results[design][step]['message']
-                #print(f'{message=}')
                 testcase.add_failure_info(message = "Error in tool log",
                                           output = None, # 'output string',
                                           failure_type = None #'error type'
@@ -570,8 +567,6 @@ def generate_html_report(framework, logger):
                 else:
                     status = 'omit'
 
-    # TODO: We should get allure_version and allure_install_dir from the
-    # framework, so the users may change it if they want
     allure_version = manage_allure.DEFAULT_ALLURE_VERSION
     allure_install_dir = os.path.join(os.path.expanduser("~"), ".cache", "fvm")
     manage_allure.ensure_allure(allure_version, allure_install_dir)
@@ -600,7 +595,6 @@ def generate_html_report(framework, logger):
                     shutil.copytree(report_history, results_history)
                 if os.path.exists(results_dir):
                     retval = generate_allure(results_dir, report_dir, allure_exec, logger)
-            # TODO : fail if retval is not zero
             if framework.show or framework.shownorun:
                 if os.path.exists(report_dir):
                     show_allure(report_dir, allure_exec, logger)

@@ -62,7 +62,6 @@ vunit interpolator_properties (interpolator(interpolator_arch)) {
         valid    = '1'                                                              
     }; 
     
-    -- TODO: Parameterize index
     -- Parameterizable output sequence
     sequence output_seq_0 (                                                          
     hdltype interpolator_output_tran output_tran;
