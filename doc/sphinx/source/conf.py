@@ -92,8 +92,8 @@ exclude_patterns = []
 #html_theme = 'alabaster'
 html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
-html_favicon = '_static/favicon.ico'
-html_logo = '_static/android-chrome-192x192.png'
+html_favicon = '../../../src/fvmframework/favicon.ico'
+html_logo = '../../../src/fvmframework/FVM_logo_192x192.png'
 
 if html_theme == 'sphinx_rtd_theme':
     html_theme_options = {

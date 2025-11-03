@@ -4,6 +4,7 @@ import re
 import subprocess
 import shutil
 import signal
+import importlib.resources
 
 from pathlib import Path
 from datetime import datetime
@@ -617,8 +618,9 @@ def generate_allure(res_dir, rep_dir, allure_exec, logger):
                                 )
     retval = process.wait()
     # Replace Allure favicon with FVM favicon only if Allure favicon exists
+    package_data_dir = importlib.resources.files('fvmframework')
     if os.path.exists(os.path.join(rep_dir, 'favicon.ico')):
-        shutil.copy2(os.path.join("doc", "sphinx", "source", "_static", "favicon.ico"),
+        shutil.copy2(os.path.join(package_data_dir, "favicon.ico"),
                      os.path.join(rep_dir, 'favicon.ico'))
     return retval
 
