@@ -1356,10 +1356,10 @@ class FvmFramework:
         """Run a specific command"""
         self.set_logformat(getlogformattool(design, step, tool))
         if cwd is not None:
-            cwd_for_debug = cwd
+            cwd_for_debug = f', working directory: {cwd}'
         else:
-            cwd_for_debug = self.outdir
-        self.logger.info(f'command: {join(cmd)}, working directory: {cwd_for_debug}')
+            cwd_for_debug = ''
+        self.logger.info(f'command: {join(cmd)}{cwd_for_debug}')
 
         timestamp = datetime.now().isoformat()
         self.results[design][step]['timestamp'] = timestamp
