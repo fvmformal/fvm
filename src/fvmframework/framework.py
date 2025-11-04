@@ -1596,7 +1596,7 @@ class FvmFramework:
             run_stdout, run_stderr, stdout_err, stderr_err, status = self.steps.steps[step]["run"](self, path)
             logfile = os.path.join(path, step, f"{step}.log")
             os.makedirs(os.path.join(path, step), exist_ok=True)
-            self.logger.info(f'{step=}, finished, output written to {logfile}')
+            self.logger.info(f'Output written to {logfile}')
             with open(logfile, 'w', encoding='utf-8') as f :
                 f.write(run_stdout)
                 f.write(run_stderr)
