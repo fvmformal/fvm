@@ -1078,11 +1078,13 @@ def run_prove_simcover(framework, path):
     for file in replay_files:
         path = pathlib.Path(file).parent
         cmd = ['./replay.scr']
+        if framework.ctrl_c_pressed:
+            break
         simcover_run('csh')
         ucdb_files.append(os.path.join(path, 'sim.ucdb'))
 
     # If we have any UCDB files, merge them and generate reports
-    if any(os.path.exists(f) for f in ucdb_files):
+    if any(os.path.exists(f) for f in ucdb_files) and framework.ctrl_c_pressed is False:
         # Merge all simulation code coverage files
         path = None
         simcover_path = os.path.join(framework.outdir, framework.current_toplevel, 'prove.simcover')
@@ -1093,7 +1095,7 @@ def run_prove_simcover(framework, path):
 
         path = simcover_path
         # Generate reports only if the merge was successful
-        if os.path.exists(os.path.join(path, 'simcover.ucdb')):
+        if os.path.exists(os.path.join(path, 'simcover.ucdb')) and framework.ctrl_c_pressed is False:
             # Generate a csv coverage report
             cmd = ['vcover', 'report', '-csv', '-hierarchical', 'simcover.ucdb',
                 '-output', 'simulation_coverage.log']
@@ -1124,7 +1126,7 @@ def run_prove_simcover(framework, path):
                     status = "goal_not_met"
 
                 # Reachability analysis of uncovered code if there are misses
-                if any(row.get("Misses", 0) > 0 for row in res):
+                if any(row.get("Misses", 0) > 0 for row in res) and framework.ctrl_c_pressed is False:
                     path = None
                     cmd = ['qverify', '-c', '-od', simcover_path,
                         '-do', os.path.join(simcover_path, 'reachability_exclusions.do')]
