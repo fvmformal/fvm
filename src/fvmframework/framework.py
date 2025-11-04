@@ -1438,20 +1438,16 @@ class FvmFramework:
         if not verbose:
             print(' Finished', flush=True)
 
+        # Append error message if return value is non-zero
+        if retval != 0 and self.ctrl_c_pressed is False:
+            stderr_lines.append("Error: Command returned non-zero exit status {}".format(retval))
+
         # Join captured output
         captured_stdout = ''.join(stdout_lines)
         captured_stderr = ''.join(stderr_lines)
 
         self.results[design][step]['stdout'] += captured_stdout
         self.results[design][step]['stderr'] += captured_stderr
-
-        # Raise an exception if the return code is non-zero and Ctrl+C was
-        # not pressed
-        if retval != 0 and self.ctrl_c_pressed is False:
-            raise subprocess.CalledProcessError(retval,
-                                                cmd,
-                                                output=captured_stdout,
-                                                stderr=captured_stderr)
 
         self.set_logformat(LOGFORMAT)
 
