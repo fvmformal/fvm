@@ -14,6 +14,7 @@ import subprocess
 import pathlib
 import fnmatch
 import signal
+import threading
 from datetime import datetime
 from io import StringIO
 from shlex import join
@@ -1379,7 +1380,21 @@ class FvmFramework:
         def handle_sigint(signum, frame):
             self.logger.error("Ctrl+C detected")
             self.ctrl_c_pressed = True
-            os.killpg(os.getpgid(process.pid), signal.SIGINT)
+            if process and process.poll() is None:
+                os.killpg(os.getpgid(process.pid), signal.SIGINT)
+                # Define a function to kill the process if it remains active after 10 s
+                def kill_if_alive():
+                    if process.poll() is None:
+                        self.logger.error("Process still running after 10s, sending SIGKILL")
+                        try:
+                            os.killpg(os.getpgid(process.pid), signal.SIGKILL)
+                        except ProcessLookupError:
+                            self.logger.warning("Process already terminated before SIGKILL")
+
+                # Initialize a 10 seconds timer to kill the process if it is still alive
+                timer = threading.Timer(10.0, kill_if_alive)
+                timer.daemon = True
+                timer.start()
 
         signal.signal(signal.SIGINT, handle_sigint)
 
