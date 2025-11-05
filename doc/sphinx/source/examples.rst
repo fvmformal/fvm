@@ -121,6 +121,7 @@ or early design learning by making a cover with the final result.
 Axi-4 Lite Slave
 ~~~~~~~~~~~~~~~~~
 
+This example also belongs to the OpenLogic library.
 This Axi Slave has a state machine that is no longer as linear (it has both
 TX and RX) and also has quite a few interfaces. This makes writing sequences
 for reuse more important, both in terms of speed and clarity. The code snippet
@@ -153,6 +154,7 @@ Medium examples
 SDRAM controller
 ~~~~~~~~~~~~~~~~
 
+This example comes from a popular Github repo: https://github.com/nullobject/sdram-fpga.
 This is the first example where complexity reduction techniques can be applied,
 although it's quite easy. There's a startup delay of over 2000 cycles
 parameterized with a generic, so it can simply be reduced without affecting
@@ -199,6 +201,7 @@ functionality. The 12 properties take less than 1.5 minutes to prove.
 Synchronous FIFO
 ~~~~~~~~~~~~~~~~~
 
+This example also belongs to the OpenLogic library.
 This example is one of the most important, since FIFOs and memories are a
 recurring element in most designs, and will be responsible for a large part
 of their difficulty.
@@ -222,6 +225,8 @@ Intermediate examples
 32-bit divider
 ~~~~~~~~~~~~~~~
 
+This examples belongs to the GRLIB IP library from Gaisler: 
+https://www.gaisler.com/grlib-ip-library.
 This case presents enormous computational complexity: a 64-bit dividend
 divided by a 32-bit divisor. This will make it impossible to verify data
 integrity for all combinations (2\ :sup:`96`), just as it would be impossible
@@ -249,6 +254,7 @@ combinations, it takes 10 minutes.
 Asynchronous FIFO
 ~~~~~~~~~~~~~~~~~
 
+This example also belongs to the OpenLogic library.
 If we specify the clock and reset domains in ``formal.py``, the steps
 ``resets`` and ``clocks`` are very useful for checking clock and reset
 domain crossing.
@@ -295,6 +301,8 @@ Difficult examples
 IPv6 transceiver
 ~~~~~~~~~~~~~~~~~
 
+This example belongs to the PoC (Pile of Cores) library: 
+https://github.com/VLSI-EDA/PoC.
 This is the most complicated of all, both because of its size and because it
 has some of the complexity elements: bigger state space, a number of
 memories inside, and a latency which cannot be arbitrarily reduced due to the
