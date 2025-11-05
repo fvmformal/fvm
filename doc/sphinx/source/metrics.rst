@@ -35,8 +35,8 @@ The main coverage metrics are:
   ``prove.formalcover``.
 
 - **Bounded reachability**: It's like signoff but with bounded proofs
-  (assertions that are inconclusive, that is, that up to a certain depth in
-  the design have not been proven or disproven). FVM shows it in the
+  (assertions that hold up to a certain depth in the design, but haven't been
+  proven or disproven for all time). FVM shows it in the
   ``prove.formalcover`` step.
 
 - **Simulation coverage**: Although not typically used in formal verification,
