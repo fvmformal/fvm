@@ -90,7 +90,7 @@ Running the FVM steps using the FVM Framework is as easy as running the
    Make sure you have the FVM installed and the ``venv``, if needed, activated.
    See the :ref:`installation` section for details.
 
-Since we don't have written any properties, we will just see the results of
+Since we haven't written any properties, we will just see the results of
 running the automated tools over our design. For each of the FVM steps you will
 see any warnings and errors given by the relevant tool and a summary of the
 step. After all the steps run you will see a final summary that will look like
@@ -195,18 +195,25 @@ finding counterexamples when there is an error in the design:
    -- Assert we do not go over the maximum
    never_go_over_the_maximum: assert always (Q <= MAX_COUNT);
 
-Now we'll write a property that does actually check the functionality of the
-design. The following will ``assert`` that if there hasn't been a reset in the
-current or previous cycle and the last counter output wasn't the maximum count,
-the counter output will have increased by 1:
+Now we'll write 3 properties that do actually check the functionality of the
+design. The first one will ``assert`` that a reset clears the count, the
+second one will ``assert`` that if the count has not reached the maximum, it
+increases by 1 (provided there has not been a reset, due to ``abort rst``) and
+the third one will ``assert`` that if it has reached the maximum, it returns to
+0 (provided there has not been a reset).
 
 .. code-block:: vhdl
 
-   -- Assert the counter is always counting up, but only:
-   -- 1) If it's not the first clock cycle
-   -- 2) If it hasn't just been reset
-   -- 3) If last value wasn't MAX_COUNT
-   always_count_up: assert always (not (rst = '1') and (not prev(rst) = '1') and (prev(Q) /= MAX_COUNT)) -> (Q-prev(Q) = 1);
+   -- Assert the count is cleared on reset
+   reset_clears_count: assert always ({rst = '1'} |=> {Q = 0});
+
+   -- Assert the count increments when not at maximum
+   -- Note that `abort rst` at the end of the assertion avoids checking
+   -- the property when reset is active
+   count_increments: assert always ({Q /= MAX_COUNT} |=> {Q = prev(Q) + 1}) abort rst;
+
+   -- Assert the count overflows when at maximum
+   count_overflow: assert always ({Q = MAX_COUNT} |=> {Q = 0}) abort rst;
 
 To complement the assertions, it's always helpful to have ``cover`` directives:
 each one will generate a trace of the design covering the specified scenario,
@@ -239,30 +246,35 @@ The full ``counter_properties.psl`` should look like this:
 
    vunit counter_properties (counter) {
 
-    -- Default clock for PSL assertions
-    default clock is rising_edge(clk);
+      -- Default clock for PSL assertions
+      default clock is rising_edge(clk);
 
-    -- Assert we do not go over the maximum
-    never_go_over_the_maximum: assert always (Q <= MAX_COUNT);
+      -- Assert we do not go over the maximum
+      never_go_over_the_maximum: assert always (Q <= MAX_COUNT);
 
-    -- Assert the counter is always counting up, but only:
-    -- 1) If it's not the first clock cycle
-    -- 2) If it hasn't just been reset
-    -- 3) If last value wasn't MAX_COUNT
-    always_count_up: assert always (not (rst = '1') and (not prev(rst) = '1') and (prev(Q) /= MAX_COUNT)) -> (Q-prev(Q) = 1);
+      -- Assert the count is cleared on reset
+      reset_clears_count: assert always ({rst = '1'} |=> {Q = 0});
 
-    -- Cover the overflow -> zero case
-    -- What we write here has to be a sequence inside curly braces {}, even if
-    -- we only have one element (for example, { Q = MAX_COUNT }
-    cover_overflow_to_zero: cover {Q = MAX_COUNT ; Q = 0};
-    cover_overflow_to_zero_and_reset: cover {Q = MAX_COUNT ; Q = 0; [*]; rst = '1'; [*]; Q = MAX_COUNT ; Q = 0};
+      -- Assert the count increments when not at maximum
+      -- Note that `abort rst` at the end of the assertion avoids checking
+      -- the property when reset is active
+      count_increments: assert always ({Q /= MAX_COUNT} |=> {Q = prev(Q) + 1}) abort rst;
 
-    -- Force a reset in the first clock cycle
-    -- Since we don't have an 'always', this assumption only applies to the
-    -- first clock cycle
-    assume_initial_reset: assume rst = '1';
+      -- Assert the count overflows when at maximum
+      count_overflow: assert always ({Q = MAX_COUNT} |=> {Q = 0}) abort rst;
 
-    }
+      -- Cover the overflow -> zero case
+      -- What we write here has to be a sequence inside curly braces {}, even if
+      -- we only have one element (for example, { Q = MAX_COUNT }
+      cover_overflow_to_zero: cover {Q = MAX_COUNT ; Q = 0};
+      cover_overflow_to_zero_and_reset: cover {Q = MAX_COUNT ; Q = 0; [*]; rst = '1'; [*]; Q = MAX_COUNT ; Q = 0};
+
+      -- Force a reset in the first clock cycle
+      -- Since we don't have an 'always', this assumption only applies to the
+      -- first clock cycle
+      assume_initial_reset: assume rst = '1';
+
+   }
 
 Adding the properties to `formal.py`
 ------------------------------------
@@ -296,7 +308,7 @@ Now, our results are better:
    :file: _static/counter_properties.html
 
 In the ``prove`` step we can see that, as we have written, we have 1
-assumption, 2 assertions which have been proven, and 2 covers that have been
+assumption, 4 assertions which have been proven, and 2 covers that have been
 covered.
 
 Also, our formal code coverage (code observed by our properties) and our
@@ -305,6 +317,6 @@ statements) are both 100%
 
 With a small number of lines of code we have fully formally verified an 8-bit
 counter, which testifies to how powerful formal verification is. Formal
-verification can tackle even more big designs, so continue reading to learn
+verification can tackle even bigger designs, so continue reading to learn
 more!
 

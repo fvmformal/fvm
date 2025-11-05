@@ -6,11 +6,16 @@ vunit counter_properties (counter) {
     -- Assert we do not go over the maximum
     never_go_over_the_maximum: assert always (Q <= MAX_COUNT);
 
-    -- Assert the counter is always counting up, but only:
-    -- 1) If it's not the first clock cycle
-    -- 2) If it hasn't just been reset
-    -- 3) If last value wasn't MAX_COUNT
-    always_count_up: assert always (not (rst = '1') and (not prev(rst) = '1') and (prev(Q) /= MAX_COUNT)) -> (Q-prev(Q) = 1);
+    -- Assert the count is cleared on reset
+    reset_clears_count: assert always ({rst = '1'} |=> {Q = 0});
+
+    -- Assert the count increments when not at maximum
+    -- Note that `abort rst` at the end of the assertion avoids checking
+    -- the property when reset is active
+    count_increments: assert always ({Q /= MAX_COUNT} |=> {Q = prev(Q) + 1}) abort rst;
+
+    -- Assert the count overflows when at maximum
+    count_overflow: assert always ({Q = MAX_COUNT} |=> {Q = 0}) abort rst;
 
     -- Cover the overflow -> zero case
     -- What we write here has to be a sequence inside curly braces {}, even if
