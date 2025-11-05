@@ -130,8 +130,8 @@ def gencompilescript(framework, filename, path):
                                                         if library == lib]
                 f_file_path = os.path.join(path, f'{lib}_design.f')
                 create_f_file(f_file_path, lib_sources)
-                print(f'vcom {framework.get_tool_flags("vcom")} -{framework.vhdlstd} '
-                    f'-work {lib} -autoorder -f {f_file_path}', file=f)
+                print(f'vcom {framework.get_tool_flags("vcom")} -{vhdlstd2flag(framework.vhdlstd)}'
+                    f' -work {lib} -autoorder -f {f_file_path}', file=f)
                 print('', file=f)
             if framework.verilog_sources:
                 lib_sources = [src for src, library in zip(framework.verilog_sources,
@@ -1386,3 +1386,21 @@ def formal_initialize_reset(framework, reset, active_high=True, cycles=1):
     else:
         line = f'formal init {{{reset}=0;##{cycles+1};{reset}=1}}'
         framework.init_reset.append(line)
+
+def vhdlstd2flag(vhdlstd):
+    """
+    Convert VHDL standard to Questa flag
+
+    :param vhdlstd: VHDL standard as a string (e.g., "93", "08")
+    :type vhdlstd: str
+
+    :return: The corresponding Questa flag (e.g., "93", "2008")
+    :rtype: str
+    """
+    vhdlstd_map = {
+        "87": "87",
+        "93": "93",
+        "02": "2002",
+        "08": "2008",
+    }
+    return vhdlstd_map.get(vhdlstd, "")

@@ -335,9 +335,9 @@ def test_set_vhdl_std_integer() :
 def test_get_vhdl_std() :
     """Test getting the current VHDL standard"""
     fvm = FvmFramework()
-    fvm.set_vhdl_std("2002")
+    fvm.set_vhdl_std("02")
     vhdlstd = fvm.get_vhdl_std()
-    assert vhdlstd == "2002"
+    assert vhdlstd == "02"
 
 def test_set_toplevel() :
     """Test setting a valid toplevel"""

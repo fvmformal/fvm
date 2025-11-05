@@ -174,7 +174,7 @@ class FvmFramework:
         self.skip_list = []
         self.allow_failure_list = []
         self.disabled_coverage = []
-        self.vhdlstd = "2008"
+        self.vhdlstd = "08"
         self.tool_flags = {}
         self.resets = []
         self.clocks = []
@@ -525,7 +525,7 @@ class FvmFramework:
         :param vhdlstd: VHDL standard version as a string.
         :type vhdlstd: str
         """
-        allowed_standards = ["87", "93", "2002", "2008"]
+        allowed_standards = ["87", "93", "02", "08"]
         if vhdlstd not in allowed_standards:
             self.logger.error(f'Specified {vhdlstd=} not in {allowed_standards=}')
             self.exit_if_required(BAD_VALUE)
