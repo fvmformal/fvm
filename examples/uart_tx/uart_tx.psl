@@ -54,6 +54,49 @@ vunit uart_tx_properties (uart_tx(Behavioral)) {
     TX=paritybit[*5]; TX=STOPBIT[*5]
   };
 
+  -- Symbolic constant for the data being transmitted
+  signal data_uart : std_logic_vector(7 downto 0);
+  assume always ( {true} |=> {data_uart = prev(data_uart)} ) abort rst;
+
+  -- Functions can be defined in PSL or in a VHDL package.
+  -- The latter is preferred, but this is just an example
+  function calc_parity(
+      data_vec    : std_logic_vector
+  ) return std_logic is
+      variable parity_bit : std_logic := '0';
+  begin
+      for i in data_vec'range loop
+          parity_bit := parity_bit xor data_vec(i);
+      end loop;
+
+      return parity_bit;
+  end function;
+
+  sequence start_of_tx (
+    hdltype std_logic_vector(7 downto 0) data_tx
+  ) is {
+    TX = '1' and rd_en = '1';
+    TX = '1' and data = data_tx
+  };
+
+  sequence tx_sequence (
+    hdltype std_logic_vector(7 downto 0) data_tx
+  ) is {
+    (TX = '0')[*BIT_DURATION];
+    (TX = data_tx(0))[*BIT_DURATION];
+    (TX = data_tx(1))[*BIT_DURATION];
+    (TX = data_tx(2))[*BIT_DURATION];
+    (TX = data_tx(3))[*BIT_DURATION];
+    (TX = data_tx(4))[*BIT_DURATION];
+    (TX = data_tx(5))[*BIT_DURATION];
+    (TX = data_tx(6))[*BIT_DURATION];
+    (TX = data_tx(7))[*BIT_DURATION];
+    (TX = calc_parity(data_tx))[*BIT_DURATION];
+    (TX = '1')[*BIT_DURATION]
+  };
+
+  assert_uart:
+    assert always (( {start_of_tx(data_uart)} |=> {tx_sequence(data_uart)}) abort rst);
   -- Now we need to predict the values of databits and paritybit
   -- We must capture the value of the data input one clock cycle after rd_en is
   -- asserted
