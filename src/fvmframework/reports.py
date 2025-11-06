@@ -432,11 +432,7 @@ def generate_xml_report(framework, logger):
     # commiting it to a file
     xml_string = xml_string.replace("<testsuites", f'<testsuites name="{framework.scriptname}"')
 
-    # TODO : we should use os.path.join or pathlib instead of concatenating
-    # directory separators (our approach is not cross platform). Apparently
-    # pathlib is recommended for new projects instead of os.path, and both
-    # approaches are cross-platform
-    xmlfile = framework.scriptname.replace('/','_')
+    xmlfile = f"{framework.prefix}_results"
     if xmlfile.startswith('_'):
         xmlfile = xmlfile[1:]
     xmlfile, extension = os.path.splitext(xmlfile)
