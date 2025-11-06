@@ -95,8 +95,28 @@ vunit uart_tx_properties (uart_tx(Behavioral)) {
     (TX = '1')[*BIT_DURATION]
   };
 
-  assert_uart:
+  assert_tx:
     assert always (( {start_of_tx(data_uart)} |=> {tx_sequence(data_uart)}) abort rst);
+
+  sequence rd_en_seq_1 is {
+    rst = '1';
+    (empty = '1')[*];
+    empty = '0'
+  };
+
+  sequence rd_en_seq_2 is {
+    rd_en = '1';
+    (rst = '0')[*(1+BIT_DURATION*11)]; -- time for one full transmission
+    (empty = '1')[*];
+    empty = '0'
+  };
+
+  rd_en_precond_1: assert always ({ rd_en_seq_1 } |-> {rd_en = '1'});
+  rd_en_precond_2: assert always ({ rd_en_seq_2 } |-> {rd_en = '1'});
+
+  rd_en_only_happens_after_precond:
+    assert always ( {rd_en = '1'} |-> { ended(rd_en_seq_1) or ended(rd_en_seq_2) });
+
   -- Now we need to predict the values of databits and paritybit
   -- We must capture the value of the data input one clock cycle after rd_en is
   -- asserted
