@@ -58,5 +58,8 @@ In formal verification, we typically:
 * ``cover`` sequences that we want to see, on the inputs, outputs and/or the
   internal states.
 
+The diagram below is a graphic representation of the typical scope of
+assertions and assumptions:
+
 .. image:: _static/directives.svg
 
