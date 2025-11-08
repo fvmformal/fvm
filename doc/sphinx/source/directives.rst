@@ -35,10 +35,28 @@ In formal verification, there are three main directives:
   sequence.
   
   While an assert asks "Can this fail?", a cover asks "Can this happen? How
-  does it happen?". Example:
+  does it happen?". If no way of satisfying the specified sequence exists, the
+  tool will prove mathematically prove that it is uncoverable. Example:
 
   .. code-block:: vhdl
 
     -- Shows the trace that leads to valid being asserted
     cover {valid = '1'};
+
+How to use these directives
+---------------------------
+
+In formal verification, we typically:
+
+* ``assume`` properties about the inputs, but not about the outputs or the
+  internal states, since that would introduce a verification gap.
+
+* ``assert`` properties about what the design does, by writing assertions that
+  consider the values of the outputs. Internal signals may also be considered
+  by the assertions.
+
+* ``cover`` sequences that we want to see, on the inputs, outputs and/or the
+  internal states.
+
+.. image:: _static/directives.svg
 
