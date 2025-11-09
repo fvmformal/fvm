@@ -58,7 +58,7 @@ We want to formally verify a simple VHDL counter, whose code is as follows:
 Save this file as ``counter.vhd``
 
 Writing the ``formal.py`` script
-------------------------------
+--------------------------------
 
 Now, let's write the ``formal.py`` script for the FVM framework!
 

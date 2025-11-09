@@ -1,7 +1,7 @@
 .. _formalfriendlydesign:
 
 Future work: Guidelines on writing formal-friendly designs
-=============================================
+==========================================================
 
 What to consider, when writing HDL code, in order to make it more
 formal-friendly
