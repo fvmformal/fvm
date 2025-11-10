@@ -62,5 +62,6 @@ commit, branch or tag.
 .. note::
 
    The ``-e`` option tells python that the FVM sources reside in the recently
-   cloned ``fvm`` directory. If you intend to remove that directory, do not use
-   the ``-e`` flag.
+   cloned ``fvm`` directory. If you intend to remove that directory, you should
+   remove the ``-e`` flag, but of course in that case the installation will not
+   be editable.

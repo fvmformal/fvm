@@ -10,7 +10,7 @@ def create_parser():
     :rtype: class 'argparse.ArgumentParser'
     """
     # Configure the argument parser
-    parser = argparse.ArgumentParser(description='Run the formal tools')
+    parser = argparse.ArgumentParser(description='Run the FVM Framework')
     parser.add_argument('-d', '--design',
             help='If set, run the specified design. If unset, run all designs. (default: %(default)s)')
     parser.add_argument('-s', '--step',
