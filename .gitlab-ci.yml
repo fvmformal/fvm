@@ -4,8 +4,6 @@ stages:
   - examples
   - coverage
   - doc
-  - deploy
-#  - history
 
 count_todos_in_code:
   stage: lint_and_test
@@ -312,45 +310,3 @@ pycoverage:
         coverage_format: cobertura
         path: coverage.xml
 
-# Deploy institutional website
-#
-# It is important we cd before the lftp command: if not, we may push the whole
-# repo to the public website. We want the second command to NOT run if the
-# first command fails, so that's why we use the && instead of a different line
-# in the script
-#
-# For now the website is just a placeholder: in the future, we will include
-# more content
-website:
-  stage: deploy
-  image: alpine:3
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main"
-  script:
-    - apk add lftp openssh
-    - mkdir ~/.ssh
-    - echo "institucional.us.es ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHQ6I6yxtNPZrW3bRpoXlDV+6QywmEp4j0ReeZETQGzi" >> ~/.ssh/known_hosts
-    - mv doc/website public
-    - mv doc/sphinx/build/html public/doc
-    - cd public && lftp -p 22 -u $FTP_USERNAME,$FTP_PASSWORD $FTP_HOST -e "mirror -R -e . ; quit"
-
-# Deploy to gitlab pages
-# This is done only on the main branch: if not, pages would be overwritten by
-# all pipelines running in all branches, and we don't want that. We want our
-# gitlab pages to point to the stable version
-# TODO : maybe there is way of serving multiple versions on the gitlab pages,
-# doing something similar as what we would like to do keeping the Allure
-# history. See
-# https://dev.to/zenika/gitlab-pages-preview-the-no-compromise-hack-to-serve-per-branch-pages-5599
-# (but also look for other alternatives)
-pages:
-  stage: deploy
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main"
-  script:
-    - mv doc/website public
-    - mv doc/sphinx/build/html public/doc
-    - echo Publishing gitlab pages
-  artifacts:
-    paths:
-      - public
