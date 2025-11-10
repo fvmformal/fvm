@@ -7,8 +7,8 @@ grlib-gpl-2024.4-b4295
 grlib-gpl-2024.4-b4295.tar.gz
 open-logic
 sdram-fpga
-drom/*.psl
-drom/*.svg
+drom_sequences/*.psl
+drom_sequences/*.svg
 test/test.vhd
 test/test2.vhd
 test/test3.vhd
