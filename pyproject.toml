@@ -25,6 +25,9 @@ dependencies = [
     "wavedrom>=2.0.3.post3",
 ]
 
+[project.scripts]
+drom2psl = "fvmframework.drom2psl.generator:main"
+
 [dependency-groups]
 dev = [
     "anybadge>=1.16.0",

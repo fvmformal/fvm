@@ -482,8 +482,13 @@ def create_parser():
     return parser
 
 
-if __name__ == "__main__":
-    # Get arguments from command-line
+def main():
+    """
+    main() function for drom2psl generator. To be used when called from the
+    command-line
+    """
+    parser = create_parser()
+
     args = parser.parse_args()
 
     if not args.debug:
@@ -498,3 +503,7 @@ if __name__ == "__main__":
             break
 
     sys.exit(retval)
+
+if __name__ == "__main__":
+    main()
+
