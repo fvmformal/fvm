@@ -262,6 +262,11 @@ class FvmFramework:
         checks whether the file exists and validates its extension. Non-standard 
         extensions trigger a warning but are still accepted.
 
+        .. warning::
+
+           Currently, Verilog support is experimental and may not work as
+           intended for all designs
+
         :param src: Path to the Verilog source file.
         :type src: str
         """
@@ -284,6 +289,11 @@ class FvmFramework:
         This method registers a SystemVerilog source file for later compilation. 
         It checks whether the file exists and validates its extension. Non-standard 
         extensions trigger a warning but are still accepted.
+
+        .. warning::
+
+           Currently, SystemVerilog support is experimental and may not work as
+           intended for all designs
 
         :param src: Path to the SystemVerilog source file.
         :type src: str
