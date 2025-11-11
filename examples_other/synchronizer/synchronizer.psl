@@ -1,0 +1,10 @@
+vunit synchronizer (synchronizer) {
+
+    -- Default clock for PSL assertions
+    default clock is rising_edge(clk);
+
+    -- Cover the output going to 1 and then back to zero
+    output_toggle: cover {output = '0'; output = '1' [+]; output = '0'};
+
+}
+

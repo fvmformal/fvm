@@ -289,7 +289,7 @@ with non-automated formal tools.
 
    fvm = FvmFramework()
    fvm.add_vhdl_source("counter.vhd")
-   fvm.add_psl_source("counter_properties.psl")
+   fvm.add_psl_source("counter_properties.psl", flavor="vhdl")
    fvm.set_toplevel("counter")
    fvm.run()
 

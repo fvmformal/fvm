@@ -9,7 +9,7 @@ subprocess.run(['git', 'clone',
 
 fvm.add_vhdl_source("sdram-fpga/sdram.vhd")
 
-fvm.add_psl_source("examples/sdram/sdram.psl")
+fvm.add_psl_source("examples/sdram/sdram.psl", flavor="vhdl")
 
 fvm.set_toplevel("sdram")
 fvm.add_config("sdram", "config_freq_10_desl_200", {"CLK_FREQ": 10.0, "T_DESL": 200.0})

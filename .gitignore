@@ -12,6 +12,12 @@ drom_sequences/*.svg
 test/test.vhd
 test/test2.vhd
 test/test3.vhd
+test/test.v
+test/test2.v
+test/test3.v
+test/test.sv
+test/test2.sv
+test/test3.sv
 test/test.psl
 test/test2.psl
 test/test3.psl

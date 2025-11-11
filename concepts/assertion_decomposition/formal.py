@@ -2,7 +2,7 @@ from fvmframework import FvmFramework
 
 fvm = FvmFramework()
 fvm.add_vhdl_sources("examples/linearinterpolator/*.vhd")
-fvm.add_psl_sources("concepts/assertion_decomposition/*.psl")
+fvm.add_psl_sources("concepts/assertion_decomposition/*.psl", flavor="vhdl")
 fvm.set_toplevel("interpolator")
 
 fvm.add_clock("clk", period = 10)

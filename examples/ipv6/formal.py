@@ -38,7 +38,7 @@ fvm.add_vhdl_sources("PoC/src/io/io.pkg.vhdl","PoC")
 fvm.add_vhdl_sources("PoC/src/net/net.pkg.vhdl","PoC")
 fvm.add_vhdl_sources("PoC/src/net/ipv6/*.vhdl","PoC")
 
-fvm.add_psl_sources("examples/ipv6/*.psl")
+fvm.add_psl_sources("examples/ipv6/*.psl", flavor="vhdl", library="PoC")
 
 fvm.set_toplevel("PoC.ipv6_Wrapper")
 

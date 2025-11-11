@@ -13,7 +13,7 @@ fvm.add_vhdl_source("open-logic/src/base/vhdl/olo_base_pkg_math.vhd")
 
 fvm.add_vhdl_sources("examples/arbiter_prior/*.vhd")
 
-fvm.add_psl_sources("examples/arbiter_prior/*.psl")
+fvm.add_psl_sources("examples/arbiter_prior/*.psl", flavor="vhdl")
 
 fvm.set_toplevel("olo_base_arb_prio")
 fvm.add_config("olo_base_arb_prio", "config_width_3_latency_0", {"Width_g": 64, "Latency_g": 1})

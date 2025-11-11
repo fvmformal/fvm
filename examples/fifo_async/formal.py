@@ -8,7 +8,7 @@ subprocess.run(['git', 'clone', '--recurse-submodules=:src', '--branch', '3.0.1'
 
 fvm.add_vhdl_sources("open-logic/src/base/vhdl/*.vhd")
 
-fvm.add_psl_source("examples/fifo_async/olo_base_fifo_async.psl")
+fvm.add_psl_source("examples/fifo_async/olo_base_fifo_async.psl", flavor="vhdl")
 
 fvm.set_toplevel("olo_base_fifo_async")
 fvm.add_config("olo_base_fifo_async", "config_width_3_depth_8", {"Width_g": 3, "Depth_g": 8})

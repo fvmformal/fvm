@@ -52,6 +52,38 @@ def test_add_single_vhdl_source_doesnt_exist() :
     assert pytest_wrapped_e.type == SystemExit
     assert pytest_wrapped_e.value.code == BAD_VALUE["value"]
 
+def test_add_single_verilog_source_exists():
+    """Test adding a single Verilog source file that exists"""
+    fvm = FvmFramework()
+    Path('test/test.v').touch()
+    fvm.add_verilog_source("test/test.v")
+    # Add verilog source without typical verilog extension
+    fvm.add_verilog_source("test/test.vhd")
+
+def test_add_single_verilog_source_doesnt_exist() :
+    """Test adding a single Verilog source file that doesn't exist"""
+    fvm = FvmFramework()
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        fvm.add_verilog_source("thisfiledoesntexist.v")
+    assert pytest_wrapped_e.type == SystemExit
+    assert pytest_wrapped_e.value.code == BAD_VALUE["value"]
+
+def test_add_single_systemverilog_source_exists():
+    """Test adding a single SystemVerilog source file that exists"""
+    fvm = FvmFramework()
+    Path('test/test.sv').touch()
+    fvm.add_systemverilog_source("test/test.sv")
+    # Add systemverilog source without typical systemverilog extension
+    fvm.add_systemverilog_source("test/test.vhd")
+
+def test_add_single_systemverilog_source_doesnt_exist() :
+    """Test adding a single SystemVerilog source file that doesn't exist"""
+    fvm = FvmFramework()
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        fvm.add_systemverilog_source("thisfiledoesntexist.sv")
+    assert pytest_wrapped_e.type == SystemExit
+    assert pytest_wrapped_e.value.code == BAD_VALUE["value"]
+
 def test_clear_vhdl_sources() :
     """Test clearing the list of VHDL source files"""
     fvm = FvmFramework()
@@ -62,17 +94,46 @@ def test_clear_vhdl_sources() :
     fvm.clear_vhdl_sources()
     assert len(fvm.vhdl_sources) == 0
 
+def test_clear_verilog_sources() :
+    """Test clearing the list of Verilog source files"""
+    fvm = FvmFramework()
+    assert len(fvm.verilog_sources) == 0
+    Path('test/test.v').touch()
+    fvm.add_verilog_source("test/test.v")
+    assert len(fvm.verilog_sources) == 1
+    fvm.clear_verilog_sources()
+    assert len(fvm.verilog_sources) == 0
+
+def test_clear_systemverilog_sources() :
+    """Test clearing the list of SystemVerilog source files"""
+    fvm = FvmFramework()
+    assert len(fvm.systemverilog_sources) == 0
+    Path('test/test.sv').touch()
+    fvm.add_systemverilog_source("test/test.sv")
+    assert len(fvm.systemverilog_sources) == 1
+    fvm.clear_systemverilog_sources()
+    assert len(fvm.systemverilog_sources) == 0
+
 def test_add_single_psl_source_exists():
     """Test adding a single PSL source file that exists"""
     fvm = FvmFramework()
     Path('test/test.psl').touch()
-    fvm.add_psl_source("test/test.psl")
+    fvm.add_psl_source("test/test.psl", flavor="vhdl")
 
 def test_add_single_psl_source_doesnt_exist() :
     """Test adding a single PSL source file that doesn't exist"""
     fvm = FvmFramework()
     with pytest.raises(SystemExit) as pytest_wrapped_e:
-        fvm.add_psl_source("thisfiledoesntexist.psl")
+        fvm.add_psl_source("thisfiledoesntexist.psl", flavor="vhdl")
+    assert pytest_wrapped_e.type == SystemExit
+    assert pytest_wrapped_e.value.code == BAD_VALUE["value"]
+
+def test_add_single_psl_source_invalid_flavor() :
+    """Test adding a single PSL source file with an invalid flavor"""
+    fvm = FvmFramework()
+    Path('test/test.psl').touch()
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        fvm.add_psl_source("test/test.psl", flavor="invalid")
     assert pytest_wrapped_e.type == SystemExit
     assert pytest_wrapped_e.value.code == BAD_VALUE["value"]
 
@@ -81,7 +142,7 @@ def test_clear_psl_sources() :
     fvm = FvmFramework()
     assert len(fvm.psl_sources) == 0
     Path('test/test.psl').touch()
-    fvm.add_psl_source("test/test.psl")
+    fvm.add_psl_source("test/test.psl", flavor="vhdl")
     assert len(fvm.psl_sources) == 1
     fvm.clear_psl_sources()
     assert len(fvm.psl_sources) == 0
@@ -90,13 +151,21 @@ def test_add_single_drom_source_exists():
     """Test adding a single Wavedrom source file that exists"""
     fvm = FvmFramework()
     Path('test/test.json').touch()
-    fvm.add_drom_source("test/test.json")
+    fvm.add_drom_source("test/test.json", flavor="vhdl")
 
 def test_add_single_drom_source_doesnt_exist() :
     """Test adding a single Wavedrom source file that doesn't exist"""
     fvm = FvmFramework()
     with pytest.raises(SystemExit) as pytest_wrapped_e:
-        fvm.add_drom_source("thisfiledoesntexist.json")
+        fvm.add_drom_source("thisfiledoesntexist.json", "vhdl")
+    assert pytest_wrapped_e.type == SystemExit
+    assert pytest_wrapped_e.value.code == BAD_VALUE["value"]
+
+def test_add_single_drom_source_verilog() :
+    """Test adding a single Wavedrom with verilog flavor (not supported yet)"""
+    fvm = FvmFramework()
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        fvm.add_drom_source("test/test.json", "verilog")
     assert pytest_wrapped_e.type == SystemExit
     assert pytest_wrapped_e.value.code == BAD_VALUE["value"]
 
@@ -105,7 +174,7 @@ def test_clear_drom_sources() :
     fvm = FvmFramework()
     assert len(fvm.drom_sources) == 0
     Path('test/test.json').touch()
-    fvm.add_drom_source("test/test.json")
+    fvm.add_drom_source("test/test.json", "vhdl")
     assert len(fvm.drom_sources) == 1
     fvm.clear_drom_sources()
     assert len(fvm.drom_sources) == 0
@@ -126,19 +195,51 @@ def test_add_multiple_vhdl_sources_dont_exist() :
     assert pytest_wrapped_e.type == SystemExit
     assert pytest_wrapped_e.value.code == BAD_VALUE["value"]
 
+def test_add_multiple_verilog_sources_exist() :
+    """Test adding multiple Verilog source files that exist"""
+    fvm = FvmFramework()
+    Path('test/test.v').touch()
+    Path('test/test2.v').touch()
+    Path('test/test3.v').touch()
+    fvm.add_verilog_sources("test/*.v")
+
+def test_add_multiple_verilog_sources_dont_exist() :
+    """Test adding multiple Verilog source files that don't exist"""
+    fvm = FvmFramework()
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        fvm.add_verilog_sources("test/thesefilesdontexist*.v")
+    assert pytest_wrapped_e.type == SystemExit
+    assert pytest_wrapped_e.value.code == BAD_VALUE["value"]
+
+def test_add_multiple_systemverilog_sources_exist() :
+    """Test adding multiple SystemVerilog source files that exist"""
+    fvm = FvmFramework()
+    Path('test/test.sv').touch()
+    Path('test/test2.sv').touch()
+    Path('test/test3.sv').touch()
+    fvm.add_systemverilog_sources("test/*.sv")
+
+def test_add_multiple_systemverilog_sources_dont_exist() :
+    """Test adding multiple SystemVerilog source files that don't exist"""
+    fvm = FvmFramework()
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        fvm.add_systemverilog_sources("test/thesefilesdontexist*.sv")
+    assert pytest_wrapped_e.type == SystemExit
+    assert pytest_wrapped_e.value.code == BAD_VALUE["value"]
+
 def test_add_multiple_psl_sources_exist() :
     """Test adding multiple PSL source files that exist"""
     fvm = FvmFramework()
     Path('test/test.psl').touch()
     Path('test/test2.psl').touch()
     Path('test/test3.psl').touch()
-    fvm.add_psl_sources("test/*.psl")
+    fvm.add_psl_sources("test/*.psl", flavor="vhdl")
 
 def test_add_multiple_psl_sources_dont_exist() :
     """Test adding multiple PSL source files that don't exist"""
     fvm = FvmFramework()
     with pytest.raises(SystemExit) as pytest_wrapped_e:
-        fvm.add_psl_sources("test/thesefilesdontexist*.psl")
+        fvm.add_psl_sources("test/thesefilesdontexist*.psl", flavor="vhdl")
     assert pytest_wrapped_e.type == SystemExit
     assert pytest_wrapped_e.value.code == BAD_VALUE["value"]
 
@@ -148,13 +249,13 @@ def test_add_multiple_drom_sources_exist() :
     Path('test/test.json').touch()
     Path('test/test2.json').touch()
     Path('test/test3.json').touch()
-    fvm.add_drom_sources("test/*.json")
+    fvm.add_drom_sources("test/*.json", flavor="vhdl")
 
 def test_add_multiple_drom_sources_dont_exist() :
     """Test adding multiple Wavedrom source files that don't exist"""
     fvm = FvmFramework()
     with pytest.raises(SystemExit) as pytest_wrapped_e:
-        fvm.add_drom_sources("test/thesefilesdontexist*.json")
+        fvm.add_drom_sources("test/thesefilesdontexist*.json", flavor="vhdl")
     assert pytest_wrapped_e.type == SystemExit
     assert pytest_wrapped_e.value.code == BAD_VALUE["value"]
 

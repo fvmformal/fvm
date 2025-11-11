@@ -252,7 +252,6 @@ class FvmFramework:
                                 f'instead it has {extension=}')
         self.vhdl_sources.append(src)
         self.libraries_from_hdl_sources.append(library)
-        self.logger.debug(f'{self.vhdl_sources=}')
 
     def add_verilog_source(self, src, library="work"):
         """
@@ -278,9 +277,10 @@ class FvmFramework:
         if extension not in ['.v', '.V'] :
             self.logger.warning(f'Verilog source {src=} does not have a typical Verilog '
                                 f'extension, instead it has {extension=}')
+        self.logger.warning('Verilog support is Work in Progress. Expect bugs and missing'
+                            ' features.')
         self.verilog_sources.append(src)
         self.libraries_from_hdl_sources.append(library)
-        self.logger.debug(f'{self.verilog_sources=}')
 
     def add_systemverilog_source(self, src, library="work"):
         """
@@ -306,9 +306,10 @@ class FvmFramework:
         if extension not in ['.v', '.V', '.sv', '.SV', '.svh', '.SVH'] :
             self.logger.warning(f'SystemVerilog source {src=} does not have a typical '
                                 f'SystemVerilog extension, instead it has {extension=}')
+        self.logger.warning('SystemVerilog support is Work in Progress. Expect bugs and missing'
+                            ' features.')
         self.systemverilog_sources.append(src)
         self.libraries_from_hdl_sources.append(library)
-        self.logger.debug(f'{self.systemverilog_sources=}')
 
     def clear_vhdl_sources(self):
         """
@@ -319,16 +320,42 @@ class FvmFramework:
         self.logger.trace('Removing all VHDL sources')
         self.vhdl_sources = []
 
-    def add_psl_source(self, src):
+    def clear_verilog_sources(self):
+        """
+        Remove all registered Verilog sources from the framework.
+
+        This method clears the internal list of Verilog sources.
+        """
+        self.logger.trace('Removing all Verilog sources')
+        self.verilog_sources = []
+
+    def clear_systemverilog_sources(self):
+        """
+        Remove all registered SystemVerilog sources from the framework.
+
+        This method clears the internal list of SystemVerilog sources.
+        """
+        self.logger.trace('Removing all SystemVerilog sources')
+        self.systemverilog_sources = []
+
+    def add_psl_source(self, src, flavor, library="work"):
         """
         Add a single PSL (Property Specification Language) source file to the framework.
 
         The function validates that the provided file exists and checks whether
         it has a common PSL extension. If the file does not exist, the framework will
         log an error and exit. If the extension is unusual, a warning is logged.
+        The flavor parameter must be either "vhdl" or "verilog". The library
+        parameter specifies the library to which the PSL source belongs, i.e.,
+        the library where the design bound to the PSL properties is located.
 
         :param src: Path to the PSL source file.
         :type src: str
+        :param flavor: Flavor of PSL, either "vhdl" or "verilog".
+        :type flavor: str
+        :param library: Library of the design bound to the PSL properties.
+                        Defaults to ``"work"``.
+        :type library: str
         """
         self.logger.trace(f'Adding PSL source: {src}')
         if not os.path.exists(src) :
@@ -338,8 +365,12 @@ class FvmFramework:
         if extension not in ['.psl', '.PSL'] :
             self.logger.warning(f'PSL source {src=} does not have a typical PSL extension, '
                                 f'instead it has {extension=}')
-        self.psl_sources.append(src)
-        self.logger.debug(f'{self.psl_sources=}')
+        if flavor.lower() not in ['vhdl', 'verilog'] :
+            self.logger.error(f'PSL flavor {flavor=} not recognized, must be one of: '
+                              f'vhdl, verilog')
+            self.exit_if_required(BAD_VALUE)
+        psl_src = {'file': src, 'flavor': flavor.lower(), 'library': library}
+        self.psl_sources.append(psl_src)
 
     def clear_psl_sources(self):
         """
@@ -350,17 +381,30 @@ class FvmFramework:
         self.logger.trace('Removing all PSL sources')
         self.psl_sources = []
 
-    def add_drom_source(self, src):
+    def add_drom_source(self, src, flavor, library="work"):
         """
         Add a single Wavedrom source file to the framework.
 
         This method validates that the provided file exists and checks whether
         it has a typical Wavedrom extension (``.json``, ``.JSON``, ``.drom``, or ``.wavedrom``).
         If the file does not exist, the framework logs an error and exits.
-        If the extension is unusual, a warning is logged.
+        If the extension is unusual, a warning is logged. The flavor parameter must
+        be either "vhdl" or "verilog".
+
+        .. warning::
+
+           Verilog flavor is not available yet when using Wavedrom sources.
+
+        The library parameter specifies the library to which the PSL source belongs,
+        i.e., the library where the design bound to the PSL properties is located.
 
         :param src: Path to the Wavedrom source file.
         :type src: str
+        :param flavor: Flavor of PSL, either "vhdl" or "verilog".
+        :type flavor: str
+        :param library: Library of the design bound to the PSL properties.
+                        Defaults to ``"work"``.
+        :type library: str
         """
         self.logger.trace(f'Adding wavedrom source: {src}')
         if not os.path.exists(src) :
@@ -370,8 +414,15 @@ class FvmFramework:
         if extension not in ['.json', '.JSON', '.drom', '.wavedrom'] :
             self.logger.warning(f'wavedrom source {src=} does not have a typical wavedrom '
                                 f'extension, instead it has {extension=}')
-        self.drom_sources.append(src)
-        self.logger.debug(f'{self.drom_sources=}')
+        if flavor.lower() not in ['vhdl', 'verilog'] :
+            self.logger.error(f'PSL flavor {flavor=} not recognized, must be one of: '
+                              f'vhdl, verilog')
+            self.exit_if_required(BAD_VALUE)
+        if flavor.lower() == "verilog":
+            self.logger.error(f'Verilog flavor not supported yet in drom2psl')
+            self.exit_if_required(BAD_VALUE)         
+        psl_src = {'file': src, 'flavor': flavor.lower(), 'library': library}
+        self.drom_sources.append(psl_src)
 
     def clear_drom_sources(self):
         """
@@ -405,26 +456,78 @@ class FvmFramework:
         for source in sources:
             self.add_vhdl_source(source, library)
 
-    def add_psl_sources(self, globstr):
+    def add_verilog_sources(self, globstr, library="work"):
         """
-        Add multiple PSL source files to the framework using a glob pattern.
+        Add multiple Verilog source files to the framework using a glob pattern.
 
-        This method searches for all files matching the provided glob pattern 
-        and adds them as PSL sources. Each matching file is added via 
-        :meth:`add_psl_source`. If no files match the pattern, an error is
+        This method searches for all files matching the provided glob pattern
+        and adds them as Verilog sources. Each matching file is added via
+        :meth:`add_verilog_source`. If no files match the pattern, an error is
         logged and the framework exits.
 
-        :param globstr: Glob pattern to search for PSL source files.
+        :param globstr: Glob pattern to search for Verilog source files.
         :type globstr: str
+        :param library: VHDL library name to associate with the sources. Defaults
+                        to ``"work"``.
+        :type library: str
         """
         sources = glob.glob(globstr)
         if len(sources) == 0 :
             self.logger.error(f'No files found for pattern {globstr}')
             self.exit_if_required(BAD_VALUE)
         for source in sources:
-            self.add_psl_source(source)
+            self.add_verilog_source(source, library)
 
-    def add_drom_sources(self, globstr):
+    def add_systemverilog_sources(self, globstr, library="work"):
+        """
+        Add multiple SystemVerilog source files to the framework using a glob pattern.
+
+        This method searches for all files matching the provided glob pattern
+        and adds them as SystemVerilog sources. Each matching file is added via
+        :meth:`add_systemverilog_source`. If no files match the pattern, an error is
+        logged and the framework exits.
+
+        :param globstr: Glob pattern to search for SystemVerilog source files.
+        :type globstr: str
+        :param library: VHDL library name to associate with the sources. Defaults
+                        to ``"work"``.
+        :type library: str
+        """
+        sources = glob.glob(globstr)
+        if len(sources) == 0 :
+            self.logger.error(f'No files found for pattern {globstr}')
+            self.exit_if_required(BAD_VALUE)
+        for source in sources:
+            self.add_systemverilog_source(source, library)
+
+    def add_psl_sources(self, globstr, flavor, library="work"):
+        """
+        Add multiple PSL source files to the framework using a glob pattern.
+
+        This method searches for all files matching the provided glob pattern 
+        and adds them as PSL sources. Each matching file is added via 
+        :meth:`add_psl_source`. If no files match the pattern, an error is
+        logged and the framework exits. The flavor parameter must be either
+        "vhdl" or "verilog". The library parameter specifies the library to
+        which the PSL source belongs, i.e., the library where the design
+        bound to the PSL properties is located.
+
+        :param globstr: Glob pattern to search for PSL source files.
+        :type globstr: str
+        :param flavor: Flavor of PSL, either "vhdl" or "verilog".
+        :type flavor: str
+        :param library: Library of the design bound to the PSL properties.
+                        Defaults to ``"work"``.
+        :type library: str
+        """
+        sources = glob.glob(globstr)
+        if len(sources) == 0 :
+            self.logger.error(f'No files found for pattern {globstr}')
+            self.exit_if_required(BAD_VALUE)
+        for source in sources:
+            self.add_psl_source(source, flavor, library)
+
+    def add_drom_sources(self, globstr, flavor, library="work"):
         """
         Add multiple Wavedrom source files to the framework using a glob pattern.
 
@@ -432,16 +535,29 @@ class FvmFramework:
         and adds them as Wavedrom sources. Each matching file is added via 
         :meth:`add_drom_source`. If no files match the pattern, an error is
         logged and the framework exits.
+        The flavor parameter must be either "vhdl" or "verilog".
 
-        :param globstr: Glob pattern to search for Wavedrom source files.
-        :type globstr: str
+        .. warning::
+
+           Verilog flavor is not available yet when using Wavedrom sources.
+
+        The library parameter specifies the library to which the PSL source belongs,
+        i.e., the library where the design bound to the PSL properties is located.
+
+        :param src: Path to the Wavedrom source file.
+        :type src: str
+        :param flavor: Flavor of PSL, either "vhdl" or "verilog".
+        :type flavor: str
+        :param library: Library of the design bound to the PSL properties.
+                        Defaults to ``"work"``.
+        :type library: str
         """
         sources = glob.glob(globstr)
         if len(sources) == 0 :
             self.logger.error(f'No files found for pattern {globstr}')
             self.exit_if_required(BAD_VALUE)
         for source in sources:
-            self.add_drom_source(source)
+            self.add_drom_source(source, flavor, library)
 
     def list_vhdl_sources(self):
         """
@@ -451,6 +567,24 @@ class FvmFramework:
         framework.
         """
         self.logger.info(f'{self.vhdl_sources=}')
+
+    def list_verilog_sources(self):
+        """
+        List all Verilog source files in the framework.
+
+        This method logs the current list of Verilog source files stored in the
+        framework.
+        """
+        self.logger.info(f'{self.verilog_sources=}')
+
+    def list_systemverilog_sources(self):
+        """
+        List all SystemVerilog source files in the framework.
+
+        This method logs the current list of SystemVerilog source files stored in the
+        framework.
+        """
+        self.logger.info(f'{self.systemverilog_sources=}')
 
     def list_psl_sources(self):
         """
@@ -481,6 +615,8 @@ class FvmFramework:
         - Wavedrom sources
         """
         self.list_vhdl_sources()
+        self.list_verilog_sources()
+        self.list_systemverilog_sources()
         self.list_psl_sources()
         self.list_drom_sources()
 

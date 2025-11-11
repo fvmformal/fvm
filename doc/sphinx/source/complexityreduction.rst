@@ -265,7 +265,7 @@ From `formal.py` we can add different configurations with
    fvm = FvmFramework()
    fvm.add_vhdl_sources("open-logic/src/base/vhdl/*.vhd")
    fvm.add_vhdl_sources("examples/fifo_sync/*.vhd")
-   fvm.add_psl_sources("examples/fifo_sync/*.psl")
+   fvm.add_psl_sources("examples/fifo_sync/*.psl", flavor="vhdl")
 
    fvm.set_toplevel("olo_base_fifo_sync")
    fvm.add_config("olo_base_fifo_sync", "config_width_8_depth_8", {"Width_g": 8, "Depth_g": 8})
@@ -308,7 +308,7 @@ From `formal.py` we can add different configurations with
    fvm = FvmFramework()
    fvm.add_vhdl_sources("open-logic/src/base/vhdl/*.vhd")
    fvm.add_vhdl_sources("examples/fifo_sync/*.vhd")
-   fvm.add_psl_sources("examples/fifo_sync/*.psl")
+   fvm.add_psl_sources("examples/fifo_sync/*.psl", flavor="vhdl")
 
    fvm.set_toplevel("olo_base_fifo_sync")
    fvm.add_config("olo_base_fifo_sync", "config_width_8_depth_8", {"Width_g": 8, "Depth_g": 8})

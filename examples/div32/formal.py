@@ -38,7 +38,7 @@ fvm.add_vhdl_source(f"{extracted_folder}/{extracted_folder}/lib/grlib/modgen/mul
 fvm.add_vhdl_sources(f"{extracted_folder}/{extracted_folder}/lib/gaisler/arith/*.vhd","gaisler")
 fvm.add_vhdl_source("examples/div32/div32_common.vhd", "gaisler")
 
-fvm.add_psl_source("examples/div32/div32.psl")
+fvm.add_psl_source("examples/div32/div32.psl", flavor="vhdl", library="gaisler")
 
 fvm.set_toplevel("gaisler.div32")
 

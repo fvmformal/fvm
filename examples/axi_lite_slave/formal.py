@@ -10,7 +10,7 @@ fvm.add_vhdl_sources("open-logic/src/base/vhdl/*.vhd")
 fvm.add_vhdl_source("open-logic/src/axi/vhdl/olo_axi_pkg_protocol.vhd")
 fvm.add_vhdl_source("open-logic/src/axi/vhdl/olo_axi_lite_slave.vhd")
 
-fvm.add_psl_source("examples/axi_lite_slave/olo_axi_lite_slave.psl")
+fvm.add_psl_source("examples/axi_lite_slave/olo_axi_lite_slave.psl", flavor="vhdl")
 
 fvm.set_toplevel("olo_axi_lite_slave")
 

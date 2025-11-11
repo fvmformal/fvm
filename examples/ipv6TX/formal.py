@@ -19,7 +19,7 @@ fvm.add_vhdl_sources("PoC/src/io/io.pkg.vhdl","PoC")
 fvm.add_vhdl_sources("PoC/src/net/net.pkg.vhdl","PoC")
 fvm.add_vhdl_source("PoC/src/net/ipv6/ipv6_TX.vhdl","PoC")
 
-fvm.add_psl_sources("examples/ipv6TX/*.psl")
+fvm.add_psl_sources("examples/ipv6TX/*.psl", flavor="vhdl", library="PoC")
 
 fvm.set_toplevel("PoC.ipv6_TX")
 

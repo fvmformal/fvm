@@ -125,32 +125,61 @@ def gencompilescript(framework, filename, path):
             print(f'vlib {framework.get_tool_flags("vlib")} {lib_dir}', file=f)
             print(f'vmap {framework.get_tool_flags("vmap")} {lib} {lib_dir}', file=f)
             if framework.vhdl_sources:
-                lib_sources = [src for src, library in zip(framework.vhdl_sources,
-                                                        framework.libraries_from_hdl_sources)
-                                                        if library == lib]
-                f_file_path = os.path.join(path, f'{lib}_design.f')
-                create_f_file(f_file_path, lib_sources)
-                print(f'vcom {framework.get_tool_flags("vcom")} -{vhdlstd2flag(framework.vhdlstd)}'
-                    f' -work {lib} -autoorder -f {f_file_path}', file=f)
-                print('', file=f)
+                compile_vdhl(path, framework, lib, f)
             if framework.verilog_sources:
-                lib_sources = [src for src, library in zip(framework.verilog_sources,
-                                                        framework.libraries_from_hdl_sources)
-                                                        if library == lib]
-                f_file_path = os.path.join(path, f'{lib}_verilog_design.f')
-                create_f_file(f_file_path, lib_sources)
-                print(f'vlog {framework.get_tool_flags("vlog")} -work {lib} -f {f_file_path}',
-                      file=f)
-                print('', file=f)
+                compile_verilog(path, framework, lib, f)
             if framework.systemverilog_sources:
-                lib_sources = [src for src, library in zip(framework.systemverilog_sources,
-                                                        framework.libraries_from_hdl_sources)
-                                                        if library == lib]
-                f_file_path = os.path.join(path, f'{lib}_systemverilog_design.f')
-                create_f_file(f_file_path, lib_sources)
-                print(f'vlog {framework.get_tool_flags("vlog")} -work {lib} -sv -f {f_file_path}',
-                      file=f)
-                print('', file=f)
+                compile_systemverilog(path, framework, lib, f)
+
+def compile_vdhl(path, framework, lib, f):
+    lib_sources = [src for src, library in zip(framework.vhdl_sources,
+                                            framework.libraries_from_hdl_sources)
+                                            if library == lib]
+    f_file_path = os.path.join(path, f'{lib}_design.f')
+    create_f_file(f_file_path, lib_sources)
+    psl_flags = ' '.join(
+        f'-pslfile {psl["file"]}'
+        for psl in framework.psl_sources
+        if psl['flavor'] == 'vhdl' and psl['library'] == lib
+    )
+    drom_generated_psl = ' '.join(
+        f'-pslfile {psl["file"]}'
+        for psl in framework.drom_generated_psl
+        if psl['flavor'] == 'vhdl' and psl['library'] == lib
+    )
+    print(f'vcom {framework.get_tool_flags("vcom")} -{vhdlstd2flag(framework.vhdlstd)}'
+        f' -work {lib} -autoorder -f {f_file_path} {drom_generated_psl} {psl_flags}', file=f)
+    print('', file=f)
+
+def compile_verilog(path, framework, lib, f):
+    lib_sources = [src for src, library in zip(framework.verilog_sources,
+                                            framework.libraries_from_hdl_sources)
+                                            if library == lib]
+    f_file_path = os.path.join(path, f'{lib}_verilog_design.f')
+    create_f_file(f_file_path, lib_sources)
+    psl_flags = ' '.join(
+        f'-pslfile {psl["file"]}'
+        for psl in framework.psl_sources
+        if psl['flavor'] == 'verilog' and psl['library'] == lib
+    )
+    print(f'vlog {framework.get_tool_flags("vlog")} -work {lib} -f {f_file_path} {psl_flags}',
+            file=f)
+    print('', file=f)
+
+def compile_systemverilog(path, framework, lib, f):
+    lib_sources = [src for src, library in zip(framework.systemverilog_sources,
+                                            framework.libraries_from_hdl_sources)
+                                            if library == lib]
+    f_file_path = os.path.join(path, f'{lib}_systemverilog_design.f')
+    create_f_file(f_file_path, lib_sources)
+    psl_flags = ' '.join(
+        f'-pslfile {psl["file"]}'
+        for psl in framework.psl_sources
+        if psl['flavor'] == 'verilog' and psl['library'] == lib
+    )
+    print(f'vlog {framework.get_tool_flags("vlog")} -work {lib} -sv -f {f_file_path} {psl_flags}',
+            file=f)
+    print('', file=f)
 
 def run_qverify_step(framework, design, step):
     """
@@ -918,10 +947,6 @@ def setup_prove(framework, path):
 
         print('formal compile ', end='', file=f)
         print(f'-d {framework.current_toplevel} {framework.generic_args} ', end='', file=f)
-        for i in framework.psl_sources :
-            print(f'-pslfile {i} ', end='', file=f)
-        for i in framework.drom_generated_psl :
-            print(f'-pslfile {i} ', end='', file=f)
         print('-include_code_cov ', end='', file=f)
         print(f'{framework.get_tool_flags("formal compile")}', file=f)
 

@@ -60,7 +60,7 @@ fvm.add_vhdl_source(f"{extracted_folder}/{extracted_folder}/lib/gaisler/ddr/ddrp
 fvm.add_vhdl_source(f"{extracted_folder}/{extracted_folder}/lib/gaisler/ddr/ddrintpkg.vhd","gaisler")
 fvm.add_vhdl_source(f"{extracted_folder}/{extracted_folder}/lib/gaisler/ddr/ddr2spax_ddr.vhd","gaisler")
 
-fvm.add_psl_sources("examples/ddr2_controller/*.psl")
+fvm.add_psl_sources("examples/ddr2_controller/*.psl", flavor="vhdl", library="gaisler")
 
 fvm.set_toplevel("gaisler.ddr2spax_ddr")
 fvm.add_config("gaisler.ddr2spax_ddr", "ddr_width_16", {"ddrbits": 16})
