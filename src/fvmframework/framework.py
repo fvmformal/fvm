@@ -1649,9 +1649,13 @@ class FvmFramework:
             drom2psl_outdir = os.path.join(self.outdir, path)
             os.makedirs(drom2psl_outdir, exist_ok=True)
             for drom_source in self.drom_sources:
-                generator(drom_source, outdir=drom2psl_outdir)
-                self.drom_generated_psl.append(os.path.join(drom2psl_outdir,
-                                             pathlib.Path(drom_source).with_suffix('.psl').name))
+                generator(drom_source["file"], outdir=drom2psl_outdir)
+                drom_source['gen_psl'] = os.path.join(drom2psl_outdir,
+                                        pathlib.Path(drom_source["file"]).with_suffix('.psl').name)
+                gen_psl = {'file': drom_source['gen_psl'],
+                           'flavor': drom_source['flavor'],
+                           'library': drom_source['library']}
+                self.drom_generated_psl.append(gen_psl)
 
     def setup_design(self, design, config=None):
         """Create the output directory and the scripts for a design, but do not
