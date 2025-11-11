@@ -149,9 +149,23 @@ todo:
 	@echo "TODOs=$(TODOs)"
 	@$(UV_RUN) anybadge --value=$(TODOs) --label=TODOs --file=badges/todo.svg 1=green 10=yellow 20=orange 30=tomato 999=red
 
-# Generate documentation
+# Generate documentation, adding a warning to the internal API
+define WARNING_INTERNAL_API
+.. warning::\n\
+\n\
+   Callables that are not documented in the Public API are not intented to\n\
+   be directly used and thus may change between minor versions.\n\
+\n\
+   Proceed with caution.\n\
+\n\
+
+endef
+
 docs:
 	$(UV_RUN) sphinx-apidoc -o doc/sphinx/source src/fvmframework
+	echo "$(WARNING_INTERNAL_API)" > temp_modules.rst
+	cat doc/sphinx/source/modules.rst >> temp_modules.rst
+	mv temp_modules.rst doc/sphinx/source/modules.rst
 	$(UV_RUN) make -C doc/sphinx/ html
 	mkdir -p badges
 	rm -f badges/undocumented.svg
