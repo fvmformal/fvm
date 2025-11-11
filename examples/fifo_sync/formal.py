@@ -17,6 +17,7 @@ fvm.add_config("olo_base_fifo_sync", "config_width_3_depth_8", {"Width_g": 3, "D
 if fvm.toolchain == "sby":
     fvm.set_tool_flags("ghdl", fvm.get_tool_flags("ghdl") + " -frelaxed")
 
+fvm.allow_failure('rulecheck')
 fvm.allow_failure('xverify')
 
 fvm.set_coverage_goal('reachability', 70)

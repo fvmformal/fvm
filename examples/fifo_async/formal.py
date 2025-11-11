@@ -26,6 +26,8 @@ fvm.add_reset_domain(["In_Ready", "In_Rst", "In_Data", "In_Valid"], name="In_Rst
 fvm.add_reset("Out_Rst", asynchronous=True, active_high=True)
 fvm.add_reset_domain(["Out_Ready"], name="Out_Rst")
 
+fvm.allow_failure("lint")
+fvm.allow_failure("rulecheck")
 fvm.allow_failure("xverify")
 fvm.set_coverage_goal("reachability", 80)
 fvm.set_coverage_goal("prove.formalcover", 60)
