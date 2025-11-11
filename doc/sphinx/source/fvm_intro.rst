@@ -153,7 +153,7 @@ For example, from the following `.json` file:
        {name: 'err', wave: '0...'}
      ],
    ],
- }
+   }
 
 
 Which corresponds to the following waveform diagram:

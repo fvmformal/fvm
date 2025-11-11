@@ -42,6 +42,7 @@ To learn more, go to the next section: :ref:`fv_intro`
    :hidden:
 
    directives
+   sequencesandproperties
    metrics
    concepts
 
