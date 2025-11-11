@@ -3,16 +3,43 @@
 drom2psl
 ========
 
-.. automodule:: fvmframework.drom2psl.generator
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :exclude-members: format_group_arguments, format_group_arguments_in_call
+There are three ways to use the ``drom2psl`` tool:
 
-.. todo::
+Adding drom sources
+-------------------
 
-   Document here how to use drom2psl
-   * Command-line options for the generator
-   * Can be also used within python
-   * Users can also directly add :code:`drom` files to their FVM project
+The functions :py:func:`fvmframework.FvmFramework.add_drom_source` and
+:py:func:`fvmframework.FvmFramework.add_drom_sources` allow to respectively add
+one or multiple wavedrom sources, in JSON format, to an FVM project.
+
+This is the recommended way of working with wavedrom sources if no
+modifications are needed on the generated PSL outputs.
+
+During the *setup* stage of the FVM framework, all the drom sources will be
+converted to PSL files, which will be included in the generated scripts for the
+``prove`` step.
+
+.. autofunction:: fvmframework.FvmFramework.add_drom_source
+
+.. autofunction:: fvmframework.FvmFramework.add_drom_sources
+
+
+Manually running drom2psl
+-------------------------
+
+Alternatively, the user can just run the ``drom2psl`` executable to:
+
+.. argparse::
+   :module: fvmframework.drom2psl.generator
+   :func: create_parser
+   :prog: drom2psl
+
+Calling the drom2psl.generator function
+---------------------------------------
+
+The third way of invoking ``drom2psl`` is by calling the
+:py:func:`fvmframework.drom2psl.generator.generator` function from any python
+script:
+
+.. autofunction:: fvmframework.drom2psl.generator.generator
 

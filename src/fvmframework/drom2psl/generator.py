@@ -460,9 +460,9 @@ def format_group_arguments_in_call(group_arguments):
         string += ')'
     return string
 
-if __name__ == "__main__":
-    # Configure the argument parser
-    parser = argparse.ArgumentParser(description=('Generate PSL sequence from'
+def create_parser():
+    """Configure drom2psl's argument parser"""
+    parser = argparse.ArgumentParser(description=('Generate PSL sequences from'
                                      ' .json wavedrom descriptions.'))
     parser.add_argument('inputfiles', nargs='+',
                         help='.json input file(s) (must be wavedrom compatible)')
@@ -479,6 +479,10 @@ if __name__ == "__main__":
                         help=('Do not include extra comments in generated PSL'
                               ' files. (default: %(default)s)'))
 
+    return parser
+
+
+if __name__ == "__main__":
     # Get arguments from command-line
     args = parser.parse_args()
 
