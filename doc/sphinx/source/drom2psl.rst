@@ -1,3 +1,5 @@
+.. _drom2psl:
+
 drom2psl
 ========
 

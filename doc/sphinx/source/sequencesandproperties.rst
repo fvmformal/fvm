@@ -49,9 +49,10 @@ receives a parameter of type *unsigned*:
 Using drom2psl to generate sequences
 ------------------------------------
 
-While PSL supports writing complex sequences using SEREs (Sequential Extended
-Regular Expressions), the FVM proposes to use a helper tool, ``drom2psl``, to
-generate sequences from `Wavedrom <wavedrom.com>`_ timing diagrams.
+While PSL supports manually writing complex sequences using SEREs (Sequential
+Extended Regular Expressions), the FVM proposes to use a helper tool,
+``drom2psl``, to generate sequences from `Wavedrom <wavedrom.com>`_ timing
+diagrams.
 
 From a Wavedrom waveform that looks like this:
 
@@ -122,6 +123,9 @@ This *vunit* can be used from any user-defined *.psl* file just by using the
 .. code-block::
 
    inherit wishbone_classic_read;
+
+See section :ref:`drom2psl` for information on how to use the ``drom2psl``
+tool.
 
 Properties
 ----------
