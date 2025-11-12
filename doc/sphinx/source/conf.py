@@ -91,11 +91,18 @@ exclude_patterns = []
 
 #html_theme = 'alabaster'
 html_theme = 'sphinx_rtd_theme'
+html_baseurl = 'https://fvm.us.es/doc'
 html_static_path = ['_static']
 html_favicon = '../../../src/fvmframework/favicon.ico'
 html_logo = '../../../src/fvmframework/FVM_logo_192x192.png'
 
 if html_theme == 'sphinx_rtd_theme':
     html_theme_options = {
-        'logo_only': True,
+        'logo_only': False,
+        'display_version': True,
+        'version_selector': True,
         }
+    # Add release number to the name since the readthedocs template refuses to
+    # show version numbers
+    project = project + ' ' + release
+    release = ''
