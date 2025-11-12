@@ -1,6 +1,6 @@
 vunit olo_base_arb_rr_properties (olo_base_arb_rr) {
 
-   --inherit rr_arbiter_common;
+   inherit last_valid_grant;
 
    use work.rr_arbiter_common.all;
 
@@ -10,10 +10,8 @@ vunit olo_base_arb_rr_properties (olo_base_arb_rr) {
    -- Force a reset in the first clock cycle
    assume_initial_reset: assume Rst = '1';
 
-   -- Output cannot be ready when it is not valid
-   assume always (not Out_Valid) -> (not Out_Ready);
-
-   --assume always ( countones(In_Req) > 0 -> (stable(In_Req) until_ Out_Ready) ) abort Rst;
+   -- Valid has to be asserted before Ready can be asserted in AXI
+   assume always (Out_Valid = '0') -> (Out_Ready = '0');
 
    -- Assert Out_Grant has maximum one bit with value 1
    assert always onehot0(Out_Grant) abort Rst;
@@ -25,58 +23,62 @@ vunit olo_base_arb_rr_properties (olo_base_arb_rr) {
    assert always {countones(In_Req) >= 1} |-> {onehot(Out_Grant)} abort Rst;
 
    -- Assert when the output is 0, the output is not valid
-   assert always {countones(Out_Grant) = 0} |-> {Out_Valid = '0'} abort Rst;
+   assert always {unsigned(Out_Grant) = 0} |-> {Out_Valid = '0'} abort Rst;
 
    -- Assert when the output is not 0, the output is valid
    assert always {countones(Out_Grant) = 1} |-> {Out_Valid = '1'} abort Rst;
 
-   sequence valid_grant is {                                                                        
+   -- Assert that when there is only one request, the grant is the same as the request
+   assert always ( {onehot(In_Req)} |-> { Out_Grant = In_Req } ) abort Rst;
+
+   -- Define sequences that will be reused multiple times:
+   -- A sequence to identify when there is a valid grant
+   sequence valid_grant is {
       Out_Ready = '1' and Out_Valid = '1'
    };
-   -- Assert when two Out_Ready in two consecutive cycles,
-   -- the second granted output is the result of a round robin
-   -- function defined in rr_arbiter_common.psl that receives as parameters
-   -- the previous granted output and the input request. This function
-   -- simulates the round_robin algorithm.
-   assert always ( {valid_grant; valid_grant} |-> { Out_Grant = round_robin_arbiter(In_Req, prev(Out_Grant)) } ) abort Rst;
 
-   -- The next few assertions are similar to the previous one.
-   -- The main difference is we do not have two consecutive cycles,
-   -- can be consecutive or not, so we cannot use operator prev(). 
-   -- So, we use 4 different assertions for each value of Out_Grant
-
-   --signal last_grant : std_logic_vector(Width_g-1 downto 0);
-
-   --assume always ( {true} |=> {last_grant = prev(last_grant)} );
-
-   sequence last_valid_grant (
-       hdltype std_logic_vector(Width_g-1 downto 0) grant
-       ) is {                                                                        
-      valid_grant: Out_Grant = grant
+   -- A sequence to identify when there is no grant
+   sequence no_grant is {
+      not (Out_Ready = '1' and Out_Valid = '1')
    };
 
-   sequence no_grant is {                                                                        
-      not (Out_Ready and Out_Valid)
-   };
+   -- Let's start with the first behavior. If there hasn't been any grant,
+   -- the arbiter must behave like a priority arbiter.
+   assert_correct_grant_after_reset:
+      assert always ({rst = '1'; valid_grant}
+                     |-> {Out_Grant = priority_arbiter(In_Req)});
 
-   --assert always ( {last_valid_grant(last_grant); no_grant[*]; valid_grant} 
-   --|-> { Out_Grant = round_robin_arbiter(In_Req, last_grant) } ) abort Rst;
+   -- Now, let's assert that if there hasn't been any grant after reset,
+   -- the arbiter must behave like a priority arbiter. Note the use of no_grant[*]
+   -- means that there can be any number of cycles without a grant after reset.
+   -- So, this assert checks the same as the previous one, and also checks that
+   -- the arbiter behaves like a priority arbiter if there are cycles without grant.
+   assert_correct_grant_without_previous_grant:
+      assert always ({rst = '1'; no_grant[*]; valid_grant}
+                     |-> {Out_Grant = priority_arbiter(In_Req)});
 
-   assert always ({rst = '1'; valid_grant} |-> {Out_Grant = priority_arbiter(In_Req)});
-   assert always ({rst = '1'; no_grant[*]; valid_grant} |-> {Out_Grant = priority_arbiter(In_Req)});
+   -- Let's define a symbolic constant to use it in the next assertion
+   signal last_grant : std_logic_vector(Width_g-1 downto 0);
+   assume always ( {true} |=> {last_grant = prev(last_grant)} ) abort Rst;
 
+   -- Now, let's assert that if there was a previous grant, the arbiter
+   -- must behave like a round robin arbiter. Note that we are using
+   -- the last_valid_grant sequence defined using drom2psl. We are also
+   -- using the symbolic constant last_grant to refer to the previous grant
+   -- in the right-hand side of the implication.
+   assert_correct_grant_after_previous_grant:
+      assert always ( {last_valid_grant(last_grant)} |->
+                     {Out_Grant = round_robin_arbiter(In_Req, last_grant) } ) abort Rst;
+
+   -- A few cover to try different scenarios
    cover {rst = '0'; countones(Out_Grant) = 0; (Out_Ready = '1' and Out_Valid = '1' and countones(In_Req) = 64)[*70]};
-
    cover {(rst = '0' and Out_Ready = '1' and Out_Valid = '1' and countones(In_Req) > 1 and Out_Grant /= prev(Out_Grant))[*300]};
    cover {rst = '0'; countones(In_Req) = 0 and countones(Out_Grant) = 0; (rst = '0' and Out_Ready = '1' and Out_Valid = '1' and countones(In_Req) = 64)[*100];
           rst = '0'; rst = '0' and countones(In_Req) = 0; Out_Grant /= prev(Out_Grant,2); rst = '1'};
-   cover {rst = '0'; countones(In_Req) = 0 and countones(Out_Grant) = 0; (rst = '0' and Out_Ready = '1' and Out_Valid = '1' and countones(In_Req) = 24)[*24];
-          rst = '0'; countones(In_Req) = 0; rst = '1'};
-   cover {(rst = '0' and Out_Ready = '1' and Out_Valid = '1' and countones(In_Req) > 1 and Out_Grant /= prev(Out_Grant))[*300]};
 
    sequence unmasked_seq (
        hdltype integer idx
-       ) is {                                                                        
+       ) is {
        countones(In_Req) = 1 and Out_Ready = '1' and Out_Grant(idx) = '1' and rst = '0'
    };
 

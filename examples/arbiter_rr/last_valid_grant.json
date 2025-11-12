@@ -1,0 +1,7 @@
+{ "signal": [
+  { "name": "Clk",        "wave": "p||.", "period": 2},
+  { "name": "Out_Ready",  "wave": "10.1", "period": 2},
+  { "name": "Out_Valid",  "wave": "101.", "period": 2},
+  { "name": "Out_Grant",  "wave": "3x..", "data": ["last_grant"], "period": 2, "type": "std_logic_vector(Width_g-1 downto 0)" }
+  
+]}

@@ -60,20 +60,15 @@ This is the generated PSL:
    vunit last_valid_grant {
 
    sequence last_valid_grant (
-      hdltype std_logic_vector(63 downto 0) last_grant
+      hdltype std_logic_vector(Width_g-1 downto 0) last_grant
    ) is {
       ((Out_Ready = '1') and (Out_Valid = '1') and (Out_Grant = last_grant))[*1];  -- 1 cycle
       ((Out_Ready = '0') and (Out_Valid = '0'))[*];  -- 0 or more cycles
+      ((Out_Ready = '0') and (Out_Valid = '1'))[*];  -- 0 or more cycles
       ((Out_Ready = '1') and (Out_Valid = '1'))[*1]  -- 1 cycle
    };
 
    }
-
-.. attention::
-   The second line of the sequence: `((Out_Ready = '0') and (Out_Valid = '0'))[*]`
-   is more convenient to express with an ``or``, because it also includes the case
-   where either of the two is equal to 1. However, that cannot be represented
-   with `drom2psl`, so it must be added manually.
 
 With this, we can ensure that if we have a grant and then we have another (it
 can happen in any possible cycle), the grant will be equal to the function
