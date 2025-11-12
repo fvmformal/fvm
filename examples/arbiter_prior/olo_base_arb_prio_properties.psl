@@ -8,18 +8,32 @@ vunit olo_base_arb_prio (olo_base_arb_prio) {
 
     -- Force a reset in the first clock cycle
     assume_initial_reset: assume Rst = '1';
-  
-    -- Assert Out_Grant has maximum one bit with value 1
-    assert always {true; onehot0(Out_Grant)};
 
-    -- Assert when the input is 0, the output is 0
-    assert always {countones(In_Req) = 0} |=> {countones(Out_Grant) = 0} abort Rst;
+    -- Assert Out_Grant has maximum one bit with value 1.
+    -- The `true` cycle is to ignore the time 0 cycle where
+    -- the internal signals and outputs may be 'X'.
+    assert_grant_is_onehot: assert always {true; onehot0(Out_Grant)};
 
-    -- Assert when the input is not 0, the output is not 0
-    assert always ({countones(In_Req) >= 1} |=> {onehot(Out_Grant)}) abort Rst;
+    -- Assert when there is no request, there is no grant
+    assert_no_req_no_grant:
+        assert always {countones(In_Req) = 0} |=> {countones(Out_Grant) = 0} abort Rst;
 
-    assert always ({true} |=> {Out_Grant = priority_arbiter(prev(In_Req))}) abort Rst;
+    -- Assert when there is a request, there is a grant
+    assert_req_implies_grant:
+        assert always ({countones(In_Req) >= 1} |=> {onehot(Out_Grant)}) abort Rst;
 
+    -- Assert that the grant is always equal to the output
+    -- of the checker function we defined in arbiter_prior_common.vhd.
+    -- With this, all the previous assertions are redundant, but we keep them
+    -- for clarity. We use the previous cycle's In_Req since the arbiter has
+    -- a latency of 1 cycle. The left hand side (`true`) is necessary to avoid
+    -- issues at time 0 and operator prev().
+    assert_grant_correct:
+        assert always ({true} |=> {Out_Grant = priority_arbiter(prev(In_Req))}) abort Rst;
+
+    -- Cover all ones on Out_Grant. This ensures that all grant lines can be set. Since
+    -- this example is simple, it's not necessary to do it, but with this we ensure that
+    -- we cover all possible outputs.
     cover {rst = '0'; countones(Out_Grant) = 0; Out_Grant(0) = '1'; Out_Grant(1) = '1';
         Out_Grant(2) = '1'; Out_Grant(3) = '1'; Out_Grant(4) = '1'; Out_Grant(5) = '1';
         Out_Grant(6) = '1'; Out_Grant(7) = '1'; Out_Grant(8) = '1'; Out_Grant(9) = '1';
@@ -36,6 +50,6 @@ vunit olo_base_arb_prio (olo_base_arb_prio) {
         Out_Grant(50) = '1'; Out_Grant(51) = '1'; Out_Grant(52) = '1'; Out_Grant(53) = '1';
         Out_Grant(54) = '1'; Out_Grant(55) = '1'; Out_Grant(56) = '1'; Out_Grant(57) = '1';
         Out_Grant(58) = '1'; Out_Grant(59) = '1'; Out_Grant(60) = '1'; Out_Grant(61) = '1';
-        Out_Grant(62) = '1'; Out_Grant(63); rst = '1'; true};
+        Out_Grant(62) = '1'; Out_Grant(63) = '1'; rst = '1'; true};
 
 }
