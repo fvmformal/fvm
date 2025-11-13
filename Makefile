@@ -122,19 +122,19 @@ testall: test concepts examples
 # We already do this in the python code, but sometimes something fails and
 # still we want to generate reports, so let's have a manual option here
 newreport:
-	$(UV_RUN) python3 src/fvmframework/manage_allure.py --allure_version $(ALLURE_VERSION) --install_dir $(ALLURE_INSTALL_DIR)
+	$(UV_RUN) python3 src/fvm/manage_allure.py --allure_version $(ALLURE_VERSION) --install_dir $(ALLURE_INSTALL_DIR)
 	$(ALLURE_INSTALL_DIR)/allure-$(ALLURE_VERSION)/bin/allure generate fvm_out/fvm_results --clean -o fvm_out/fvm_report
 
 report:
-	$(UV_RUN) python3 src/fvmframework/manage_allure.py --allure_version $(ALLURE_VERSION) --install_dir $(ALLURE_INSTALL_DIR)
+	$(UV_RUN) python3 src/fvm/manage_allure.py --allure_version $(ALLURE_VERSION) --install_dir $(ALLURE_INSTALL_DIR)
 	$(ALLURE_INSTALL_DIR)/allure-$(ALLURE_VERSION)/bin/allure generate fvm_out/fvm_results -o fvm_out/fvm_report
 
 updated_report:
-	$(UV_RUN) python3 src/fvmframework/manage_allure.py --allure_version $(ALLURE_VERSION) --install_dir $(ALLURE_INSTALL_DIR)
+	$(UV_RUN) python3 src/fvm/manage_allure.py --allure_version $(ALLURE_VERSION) --install_dir $(ALLURE_INSTALL_DIR)
 	$(ALLURE_INSTALL_DIR)/allure-$(ALLURE_VERSION)/bin/allure generate fvm_out/dashboard/allure-results -o fvm_out/dashboard/allure-report
 
 show:
-	$(UV_RUN) python3 src/fvmframework/manage_allure.py --allure_version $(ALLURE_VERSION) --install_dir $(ALLURE_INSTALL_DIR)
+	$(UV_RUN) python3 src/fvm/manage_allure.py --allure_version $(ALLURE_VERSION) --install_dir $(ALLURE_INSTALL_DIR)
 	$(ALLURE_INSTALL_DIR)/allure-$(ALLURE_VERSION)/bin/allure open fvm_out/fvm_report
 
 # Count TODOs in code
