@@ -616,7 +616,7 @@ def generate_allure(res_dir, rep_dir, allure_exec, logger):
     # Replace Allure favicon with FVM favicon only if Allure favicon exists
     package_data_dir = importlib.resources.files('fvm')
     if os.path.exists(os.path.join(rep_dir, 'favicon.ico')):
-        shutil.copy2(os.path.join(package_data_dir, "favicon.ico"),
+        shutil.copy2(os.path.join(package_data_dir, 'assets', "favicon.ico"),
                      os.path.join(rep_dir, 'favicon.ico'))
     return retval
 
