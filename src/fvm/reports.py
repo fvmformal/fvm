@@ -108,7 +108,7 @@ def pretty_summary(framework, logger):
     table = None
     for design in framework.designs:
         table = None
-        table = Table(title=f"[cyan]FVM Summary: {design}[/cyan]")
+        table = Table(title=f"[cyan]FVM {helpers.get_fvm_version()} Summary: {design}[/cyan]")
         table.add_column("status", justify="left", min_width=6)
         table.add_column("step", justify="left", min_width=25)
         table.add_column("results", justify="right", min_width=5)
@@ -430,7 +430,9 @@ def generate_xml_report(framework, logger):
     # Since junit_xml doesn't support adding a name to the global
     # testsuites set, we will modify the generated xml string before
     # commiting it to a file
-    xml_string = xml_string.replace("<testsuites", f'<testsuites name="{framework.scriptname}"')
+    xml_string = xml_string.replace("<testsuites",
+                                    f'<testsuites name="{framework.scriptname}" '
+                                    f'fvm_version="{helpers.get_fvm_version()}"')
 
     xmlfile = f"{framework.prefix}_results"
     if xmlfile.startswith('_'):
@@ -604,7 +606,7 @@ def generate_html_report(framework, logger):
 def generate_allure(res_dir, rep_dir, allure_exec, logger):
     """Generate an Allure report"""
     cmd = [allure_exec, 'generate', '--clean', res_dir, '-o', rep_dir,
-        "--name", "FVM Report"]
+        "--name", f"FVM {helpers.get_fvm_version()} Report"]
     logger.trace(f'Generating dashboard with {cmd=}')
     process = subprocess.Popen (cmd,
                                 stdout  = subprocess.PIPE,
@@ -689,6 +691,7 @@ def generate_text_report(framework, logger):
 
     global_summary.append(date_str + "\n")
     global_summary.append(f"Execution time: {start_str} - {stop_str} ({duration_str})\n")
+    global_summary.append(f"FVM version: {helpers.get_fvm_version()}\n")
     global_summary.append(f"Toolchain: {framework.toolchain}\n")
     global_summary.append(f"Design(s): {', '.join(framework.designs)}\n")
 
