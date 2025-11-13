@@ -1,4 +1,4 @@
-from fvmframework import FvmFramework
+from fvm import FvmFramework
 
 fvm = FvmFramework()
 fvm.add_vhdl_source("examples_other/countervunit_var/counter.vhd")

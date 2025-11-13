@@ -7,7 +7,7 @@ The FvmFramework class is the intended interface for users.
 
    Callables (classes, functions and methods) that are not documented in this Public API are not intented to be directly used and thus may change between minor versions.
 
-.. autoclass:: fvmframework.FvmFramework
+.. autoclass:: fvm.FvmFramework
    :members:
    :undoc-members:
    :show-inheritance:

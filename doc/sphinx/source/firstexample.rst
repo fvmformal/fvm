@@ -68,7 +68,7 @@ a single PSL line.
 
 .. code-block:: python
 
-   from fvmframework import FvmFramework
+   from fvm import FvmFramework
 
    fvm = FvmFramework()
    fvm.add_vhdl_source("counter.vhd")
@@ -285,7 +285,7 @@ with non-automated formal tools.
 .. code-block:: python
    :emphasize-lines: 5
 
-   from fvmframework import FvmFramework
+   from fvm import FvmFramework
 
    fvm = FvmFramework()
    fvm.add_vhdl_source("counter.vhd")

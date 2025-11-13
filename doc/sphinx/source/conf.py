@@ -93,8 +93,8 @@ exclude_patterns = []
 html_theme = 'sphinx_rtd_theme'
 html_baseurl = 'https://fvm.us.es/doc'
 html_static_path = ['_static']
-html_favicon = '../../../src/fvmframework/favicon.ico'
-html_logo = '../../../src/fvmframework/FVM_logo_192x192.png'
+html_favicon = '../../../src/fvm/favicon.ico'
+html_logo = '../../../src/fvm/FVM_logo_192x192.png'
 
 if html_theme == 'sphinx_rtd_theme':
     html_theme_options = {

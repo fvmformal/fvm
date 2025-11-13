@@ -62,7 +62,7 @@ def change_logo(allure_version, install_dir):
     # TODO: FVM logo path could change?
     allure_yml = os.path.join(install_dir, f'allure-{allure_version}', 'config', 'allure.yml')
     styles_css = os.path.join(install_dir, f'allure-{allure_version}', 'plugins', 'custom-logo-plugin', 'static', 'styles.css')
-    package_data_dir = importlib.resources.files('fvmframework')
+    package_data_dir = importlib.resources.files('fvm')
     logo_src = os.path.join(package_data_dir, 'FVM_logo_192x192.png')
     logo_dst = os.path.join(install_dir, f'allure-{allure_version}', 'plugins', 'custom-logo-plugin', 'static', 'fvm_logo.png')
     shutil.copy2(logo_src, logo_dst)

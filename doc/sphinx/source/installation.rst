@@ -13,7 +13,7 @@ Package Index (`PyPI <https://pypi.org/>`_), using pip:
 
 .. code-block:: zsh
 
-   pip3 install fvmframework
+   pip3 install fvm-formal
 
 .. note::
 

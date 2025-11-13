@@ -36,7 +36,7 @@ def get_default_flags(toolchain):
     :return: list of default flags
     :rtype: list
     """
-    module = importlib.import_module(f'fvmframework.toolchains.{toolchain}')
+    module = importlib.import_module(f'fvm.toolchains.{toolchain}')
     default_flags = module.default_flags
     return default_flags
 
@@ -52,7 +52,7 @@ def define_steps(framework, steps, toolchain):
     :param toolchain: toolchain name
     :type toolchain: str
     """
-    module = importlib.import_module(f'fvmframework.toolchains.{toolchain}')
+    module = importlib.import_module(f'fvm.toolchains.{toolchain}')
     module.define_steps(framework, steps)
 
 def set_timeout(framework, toolchain, step, timeout):
@@ -69,7 +69,7 @@ def set_timeout(framework, toolchain, step, timeout):
     :param timeout: timeout
     :type timeout: str
     """
-    module = importlib.import_module(f'fvmframework.toolchains.{toolchain}')
+    module = importlib.import_module(f'fvm.toolchains.{toolchain}')
     module.set_timeout(framework, step, timeout)
 
 def set_coverage_goal(toolchain, step, goal):
@@ -84,7 +84,7 @@ def set_coverage_goal(toolchain, step, goal):
     :param goal: coverage goal
     :type goal: int or float
     """
-    module = importlib.import_module(f'fvmframework.toolchains.{toolchain}')
+    module = importlib.import_module(f'fvm.toolchains.{toolchain}')
     module.set_coverage_goal(step, goal)
 
 def generics_to_args(toolchain, generics):
@@ -97,7 +97,7 @@ def generics_to_args(toolchain, generics):
     :param generics: dictionary of generics
     :type generics: dict
     """
-    module = importlib.import_module(f'fvmframework.toolchains.{toolchain}')
+    module = importlib.import_module(f'fvm.toolchains.{toolchain}')
     return module.generics_to_args(generics)
 
 def formal_initialize_reset(framework, toolchain, reset, active_high=True, cycles=1):
@@ -116,7 +116,7 @@ def formal_initialize_reset(framework, toolchain, reset, active_high=True, cycle
     :param cycles: number of cycles to hold the reset
     :type cycles: int
     """
-    module = importlib.import_module(f'fvmframework.toolchains.{toolchain}')
+    module = importlib.import_module(f'fvm.toolchains.{toolchain}')
     module.formal_initialize_reset(framework, reset, active_high=active_high, cycles=cycles)
 
 def get_linecheck_patterns(framework, step=None):
@@ -132,7 +132,7 @@ def get_linecheck_patterns(framework, step=None):
     if step is None:
         return {}
 
-    module = importlib.import_module(f'fvmframework.toolchains.{framework.toolchain}')
+    module = importlib.import_module(f'fvm.toolchains.{framework.toolchain}')
     func_name = f"get_linecheck_{step.replace('.', '_')}"
     get_patterns_func = getattr(module, func_name, None)
 

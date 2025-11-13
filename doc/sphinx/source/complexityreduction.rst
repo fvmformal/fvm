@@ -45,14 +45,14 @@ hold for any possible value of the 64-bit counter's output.
 How to do it
 ------------
 
-Just use the function :py:func:`fvmframework.FvmFramework.cutpoint` and pass to it at
+Just use the function :py:func:`fvm.FvmFramework.cutpoint` and pass to it at
 least the signal you want to cutpoint. Use it for all the signals you need to
 convert into free variables. If needed, a python :code:`for` loop can be used
 to apply the function to multiple signals.
 
 .. code-block:: python
 
-   from fvmframework import FvmFramework
+   from fvm import FvmFramework
 
    fvm.add_vhdl_source("concepts/cutpoint_example/counter.vhd")
    fvm = FvmFramework()
@@ -60,7 +60,7 @@ to apply the function to multiple signals.
 
 The function can receive more arguments than just the signal name so don't
 forget to check the function documentation:
-:py:func:`fvmframework.FvmFramework.cutpoint`
+:py:func:`fvm.FvmFramework.cutpoint`
 
 Example
 -------
@@ -108,11 +108,11 @@ How to do it
    Add links to public repo
 
 If you want to blackbox all instances of a specific entity, use the function
-:py:func:`fvmframework.FvmFramework.blackbox` and pass to it the entity name.
+:py:func:`fvm.FvmFramework.blackbox` and pass to it the entity name.
 
 .. code-block:: python
 
-   from fvmframework import FvmFramework
+   from fvm import FvmFramework
 
    fvm = FvmFramework()
    fvm.add_vhdl_sources("concepts/blackbox_instance/*.vhd")
@@ -120,12 +120,12 @@ If you want to blackbox all instances of a specific entity, use the function
    fvm.blackbox('counter')
 
 If you want to blackbox a specific instance of an entity, you need to use the
-function :py:func:`fvmframework.FvmFramework.blackbox_instance`, providing the entity
+function :py:func:`fvm.FvmFramework.blackbox_instance`, providing the entity
 name as argument.
 
 .. code-block:: python
 
-   from fvmframework import FvmFramework
+   from fvm import FvmFramework
 
    fvm = FvmFramework()
    fvm.add_vhdl_sources("concepts/blackbox_instance/*.vhd")
@@ -167,7 +167,7 @@ In the :file:`formal.py` script:
 
 .. code-block:: python
 
-   from fvmframework import FvmFramework
+   from fvm import FvmFramework
 
    fvm.add_vhdl_source("concepts/cutpoint_example/counter.vhd")
    fvm = FvmFramework()
@@ -256,11 +256,11 @@ How to do it
 ------------
 
 From `formal.py` we can add different configurations with
-:py:func:`fvmframework.FvmFramework.add_config`:
+:py:func:`fvm.FvmFramework.add_config`:
 
 .. code-block:: python
 
-   from fvmframework import FvmFramework
+   from fvm import FvmFramework
 
    fvm = FvmFramework()
    fvm.add_vhdl_sources("open-logic/src/base/vhdl/*.vhd")
@@ -299,11 +299,11 @@ How to do it
 ------------
 
 From `formal.py` we can add different configurations with
-:py:func:`fvmframework.FvmFramework.add_config`:
+:py:func:`fvm.FvmFramework.add_config`:
 
 .. code-block:: python
 
-   from fvmframework import FvmFramework
+   from fvm import FvmFramework
 
    fvm = FvmFramework()
    fvm.add_vhdl_sources("open-logic/src/base/vhdl/*.vhd")
@@ -456,7 +456,7 @@ escape**, although some time might be lost due to false alarms.
 How to do it
 ------------
 
-With :py:func:`fvmframework.FvmFramework.set_toplevel` we can change the module
+With :py:func:`fvm.FvmFramework.set_toplevel` we can change the module
 we are working on.
 
 Example

@@ -25,13 +25,13 @@ from loguru import logger
 from rich.console import Console
 
 # Our own imports
-from fvmframework import argument_parser
-from fvmframework import logcounter
-from fvmframework import helpers
-from fvmframework import reports
-from fvmframework.steps import Steps
-from fvmframework.toolchains import toolchains
-from fvmframework.drom2psl.generator import generator
+from fvm import argument_parser
+from fvm import logcounter
+from fvm import helpers
+from fvm import reports
+from fvm.steps import Steps
+from fvm.toolchains import toolchains
+from fvm.drom2psl.generator import generator
 
 # Error codes
 # Error codes 1 and 2 are reserved: 1 is the default error code in unix shells,

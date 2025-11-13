@@ -1,4 +1,4 @@
-from fvmframework import FvmFramework
+from fvm import FvmFramework
 
 fvm = FvmFramework()
 fvm.add_vhdl_source("concepts/reachability_example/counter.vhd")

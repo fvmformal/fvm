@@ -1,4 +1,4 @@
-from fvmframework import FvmFramework
+from fvm import FvmFramework
 
 fvm = FvmFramework()
 fvm.add_verilog_source("examples_verilog/counter_v/counter.v")

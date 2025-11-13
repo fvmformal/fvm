@@ -1,4 +1,4 @@
-from fvmframework import FvmFramework
+from fvm import FvmFramework
 
 fvm = FvmFramework()
 fvm.add_vhdl_sources("concepts/user_defined_hdltypes_in_external_package/*.vhd")

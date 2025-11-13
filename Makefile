@@ -162,7 +162,7 @@ define WARNING_INTERNAL_API
 endef
 
 docs:
-	$(UV_RUN) sphinx-apidoc -o doc/sphinx/source src/fvmframework
+	$(UV_RUN) sphinx-apidoc -o doc/sphinx/source src/fvm
 	echo "$(WARNING_INTERNAL_API)" > temp_modules.rst
 	cat doc/sphinx/source/modules.rst >> temp_modules.rst
 	mv temp_modules.rst doc/sphinx/source/modules.rst

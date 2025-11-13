@@ -1,4 +1,4 @@
-from fvmframework import FvmFramework
+from fvm import FvmFramework
 import subprocess
 
 fvm = FvmFramework()

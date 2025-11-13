@@ -1,4 +1,4 @@
-from fvmframework import FvmFramework
+from fvm import FvmFramework
 
 # Prove properties of counter
 fvm = FvmFramework()
