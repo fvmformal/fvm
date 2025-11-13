@@ -188,6 +188,9 @@ class FvmFramework:
         self.designs = []
         self.design_configs = {}
         self.ctrl_c_pressed = False
+        self.version = helpers.get_fvm_version()
+
+        logger.info(f'{self.version=}')
 
         # Get the toolchain (questa, sby, etc), assign sensible default options
         # defined in the selected toolchain, and define the methdology steps

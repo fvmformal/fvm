@@ -7,12 +7,13 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 import os
 import datetime
+from fvm import helpers
 
 # Project details
 project = 'fvm'
 author = 'Universidad de Sevilla'
-version = '0.1' # Short version number (major.minor)
-release = '0.1.0' # Full version number (major.minor.patch)
+version = helpers.get_fvm_shortversion() # Short version number (major.minor)
+release = helpers.get_fvm_version() # Full version number (major.minor.patch)
 
 current_year = datetime.datetime.now().year
 copyright = f'2024-{current_year}, Universidad de Sevilla'

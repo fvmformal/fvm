@@ -1,7 +1,22 @@
 """Helper functions for FVM"""
-# Helper functions
 import os
 import sys
+from packaging.version import Version
+from importlib.metadata import version as get_version
+
+def get_fvm_version():
+    """Returns the full version number (major.minor.patch) of the FVM"""
+    versionstring = get_version("fvm-formal")
+    versionclass = Version(versionstring)
+    ret = f'{versionclass.major}.{versionclass.minor}.{versionclass.micro}'
+    return ret
+
+def get_fvm_shortversion():
+    """Returns the short version number (major.minor) of the FVM"""
+    versionstring = get_version("fvm-formal")
+    versionclass = Version(versionstring)
+    ret = f'{versionclass.major}.{versionclass.minor}'
+    return ret
 
 def getscriptname():
     """Gets the absolute path of the called python script"""
