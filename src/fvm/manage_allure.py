@@ -59,7 +59,6 @@ def make_allure_executable(allure_version, install_dir):
 
 def change_logo(allure_version, install_dir):
     """Change Allure logo to FVM logo"""
-    # TODO: FVM logo path could change?
     allure_yml = os.path.join(install_dir, f'allure-{allure_version}', 'config', 'allure.yml')
     styles_css = os.path.join(install_dir, f'allure-{allure_version}', 'plugins', 'custom-logo-plugin', 'static', 'styles.css')
     package_data_dir = importlib.resources.files('fvm')
