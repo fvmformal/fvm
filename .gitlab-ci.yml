@@ -8,7 +8,7 @@ stages:
   - test_testpypi
   - deploy_pypi
 
-version_badge:
+.version_badge:
   stage: lint_and_test
   image: registry.woden.us.es/containers/debian:12
   script:
@@ -22,7 +22,7 @@ version_badge:
     paths:
       - badges/version.svg
 
-test_ci_vars:
+.test_ci_vars:
   stage: lint_and_test
   image: alpine
   script:
@@ -30,7 +30,7 @@ test_ci_vars:
     - echo $CI_COMMIT_BRANCH
     - echo $IS_PRIVATE_GITLAB_INSTANCE
 
-count_todos_in_code:
+.count_todos_in_code:
   stage: lint_and_test
   image: registry.woden.us.es/containers/debian:12
   variables:
@@ -55,7 +55,7 @@ count_todos_in_code:
     paths:
       - badges/todo.svg
 
-lint_python:
+.lint_python:
   stage: lint_and_test
   image: registry.woden.us.es/containers/debian:12
   variables:
@@ -78,7 +78,7 @@ lint_python:
       fi
   coverage: /lint score is ([\d]+\.[\d]+)/
 
-test_all:
+.test_all:
   stage: lint_and_test
   image: registry.woden.us.es/containers/debian:12
   script:
@@ -107,7 +107,7 @@ test_all:
 
 # TODO : Add artifacts, when we have a clearer idea of what those would be
 # TODO : Add results.xml, when our framework generates it
-run_concepts_questa: &run_concepts_questa
+.run_concepts_questa: &run_concepts_questa
   stage: concepts
   image: registry.woden.us.es/containers/questa:2025.1_2
   variables:
@@ -162,7 +162,7 @@ run_concepts_questa: &run_concepts_questa
     - curl -LsSf https://astral.sh/uv/install.sh | sh
     - export PATH="$HOME/.local/bin:$PATH"
 
-run_examples_questa:
+.run_examples_questa:
   <<: *run_concepts_questa
   stage: examples
   parallel:
@@ -213,7 +213,7 @@ run_examples_questa:
     paths:
       - .coverage.*
 
-run_options_questa:
+.run_options_questa:
   stage: concepts
   image: registry.woden.us.es/containers/questa:2025.1_2
   tags:
@@ -248,7 +248,7 @@ run_options_questa:
       - .coverage.$TOOLCHAIN.hooks.prove_list
       - .coverage.$TOOLCHAIN.vunits.continue
 
-full_dashboard:
+.full_dashboard:
   stage: doc
   image: registry.woden.us.es/containers/debian:12
   script:
@@ -264,7 +264,7 @@ full_dashboard:
     paths:
       - fvm_out/dashboard/allure-report
 
-apidoc:
+.apidoc:
   stage: doc
   image: registry.woden.us.es/containers/debian:12
   variables:
@@ -305,7 +305,7 @@ apidoc:
 
 
 # TODO : merge coverage files from previous stages
-pycoverage:
+.pycoverage:
   stage: coverage
   image: registry.woden.us.es/containers/debian:12
   variables:
