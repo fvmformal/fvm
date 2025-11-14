@@ -23,6 +23,6 @@ echo "creating annotated tag with 'git tag -a $(uv version --short) -m \"Version
 git tag -a $(uv version --short) -m "Version $(uv version --short)"
 echo "All ok! Remember to:"
 echo "  1. git add pyproject.toml"
-echo "  2. git commit"
+echo "  2. git commit -m \"Bump version to $(uv version --short)\""
 echo "  3. git push"
 echo "  4. git push origin $(uv version --short)"
