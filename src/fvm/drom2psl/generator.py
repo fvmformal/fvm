@@ -437,12 +437,20 @@ def generator(filename, outdir = None, verbose_psl = True, debug = False,
 
 def format_group_arguments(group_arguments):
     """Returns the group arguments with an extra semicolon that should be
-    removed separately"""
+    removed separately. Avoids duplicated arguments."""
+
+    seen = set()
     string = ''
+
     for j in group_arguments:
-        argument = j[0]
-        datatype = j[1]
+        argument, datatype = j
+
+        if argument in seen:
+            continue
+
+        seen.add(argument)
         string += f'    hdltype {datatype} {argument};\n'
+
     return string
 
 def format_group_arguments_in_call(group_arguments):
