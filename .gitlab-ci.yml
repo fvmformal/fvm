@@ -436,6 +436,7 @@ test_from_testpypi:
     - pytest -v
 
 deploy_to_pypi:
+  <<: *deploy_to_testpypi
   stage: deploy_pypi
   variables:
     UV_PUBLISH_TOKEN: $PYPI_API_TOKEN
