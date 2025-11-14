@@ -21,6 +21,14 @@ version_badge:
     paths:
       - badges/version.svg
 
+test_ci_vars:
+  stage: lint_and_test
+  image: alpine
+  script:
+    - echo $CI_COMMIT_TAG
+    - echo $CI_COMMIT_BRANCH
+    - echo $IS_PRIVATE_GITLAB_INSTANCE
+
 count_todos_in_code:
   stage: lint_and_test
   image: registry.woden.us.es/containers/debian:12
