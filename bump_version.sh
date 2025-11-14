@@ -15,14 +15,22 @@ if [ $(git branch --show-current) != "main" ]; then
   exit 1
 fi
 
+GIT_STATUS_PORCELAIN=$(git status --porcelain)
+if [ -n "GIT_STATUS_PORCELAIN" ]; then
+  echo "ERROR: we do not bump versions in repositories that are not clean"
+  exit 1
+fi
+
 echo "current version: $(uv version --short)"
 echo "bumping version by running 'uv version --bump $1'"
 uv version --bump $1
 echo "version bumped to: $(uv version --short)"
+echo "adding pyproject.toml by running 'git add pyproject.toml'"
+git add pyproject.toml
+echo "creating commit by running git commit -m \"Bump version to $(uv version --short)\""
+git commit -m "Bump version to $(uv version --short)"
 echo "creating annotated tag with 'git tag -a $(uv version --short) -m \"Version $(uv version --short)\"'"
 git tag -a $(uv version --short) -m "Version $(uv version --short)"
 echo "All ok! Remember to:"
-echo "  1. git add pyproject.toml"
-echo "  2. git commit -m \"Bump version to $(uv version --short)\""
-echo "  3. git push"
-echo "  4. git push origin $(uv version --short)"
+echo "  1. git push"
+echo "  2. git push origin $(uv version --short)"
