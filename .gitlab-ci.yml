@@ -439,6 +439,6 @@ deploy_to_pypi:
   <<: deploy_to_testpypi
   stage: deploy_pypi
   before_script:
-    - export UV_PUBLISH_TOKEN="${TESTPYPI_API_TOKEN}"
-    - export PUBLISH_URL
+    - export UV_PUBLISH_TOKEN="${PYPI_API_TOKEN}"
+    - export PUBLISH_URL=https://upload.pypi.org/legacy/
 
