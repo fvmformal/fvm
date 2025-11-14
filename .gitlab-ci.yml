@@ -436,7 +436,7 @@ test_from_testpypi:
     - pytest -v
 
 deploy_to_pypi:
-  <<: deploy_to_testpypi
+  <<: *deploy_to_testpypi
   stage: deploy_pypi
   before_script:
     - export UV_PUBLISH_TOKEN="${PYPI_API_TOKEN}"
