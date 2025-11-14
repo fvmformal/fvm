@@ -7,6 +7,20 @@ stages:
   - deploy_testpypi
   - test_testpypi
 
+version_badge:
+  stage: lint_and_test
+  image: registry.woden.us.es/containers/debian:12
+  script:
+    - apt update
+    - apt install -y python3 python3-pip python3-venv bc curl
+    - curl -LsSf https://astral.sh/uv/install.sh | sh
+    - export PATH="$HOME/.local/bin:$PATH"
+    - mkdir -p badges
+    - uv run anybadge --value=`uv version --short` --file=badges/version.svg
+  artifacts:
+    paths:
+      - badges/version.svg
+
 count_todos_in_code:
   stage: lint_and_test
   image: registry.woden.us.es/containers/debian:12
