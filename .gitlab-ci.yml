@@ -353,7 +353,7 @@ deploy_to_testpypi: &deploy_to_testpypi
     - curl -LsSf https://astral.sh/uv/install.sh | sh
     - export PATH="$HOME/.local/bin:$PATH"
     - uv build
-    - uv publish --publish-url $PUBLISH_URL
+    - uv publish --publish-url $PUBLISH_URL --token $UV_PUBLISH_TOKEN
 
 # Get the recently published fvm from testpypi and try to run the tests
 # Of couse we only do this if we have deployed to testpypi, so the 'rules' are
