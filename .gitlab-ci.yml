@@ -8,7 +8,7 @@ stages:
   - test_testpypi
   - deploy_pypi
 
-.version_badge:
+version_badge:
   stage: lint_and_test
   image: registry.woden.us.es/containers/debian:12
   script:
@@ -22,7 +22,7 @@ stages:
     paths:
       - badges/version.svg
 
-.test_ci_vars:
+test_ci_vars:
   stage: lint_and_test
   image: alpine
   script:
@@ -30,7 +30,7 @@ stages:
     - echo $CI_COMMIT_BRANCH
     - echo $IS_PRIVATE_GITLAB_INSTANCE
 
-.count_todos_in_code:
+count_todos_in_code:
   stage: lint_and_test
   image: registry.woden.us.es/containers/debian:12
   variables:
@@ -55,7 +55,7 @@ stages:
     paths:
       - badges/todo.svg
 
-.lint_python:
+lint_python:
   stage: lint_and_test
   image: registry.woden.us.es/containers/debian:12
   variables:
@@ -78,7 +78,7 @@ stages:
       fi
   coverage: /lint score is ([\d]+\.[\d]+)/
 
-.test_all:
+test_all:
   stage: lint_and_test
   image: registry.woden.us.es/containers/debian:12
   script:
@@ -98,16 +98,7 @@ stages:
       junit:
         - results.xml
 
-#generate_matrixes:
-#  stage: lint_and_test
-#  image: registry.woden.us.es/containers/debian:12
-#  script:
-#    - export CONCEPTS=$(make list-concepts | tr '\n' ',')
-#    - export EXAMPLES=$(make list-concepts | tr '\n' ',')
-
-# TODO : Add artifacts, when we have a clearer idea of what those would be
-# TODO : Add results.xml, when our framework generates it
-.run_concepts_questa: &run_concepts_questa
+run_concepts_questa: &run_concepts_questa
   stage: concepts
   image: registry.woden.us.es/containers/questa:2025.1_2
   variables:
@@ -123,15 +114,6 @@ stages:
     - yum install -y git python39 java-1.8.0-openjdk
     - curl -LsSf https://astral.sh/uv/install.sh | sh
     - export PATH="$HOME/.local/bin:$PATH"
-    # TODO : the following 6 lines don't work, we should create the file from
-    # inside the python code (see issue #165)
-    #- echo '{"name":"GitLab CI with runner ${CI_RUNNER_ID}","type":"gitlab","reportName":"Allure Report (without history for now)",' > executor.json
-    #- echo "\"reportUrl\":\"${CI_PAGES_URL}/${CI_COMMIT_REF_NAME}/${CI_JOB_ID}/\"," >> executor.json
-    #- echo "\"buildUrl\":\"${CI_PIPELINE_URL}\"," >> executor.json
-    #- echo "\"buildName\":\"GitLab Job Run ${CI_JOB_ID}\",\"buildOrder\":\"${CI_JOB_ID}\"}" >> executor.json
-    #- mkdir -p fvm_out/fvm_results
-    #- mv executor.json fvm_out/fvm_results
-    #- mkdir -p fvm_out/dashboard/allure-results
   script:
     - make UVFLAGS=--dev PYTHON="coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN" $DESIGN
   after_script:
@@ -162,7 +144,7 @@ stages:
     - curl -LsSf https://astral.sh/uv/install.sh | sh
     - export PATH="$HOME/.local/bin:$PATH"
 
-.run_examples_questa:
+run_examples_questa:
   <<: *run_concepts_questa
   stage: examples
   parallel:
@@ -182,7 +164,7 @@ stages:
 # it manually, for example it may get the available steps from the framework
 # and then run each of them alternated with a 'make clean' inside a for loop
 # TODO : this could be implemented more cleanly using parallel:matrix
-.run_steps_independently_questa:
+run_steps_independently_questa:
   stage: examples
   image: registry.woden.us.es/containers/questa:2025.1_2
   tags:
@@ -213,7 +195,7 @@ stages:
     paths:
       - .coverage.*
 
-.run_options_questa:
+run_options_questa:
   stage: concepts
   image: registry.woden.us.es/containers/questa:2025.1_2
   tags:
@@ -264,7 +246,7 @@ stages:
     paths:
       - fvm_out/dashboard/allure-report
 
-.apidoc:
+apidoc:
   stage: doc
   image: registry.woden.us.es/containers/debian:12
   variables:
@@ -290,21 +272,6 @@ stages:
       - badges/undocumented.svg
   coverage: /Total undocumented members= ([\d]+)/
 
-# The history is much smaller than the full dashboard, so we can afford to save
-# it with a long expiry date
-#save_history:
-#  stage: history
-#  image: registry.woden.us.es/containers/debian:12
-#  script:
-#    - mv fvm_out/fvm_report/history history
-#  artifacts:
-#    when: always
-#    paths:
-#      - history
-#    expire_in: 1 month
-
-
-# TODO : merge coverage files from previous stages
 .pycoverage:
   stage: coverage
   image: registry.woden.us.es/containers/debian:12
@@ -341,7 +308,6 @@ stages:
 # variables
 deploy_to_testpypi: &deploy_to_testpypi
   variables:
-    #UV_PUBLISH_TOKEN: $TESTPYPI_API_TOKEN
     PUBLISH_URL: "https://test.pypi.org/legacy/"
   stage: deploy_testpypi
   rules:
@@ -440,7 +406,6 @@ deploy_to_pypi:
   <<: *deploy_to_testpypi
   stage: deploy_pypi
   variables:
-    #UV_PUBLISH_TOKEN: $PYPI_API_TOKEN
     PUBLISH_URL: "https://upload.pypi.org/legacy/"
   script:
     - uv publish --publish-url $PUBLISH_URL --token $PYPI_API_TOKEN
