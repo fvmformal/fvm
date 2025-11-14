@@ -10,7 +10,7 @@ stages:
 
 version_badge:
   stage: lint_and_test
-  image: registry.woden.us.es/containers/debian:12
+  image: debian:12
   script:
     - apt update
     - apt install -y python3 python3-pip python3-venv bc curl
@@ -32,7 +32,7 @@ test_ci_vars:
 
 count_todos_in_code:
   stage: lint_and_test
-  image: registry.woden.us.es/containers/debian:12
+  image: debian:12
   variables:
     GOAL: "60"
   script:
@@ -57,7 +57,7 @@ count_todos_in_code:
 
 lint_python:
   stage: lint_and_test
-  image: registry.woden.us.es/containers/debian:12
+  image: debian:12
   variables:
     GOAL: "92"
   script:
@@ -80,7 +80,7 @@ lint_python:
 
 test_all:
   stage: lint_and_test
-  image: registry.woden.us.es/containers/debian:12
+  image: debian:12
   script:
     - apt update
     - apt install -y python3 python3-pip python3-venv curl
@@ -99,6 +99,8 @@ test_all:
         - results.xml
 
 run_concepts_questa: &run_concepts_questa
+  rules:
+    - if: $IS_PRIVATE_GITLAB_INSTANCE == "True"
   stage: concepts
   image: registry.woden.us.es/containers/questa:2025.1_2
   variables:
@@ -165,6 +167,8 @@ run_examples_questa:
 # and then run each of them alternated with a 'make clean' inside a for loop
 # TODO : this could be implemented more cleanly using parallel:matrix
 run_steps_independently_questa:
+  rules:
+    - if: $IS_PRIVATE_GITLAB_INSTANCE == "True"
   stage: examples
   image: registry.woden.us.es/containers/questa:2025.1_2
   tags:
@@ -196,6 +200,8 @@ run_steps_independently_questa:
       - .coverage.*
 
 run_options_questa:
+  rules:
+    - if: $IS_PRIVATE_GITLAB_INSTANCE == "True"
   stage: concepts
   image: registry.woden.us.es/containers/questa:2025.1_2
   tags:
@@ -232,7 +238,7 @@ run_options_questa:
 
 apidoc:
   stage: doc
-  image: registry.woden.us.es/containers/debian:12
+  image: debian:12
   variables:
     GOAL: 98
   script:
@@ -256,9 +262,9 @@ apidoc:
       - badges/undocumented.svg
   coverage: /Total undocumented members= ([\d]+)/
 
-.pycoverage:
+pycoverage:
   stage: coverage
-  image: registry.woden.us.es/containers/debian:12
+  image: debian:12
   variables:
     GOAL: "92"
   script:
@@ -296,7 +302,7 @@ deploy_to_testpypi: &deploy_to_testpypi
   stage: deploy_testpypi
   rules:
     - if: $CI_COMMIT_TAG && $IS_PRIVATE_GITLAB_INSTANCE == "True"
-  image: registry.woden.us.es/containers/debian:12
+  image: debian:12
   before_script:
     - apt update
     - apt install -y python3 python3-pip python3-venv curl
