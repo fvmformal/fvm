@@ -13,7 +13,7 @@ Verification Methodology for VHDL designs.
 ## Documentation
 
 This README.md is intentionally short. Please see the documentation at
-[https://fvm.us.es](https:/fvm.us.es), where you will find installation
+[https://fvm.us.es](https://fvm.us.es), where you will find installation
 instructions, a getting started section, an introduction to Formal
 Verification, an introduction to FVM, example designs that have been formally
 verified with FVM, techniques to reduce proof complexity, and more!
