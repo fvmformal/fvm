@@ -4,6 +4,8 @@ stages:
   - examples
   - coverage
   - doc
+  - deploy_testpypi
+  - test_testpypi
 
 count_todos_in_code:
   stage: lint_and_test
@@ -309,4 +311,53 @@ pycoverage:
       coverage_report:
         coverage_format: cobertura
         path: coverage.xml
+
+# Deploy to testPyPI, but only if we have pushed a git tag, which only should
+# be pushed to the main branch, and we are in the private instance, which has
+# the API tokens as CI/CD variables
+deploy_to_testpypi:
+  stage: deploy_testpypi
+  rules:
+    - if: $CI_COMMIT_TAG && $CI_COMMIT_BRANCH == "main" && $IS_PRIVATE_GITLAB_INSTANCE == "True"
+  image: registry.woden.us.es/containers/debian:12
+  script:
+    - apt update
+    - apt install -y python3 python3-pip python3-venv curl
+    - curl -LsSf https://astral.sh/uv/install.sh | sh
+    - export PATH="$HOME/.local/bin:$PATH"
+    - export UV_PUBLISH_TOKEN="${TESTPYPI_API_TOKEN}"
+    - uv publish --publish-url https://test.pypi.org/legacy/
+
+# Get the recently published fvm from testpypi and try to run the tests
+# Of couse we only do this if we have deployed to testpypi, so the 'rules' are
+# the same as for the previous job
+# Here we don't want to use uv to run the tests, we only use uv to get the
+# version number
+# Then we install, using pip, the specific version from testpypi in a clean
+# venv and run the tests with that version
+# We remove the src/ folder in this job before running pytest to ensure we are
+# finding the installed fvm (inside the testvenv)
+# Tests may fail if the tests in the test/ folder do not match the installed
+# version from testpypi (for example if the repo is 0.1.1 and we install
+# 0.1.0), but as far as I know that shouldn't happen since we get the version
+# from the repo using uv
+    test_from_testpypi:
+  stage: test_testpypi
+  rules:
+    - if: $CI_COMMIT_TAG && $CI_COMMIT_BRANCH == "main" && $IS_PRIVATE_GITLAB_INSTANCE == "True"
+  parallel:
+    matrix:
+      - DOCKERIMAGE: ["debian:12", "debian:13", "ubuntu:22.04", "ubuntu:24.04"]
+  script:
+    - apt update
+    - apt install -y python3 python3-pip python3-venv
+    - python3 -m venv testvenv
+    - source testvenv/bin/activate
+    - pip3 install --extra-index-url https://test.pypi.org/simple/ fvm-formal==`uv version --short`
+    - pip3 install pytest
+    - echo "[pytest]\npythonpath = ." > pytest.ini
+    - export SITE_PACKAGES_PATH=$(python -c 'import site; print(site.getsitepackages()[0])')
+    - export PYTHONPATH="${SITE_PACKAGES_PATH}:${PYTHONPATH}"
+    - rm -rf src/
+    - pytest -v
 
