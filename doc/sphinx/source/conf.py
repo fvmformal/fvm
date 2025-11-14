@@ -99,11 +99,14 @@ html_logo = '../../../src/fvm/assets/FVM_logo_192x192.png'
 
 if html_theme == 'sphinx_rtd_theme':
     html_theme_options = {
-        'logo_only': False,
+        'logo_only': True,
         'display_version': True,
-        'version_selector': True,
+        #'version_selector': True,
         }
+    # For sphinx_rtd_theme > 3.0, they removed the capability of showing the
+    # release number in self-hosted documentation. It can be roughly patched
+    # by setting logo_only to false and:
     # Add release number to the name since the readthedocs template refuses to
     # show version numbers
-    project = project + ' ' + release
-    release = ''
+    #project = project + ' ' + release
+    #release = ''
