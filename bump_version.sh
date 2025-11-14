@@ -15,8 +15,9 @@ if [ $(git branch --show-current) != "main" ]; then
   exit 1
 fi
 
-GIT_STATUS_PORCELAIN=$(git status --porcelain)
-if [ -n "GIT_STATUS_PORCELAIN" ]; then
+if [ -z "$(git status --porcelain)" ]; then
+  echo "Working directory is clean, proceeding"
+else
   echo "ERROR: we do not bump versions in repositories that are not clean"
   exit 1
 fi
