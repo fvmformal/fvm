@@ -230,22 +230,6 @@ run_options_questa:
       - .coverage.$TOOLCHAIN.hooks.prove_list
       - .coverage.$TOOLCHAIN.vunits.continue
 
-.full_dashboard:
-  stage: doc
-  image: registry.woden.us.es/containers/debian:12
-  script:
-    - apt update
-    - apt install -y python3 python3-pip python3-venv default-jdk curl
-    - curl -LsSf https://astral.sh/uv/install.sh | sh
-    - export PATH="$HOME/.local/bin:$PATH"
-    - mv results.xml fvm_out/fvm_results
-    - make report
-    - make updated_report
-  artifacts:
-    when: always
-    paths:
-      - fvm_out/dashboard/allure-report
-
 apidoc:
   stage: doc
   image: registry.woden.us.es/containers/debian:12
