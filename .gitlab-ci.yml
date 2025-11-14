@@ -17,7 +17,7 @@ version_badge:
     - curl -LsSf https://astral.sh/uv/install.sh | sh
     - export PATH="$HOME/.local/bin:$PATH"
     - mkdir -p badges
-    - uv run anybadge --value=`uv version --short` --file=badges/version.svg
+    - uv run anybadge --label=version --value=`uv version --short` --file=badges/version.svg
   artifacts:
     paths:
       - badges/version.svg
