@@ -334,13 +334,14 @@ pycoverage:
         coverage_format: cobertura
         path: coverage.xml
 
-# Deploy to testPyPI, but only if we have pushed a git tag, which only should
-# be pushed to the main branch, and we are in the private instance, which has
-# the API tokens as CI/CD variables
+# Deploy to testPyPI, but only if we have pushed a git tag, which should have
+# only been pushed to the main branch (the bump_version.sh script enforces
+# this), and we are in the private instance, which has the API tokens as CI/CD
+# variables
 deploy_to_testpypi:
   stage: deploy_testpypi
   rules:
-    - if: $CI_COMMIT_TAG && $CI_COMMIT_BRANCH == "main" && $IS_PRIVATE_GITLAB_INSTANCE == "True"
+    - if: $CI_COMMIT_TAG && $IS_PRIVATE_GITLAB_INSTANCE == "True"
   image: registry.woden.us.es/containers/debian:12
   script:
     - apt update
@@ -366,7 +367,7 @@ deploy_to_testpypi:
 test_from_testpypi:
   stage: test_testpypi
   rules:
-    - if: $CI_COMMIT_TAG && $CI_COMMIT_BRANCH == "main" && $IS_PRIVATE_GITLAB_INSTANCE == "True"
+    - if: $CI_COMMIT_TAG && $IS_PRIVATE_GITLAB_INSTANCE == "True"
   parallel:
     matrix:
       - DOCKERIMAGE: ["debian:12", "debian:13", "ubuntu:22.04", "ubuntu:24.04"]

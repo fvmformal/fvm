@@ -10,6 +10,11 @@ if [ "$#" -ne 1 ]; then
   exit 1
 fi
 
+if [ $(git branch --show-current) != "main" ]; then
+  echo "ERROR: we do not bump versions in branches other than main"
+  exit 1
+fi
+
 echo "current version: $(uv version --short)"
 echo "bumping version by running 'uv version --bump $1'"
 uv version --bump $1
