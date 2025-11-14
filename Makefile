@@ -171,6 +171,13 @@ docs:
 	rm -f badges/undocumented.svg
 	$(UV_RUN) anybadge --value=`cat doc/sphinx/undocumented_count.txt` --label=undocumented --file=badges/undocumented.svg 1=green 10=yellow 20=orange 30=tomato 999=red
 
+multidocs:
+	$(UV_RUN) sphinx-apidoc -o doc/sphinx/source src/fvm
+	echo "$(WARNING_INTERNAL_API)" > temp_modules.rst
+	cat doc/sphinx/source/modules.rst >> temp_modules.rst
+	mv temp_modules.rst doc/sphinx/source/modules.rst
+	$(UV_RUN) make -C doc/sphinx/ multidocs
+
 # Remove generated files
 clean:
 	rm -f results.xml flex*.log vish_stacktrace.vstf modelsim.ini

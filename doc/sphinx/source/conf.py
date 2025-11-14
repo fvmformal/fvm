@@ -53,6 +53,7 @@ extensions = [
     "sphinxarg.ext",            # Allow automatic documentation of arparse parsers
     "sphinxcontrib.mermaid",    # To have mermaid diagrams
     "sphinxcontrib.bibtex",     # To use bibtex
+    "sphinx_multiversion",      # To be able to have doc for multiple versions of the package
     #"sphinx_autodoc_typehints", # Show type hints
     #"sphinx.ext.coverage",      # Report documentation coverage (we are not
       #using it, because when using autodoc, coverage believes everything is
@@ -86,6 +87,16 @@ autodoc_default_options = {
 
 templates_path = ['_templates']
 exclude_patterns = []
+
+# Inject the template into the html context for the
+# RTD theme
+try:
+    html_context
+except NameError:
+    html_context = dict()
+
+html_context['display_lower_left'] = True
+html_context['versioning_widget'] = 'versions.html'
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
