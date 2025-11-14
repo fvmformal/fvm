@@ -6,6 +6,7 @@ stages:
   - doc
   - deploy_testpypi
   - test_testpypi
+  - deploy_pypi
 
 version_badge:
   stage: lint_and_test
@@ -338,18 +339,21 @@ pycoverage:
 # only been pushed to the main branch (the bump_version.sh script enforces
 # this), and we are in the private instance, which has the API tokens as CI/CD
 # variables
-deploy_to_testpypi:
+deploy_to_testpypi: &deploy_to_testpypi
   stage: deploy_testpypi
   rules:
     - if: $CI_COMMIT_TAG && $IS_PRIVATE_GITLAB_INSTANCE == "True"
   image: registry.woden.us.es/containers/debian:12
+  before_script:
+    - export UV_PUBLISH_TOKEN="${TESTPYPI_API_TOKEN}"
+    - export PUBLISH_URL=https://test.pypi.org/legacy/
   script:
     - apt update
     - apt install -y python3 python3-pip python3-venv curl
     - curl -LsSf https://astral.sh/uv/install.sh | sh
     - export PATH="$HOME/.local/bin:$PATH"
-    - export UV_PUBLISH_TOKEN="${TESTPYPI_API_TOKEN}"
-    - uv publish --publish-url https://test.pypi.org/legacy/
+    - uv build
+    - uv publish --publish-url $PUBLISH_URL
 
 # Get the recently published fvm from testpypi and try to run the tests
 # Of couse we only do this if we have deployed to testpypi, so the 'rules' are
@@ -362,26 +366,79 @@ deploy_to_testpypi:
 # finding the installed fvm (inside the testvenv)
 # Tests may fail if the tests in the test/ folder do not match the installed
 # version from testpypi (for example if the repo is 0.1.1 and we install
-# 0.1.0), but as far as I know that shouldn't happen since we get the version
+# 0.1.0), but as far as we know that shouldn't happen since we get the version
 # from the repo using uv
+# Let's test on multiple linux flavors that have python3.9 or later
 test_from_testpypi:
   stage: test_testpypi
   rules:
     - if: $CI_COMMIT_TAG && $IS_PRIVATE_GITLAB_INSTANCE == "True"
+  image: $DOCKERIMAGE
   parallel:
     matrix:
-      - DOCKERIMAGE: ["debian:12", "debian:13", "ubuntu:22.04", "ubuntu:24.04"]
-  image: $DOCKERIMAGE
+      - DOCKERIMAGE:
+          - "debian:12"
+          - "debian:13"
+          - "ubuntu:22.04"
+          - "ubuntu:24.04"
+          - "alpine:3"
+          - "rockylinux:9"
+          - "fedora:41"
+          - "fedora:42"
   script:
-    - apt update
-    - apt install -y python3 python3-pip python3-venv
+    - |
+      # Check the value of the DOCKERIMAGE variable
+      case "$DOCKERIMAGE" in
+        # Match images containing 'alpine'
+        *alpine*)
+          echo "Setting up Alpine Linux (apk)"
+          apk update
+          apk add --no-cache python3 py3-pip python3-venv curl
+          ;;
+
+        # Match images containing 'debian' or 'ubuntu'
+        *debian* | *ubuntu*)
+          echo "Setting up Debian/Ubuntu Linux (apt)"
+          apt-get update
+          apt-get install -y python3 python3-pip python3-venv curl
+          ;;
+
+        # Match images containing 'rocky', 'fedora', or 'centos'
+        *rocky* | *fedora* | *centos*)
+          # We check for 'dnf' or 'yum' to be robust across RHEL-based systems
+          if [ -x "$(command -v dnf)" ]; then
+            PACKAGE_MANAGER="dnf"
+          elif [ -x "$(command -v yum)" ]; then
+            PACKAGE_MANAGER="yum"
+          else
+            echo "Error: RHEL-based system detected but neither dnf nor yum found."
+            exit 1
+          fi
+
+          echo "Setting up Rocky/Fedora/Centos/RHEL Linux ($PACKAGE_MANAGER)"
+          # No need to $PACKAGE_MANAGER update (that would update installed packages)
+          $PACKAGE_MANAGER install -y python3 python3-pip python3-venv curl
+          ;;
+
+        *)
+          echo "Error: Unsupported Docker image base: $DOCKERIMAGE"
+          exit 1
+          ;;
+      esac
+    - curl -LsSf https://astral.sh/uv/install.sh | sh
+    - export PATH="$HOME/.local/bin:$PATH"
     - python3 -m venv testvenv
     - source testvenv/bin/activate
     - pip3 install --extra-index-url https://test.pypi.org/simple/ fvm-formal==`uv version --short`
     - pip3 install pytest
     - echo "[pytest]\npythonpath = ." > pytest.ini
-    - export SITE_PACKAGES_PATH=$(python -c 'import site; print(site.getsitepackages()[0])')
-    - export PYTHONPATH="${SITE_PACKAGES_PATH}:${PYTHONPATH}"
     - rm -rf src/
     - pytest -v
+
+deploy_to_pypi:
+  <<: deploy_to_testpypi
+  stage: deploy_pypi
+  before_script:
+    - export UV_PUBLISH_TOKEN="${TESTPYPI_API_TOKEN}"
+    - export PUBLISH_URL
 
