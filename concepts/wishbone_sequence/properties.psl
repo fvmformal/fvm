@@ -14,7 +14,7 @@ vunit properties(wishbone) {
   --  assume wishbone_classic_read(addr, data);
 
   assert_correct_read_module_B:
-    assert wishbone_classic_read(m2s_addr, s2m_data)
+    assert wishbone_classic_read(m2s_addr, s2m_data, rst)
     abort rst;
 
   --cover_read_from_specific_address:
