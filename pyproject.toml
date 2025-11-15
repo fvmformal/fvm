@@ -47,7 +47,7 @@ dev = [
 packages = ["src"]
 
 [tool.setuptools.package-data]
-"fvm" = ["*.png", "*.ico"]
+"fvm" = ["assets/*.png", "assets/*.ico"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
