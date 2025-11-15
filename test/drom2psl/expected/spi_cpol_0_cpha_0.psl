@@ -43,8 +43,9 @@ vunit spi_cpol_0_cpha_0 {
   --   |=> : non-overlapping implication: both must happen, with the first cycle of the second occuring the cycle after the last cycle of the first
   property spi_cpol_0_cpha_0 (
     hdltype std_ulogic_vector(7 downto 0) m2s;
-    hdltype std_ulogic_vector(7 downto 0) s2m
+    hdltype std_ulogic_vector(7 downto 0) s2m;
+    hdltype std_ulogic fvm_rst
   ) is
-    always { {spi_cpol_0_cpha_0_master(m2s)} && {spi_cpol_0_cpha_0_slave(s2m)} };
+    always { {spi_cpol_0_cpha_0_master(m2s)} && {spi_cpol_0_cpha_0_slave(s2m)} } abort (fvm_rst = '1');
 
 }

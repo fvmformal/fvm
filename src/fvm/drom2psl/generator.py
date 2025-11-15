@@ -296,6 +296,26 @@ def generator(filename, outdir = None, verbose_psl = True, debug = False,
             prev_line = ''
             prev_cycles = 0
             prev_or_more = False
+
+            sequence_start = None
+            sequence_end = None
+            for cycle in range(clock_cycles):
+
+                # The clock wavelane is processed a bit different and apart
+                # from the rest of the wavelanes
+                line = ''
+                line += '    ('
+                for wavelane in flattened_signal[1:]:
+                    name = get_wavelane_name(wavelane)
+                    if name[:len(groupname)] == groupname:
+                        wave = get_wavelane_wave(wavelane)
+                        data = get_wavelane_data(wavelane)
+                        value = get_signal_value(wave, data, cycle)
+                        value = adapt_value_to_hdltype(value)
+                        if value != "'-'":
+                            if sequence_start is None:
+                                sequence_start = cycle
+                            sequence_end = cycle
             for cycle in range(clock_cycles):
 
                 # The clock wavelane is processed a bit different and apart
@@ -329,6 +349,12 @@ def generator(filename, outdir = None, verbose_psl = True, debug = False,
                 #   1. Finish the previous line with the cycles
                 #   2. Write the current line, except the cycles
                 #   3. The actual current line will be the next prev_line
+                if sequence_start is not None:
+                    if sequence_start > cycle:
+                        # We are before the start of the sequence, so ignore
+                        continue
+                if line == '    ()':
+                    line = '    (true)'
                 if line != prev_line:
                     if prev_line != '':
                         prev_cycles_text = gen_sere_repetition(prev_cycles,
@@ -349,6 +375,10 @@ def generator(filename, outdir = None, verbose_psl = True, debug = False,
                 else:
                     prev_cycles += cycles
                     prev_or_more = bool(prev_or_more or or_more)
+
+                if sequence_end == cycle:
+                    # Finish the sequence here
+                    break
 
             # After the for loop finishes, we will have the last cycles to
             # write, so let's write them:
@@ -374,10 +404,12 @@ def generator(filename, outdir = None, verbose_psl = True, debug = False,
                           " happen, with the first cycle of the second occuring"
                           " the cycle after the last cycle of the first\n")
             vunit += f'  property {vunit_name} (\n'
+            group_arguments = []
             for groupname in groups:
-                group_arguments = get_group_arguments(groupname, flattened_signal)
+                group_arguments += get_group_arguments(groupname, flattened_signal)
                 ic(group_arguments)
-                vunit += format_group_arguments(group_arguments)
+            vunit += format_group_arguments(group_arguments)
+            vunit += format_group_arguments([['fvm_rst', 'std_ulogic']])
             # Again, remove the unneded semicolon and restore the deleted \n
             if vunit[-2:] == ";\n":
                 vunit = vunit[:-2]
@@ -387,8 +419,23 @@ def generator(filename, outdir = None, verbose_psl = True, debug = False,
                                                                              flattened_signal))
             group1_args = format_group_arguments_in_call(get_group_arguments(groups[1],
                                                                              flattened_signal))
-            vunit += f'    always {{ {{{vunit_name}_{groups[0]}{group0_args}}}'
-            vunit += f' && {{{vunit_name}_{groups[1]}{group1_args}}} }};\n'
+            if groups[0] == "Precond" and groups[1] == "Cond":
+                vunit = vunit.replace("Precond.", "")
+                vunit = vunit.replace("Cond.", "")
+                group0_args = format_arguments_suffix_implication(group0_args)
+                group1_args = format_arguments_suffix_implication(group1_args)
+                vunit += f'    always ( {vunit_name}_{groups[0]}{group0_args}'
+                vunit += f' |-> {vunit_name}_{groups[1]}{group1_args} ) abort (fvm_rst = \'1\');\n'
+            elif groups[0] == "Precond" and groups[1] == "Cond_non_overlap":
+                vunit = vunit.replace("Precond.", "")
+                vunit = vunit.replace("Cond_non_overlap.", "")
+                group0_args = format_arguments_suffix_implication(group0_args)
+                group1_args = format_arguments_suffix_implication(group1_args)
+                vunit += f'    always ( {vunit_name}_{groups[0]}{group0_args}'
+                vunit += f' |=> {vunit_name}_{groups[1]}{group1_args} ) abort (fvm_rst = \'1\');\n'
+            else:
+                vunit += f'    always {{ {{{vunit_name}_{groups[0]}{group0_args}}}'
+                vunit += f' && {{{vunit_name}_{groups[1]}{group1_args}}} }} abort (fvm_rst = \'1\');\n'
             vunit += '\n'
 
 
@@ -445,6 +492,8 @@ def format_group_arguments(group_arguments):
     for j in group_arguments:
         argument, datatype = j
 
+        # In case we have a record type, only keep the base name
+        argument = argument.split('.')[0]
         if argument in seen:
             continue
 
@@ -452,6 +501,26 @@ def format_group_arguments(group_arguments):
         string += f'    hdltype {datatype} {argument};\n'
 
     return string
+
+def format_arguments_suffix_implication(group_arguments):
+    """Returns the group arguments ready to parameterize an implication,
+    for example: (addr, data)"""
+    args = group_arguments.strip("()")
+    items = [arg.strip() for arg in args.split(",")]
+    # Extract name before the first dot
+    bases = [item.split(".")[0] for item in items]
+
+    # Remove duplicates while preserving order
+    seen = set()
+    unique_bases = []
+    for b in bases:
+        if b not in seen:
+            seen.add(b)
+            unique_bases.append(b)
+
+    # Convert back to a string with parentheses
+    final = "(" + ", ".join(unique_bases) + ")"
+    return final
 
 def format_group_arguments_in_call(group_arguments):
     """Returns the group arguments ready to parameterize a property or

@@ -28,8 +28,9 @@ vunit wishbone_classic_read {
   --   |=> : non-overlapping implication: both must happen, with the first cycle of the second occuring the cycle after the last cycle of the first
   property wishbone_classic_read (
     hdltype std_ulogic_vector(31 downto 0) addr;
-    hdltype std_ulogic_vector(31 downto 0) data
+    hdltype std_ulogic_vector(31 downto 0) data;
+    hdltype std_ulogic fvm_rst
   ) is
-    always { {wishbone_classic_read_Master(addr)} && {wishbone_classic_read_Slave(data)} };
+    always { {wishbone_classic_read_Master(addr)} && {wishbone_classic_read_Slave(data)} } abort (fvm_rst = '1');
 
 }

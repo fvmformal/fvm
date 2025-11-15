@@ -30,8 +30,9 @@ vunit wishbone_classic_write {
   property wishbone_classic_write (
     hdltype std_ulogic_vector(31 downto 0) addr;
     hdltype std_ulogic_vector(31 downto 0) data;
-    hdltype std_ulogic_vector(3 downto 0) byte_en
+    hdltype std_ulogic_vector(3 downto 0) byte_en;
+    hdltype std_ulogic fvm_rst
   ) is
-    always { {wishbone_classic_write_Master(addr, data, byte_en)} && {wishbone_classic_write_Slave} };
+    always { {wishbone_classic_write_Master(addr, data, byte_en)} && {wishbone_classic_write_Slave} } abort (fvm_rst = '1');
 
 }

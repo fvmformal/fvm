@@ -348,7 +348,7 @@ def get_group_arguments(groupname, flattened_signal):
                 ic(deduplicated_data)
                 data_after_exclusion = exclude_data_types(deduplicated_data)
                 # Create a new list with each argument and its datatype
-                args_with_type = [[d, datatype] for d in data_after_exclusion]
+                args_with_type = assign_datatypes(data_after_exclusion, datatype)
                 ic(args_with_type)
                 group_arguments.extend(args_with_type)
     return group_arguments
@@ -367,6 +367,38 @@ def exclude_data_types(datalist):
             new_datalist.append(data)
 
     return new_datalist
+
+def assign_datatypes(data, datatype):
+    """
+    Assign datatypes to data elements correctly even if `datatype`
+    is a string that *looks like* a list.
+    """
+
+    # Case 3 — datatype is a string but looks like a list:
+    if isinstance(datatype, str) and datatype.strip().startswith("[") and datatype.strip().endswith("]"):
+        # Extract elements between commas
+        # No eval(), avoid peligros
+        datatype = re.findall(r'[^,\[\]]+', datatype)
+        datatype = [x.strip() for x in datatype]
+
+    # Normalize datatype to list
+    if isinstance(datatype, str):
+        # Case 1 — single datatype
+        datatype_list = [datatype] * len(data)
+
+    else:
+        # Case 2 — list of datatypes
+        datatype_list = []
+        last_type = None
+
+        for i in range(len(data)):
+            if i < len(datatype):
+                last_type = datatype[i]
+                datatype_list.append(last_type)
+            else:
+                datatype_list.append(last_type)
+
+    return [[d, t] for d, t in zip(data, datatype_list)]
 
 def remove_parentheses(string):
     """Removes anything between parentheses, including the parentheses, from a
