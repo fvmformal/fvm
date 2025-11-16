@@ -33,25 +33,37 @@ def is_inside_venv():
     return sys.prefix == sys.base_prefix
 
 def readable_time(seconds):
-    """Converts a time in seconds to the most appropriate unit"""
-    if seconds <= 1:
+    """Converts seconds into a readable format with up to 2 fields.
+       Suppresses the second field if its value is zero.
+    """
+
+    if seconds < 1:
         return f"{seconds:.2f} seconds"
 
     days, rem = divmod(int(seconds), 86400)
     hours, rem = divmod(rem, 3600)
     minutes, secs = divmod(rem, 60)
 
-    parts = []
-    if days:
-        parts.append(f"{days} days,")
-    if hours:
-        parts.append(f"{hours} hours,")
-    if minutes:
-        parts.append(f"{minutes} minutes,")
-    if secs or not parts:
-        parts.append(f"{secs} seconds")
+    if days > 0:
+        if hours > 0:
+            return f"{days} days, {hours} hours"
+        else:
+            return f"{days} days"
 
-    return " ".join(parts)
+    if hours > 0:
+        if minutes > 0:
+            return f"{hours} hours, {minutes} minutes"
+        else:
+            return f"{hours} hours"
+
+    if minutes > 0:
+        if secs > 0:
+            return f"{minutes} minutes, {secs} seconds"
+        else:
+            return f"{minutes} minutes"
+
+    return f"{secs} seconds"
+
 
 def insert_line_before_target(file, target_line, line_to_insert):
     """Inserts a line before the first occurrence of target_line in file"""
