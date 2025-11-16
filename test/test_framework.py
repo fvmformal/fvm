@@ -119,6 +119,8 @@ def test_add_single_psl_source_exists():
     fvm = FvmFramework()
     Path('test/test.psl').touch()
     fvm.add_psl_source("test/test.psl", flavor="vhdl")
+    # Add PSL source without typical PSL extension (warning)
+    fvm.add_psl_source("test/test.vhd", flavor="vhdl")
 
 def test_add_single_psl_source_doesnt_exist() :
     """Test adding a single PSL source file that doesn't exist"""
@@ -152,6 +154,8 @@ def test_add_single_drom_source_exists():
     fvm = FvmFramework()
     Path('test/test.json').touch()
     fvm.add_drom_source("test/test.json", flavor="vhdl")
+    # Add drom source without typical drom extension
+    fvm.add_drom_source("test/test.vhd", flavor="vhdl")
 
 def test_add_single_drom_source_doesnt_exist() :
     """Test adding a single Wavedrom source file that doesn't exist"""
@@ -166,6 +170,15 @@ def test_add_single_drom_source_verilog() :
     fvm = FvmFramework()
     with pytest.raises(SystemExit) as pytest_wrapped_e:
         fvm.add_drom_source("test/test.json", "verilog")
+    assert pytest_wrapped_e.type == SystemExit
+    assert pytest_wrapped_e.value.code == BAD_VALUE["value"]
+
+def test_add_single_drom_source_invalid_flavor() :
+    """Test adding a single Wavedrom source file with an invalid flavor"""
+    fvm = FvmFramework()
+    Path('test/test.json').touch()
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        fvm.add_drom_source("test/test.json", flavor="invalid")
     assert pytest_wrapped_e.type == SystemExit
     assert pytest_wrapped_e.value.code == BAD_VALUE["value"]
 
