@@ -1,0 +1,13 @@
+{ "signal": [
+  { "name": "clk",        "wave": "p............", "period": 2},
+  ["Precond",
+    { "name": "inferior",  "wave": "3x...........", "data": ["input_tran.infr"], "type": "interpolator_input_tran", "period": 2},
+    { "name": "superior",  "wave": "3x...........", "data": ["input_tran.supr"], "type": "interpolator_input_tran", "period": 2},
+    { "name": "valid",  "wave": "1x...........", "period": 2}
+  ],
+  ["Cond_non_overlap",
+    { "name": "estim.re",  "wave": "x456789345678", "data": ["data(0).re", "data(1).re", "data(2).re", "data(3).re", "data(4).re", "data(5).re", "data(6).re", "data(7).re", "data(8).re", "data(9).re", "data(10).re", "data(11).re"], "type": "interpolator_output_tran", "period": 2},
+    { "name": "estim.im",  "wave": "x456789345678", "data": ["data(0).im", "data(1).im", "data(2).im", "data(3).im", "data(4).im", "data(5).im", "data(6).im", "data(7).im", "data(8).im", "data(9).im", "data(10).im", "data(11).im"], "type": "interpolator_output_tran", "period": 2},
+    { "name": "estim_valid",  "wave": "x1...........", "period": 2}
+   ]
+]}

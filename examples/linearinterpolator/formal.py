@@ -3,6 +3,7 @@ from fvm import FvmFramework
 fvm = FvmFramework()
 fvm.add_vhdl_sources("examples/linearinterpolator/*.vhd")
 fvm.add_psl_sources("examples/linearinterpolator/*.psl", flavor="vhdl")
+fvm.add_drom_sources("examples/linearinterpolator/*.json", flavor="vhdl")
 fvm.set_toplevel("interpolator")
 
 fvm.add_clock("clk", period = 10)

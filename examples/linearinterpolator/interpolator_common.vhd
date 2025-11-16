@@ -10,16 +10,11 @@ package interpolator_common is
         supr : complex10;  
     end record;
 
-    type interpolator_output_tran_type is array (0 to 11) of complex10;
-
-    type interpolator_output_tran is record
-        data : interpolator_output_tran_type;
-    end record;
+    type interpolator_output_tran is array (0 to 11) of complex10;
 
     function interpolator_predict(
         input_tran : interpolator_input_tran
     ) return interpolator_output_tran;
-
 end package interpolator_common;
 
 package body interpolator_common is
@@ -30,6 +25,9 @@ package body interpolator_common is
         variable output_tran : interpolator_output_tran;
         variable infr_re, infr_im : integer;
         variable supr_re, supr_im : integer;
+        variable num   : integer;
+        variable tmp   : integer;
+        variable tmp_signed : signed(15 downto 0);
     begin
         infr_re := to_integer(input_tran.infr.re);
         infr_im := to_integer(input_tran.infr.im);
@@ -37,8 +35,22 @@ package body interpolator_common is
         supr_im := to_integer(input_tran.supr.im);
 
         for i in 0 to 11 loop
-            output_tran.data(i).re :=  to_signed( (infr_re * (12 - i)/12 + supr_re * i/12) * 3/4, 10);
-            output_tran.data(i).im :=  to_signed( (infr_im * (12 - i)/12 + supr_im * i/12) * 3/4, 10);
+            num := (infr_re * (12 - i)) + (supr_re * i);
+            -- if so that the integer is truncated as signed
+            if num < 0 then
+                tmp := (num * 3 - 48 + 1) / 48;
+            else
+                tmp := (num * 3) / 48;
+            end if;
+            output_tran(i).re := to_signed(tmp, 10);
+            num := (infr_im * (12 - i)) + (supr_im * i);
+            -- if so that the integer is truncated as signed
+            if num < 0 then
+                tmp := (num * 3 - 48 + 1) / 48;
+            else
+                tmp := (num * 3) / 48;
+            end if;
+            output_tran(i).im := to_signed(tmp, 10);
         end loop;
 
         return output_tran;

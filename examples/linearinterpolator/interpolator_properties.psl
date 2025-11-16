@@ -2,6 +2,7 @@
 -- the vunit to a specific entity/architecture pair
 vunit interpolator_properties (interpolator(interpolator_arch)) {
 
+    inherit interpolator_prop;
     -- Default clock for PSL assertions
     default clock is rising_edge(clk);
 
@@ -53,86 +54,27 @@ vunit interpolator_properties (interpolator(interpolator_arch)) {
     --assert_will_fire:
     --    assert always (({not valid} |=> twelve_estim_valid) abort rst);
 
-    -- Parameterizable input sequence
-    sequence input_seq (                                                           
-        hdltype interpolator_input_tran input_tran                                                                                                   
-        ) is {                                                                        
-        inferior = input_tran.infr:                                                            
-        superior = input_tran.supr:                                                            
-        valid    = '1'                                                              
-    }; 
-
-    -- Parameterizable output sequence
-    sequence output_seq (                                                          
-    hdltype interpolator_output_tran output_tran                                                        
-    ) is {                                                                        
-        (abs(estim.re - output_tran.data(0).re) < 2):
-        (abs(estim.im - output_tran.data(0).im) < 2):
-        estim_valid = '1';                                                          
-        (abs(estim.re - output_tran.data(1).re) < 4):
-        (abs(estim.im - output_tran.data(1).im) < 4):
-        estim_valid = '1';                                                          
-        (abs(estim.re - output_tran.data(2).re) < 3):
-        (abs(estim.im - output_tran.data(2).im) < 3):
-        estim_valid = '1';                                                          
-        (abs(estim.re - output_tran.data(3).re) < 3):
-        (abs(estim.im - output_tran.data(3).im) < 3):
-        estim_valid = '1';                                                          
-        (abs(estim.re - output_tran.data(4).re) < 3):
-        (abs(estim.im - output_tran.data(4).im) < 3):
-        estim_valid = '1';                                                         
-        (abs(estim.re - output_tran.data(5).re) < 4):
-        (abs(estim.im - output_tran.data(5).im) < 4):
-        estim_valid = '1';                                                          
-        (abs(estim.re - output_tran.data(6).re) < 3):
-        (abs(estim.im - output_tran.data(6).im) < 3):
-        estim_valid = '1';                                                          
-        (abs(estim.re - output_tran.data(7).re) < 4):
-        (abs(estim.im - output_tran.data(7).im) < 4):
-        estim_valid = '1';                                                          
-        (abs(estim.re - output_tran.data(8).re) < 3):
-        (abs(estim.im - output_tran.data(8).im) < 3):
-        estim_valid = '1';                                                          
-        (abs(estim.re - output_tran.data(9).re) < 3):
-        (abs(estim.im - output_tran.data(9).im) < 3):
-        estim_valid = '1';                                                          
-        (abs(estim.re - output_tran.data(10).re) < 3):
-        (abs(estim.im - output_tran.data(10).im) < 3):
-        estim_valid = '1';                                                          
-        (abs(estim.re - output_tran.data(11).re) < 4):
-        (abs(estim.im - output_tran.data(11).im) < 4):
-        estim_valid = '1'                                                           
-    };           
-
-    -- Parameterizable property that relates the input and
-    -- the output sequence
-    property interpolation(
-        hdltype interpolator_input_tran input_tran;
-        hdltype interpolator_output_tran output_tran
-        ) is
-        always ((input_seq(input_tran) |=> output_seq(output_tran)) abort rst);
-
     -- Input transaction assignation
     signal input_tran : interpolator_input_tran;
     input_tran.infr <= inferior;
     input_tran.supr <= superior;
 
-    -- Assert the parameterized property
     interpolator_works_correctly:
-       assert interpolation(input_tran, interpolator_predict(input_tran));
+        assert interpolator_prop(input_tran, interpolator_predict(input_tran), rst);
 
-    sequence input (                                                           
+    -- Let's cover some input combinations
+    sequence input (
         hdltype signed(9 downto 0) inf_re;
         hdltype signed(9 downto 0) inf_im;
         hdltype signed(9 downto 0) sup_re;
         hdltype signed(9 downto 0) sup_im
-        ) is {                                    
-        input_tran.infr.re = inf_re and          
-        input_tran.infr.im = inf_im and   
+        ) is {
+        input_tran.infr.re = inf_re and
+        input_tran.infr.im = inf_im and
         input_tran.supr.re = sup_re and
-        input_tran.supr.im = sup_im                                                
-    }; 
-    
+        input_tran.supr.im = sup_im
+    };
+
     cover {input("1111111111", "1111111111", "0000000000", "0000000000"); twelve_estim_valid}; 
     cover {input("0000000000", "0000000000", "1111111111", "1111111111"); twelve_estim_valid}; 
 }
