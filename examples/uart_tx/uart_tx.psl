@@ -1,5 +1,6 @@
 vunit uart_tx_properties (uart_tx(Behavioral)) {
 
+  inherit uart_prop;
   -- Default clock
   default clock is rising_edge (clk);
 
@@ -72,31 +73,12 @@ vunit uart_tx_properties (uart_tx(Behavioral)) {
       return parity_bit;
   end function;
 
-  sequence start_of_tx (
-    hdltype std_logic_vector(7 downto 0) data_tx
-  ) is {
-    TX = '1' and rd_en = '1';
-    TX = '1' and data = data_tx
-  };
-
-  sequence tx_sequence (
-    hdltype std_logic_vector(7 downto 0) data_tx
-  ) is {
-    (TX = '0')[*BIT_DURATION];
-    (TX = data_tx(0))[*BIT_DURATION];
-    (TX = data_tx(1))[*BIT_DURATION];
-    (TX = data_tx(2))[*BIT_DURATION];
-    (TX = data_tx(3))[*BIT_DURATION];
-    (TX = data_tx(4))[*BIT_DURATION];
-    (TX = data_tx(5))[*BIT_DURATION];
-    (TX = data_tx(6))[*BIT_DURATION];
-    (TX = data_tx(7))[*BIT_DURATION];
-    (TX = calc_parity(data_tx))[*BIT_DURATION];
-    (TX = '1')[*BIT_DURATION]
-  };
-
   assert_tx:
-    assert always (( {start_of_tx(data_uart)} |=> {tx_sequence(data_uart)}) abort rst);
+    assert uart_prop(data_uart, calc_parity(data_uart), rst);
+
+  cover_tx:
+    cover {uart_prop_Precond(data_uart);
+          uart_prop_Cond_non_overlap(data_uart, calc_parity(data_uart))};
 
   sequence rd_en_seq_1 is {
     rst = '1';
