@@ -1038,6 +1038,10 @@ def setup_prove_simcover(framework, path):
                                           f'coverage attribute -name TESTNAME -value '
                                           f'{pathlib.Path(file).parent.name}')
         helpers.insert_line_before_target(file, "quit -f;", "coverage save sim.ucdb")
+        replay_script = os.path.join(pathlib.Path(file).parent, 'replay.scr')
+        helpers.insert_line_after_target(replay_script,
+                                         "-work work \\",
+                                         f'    -suppress 1615 \\')
 
     simcover_path = os.path.join(path, 'prove.simcover')
     os.makedirs(simcover_path, exist_ok=True)
@@ -1114,7 +1118,7 @@ def run_prove_simcover(framework, path):
         path = None
         simcover_path = os.path.join(framework.outdir, framework.current_toplevel, 'prove.simcover')
         os.makedirs(simcover_path, exist_ok=True)
-        cmd = ['vcover', 'merge', '-out', os.path.join(simcover_path, 'simcover.ucdb')]
+        cmd = ['vcover', 'merge', '-suppress', '6820', '-out', os.path.join(simcover_path, 'simcover.ucdb')]
         cmd = cmd + ucdb_files
         simcover_run('vcover')
 
@@ -1193,7 +1197,9 @@ def get_linecheck_prove_simcover():
 
     patterns["ignore"] += [
         "Note: (vsim-12126) Error and warning message counts have been restored",
-        "Coverage Type           Active        Witness   Inconclusive    Unreachable"
+        "Coverage Type           Active        Witness   Inconclusive    Unreachable",
+        "[ucdb-3]",
+        "[ucdb-8]",
         ]
     patterns["warning"] += ["inconclusive", "inconclusives"]
 
