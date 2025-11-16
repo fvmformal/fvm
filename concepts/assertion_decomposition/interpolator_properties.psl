@@ -54,21 +54,21 @@ vunit interpolator_properties (interpolator(interpolator_arch)) {
     --    assert always (({not valid} |=> twelve_estim_valid) abort rst);
 
     -- Parameterizable input sequence
-    sequence input_seq (                                                           
-        hdltype interpolator_input_tran input_tran                                                                                                   
-        ) is {                                                                        
-        inferior = input_tran.infr:                                                            
-        superior = input_tran.supr:                                                            
-        valid    = '1'                                                              
+    sequence input_seq (
+        hdltype interpolator_input_tran input_tran
+        ) is {
+        inferior = input_tran.infr:
+        superior = input_tran.supr:
+        valid    = '1'
     }; 
     
     -- Parameterizable output sequence
-    sequence output_seq_0 (                                                          
+    sequence output_seq_0 (
     hdltype interpolator_output_tran output_tran;
     const idx
     ) is {      
-        (abs(estim.re - output_tran.data(idx).re) < 4):
-        (abs(estim.im - output_tran.data(idx).im) < 4):
+        estim.re = output_tran(idx).re:
+        estim.im = output_tran(idx).im:
         estim_valid = '1'                         
     };
 
@@ -134,16 +134,16 @@ vunit interpolator_properties (interpolator(interpolator_arch)) {
     interpolator_works_correctly_11:
         assert interpolation_0(input_tran, interpolator_predict(input_tran), 11);
 
-    sequence input (                                                           
+    sequence input (
         hdltype signed(9 downto 0) inf_re;
         hdltype signed(9 downto 0) inf_im;
         hdltype signed(9 downto 0) sup_re;
         hdltype signed(9 downto 0) sup_im
-        ) is {                                    
-        input_tran.infr.re = inf_re and          
-        input_tran.infr.im = inf_im and   
+        ) is {
+        input_tran.infr.re = inf_re and
+        input_tran.infr.im = inf_im and
         input_tran.supr.re = sup_re and
-        input_tran.supr.im = sup_im                                                
+        input_tran.supr.im = sup_im
     }; 
 
     cover {input("1111111111", "1111111111", "0000000000", "0000000000"); twelve_estim_valid}; 
