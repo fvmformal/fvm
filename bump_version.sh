@@ -2,13 +2,20 @@
 set -e
 
 echo "bump_version.sh: received argument = $1"
-if [ "$#" -ne 1 ]; then
-  echo "Usage: ./bump_version.sh VALUE" >&2
-  echo "Where VALUE is any value accepted by 'uv version --bump':"
+if [ "$#" -eq 0 ]; then
+  echo "Usage: ./bump_version.sh <VALUE1> <VALUE2> ..." >&2
+  echo "Where the VALUES are any values accepted by 'uv version --bump':"
   echo "  major | minor | patch | stable | alpha | beta | rc | post | dev "
   echo "run 'uv help version' for details"
   exit 1
 fi
+
+BUMP_ARGS=()
+for arg in "$@"
+do
+  BUMP_ARGS+="--bump $arg "
+done
+echo "BUMP_ARGS: $BUMP_ARGS"
 
 if [ $(git branch --show-current) != "main" ]; then
   echo "ERROR: we do not bump versions in branches other than main"
@@ -23,8 +30,8 @@ else
 fi
 
 echo "current version: $(uv version --short)"
-echo "bumping version by running 'uv version --bump $1'"
-uv version --bump $1
+echo "bumping version by running 'uv version $BUMP_ARGS'"
+uv version $BUMP_ARGS
 echo "version bumped to: $(uv version --short)"
 echo "adding pyproject.toml by running 'git add pyproject.toml'"
 git add pyproject.toml
