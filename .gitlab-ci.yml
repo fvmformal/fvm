@@ -304,12 +304,18 @@ apidoc:
 #    expire_in: 1 month
 
 
-# TODO : merge coverage files from previous stages
+# Merge coverage files from previous stages
 pycoverage:
   stage: coverage
   image: registry.woden.us.es/containers/debian:12
-  variables:
-    GOAL: "92"
+  before_script:
+    - |
+      # When not running the examples and concepts, python coverage is lower
+      if [ "$IS_PRIVATE_GITLAB_INSTANCE" == "True" ]; then
+        export GOAL="92"
+      else
+        export GOAL="45"
+      fi
   script:
     - apt update
     - apt install -y python3 python3-pip python3-venv bc curl
