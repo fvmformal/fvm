@@ -33,7 +33,11 @@ def is_inside_venv():
 def readable_time(seconds):
     """Converts seconds into a readable format with up to 2 fields.
        Suppresses the second field if its value is zero.
+       Uses singular or plural automatically.
     """
+
+    def unit(value, singular, plural):
+        return f"{value} {singular if value == 1 else plural}"
 
     if seconds < 1:
         return f"{seconds:.2f} seconds"
@@ -44,24 +48,23 @@ def readable_time(seconds):
 
     if days > 0:
         if hours > 0:
-            return f"{days} days, {hours} hours"
+            return f"{unit(days, 'day', 'days')}, {unit(hours, 'hour', 'hours')}"
         else:
-            return f"{days} days"
+            return unit(days, 'day', 'days')
 
     if hours > 0:
         if minutes > 0:
-            return f"{hours} hours, {minutes} minutes"
+            return f"{unit(hours, 'hour', 'hours')}, {unit(minutes, 'minute', 'minutes')}"
         else:
-            return f"{hours} hours"
+            return unit(hours, 'hour', 'hours')
 
     if minutes > 0:
         if secs > 0:
-            return f"{minutes} minutes, {secs} seconds"
+            return f"{unit(minutes, 'minute', 'minutes')}, {unit(secs, 'second', 'seconds')}"
         else:
-            return f"{minutes} minutes"
+            return unit(minutes, 'minute', 'minutes')
 
-    return f"{secs} seconds"
-
+    return unit(secs, 'second', 'seconds')
 
 def insert_line_before_target(file, target_line, line_to_insert):
     """Inserts a line before the first occurrence of target_line in file"""
