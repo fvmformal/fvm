@@ -121,7 +121,7 @@ run_concepts_questa: &run_concepts_questa
         - assertion_decomposition
         - assert_to_assume
         - blackbox_example
-        - blackbop_instance
+        - blackbox_instance
         - cutpoint_example
         - defining_clocks_and_resets
         - design_configurations
