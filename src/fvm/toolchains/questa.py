@@ -97,7 +97,7 @@ def create_f_file(filename, sources):
         for src in sources:
             print(src, file=f)
 
-def gencompilescript(framework, filename, path):
+def gencompilescript(framework, filename, path, psl_compile=False):
     """
     Generate script to compile design sources
 
@@ -125,58 +125,69 @@ def gencompilescript(framework, filename, path):
             print(f'vlib {framework.get_tool_flags("vlib")} {lib_dir}', file=f)
             print(f'vmap {framework.get_tool_flags("vmap")} {lib} {lib_dir}', file=f)
             if framework.vhdl_sources:
-                compile_vdhl(path, framework, lib, f)
+                compile_vhdl(path, framework, lib, f, psl_compile)
             if framework.verilog_sources:
-                compile_verilog(path, framework, lib, f)
+                compile_verilog(path, framework, lib, f, psl_compile)
             if framework.systemverilog_sources:
-                compile_systemverilog(path, framework, lib, f)
+                compile_systemverilog(path, framework, lib, f, psl_compile)
 
-def compile_vdhl(path, framework, lib, f):
+def compile_vhdl(path, framework, lib, f, psl_compile):
     lib_sources = [src for src, library in zip(framework.vhdl_sources,
                                             framework.libraries_from_hdl_sources)
                                             if library == lib]
     f_file_path = os.path.join(path, f'{lib}_design.f')
     create_f_file(f_file_path, lib_sources)
-    psl_flags = ' '.join(
-        f'-pslfile {psl["file"]}'
-        for psl in framework.psl_sources
-        if psl['flavor'] == 'vhdl' and psl['library'] == lib
-    )
-    drom_generated_psl = ' '.join(
-        f'-pslfile {psl["file"]}'
-        for psl in framework.drom_generated_psl
-        if psl['flavor'] == 'vhdl' and psl['library'] == lib
-    )
+    if psl_compile:
+        psl_flags = ' '.join(
+            f'-pslfile {psl["file"]}'
+            for psl in framework.psl_sources
+            if psl['flavor'] == 'vhdl' and psl['library'] == lib
+        )
+        drom_generated_psl = ' '.join(
+            f'-pslfile {psl["file"]}'
+            for psl in framework.drom_generated_psl
+            if psl['flavor'] == 'vhdl' and psl['library'] == lib
+        )
+    else:
+        psl_flags = ' '
+        drom_generated_psl = ' '
+
     print(f'vcom {framework.get_tool_flags("vcom")} -{vhdlstd2flag(framework.vhdlstd)}'
         f' -work {lib} -autoorder -f {f_file_path} {drom_generated_psl} {psl_flags}', file=f)
     print('', file=f)
 
-def compile_verilog(path, framework, lib, f):
+def compile_verilog(path, framework, lib, f, psl_compile):
     lib_sources = [src for src, library in zip(framework.verilog_sources,
                                             framework.libraries_from_hdl_sources)
                                             if library == lib]
     f_file_path = os.path.join(path, f'{lib}_verilog_design.f')
     create_f_file(f_file_path, lib_sources)
-    psl_flags = ' '.join(
-        f'-pslfile {psl["file"]}'
-        for psl in framework.psl_sources
-        if psl['flavor'] == 'verilog' and psl['library'] == lib
-    )
+    if psl_compile:
+        psl_flags = ' '.join(
+            f'-pslfile {psl["file"]}'
+            for psl in framework.psl_sources
+            if psl['flavor'] == 'verilog' and psl['library'] == lib
+        )
+    else:
+        psl_flags = ' '
     print(f'vlog {framework.get_tool_flags("vlog")} -work {lib} -f {f_file_path} {psl_flags}',
             file=f)
     print('', file=f)
 
-def compile_systemverilog(path, framework, lib, f):
+def compile_systemverilog(path, framework, lib, f, psl_compile):
     lib_sources = [src for src, library in zip(framework.systemverilog_sources,
                                             framework.libraries_from_hdl_sources)
                                             if library == lib]
     f_file_path = os.path.join(path, f'{lib}_systemverilog_design.f')
     create_f_file(f_file_path, lib_sources)
-    psl_flags = ' '.join(
-        f'-pslfile {psl["file"]}'
-        for psl in framework.psl_sources
-        if psl['flavor'] == 'verilog' and psl['library'] == lib
-    )
+    if psl_compile:
+        psl_flags = ' '.join(
+            f'-pslfile {psl["file"]}'
+            for psl in framework.psl_sources
+            if psl['flavor'] == 'verilog' and psl['library'] == lib
+        )
+    else:
+        psl_flags = ' '
     print(f'vlog {framework.get_tool_flags("vlog")} -work {lib} -sv -f {f_file_path} {psl_flags}',
             file=f)
     print('', file=f)
@@ -908,7 +919,7 @@ def setup_prove(framework, path):
     # We need to save the current toplevel to use it in the setup
     # of the post-steps.
     set_setup_toplevel(framework.current_toplevel)
-    gencompilescript(framework, filename, path)
+    gencompilescript(framework, filename, path, psl_compile=True)
     # Only add the clocks since we don't want to add any extra constraint
     # Also, adding the clock domain make propcheck throw errors because
     # output ports in the clock domain cannot be constrained
@@ -1047,7 +1058,10 @@ def setup_prove_simcover(framework, path):
     os.makedirs(simcover_path, exist_ok=True)
 
     # Generate the script to exclude unreachable code from simulation coverage
-    gencompilescript(framework, os.path.join('prove.simcover', 'reachability_exclusions.do'), path)
+    gencompilescript(framework,
+                     os.path.join('prove.simcover', 'reachability_exclusions.do'),
+                     path,
+                     psl_compile=False)
     with open(os.path.join(simcover_path, 'reachability_exclusions.do'), "a", encoding='utf-8') as f:
         for line in framework.init_reset:
             print(line, file=f)
