@@ -1155,7 +1155,12 @@ def run_prove_simcover(framework, path):
                     status = "goal_not_met"
 
                 # Reachability analysis of uncovered code if there are misses
-                if any(row.get("Misses", 0) > 0 for row in res) and framework.ctrl_c_pressed is False:
+                if framework.ctrl_c_pressed is True:
+                    framework.logger.trace('Skipping reachability analysis since Ctrl-C was pressed')
+                elif framework.is_skipped(design, 'reachability'):
+                    framework.logger.warning('Skipping reachability analysis since reachability'
+                                             ' step is skipped')
+                elif any(row.get("Misses", 0) > 0 for row in res):
                     path = None
                     cmd = ['qverify', '-c', '-od', simcover_path,
                         '-do', os.path.join(simcover_path, 'reachability_exclusions.do')]
