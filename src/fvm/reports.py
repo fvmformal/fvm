@@ -502,6 +502,7 @@ def generate_html_report(framework, logger):
                     stop_time = start_time
                     friendliness_score = None
                     properties = None
+                    drom_svg_path = None
 
                     step_path = os.path.join(framework.outdir, design, step)
                     step_summary = f"{step}_summary.html"
@@ -532,6 +533,7 @@ def generate_html_report(framework, logger):
 
                     if step == 'prove':
                         path = os.path.join(framework.outdir, design, step, f'{step}.log')
+                        drom_svg_path = [item['svg'] for item in framework.drom_generated_psl]
                         if os.path.exists(path):
                             properties = parse_prove.parse_properties_extended(path)
 
@@ -546,7 +548,8 @@ def generate_html_report(framework, logger):
                                                         friendliness_score=friendliness_score,
                                                         properties=properties,
                                                         step_summary_html=step_summary_html,
-                                                        html_files=html_files
+                                                        html_files=html_files,
+                                                        drom_svg_path=drom_svg_path
                                                         )
                 elif ('status' in framework.results[design][step] and
                     framework.results[design][step]['status'] == "skip"):

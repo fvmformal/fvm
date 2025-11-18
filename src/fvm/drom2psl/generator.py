@@ -453,15 +453,14 @@ def generator(filename, outdir = None, verbose_psl = True, debug = False,
     # Render the json using wavedrompy. This way we should receive an error if
     # there are any wavedrom-specific errors in an otherwise correct JSON
     if ok:
-        if (not empty_json) and debug:
+        if (not empty_json):
             ic("Rendering the JSON into an .svg")
             render = wavedrom.render(string)
             ic(render)
-            ic(full_filename)
-            svgfilename = Path(full_filename).with_suffix('.svg')
+            ic(output_file)
+            svgfilename = Path(output_file).with_suffix('.svg')
             ic(svgfilename)
-            if debug:
-                render.saveas(svgfilename)
+            render.saveas(svgfilename)
 
     #    for i in range(len(value)):
     #        print("i:", i, "value[i]:", value[i])

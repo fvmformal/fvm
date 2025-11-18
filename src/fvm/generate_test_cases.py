@@ -7,7 +7,8 @@ import re
 
 def generate_test_case(design_name, prefix, step, results_dir, status="passed", outdir=None,
                        start_time=None, stop_time=None, friendliness_score=None,
-                       properties = None, step_summary_html = None, html_files=None):
+                       properties = None, step_summary_html = None, html_files=None,
+                       drom_svg_path=None):
     """
     Generate a test case structure for reports.
 
@@ -135,6 +136,21 @@ def generate_test_case(design_name, prefix, step, results_dir, status="passed", 
                         "name": os.path.basename(original_file),
                         "source": f"{attachment_uuid}-attachment.html",
                         "type": "text/html"
+                    }
+                )
+
+    # Add drom SVG attachments
+    if drom_svg_path:
+        for svg_file in drom_svg_path:
+            attachment_uuid = str(uuid.uuid4())
+            attachment = os.path.join(results_dir, f"{attachment_uuid}-attachment.svg")
+            if os.path.exists(svg_file):
+                shutil.copy(svg_file, attachment)
+                attachments.append(
+                    {
+                        "name": os.path.basename(svg_file),
+                        "source": f"{attachment_uuid}-attachment.svg",
+                        "type": "image/svg+xml"
                     }
                 )
 

@@ -1657,7 +1657,8 @@ class FvmFramework:
                                         pathlib.Path(drom_source["file"]).with_suffix('.psl').name)
                 gen_psl = {'file': drom_source['gen_psl'],
                            'flavor': drom_source['flavor'],
-                           'library': drom_source['library']}
+                           'library': drom_source['library'],
+                           'svg': pathlib.Path(drom_source["gen_psl"]).with_suffix('.svg')}
                 self.drom_generated_psl.append(gen_psl)
 
     def setup_design(self, design, config=None):
