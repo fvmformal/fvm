@@ -240,6 +240,7 @@ def generator(filename, outdir = None, verbose_psl = True, debug = False,
         vunit_name = full_filename.stem
 
         if outdir is not None:
+            os.makedirs(outdir, exist_ok=True)
             output_file = os.path.join(outdir,
                                        os.path.basename(Path(full_filename).with_suffix('.psl')))
         else:
@@ -574,7 +575,7 @@ def main():
     ic(args)
 
     for file in args.inputfiles:
-        retval = generator(file, verbose_psl=not args.quiet_psl,
+        retval = generator(file, outdir=args.outdir, verbose_psl=not args.quiet_psl,
                            debug=args.debug, do_traverse=args.traverse)
         if retval != 0:
             break
