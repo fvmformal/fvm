@@ -270,7 +270,7 @@ run_options_questa:
     - uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.hooks.design concepts/hooks/formal.py -d counter
     - uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.hooks.prove concepts/hooks/formal.py -s prove
     - uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.hooks.prove_list concepts/hooks/formal.py -s prove -l
-    - uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.vunits.continue concepts/inheriting_vunits_fail/formal.py -c
+    - uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.vunits.continue test/examples/inheriting_vunits_fail/formal.py -c
     - make clean
   artifacts:
     when: always
