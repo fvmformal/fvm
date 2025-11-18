@@ -48,13 +48,13 @@ KEYBOARD_INTERRUPT = {"msg": "FVM exit condition: Keyboard interrupt",
                 "value": 7}
 
 # Log formats
-LOGFORMAT = '<cyan>FVM</cyan> | <green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>'
-LOGFORMAT_SUMMARY = '<cyan>FVM</cyan> | <green>Summary</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>'
+LOGFORMAT = '<cyan>FVM</cyan> | <green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <level>{message}</level>'
+LOGFORMAT_SUMMARY = '<cyan>FVM</cyan> | <green>Summary</green> | <level>{level: <8}</level> | <level>{message}</level>'
 #LOGFORMAT_TOOL = '<cyan>FVM</cyan> | <green>Tool</green> | <level>{level: <8}</level> | <level>{message}</level>'
 
 def getlogformattool(design, step, tool):
     """Get the log format for tool messages"""
-    return f'<cyan>{design}.{step}</cyan> | <green>{tool=}</green> | ' + '<level>{level: <8}</level> | <level>{message}</level>'
+    return f'<cyan>{step}</cyan> | <green>{tool=}</green> | ' + '<level>{level: <8}</level> | <level>{message}</level>'
 
 # Create a rich console object
 # For CI systems that support colors but where we don't want any interactivity
@@ -1707,14 +1707,14 @@ class FvmFramework:
             # warnings / etc. but do not duplicate the messages
             if err :
                 if not self.verbose:
-                    self.logger.error(f'ERROR detected in {step=}, {tool=}, {line=}')
+                    self.logger.error(line.rstrip())
                 err_in_log = True
             elif warn :
                 if not self.verbose:
-                    self.logger.warning(f'WARNING detected in {step=}, {tool=}, {line=}')
+                    self.logger.warning(line.rstrip())
             elif success :
                 if not self.verbose:
-                    self.logger.success(f'SUCCESS detected in {step=}, {tool=}, {line=}')
+                    self.logger.success(line.rstrip())
 
         # Capture the messages into the results
         self.results[design][step]['message'] += log_stream.getvalue()
