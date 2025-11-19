@@ -5,11 +5,6 @@ project, during the definition of the methodology
 
 ## Contents
 
-- [``transactions_deprecated``](transactions_deprecated): a first example of how to increase the
-  abstraction level at which to write properties, but it requires extra VHDL
-  code in the PSL file and doesn't seem to scale well to multi-cycle
-  transactions, so it is kind of a dead end. It will remain here for historical
-  reasons, since it is also good to know what didn't work
 - [``parameterized_sequences``](parameterized_sequences): an example of how we can define a sequence with
   parameters, and afterwards when can assign values to those parameters in the
   properties we define reusing the sequence. This is a better way of increasing
