@@ -239,6 +239,11 @@ class FvmFramework:
         whether the file exists and validates its extension. Non-standard 
         extensions trigger a warning but are still accepted.
 
+        Libraries have to be specified in the order they want to be compiled.
+        For example, if library A depends on library B, then B must be
+        added before A. The order of the source files within each library is
+        not significant.
+
         :param src: Path to the VHDL source file.
         :type src: str
         :param library: VHDL library name to associate with the source file.
@@ -263,6 +268,11 @@ class FvmFramework:
         This method registers a Verilog source file for later compilation. It 
         checks whether the file exists and validates its extension. Non-standard 
         extensions trigger a warning but are still accepted.
+
+        Libraries have to be specified in the order they want to be compiled.
+        For example, if library A depends on library B, then B must be
+        added before A. The order of the source files within each library is
+        not significant.
 
         .. warning::
 
@@ -292,6 +302,11 @@ class FvmFramework:
         This method registers a SystemVerilog source file for later compilation. 
         It checks whether the file exists and validates its extension. Non-standard 
         extensions trigger a warning but are still accepted.
+
+        Libraries have to be specified in the order they want to be compiled.
+        For example, if library A depends on library B, then B must be
+        added before A. The order of the source files within each library is
+        not significant.
 
         .. warning::
 
@@ -352,6 +367,11 @@ class FvmFramework:
         parameter specifies the library to which the PSL source belongs, i.e.,
         the library where the design bound to the PSL properties is located.
 
+        Libraries have to be specified in the order they want to be compiled.
+        For example, if library A depends on library B, then B must be
+        added before A. The order of the source files within each library is
+        not significant.
+
         :param src: Path to the PSL source file.
         :type src: str
         :param flavor: Flavor of PSL, either "vhdl" or "verilog".
@@ -401,6 +421,11 @@ class FvmFramework:
         The library parameter specifies the library to which the PSL source belongs,
         i.e., the library where the design bound to the PSL properties is located.
 
+        Libraries have to be specified in the order they want to be compiled.
+        For example, if library A depends on library B, then B must be
+        added before A. The order of the source files within each library is
+        not significant.
+
         :param src: Path to the Wavedrom source file.
         :type src: str
         :param flavor: Flavor of PSL, either "vhdl" or "verilog".
@@ -446,6 +471,11 @@ class FvmFramework:
         :meth:`add_vhdl_source`. If no files match the pattern, an error is
         logged and the framework exits.
 
+        Libraries have to be specified in the order they want to be compiled.
+        For example, if library A depends on library B, then B must be
+        added before A. The order of the source files within each library is
+        not significant.
+
         :param globstr: Glob pattern to search for VHDL source files.
         :type globstr: str
         :param library: VHDL library name to associate with the sources. Defaults 
@@ -468,6 +498,11 @@ class FvmFramework:
         :meth:`add_verilog_source`. If no files match the pattern, an error is
         logged and the framework exits.
 
+        Libraries have to be specified in the order they want to be compiled.
+        For example, if library A depends on library B, then B must be
+        added before A. The order of the source files within each library is
+        not significant.
+
         :param globstr: Glob pattern to search for Verilog source files.
         :type globstr: str
         :param library: VHDL library name to associate with the sources. Defaults
@@ -489,6 +524,11 @@ class FvmFramework:
         and adds them as SystemVerilog sources. Each matching file is added via
         :meth:`add_systemverilog_source`. If no files match the pattern, an error is
         logged and the framework exits.
+
+        Libraries have to be specified in the order they want to be compiled.
+        For example, if library A depends on library B, then B must be
+        added before A. The order of the source files within each library is
+        not significant.
 
         :param globstr: Glob pattern to search for SystemVerilog source files.
         :type globstr: str
@@ -514,6 +554,11 @@ class FvmFramework:
         "vhdl" or "verilog". The library parameter specifies the library to
         which the PSL source belongs, i.e., the library where the design
         bound to the PSL properties is located.
+
+        Libraries have to be specified in the order they want to be compiled.
+        For example, if library A depends on library B, then B must be
+        added before A. The order of the source files within each library is
+        not significant.
 
         :param globstr: Glob pattern to search for PSL source files.
         :type globstr: str
@@ -546,6 +591,11 @@ class FvmFramework:
 
         The library parameter specifies the library to which the PSL source belongs,
         i.e., the library where the design bound to the PSL properties is located.
+
+        Libraries have to be specified in the order they want to be compiled.
+        For example, if library A depends on library B, then B must be
+        added before A. The order of the source files within each library is
+        not significant.
 
         :param src: Path to the Wavedrom source file.
         :type src: str

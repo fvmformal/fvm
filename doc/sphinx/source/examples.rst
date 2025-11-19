@@ -221,7 +221,10 @@ Intermediate examples
 ~~~~~~~~~~~~~~~
 
 This examples belongs to the GRLIB IP library from Gaisler: 
-https://www.gaisler.com/grlib-ip-library.
+https://www.gaisler.com/grlib-ip-library. This is the first example in which
+several libraries are used; the sources must be added in the order they are
+compiled, as mentioned in :py:func:`fvm.FvmFramework.add_vhdl_source`.
+
 This case presents enormous computational complexity: a 64-bit dividend
 divided by a 32-bit divisor. This will make it impossible to verify data
 integrity for all combinations (2\ :sup:`96`), just as it would be impossible
