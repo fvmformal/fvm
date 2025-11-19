@@ -7,19 +7,6 @@ vunit uart_tx_properties (uart_tx(Behavioral)) {
   -- Assume a reset on the first clock cycle
   assume_initial_reset: assume rst = '1';
 
-  -- Assume we won't be having any resets while we are transmitting
-  -- We shouldn't need this is we use 'abort rst' in the properties, and
-  -- actually if we uncomment the following assertion we are overconstraining
-  -- the design. How do we know? Becase we get errors on the reachability
-  -- coverage. Actually we are just missing the reset transitions for the FSM,
-  -- which are typically excluded from simulation coverage, but nevertheless 
-  -- this is a good example
-  -- (the description in the 'training' version of this code is slightly
-  -- different and better worded)
-  --assume_no_reset_during_tx:
-  --  assume always rd_en -> {true; (not rst)[*(11*BIT_DURATION)]};
-
-
   -- Assert the UART never reads from an empty FIFO
   never_read_from_empty_fifo:
     assert never (rd_en and empty);
@@ -30,30 +17,6 @@ vunit uart_tx_properties (uart_tx(Behavioral)) {
   -- with the FIFO module
   assume_fifo_empty_in_reset:
     assume always rst -> empty;
-
-  -- Also assume the FIFO cannot change our input data if it didn't receive a
-  -- rd_en in the previous cycle.
-  -- Which is the same as saying that, if rd_en didn't change in the previous
-  -- cycle, data cannot change in this cycle
-  --assume_data_constant_until_rd_en:
-  --  assume always prev(rd_en) -> (data = prev(data));
-
-  -- Let's define here the sequence of a correct UART transmission
-  -- We have start bit, 8 data bytes, even parity bit, stop bit
-  constant STARTBIT : std_logic := '0';
-  signal databits, n_databits : std_logic_vector(7 downto 0);
-  signal paritybit : std_logic;
-  signal rd_en_r : std_logic;
-  constant STOPBIT : std_logic := '1';
-
-  sequence transmission is {
-    TX=STARTBIT[*5];
-    TX=databits(0)[*5]; TX=databits(1)[*5];
-    TX=databits(2)[*5]; TX=databits(3)[*5];
-    TX=databits(4)[*5]; TX=databits(5)[*5];
-    TX=databits(6)[*5]; TX=databits(7)[*5];
-    TX=paritybit[*5]; TX=STOPBIT[*5]
-  };
 
   -- Symbolic constant for the data being transmitted
   signal data_uart : std_logic_vector(7 downto 0);
@@ -99,46 +62,13 @@ vunit uart_tx_properties (uart_tx(Behavioral)) {
   rd_en_only_happens_after_precond:
     assert always ( {rd_en = '1'} |-> { ended(rd_en_seq_1) or ended(rd_en_seq_2) });
 
-  -- Now we need to predict the values of databits and paritybit
-  -- We must capture the value of the data input one clock cycle after rd_en is
-  -- asserted
-  -- TODO : I cannot use prev() inside a process or concurrent statements, but
-  -- I have to see if there is a more PSL way of predicting expected outputs
-  predict_databits: process(databits, rd_en, data)
-  begin
-      n_databits <= databits;
-      if rd_en_r = '1' then
-          n_databits <= data;
-      end if;
-  end process;
 
-  sync_formal: process(rst, clk)
-  begin
-      if rising_edge(clk) then
-          databits <= n_databits;
-          rd_en_r <= rd_en;
-      end if;
-  end process;
-
-  -- Let's calculate the expected parity in a different way than the RTL
-  paritybit <= not (databits(7) xnor databits(6) xnor databits(5) xnor
-      databits(4) xnor databits(3) xnor databits(2) xnor databits(1) xnor
-      databits(0));
-
-  -- And now let's assert that, each time rd_en is asserted, we will eventually
-  -- have a correct transmission (this is actually a transaction), unless
-  -- someone asserts the reset input
-  -- The not rd_en cycle is added kind of as a wait cycle, since transmission
-  -- takes two cycles to begin after rd_en is asserted. We could have used
-  -- 'true' instead of 'not rd_en', too
-  -- TODO : we could assert that rd_en cannot activate while the transmission
-  -- sequence is running, but in my opinion it isn't actually necessary
-  --   Aaah the beauty of formal. It IS necessary because the formal engine is
-  --   asserting reset during the transmissions when generating the cover
-  --   traces
-  -- TODO : assume the design will not be reset while transmitting
-  correct_tx_after_rd_en:
-    assert always (({rd_en} |=> {not rd_en; transmission}) abort rst);
+  -- Let's define a sequence for a full transmission.
+  -- We can then reuse this sequence in multiple cover properties,
+  -- so we define the sequence to avoid defining the parameters multiple times.
+  sequence transmission is {
+    uart_prop_Cond_non_overlap(data_uart, calc_parity(data_uart))
+  };
 
   -- Cover one correct transmission
   cover_one_transmission:
