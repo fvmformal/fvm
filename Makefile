@@ -47,7 +47,6 @@ test-verbose:
 
 # List with all the examples
 examplelist += counter
-examplelist += countervunit
 examplelist += linearinterpolator
 examplelist += dualcounter
 examplelist += uart_tx
