@@ -132,6 +132,7 @@ def gencompilescript(framework, filename, path, psl_compile=False):
                 compile_systemverilog(path, framework, lib, f, psl_compile)
 
 def compile_vhdl(path, framework, lib, f, psl_compile):
+    """Compile VHDL sources for a given library"""
     lib_sources = [src for src, library in zip(framework.vhdl_sources,
                                             framework.libraries_from_hdl_sources)
                                             if library == lib]
@@ -157,6 +158,7 @@ def compile_vhdl(path, framework, lib, f, psl_compile):
     print('', file=f)
 
 def compile_verilog(path, framework, lib, f, psl_compile):
+    """Compile Verilog sources for a given library"""
     lib_sources = [src for src, library in zip(framework.verilog_sources,
                                             framework.libraries_from_hdl_sources)
                                             if library == lib]
@@ -175,6 +177,7 @@ def compile_verilog(path, framework, lib, f, psl_compile):
     print('', file=f)
 
 def compile_systemverilog(path, framework, lib, f, psl_compile):
+    """Compile SystemVerilog sources for a given library"""
     lib_sources = [src for src, library in zip(framework.systemverilog_sources,
                                             framework.libraries_from_hdl_sources)
                                             if library == lib]
