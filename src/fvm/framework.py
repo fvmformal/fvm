@@ -54,7 +54,7 @@ LOGFORMAT_SUMMARY = '<cyan>FVM</cyan> | <green>Summary</green> | <level>{level: 
 
 def getlogformattool(design, step, tool):
     """Get the log format for tool messages"""
-    return f'<cyan>{step}</cyan> | <green>{tool=}</green> | ' + '<level>{level: <8}</level> | <level>{message}</level>'
+    return f'<cyan>{step}</cyan><green>({tool})</green> | ' + '<level>{level: <8}</level> | <level>{message}</level>'
 
 # Create a rich console object
 # For CI systems that support colors but where we don't want any interactivity
