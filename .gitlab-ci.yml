@@ -201,7 +201,6 @@ run_examples_questa:
         - arbiter_rr
         - axi_lite_slave
         - counter
-        - countervunit
         - ddr2_controller
         - div32
         - dualcounter
@@ -232,17 +231,17 @@ run_examples_questa:
     - curl -LsSf https://astral.sh/uv/install.sh | sh
     - export PATH="$HOME/.local/bin:$PATH"
   script:
-    - uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.lint -m examples.countervunit.formal -s lint
+    - uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.lint -m examples.counter.formal -s lint
     - make clean
-    - uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.rulecheck --m examples.countervunit.formal -s friendliness
+    - uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.rulecheck --m examples.counter.formal -s friendliness
     - make clean
-    - uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.reachability --m examples.countervunit.formal -s reachability
+    - uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.reachability --m examples.counter.formal -s reachability
     - make clean
-    - uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.resets --m examples.countervunit.formal -s resets
+    - uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.resets --m examples.counter.formal -s resets
     - make clean
-#    - coverage run -m examples.countervunit.formal -s clocks
+#    - coverage run -m examples.counter.formal -s clocks
 #    - make clean
-    - uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.prove --m examples.countervunit.formal -s prove
+    - uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.prove --m examples.counter.formal -s prove
     - make clean
   artifacts:
     when: always
