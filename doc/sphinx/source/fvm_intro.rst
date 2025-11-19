@@ -73,7 +73,7 @@ for tool options.
 
 The user just writes a simple ``formal.py`` script like the following one:
 
-.. literalinclude:: ../../../examples/countervunit/formal.py
+.. literalinclude:: ../../../examples/counter/formal.py
    :language: python
 
 When running the script (``python3 formal.py``), the framework
