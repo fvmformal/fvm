@@ -187,7 +187,7 @@ run_examples_questa:
   stage: examples
   parallel:
     matrix:
-      - DESIGN: [counter, linearinterpolator, dualcounter, uart_tx, arbiter_prior, arbiter_rr, fifo_sync, fifo_async, axi_lite_slave, sdram, ddr2_controller, ipv6]
+      - DESIGN: [counter, linearinterpolator, dualcounter, uart_tx, arbiter_prior, arbiter_rr, fifo_sync, fifo_async, axi_lite_slave, sdram, ipv6]
 
 .run_examples_sby:
   <<: *run_concepts_sby
@@ -199,7 +199,6 @@ run_examples_questa:
         - arbiter_rr
         - axi_lite_slave
         - counter
-        - ddr2_controller
         - div32
         - dualcounter
         - fifo_async

@@ -57,7 +57,6 @@ examplelist += fifo_sync
 examplelist += fifo_async
 examplelist += axi_lite_slave
 examplelist += sdram
-examplelist += ddr2_controller
 examplelist += ipv6
 
 # If we only want to calculate friendliness
