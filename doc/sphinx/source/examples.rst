@@ -156,7 +156,7 @@ noted that in the property's precondition there is an output (``rd_en``) and,
 **when a precondition of a property depends on a design output, you must make
 sure that that specific design output is activated when expected**, to avoid
 verification gaps. So, we need to verify somehow that ``rd_en`` is activated
-when we want it to be; the PSL code shows how we do this in this case.
+when we want it to be; the example code shows how we do this in this case.
 
 Axi-4 Lite Slave
 ~~~~~~~~~~~~~~~~~

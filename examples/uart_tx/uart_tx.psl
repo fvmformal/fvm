@@ -36,13 +36,24 @@ vunit uart_tx_properties (uart_tx(Behavioral)) {
       return parity_bit;
   end function;
 
+  -- Assert the drom2psl-generated property
   assert_tx:
     assert uart_prop(data_uart, calc_parity(data_uart), rst);
 
+  -- Cover the drom2psl-generated property (since cover needs a sequence,
+  -- we need to use the sequences that uses the property in the same order)
   cover_tx:
     cover {uart_prop_Precond(data_uart);
           uart_prop_Cond_non_overlap(data_uart, calc_parity(data_uart))};
 
+  -- We have used rd_en (output) in the precondition of the property.
+  -- So, we have to verify that rd_en only happens when we want it to
+  -- happen, to avoid verification gaps. It doesn't necessarily have
+  -- to be with formal verification, but it's preferable.
+
+  -- rd_en can happen in two scenarios:
+  -- 1) right after reset, when the FIFO is not empty
+  -- 2) after a full transmission has completed, when the FIFO is not empty
   sequence rd_en_seq_1 is {
     rst = '1';
     (empty = '1')[*];
@@ -56,9 +67,16 @@ vunit uart_tx_properties (uart_tx(Behavioral)) {
     empty = '0'
   };
 
+  -- This couple of assertions make sure that rd_en happens
+  -- if the preconditions are met
   rd_en_precond_1: assert always ({ rd_en_seq_1 } |-> {rd_en = '1'});
   rd_en_precond_2: assert always ({ rd_en_seq_2 } |-> {rd_en = '1'});
 
+  -- But we would also want to make sure that rd_en only happens
+  -- when one of the preconditions are met, to avoid spurious rd_en pulses
+  -- that could hide bugs in the design. So, we can use the operator ended
+  -- and change the condition and precondition, but some tools might not support
+  -- this operator.
   rd_en_only_happens_after_precond:
     assert always ( {rd_en = '1'} |-> { ended(rd_en_seq_1) or ended(rd_en_seq_2) });
 
@@ -109,4 +127,29 @@ vunit uart_tx_properties (uart_tx(Behavioral)) {
   cover_end_of_transmission: 
     cover {state = b_stop; state = reposo};
 
+  sequence transmission_with_param (
+    hdltype std_logic_vector(7 downto 0) data_val
+  ) is {
+    uart_prop_Cond_non_overlap(data_val, calc_parity(data_val))
+  };
+
+  -- Cover transmission of specific data values. This is useful to
+  -- because formal verification might cover the sequences using
+  -- always the same value and maybe is all zeros because it's easier
+  -- for the solver. So, we can force specific values to be covered
+  -- using this kind of cover.
+  cover_specific_data_values:
+    cover {transmission_with_param(x"00");
+           transmission_with_param(x"55");
+           transmission_with_param(x"A3");
+           transmission_with_param(x"7E");
+           transmission_with_param(x"FF");
+           transmission_with_param(x"00")};
+
+  -- This cover is not ideal, but this is the only way to cover
+  -- the full range of toggles of the symbolic constants in PSL.
+  -- Because, all covers will likely use the same value of the symbolic constant,
+  -- and therefore, they will not cover all the toggles. Another option
+  -- would be to ignore/exclude symbolic constants from simulation coverage.
+  --cover {data_uart = x"00"; (rst = '0')[*]; data_uart = x"FF"; (rst = '0')[*]; data_uart = x"00"};
 }
