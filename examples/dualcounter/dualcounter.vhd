@@ -17,8 +17,6 @@ architecture Behavioral of dualcounter is
   signal count0 : unsigned(integer(ceil(log2(real(MAX_COUNT))))-1 downto 0);
   signal count1 : unsigned(integer(ceil(log2(real(MAX_COUNT))))-1 downto 0);
 
-  -- Necesito declararlo para poderlo usar, pero el hecho de declararlo no
-  -- significa que lo esté usando ni me obliga a usarlo
   component counter is
     generic ( MAX_COUNT : integer := 100 );
     port ( clk: in  std_logic;
@@ -29,17 +27,12 @@ architecture Behavioral of dualcounter is
 
 begin
 
-  -- Quiero poner DOS copias del contador
-  -- cada una ocupará los recursos correspondientes a un contador
-
-  -- Primera copia (instancia en VHDL)
   counter0 : counter
     generic map (MAX_COUNT => MAX_COUNT)
     port map(rst => rst,
              clk => clk,
              Q   => count0);
 
-  -- Segunda copia (segunda instancia)
   counter1 : counter
     generic map (MAX_COUNT => MAX_COUNT)
     port map(rst => rst,
