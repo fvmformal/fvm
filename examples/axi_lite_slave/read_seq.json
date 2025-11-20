@@ -1,0 +1,15 @@
+{ "signal": [
+  { "name": "Clk",        "wave": "p..|.|.", "period": 3},
+  { "name": "S_AxiLite_ArAddr",  "wave": "3.x....", "data": ["R_addr"], "type": "std_logic_vector(AxiAddrWidth_g - 1 downto 0)", "period": 3},
+  { "name": "S_AxiLite_ArValid",  "wave": "1.x....", "period": 3},
+  { "name": "S_AxiLite_ArReady",  "wave": "010....", "period": 3},
+  { "name": "S_AxiLite_RData",  "wave": "x....4.", "data": ["R_data"], "type": "std_logic_vector(AxiDataWidth_g - 1 downto 0)", "period": 3},
+  { "name": "S_AxiLite_RResp",  "wave": "x....4.", "data": ["00"], "type": "std_logic_vector(1 downto 0)", "period": 3},
+  { "name": "S_AxiLite_RValid",  "wave": "0....1.", "period": 3},
+  { "name": "S_AxiLite_RReady",  "wave": "x....01", "period": 3},
+  { "name": "Rb_Addr",  "wave": "x.3x...", "data": ["R_addr"], "type": "std_logic_vector(AxiAddrWidth_g - 1 downto 0)", "period": 3},
+  { "name": "Rb_Rd",  "wave": "0.10...", "period": 3},
+  { "name": "Rb_RdData",  "wave": "x...4x.", "data": ["R_data"], "type": "std_logic_vector(AxiDataWidth_g - 1 downto 0)", "period": 3},
+  { "name": "Rb_RdValid",  "wave": "x.0.1x.", "period": 3}
+]
+}
