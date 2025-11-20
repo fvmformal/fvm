@@ -9,9 +9,6 @@ vunit fifo_sync (olo_base_fifo_sync(rtl)) {
   -- Force a reset in the first clock cycle
   assume_initial_reset: assume Rst = '1';
 
-  -- Output cannot be ready when it is not valid
-  --assume always (not Out_Valid) -> (not Out_Ready);
-
   -- This way is easier to visualize data (NOT A NECESSARY ASSUME)
   --assume always In_Valid -> not(In_Data = "000");
 
@@ -63,6 +60,7 @@ vunit fifo_sync (olo_base_fifo_sync(rtl)) {
   signal in_cnt: unsigned(log2ceil(Depth_g) - 1 downto 0);
   signal out_cnt: unsigned(log2ceil(Depth_g) - 1 downto 0);
 
+  -- Process to count number of valid writes and reads
   process(clk)
   begin
     if rising_edge(clk) then
@@ -85,14 +83,7 @@ vunit fifo_sync (olo_base_fifo_sync(rtl)) {
   end process;
 
   signal a : std_logic_vector(Width_g-1 downto 0);
-  signal c : unsigned(log2ceil(Depth_g) - 1 downto 0);
-  --signal d : unsigned(log2ceil(Depth_g) - 1 downto 0);
   assume always ({true} |=> {a = prev(a)}) abort Rst;
-  --assume always ({true} |=> {d = prev(d)});
-
-  --        assert always ( {In_Ready = '1' and In_Valid = '1' and In_Data = a and in_cnt = c; (out_cnt /= c)[*];
-  --                 Out_Ready = '1' and Out_Valid = '1' and out_cnt = c}
-  --                 |-> {Out_Data = a} ) abort Rst;
 
   sequence write_seq is {
       In_Ready = '1' and In_Valid = '1'
@@ -125,6 +116,8 @@ vunit fifo_sync (olo_base_fifo_sync(rtl)) {
       out_cnt = j
    };
 
+  -- With the number of valid writes and reads, we can
+  -- check that data read is the same as data written.
   %for j in 0..7 do
     assert always ( { in_data_pos_j(a, to_unsigned(j, in_cnt'length)); no_pos_j(to_unsigned(j, out_cnt'length)); 
                       out_valid_pos_j(to_unsigned(j, out_cnt'length))} |-> {Out_Data = a} ) abort Rst;
@@ -155,6 +148,10 @@ vunit fifo_sync (olo_base_fifo_sync(rtl)) {
       read_seq_no_rst[*7]
   };
 
+  -- Cover all the important events in a FIFO: write, read,
+  -- full, empty...
+  cover_write_and_read_FIFO: cover{rst; write_FIFO; read_FIFO; write_FIFO; [*]; Full; (not Rst)[*10]; Empty; [*]; Full};
+
   sequence toggle_a_1 is {
     countones(a) = Width_g and rst = '1'; 
     countones(a) = 0 and rst = '0'
@@ -164,21 +161,12 @@ vunit fifo_sync (olo_base_fifo_sync(rtl)) {
     countones(a) = 0 and rst = '1'; 
     countones(a) = Width_g and rst = '0'
   };
-
-  sequence toggle_c_1 is {
-    countones(c) = log2ceil(Depth_g) and rst = '1'; 
-    countones(c) = 0 and rst = '0'
-  };
-  sequence toggle_c_2 is {
-    countones(c) = 0 and rst = '1'; 
-    countones(c) = log2ceil(Depth_g) and rst = '0'
-  };
-  -- Cover all the important events in a FIFO: write, read,
-  -- full, empty...
-  cover_write_and_read_FIFO: cover{rst; write_FIFO; read_FIFO; write_FIFO; [*]; Full; (not Rst)[*10]; Empty; [*]; Full};
+  -- This cover is not ideal, but this is the only way to cover
+  -- the full range of toggles of the symbolic constants in PSL.
+  -- Because, all covers will likely use the same value of the symbolic constant,
+  -- and therefore, they will not cover all the toggles. Another option
+  -- would be to ignore/exclude symbolic constants from simulation coverage.
   cover{toggle_a_1};
   cover{toggle_a_2};
-  cover{toggle_c_1};
-  cover{toggle_c_2};
   
 }

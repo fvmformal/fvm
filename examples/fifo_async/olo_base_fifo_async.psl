@@ -9,7 +9,7 @@ vunit olo_base_fifo_async (olo_base_fifo_async(rtl)) {
 
   -- This way is easier to visualize data, otherwise it keeps
   -- the same value of In_Data (NOT A NECESSARY ASSUME)
-  assume always ( ( In_Valid -> (In_Data /= prev(In_Data)) ) abort In_Rst) @rising_edge(In_Clk);
+  --assume always ( ( In_Valid -> (In_Data /= prev(In_Data)) ) abort In_Rst) @rising_edge(In_Clk);
 
   assert always  ( (unsigned(In_Level) = Depth_g) -> In_Full)  @rising_edge(In_Clk);
 
@@ -219,6 +219,10 @@ vunit olo_base_fifo_async (olo_base_fifo_async(rtl)) {
       not Out_Rst
   } @rising_edge(Out_Clk);
 
+  cover{write_FIFO; [*]; In_Full = '1'; true[*3]} @rising_edge(In_Clk);
+  cover{read_FIFO; [*]; Out_Full = '1'; (Out_Rst = '0' and Out_RstOut = '0')[*]; Out_Empty = '1'} @rising_edge(Out_Clk);
+  cover{Out_RstOut; (Out_RstOut = '0' and Out_Rst = '0')[+]; out_cnt = Depth_g-1; out_cnt = 0} @rising_edge(Out_Clk);
+
   sequence toggle_a_1 is {
     countones(a) = Width_g and In_Rst = '1'; 
     countones(a) = 0 and In_Rst = '0'
@@ -228,10 +232,11 @@ vunit olo_base_fifo_async (olo_base_fifo_async(rtl)) {
     countones(a) = 0 and In_Rst = '1'; 
     countones(a) = Width_g and In_Rst = '0'
   };
-
-  cover{write_FIFO; [*]; In_Full = '1'; true[*3]} @rising_edge(In_Clk);
-  cover{read_FIFO; [*]; Out_Full = '1'; (Out_Rst = '0' and Out_RstOut = '0')[*]; Out_Empty = '1'} @rising_edge(Out_Clk);
-  cover{Out_RstOut; (Out_RstOut = '0' and Out_Rst = '0')[+]; out_cnt = Depth_g-1; out_cnt = 0} @rising_edge(Out_Clk);
+  -- This cover is not ideal, but this is the only way to cover
+  -- the full range of toggles of the symbolic constants in PSL.
+  -- Because, all covers will likely use the same value of the symbolic constant,
+  -- and therefore, they will not cover all the toggles. Another option
+  -- would be to ignore/exclude symbolic constants from simulation coverage.
   cover{toggle_a_1} @rising_edge(In_Clk);
   cover{toggle_a_2} @rising_edge(In_Clk);
 
