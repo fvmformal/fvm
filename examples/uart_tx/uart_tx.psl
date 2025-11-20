@@ -151,5 +151,5 @@ vunit uart_tx_properties (uart_tx(Behavioral)) {
   -- Because, all covers will likely use the same value of the symbolic constant,
   -- and therefore, they will not cover all the toggles. Another option
   -- would be to ignore/exclude symbolic constants from simulation coverage.
-  --cover {data_uart = x"00"; (rst = '0')[*]; data_uart = x"FF"; (rst = '0')[*]; data_uart = x"00"};
+  cover {data_uart = x"00"; (rst = '0')[*]; data_uart = x"FF"; (rst = '0')[*]; data_uart = x"00"};
 }
