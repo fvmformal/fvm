@@ -178,7 +178,7 @@ A very interesting way to use ``drom2psl`` is to define one of the
 functionalities of our design in wavedrom, in this case READ, and cover it
 to see if it can occur:
 
-.. image:: _static/examples/axi_s_read.svg
+.. image:: _static/examples/axi_s_read_3.svg
 
 With the wavedrom, we can generate assertions to write (either manually or
 with ``drom2psl``). In this case, it's clear that three things happen:
