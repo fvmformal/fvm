@@ -1,0 +1,18 @@
+{ "signal": [
+  { "name": "Clk",        "wave": "p.|..|.", "period": 3},
+  { "name": "S_AxiLite_AwAddr",  "wave": "4.x....", "data": ["W_addr"], "type": "std_logic_vector(AxiAddrWidth_g - 1 downto 0)", "period": 3},
+  { "name": "S_AxiLite_AwValid",  "wave": "1.x....", "period": 3},
+  { "name": "S_AxiLite_AwReady",  "wave": "010....", "period": 3},
+  { "name": "S_AxiLite_BResp",  "wave": "7......", "data": ["00"], "type": "std_logic_vector(1 downto 0)", "period": 3},
+  { "name": "S_AxiLite_BValid",  "wave": "0...1..", "period": 3},
+  { "name": "S_AxiLite_BReady",  "wave": "x...0.1", "period": 3},
+  { "name": "S_AxiLite_WData",  "wave": "x.5.x..", "data": ["W_data"], "type": "std_logic_vector(AxiDataWidth_g - 1 downto 0)", "period": 3},
+  { "name": "S_AxiLite_WStrb",  "wave": "x.6.x..", "data": ["W_byte"], "type": "std_logic_vector((AxiDataWidth_g/8) - 1 downto 0)", "period": 3},
+  { "name": "S_AxiLite_WValid",  "wave": "x.01x..", "period": 3},
+  { "name": "S_AxiLite_WReady",  "wave": "x.1.0..", "period": 3},
+  { "name": "Rb_Addr",  "wave": "x.4..x.", "data": ["W_addr"], "type": "std_logic_vector(AxiAddrWidth_g - 1 downto 0)", "period": 3},
+  { "name": "Rb_Wr",  "wave": "x0..10.", "period": 3},
+  { "name": "Rb_WrData",  "wave": "x...5x.", "data": ["W_data"], "type": "std_logic_vector(AxiDataWidth_g - 1 downto 0)", "period": 3},
+  { "name": "Rb_ByteEna",  "wave": "x...6x.", "data": ["W_byte"], "type": "std_logic_vector((AxiDataWidth_g/8) - 1 downto 0)", "period": 3}
+]
+}

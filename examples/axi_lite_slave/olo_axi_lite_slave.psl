@@ -1,5 +1,11 @@
 vunit olo_axi_lite_slave_properties (olo_axi_lite_slave(rtl)) {
 
+    -- In axi_slave_sequences.psl we have the sequences for AXI Lite Slave,
+    -- such as handshakes or interfaces for each channel
+    inherit axi_slave_sequences;
+    inherit read_seq;
+    inherit write_seq;
+
     -- Default clock for PSL assertions
     default clock is rising_edge(Clk);
 
@@ -12,9 +18,131 @@ vunit olo_axi_lite_slave_properties (olo_axi_lite_slave(rtl)) {
     -- This way is easier to visualize data (NOT A NECESSARY ASSUME)
     --assume always Rb_RdValid -> (unsigned(Rb_RdData) /= 0);
 
-    assume always Rst -> (not Rb_RdValid);
+    assume always Rst -> (Rb_RdValid = '0');
 
-    assume never (Rb_RdValid and Rb_Rd);
+    ------------------------------
+    -- ASSUMES FOR AXI LITE SLAVE
+    ------------------------------
+
+    property active_until_handshake(
+        hdltype std_logic init_transf;
+        hdltype std_logic accept_transf
+        ) is
+        always ((init_transf = '1') -> (init_transf = '1' until_ accept_transf = '1')) abort Rst;
+
+    property data_stable_until_handshake(
+        hdltype std_logic init_transf;
+        hdltype std_logic accept_transf;
+        hdltype std_logic_vector(AxiDataWidth_g-1 downto 0) data
+        ) is
+        always (
+                    {init_transf = '1' and accept_transf = '0'; true} |->
+                    (stable(data) until_ accept_transf = '1')
+                ) abort Rst;
+
+    property addr_stable_until_handshake(
+        hdltype std_logic init_transf;
+        hdltype std_logic accept_transf;
+        hdltype std_logic_vector(AxiAddrWidth_g-1 downto 0) addr
+        ) is
+        always (
+                    {init_transf = '1' and accept_transf = '0'; true} |->
+                    (stable(addr) until_ accept_transf = '1')
+                ) abort Rst;
+
+    -- AXI Lite Slave PROTOCOL ASSUMPTIONS
+    -- AR and W channels keep the valid signal
+    -- until the ready signal is high.
+    handshake_AR: assume active_until_handshake(S_AxiLite_ArValid, S_AxiLite_ArReady);
+    handshake_AR_addr: assume addr_stable_until_handshake(S_AxiLite_ArValid, S_AxiLite_ArReady, S_AxiLite_ArAddr);
+
+    handshake_AW: assume active_until_handshake(S_AxiLite_AwValid, S_AxiLite_AwReady);
+    handshake_AW_addr: assume addr_stable_until_handshake(S_AxiLite_AwValid, S_AxiLite_AwReady, S_AxiLite_AwAddr);
+
+    -- B and R channels do not have this assumption because the
+    -- valid signal is an output from the AXI Lite Slave, so
+    -- it will happen anyway. We can assert it to check the behavior.
+    -- In the connected master, these assumes will be asserts and
+    -- the asserts will be assumes.
+    handshake_B: assert active_until_handshake(S_AxiLite_BValid, S_AxiLite_BReady);
+    handshake_R:assert active_until_handshake(S_AxiLite_RValid, S_AxiLite_RReady);
+    handshake_R_data: assert data_stable_until_handshake(S_AxiLite_RValid, S_AxiLite_RReady, S_AxiLite_RData);
+
+    -- assert always ({S_AxiLite_RValid} |=> (stable(S_AxiLite_RResp) until_ S_AxiLite_RReady)) abort Rst; -- fail since S_AxiLite_RResp can change with a timeout
+
+    -- W channel keeps the ready signal until the valid signal is high.
+    -- Since ready is an output in this case, we can assert the behavior.
+    handshake_W: assert active_until_handshake(S_AxiLite_WReady, S_AxiLite_WValid);
+
+    -- Rb_RdValid is asserted after Rb_Rd (exaplanation in OpenLogic
+    -- AXI Lite Slave documentation). So, they cannot be asserted at
+    -- the same time
+    assume always ( not (Rb_RdValid and Rb_Rd)) abort Rst;
+
+    -- Let's define symbolic constants for AXI responses
+    signal addr_symb_const : std_logic_vector(AxiAddrWidth_g - 1 downto 0);
+    signal data_symb_const : std_logic_vector(AxiDataWidth_g - 1 downto 0);
+    signal byte_ena_symb_const : std_logic_vector((AxiDataWidth_g/8) - 1 downto 0);
+    assume always ({true} |=> {addr_symb_const = prev(addr_symb_const)}) abort Rst;
+    assume always ({true} |=> {data_symb_const = prev(data_symb_const)}) abort Rst;
+    assume always ({true} |=> {byte_ena_symb_const = prev(byte_ena_symb_const)}) abort Rst;
+
+    -- Cover the drom2psl generated read and write sequences
+    drom2psl_read: cover {read_seq(addr_symb_const, data_symb_const)};
+    drom2psl_write: cover {write_seq(addr_symb_const, data_symb_const, byte_ena_symb_const)};
+
+    ---------------------------------
+    -- ASSERTIONS FOR AXI LITE SLAVE
+    ---------------------------------
+    -- How does this Axi slave work?
+
+    -- Read mode:
+    -- AR Channel requests data from an address
+    -- Read from the register bank
+    -- R Channel returns the requested data 
+
+    -- Write mode:
+    -- Channel AW sends the write address
+    -- Channel W sends the data
+    -- Write in the register bank
+    -- Channel B acknowledges the write
+
+    -- When does it start?
+
+    -- It enters read mode or write mode if there is no read/write
+    -- in progress and there is an AR or AW (read has priority).
+
+    sequence no_AR_no_AW_valid is {
+       S_AxiLite_ARValid = '0' and S_AxiLite_AWValid = '0'
+    };
+    sequence finish_read_and_start_read is {
+       R_handshake;
+       no_AR_no_AW_valid[*];
+       S_AxiLite_ARValid = '1';
+       true
+    };
+    sequence finish_write_and_start_read is {
+       B_handshake;
+       no_AR_no_AW_valid[*];
+       S_AxiLite_ARValid = '1';
+       true
+    };
+    sequence rst_and_start_read is {
+       Rst = '1';
+       no_AR_no_AW_valid[*];
+       Rst = '0' and S_AxiLite_ARValid = '1';
+       Rst = '0'
+    };
+
+    correct_AR_handshake_1: assert always ({rst_and_start_read} |-> {AR_handshake});
+    correct_AR_handshake_2: assert always ({finish_read_and_start_read} |-> {AR_handshake}) abort Rst;
+    correct_AR_handshake_3: assert always ({finish_write_and_start_read} |-> {AR_handshake}) abort Rst;
+
+    only_ways_to_AR_handshake: assert always ({AR_handshake} |->
+                   {ended(finish_read_and_start_read) or
+                    ended(finish_write_and_start_read) or
+                    ended(rst_and_start_read)
+                    }) abort Rst;
 
     -- READ ASSERTIONS
     -- AR Channel requests data from an address
@@ -31,12 +159,12 @@ vunit olo_axi_lite_slave_properties (olo_axi_lite_slave(rtl)) {
     assert_read_enable_prev_ready:
         assert always ( {true; Rb_Rd} |-> {prev(S_AxiLite_ARReady)} ) abort Rst;
 
-   sequence AR_valid_ready is {                                                                        
-      S_AxiLite_ARValid; S_AxiLite_ARReady
-   };
-   sequence AR_valid_not_ready_and_ready is {                                                                        
-      S_AxiLite_ARValid: (not S_AxiLite_ARReady)[*]; S_AxiLite_ARReady
-   };
+    sequence AR_valid_ready is {
+        S_AxiLite_ARValid; S_AxiLite_ARReady
+    };
+    sequence AR_valid_not_ready_and_ready is {
+        S_AxiLite_ARValid: (not S_AxiLite_ARReady)[*]; S_AxiLite_ARReady
+    };
     -- Assert the register bank receives the address
     -- from the request
     assert_address_received:
@@ -44,26 +172,17 @@ vunit olo_axi_lite_slave_properties (olo_axi_lite_slave(rtl)) {
     assert_address_received_2:
         assert always ( {AR_valid_not_ready_and_ready} |=> {Rb_Addr = prev(S_AxiLite_ARAddr)} ) abort Rst;
 
-   sequence bank_R_valid_ready is {                                                                        
-      Rb_Rd; Rb_RdValid
-   };
-   sequence bank_R_valid_ready_before_timeout is {                                                                        
-      Rb_Rd; (not Rb_RdValid)[*1 to ReadTimeoutClks_g-3]; Rb_RdValid
-   };
+    sequence bank_R_valid_ready is {                                                                        
+        Rb_Rd; Rb_RdValid
+    };
+    sequence bank_R_valid_ready_before_timeout is {                                                                        
+        Rb_Rd; (not Rb_RdValid)[*1 to ReadTimeoutClks_g-3]; Rb_RdValid
+    };
 
-   sequence bank_R_not_valid_before_timeout is {                                                                        
-      Rb_Rd; (not Rb_RdValid)[*ReadTimeoutClks_g-1]
-   };
+    sequence bank_R_not_valid_before_timeout is {                                                                        
+        Rb_Rd; (not Rb_RdValid)[*ReadTimeoutClks_g-1]
+    };
 
-    sequence R_interface (
-       hdltype std_logic R_valid;
-       hdltype std_logic_vector(AxiDataWidth_g - 1 downto 0) R_data;
-       hdltype std_logic_vector(1 downto 0) R_resp
-       ) is {                                                                        
-       S_AxiLite_RValid = R_valid and
-       S_AxiLite_RData = R_data and
-       S_AxiLite_RResp = R_resp
-   };
     -- Assert the R Channel receives the data
     -- from the register bank
     assert_data_received:
@@ -77,15 +196,6 @@ vunit olo_axi_lite_slave_properties (olo_axi_lite_slave(rtl)) {
     assert_data_not_received:
         assert always ( {bank_R_not_valid_before_timeout} |=> {S_AxiLite_RResp = AxiResp_SlvErr_c} ) abort Rst;
 
-
-    sequence R_handshake is {                                                                        
-        S_AxiLite_RValid: S_AxiLite_RReady
-    };
-    -- Assert if the response is valid and ready,
-    -- the next cycle is not sent
-    assert_response_valid:
-        assert always ( {R_handshake} |=> {not S_AxiLite_RValid} ) abort Rst;
-
     -- The response cannot have these values
     assert_response_never_01:
         assert (never (S_AxiLite_RResp = "01") ) abort Rst;
@@ -98,6 +208,38 @@ vunit olo_axi_lite_slave_properties (olo_axi_lite_slave(rtl)) {
     -- Write in the bank register
     -- Channel B acknowledges the write
 
+    sequence AW_valid_no_AR_valid is {
+       S_AxiLite_ARValid = '0' and S_AxiLite_AWValid = '1'
+    };
+    sequence finish_read_and_start_write is {
+       R_handshake;
+       no_AR_no_AW_valid[*];
+       AW_valid_no_AR_valid;
+       true
+    };
+    sequence finish_write_and_start_write is {
+       B_handshake;
+       no_AR_no_AW_valid[*];
+       AW_valid_no_AR_valid;
+       true
+    };
+    sequence start_write is {
+       Rst = '1';
+       no_AR_no_AW_valid[*];
+       Rst = '0': AW_valid_no_AR_valid;
+       Rst = '0'
+    };
+
+    correct_AW_handshake_1: assert always ({start_write} |-> {AW_handshake});
+    correct_AW_handshake_2: assert always ({finish_read_and_start_write} |-> {AW_handshake}) abort Rst;
+    correct_AW_handshake_3: assert always ({finish_write_and_start_write} |-> {AW_handshake}) abort Rst;
+
+    only_ways_to_AW_handshake: assert always ({AW_handshake} |->
+                   {ended(finish_read_and_start_write) or
+                    ended(finish_write_and_start_write) or
+                    ended(start_write)
+                    }) abort Rst;
+
     -- Assert if the address is ready,
     -- it was valid in the previous cycle
     assert_write_address_ready_prev_valid:
@@ -105,30 +247,19 @@ vunit olo_axi_lite_slave_properties (olo_axi_lite_slave(rtl)) {
 
     -- Assert the register bank receives the address
     -- from the request
-    -- Does not work because the 2 least significant bits
-    -- TODO: Fix it
-    --assert_write_address_received:
-    --    assert always ( {S_AxiLite_AWValid; S_AxiLite_AWReady} |=> {Rb_Addr = prev(S_AxiLite_AWAddr)} ) abort Rst;
-    --assert_write_address_received_2:
-    --    assert always ( {S_AxiLite_AWValid: (not S_AxiLite_AWReady)[*]; S_AxiLite_AWReady} |=> {Rb_Addr = prev(S_AxiLite_AWAddr)} ) abort Rst;
+    assert_write_address_received:
+        assert always ( {AW_handshake} |=>
+                        {Rb_Addr = prev(S_AxiLite_AWAddr(S_AxiLite_AwAddr'high downto UnusedBits_c) & zerosVector(UnusedBits_c))}
+                        ) abort Rst;
 
-    sequence W_handshake is {                                                                        
-        S_AxiLite_WValid and S_AxiLite_WReady
-    };
     sequence prev_W_handshake is {
         prev(S_AxiLite_WValid) and prev(S_AxiLite_WReady)
     };
-    -- Assert if write enable,
-    -- it was valid in the previous cycle
-    assert_write_enable_prev_valid:
-        assert always ( {true; Rb_Wr} 
-        |-> { prev_W_handshake } ) abort Rst;
 
     assert_valid_handshake_write_enable:
         assert always ( {W_handshake} 
         |=> { Rb_Wr } ) abort Rst;
 
-    --assert_x1: assert always ( (S_AxiLite_WValid and S_AxiLite_WReady) -> next S_AxiLite_BValid ) abort Rst;
     sequence bank_W_interface (
        hdltype std_logic Wr;
        hdltype std_logic_vector(AxiDataWidth_g - 1 downto 0) WrData;
@@ -139,10 +270,9 @@ vunit olo_axi_lite_slave_properties (olo_axi_lite_slave(rtl)) {
        Rb_ByteEna = ByteEna 
    };
 
-    assert_x2: assert always ( {true; S_AxiLite_WReady and (not prev(S_AxiLite_WReady))}  |-> {prev(S_AxiLite_AWReady)} ) abort Rst;
-
     assert_bank_W: assert always ( {W_handshake} |=> {bank_W_interface('1', prev(S_AxiLite_WData), prev(S_AxiLite_WStrb))} ) abort Rst;
 
+    assert_channel_B: assert always ( {Rb_Wr = '1'} |-> {(S_AxiLite_BReady = '0' and S_AxiLite_BValid = '1')[*]; B_handshake} ) abort Rst;
     -- Writes cannot fail
     assert always (S_AxiLite_BResp = "00"); 
 
@@ -153,8 +283,12 @@ vunit olo_axi_lite_slave_properties (olo_axi_lite_slave(rtl)) {
     assert_never_read_and_write:
         assert ( never (Rb_Rd and Rb_Wr) ) abort Rst;
 
+    -----------------------------
+    -- COVERS FOR AXI LITE SLAVE
+    -----------------------------
+
     -- Cover everything that can happen
-    cover{[*]; not Rst: Rb_Wr; [*]; not Rst: Rb_Wr: Rb_Addr = x"10"; [*]; not Rst: Rb_Rd; (not Rst)[*10]; [*]; Rb_RdValid; [*]; not Rst: Rb_Rd; [*]; Rb_RdValid};
+    cover_read_and_write: cover{[*]; not Rst: Rb_Wr; [*]; not Rst: Rb_Wr: Rb_Addr = x"10"; [*]; not Rst: Rb_Rd; (not Rst)[*10]; [*]; Rb_RdValid; [*]; not Rst: Rb_Rd; [*]; Rb_RdValid};
 
     sequence toggle_output_axi_data_width (
        hdltype std_logic_vector(AxiDataWidth_g - 1 downto 0) axiData
@@ -171,9 +305,14 @@ vunit olo_axi_lite_slave_properties (olo_axi_lite_slave(rtl)) {
        Rst = '0' and countones(axiAddr) = 0
    };
 
-    cover {toggle_output_axi_data_width(S_AxiLite_RData)};
-    cover {toggle_output_axi_data_width(Rb_WrData)};
-    cover {toggle_output_axi_addr_width(Rb_Addr)};
+    -- Toggle some outputs to improve simulation coverage.
+    -- This is not ideal, but toggle coverage will be low
+    -- otherwise because all covers will likely use the same value
+    -- or similar values since it's easier for the solver to find
+    -- those values.
+    cover_toggle_read_data: cover {toggle_output_axi_data_width(S_AxiLite_RData)};
+    cover_toggle_write_data: cover {toggle_output_axi_data_width(Rb_WrData)};
+    cover_toggle_addr: cover {toggle_output_axi_addr_width(Rb_Addr)};
 
    sequence cover_seq_1 is {                                                                        
       ((Rb_Rd = '0') and (Rb_RdValid = '0'))[*1];
@@ -194,8 +333,8 @@ vunit olo_axi_lite_slave_properties (olo_axi_lite_slave(rtl)) {
       ((Rb_Wr = '0'))[*3] 
    };
 
-    cover{cover_seq_1};
+    cover_read_seq: cover{cover_seq_1};
 
-    cover{cover_seq_2};
+    cover_write_seq: cover{cover_seq_2};
 
 }

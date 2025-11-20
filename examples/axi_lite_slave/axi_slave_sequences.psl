@@ -1,0 +1,80 @@
+vunit axi_slave_sequences {
+
+    -- AR Channel
+   sequence AR_handshake is {
+      S_AxiLite_ArValid = '1' and S_AxiLite_ArReady = '1'
+   };
+
+   sequence no_AR_handshake is {
+      not (S_AxiLite_ArValid = '1' and S_AxiLite_ArReady = '1')
+   };
+
+   sequence AR_interface (
+      hdltype std_logic AR_valid;
+      hdltype std_logic_vector(AxiAddrWidth_g - 1 downto 0) AR_addr
+      ) is {
+      S_AxiLite_ArValid = AR_valid and
+      S_AxiLite_ArAddr = AR_addr
+   };
+
+   -- AW Channel
+   sequence AW_handshake is {
+      S_AxiLite_AwValid = '1' and S_AxiLite_AwReady = '1'
+   };
+
+   sequence no_AW_handshake is {
+      not (S_AxiLite_AwValid = '1' and S_AxiLite_AwReady = '1')
+   };
+
+   sequence AW_interface (
+      hdltype std_logic AW_valid;
+      hdltype std_logic_vector(AxiAddrWidth_g - 1 downto 0) AW_addr
+      ) is {
+      S_AxiLite_AwValid = AW_valid and
+      S_AxiLite_AwAddr = AW_addr
+   };
+
+   -- W Channel
+    sequence W_handshake is {
+        S_AxiLite_WValid = '1' and S_AxiLite_WReady = '1'
+    };
+
+    sequence W_interface (
+       hdltype std_logic W_valid;
+       hdltype std_logic_vector(AxiDataWidth_g - 1 downto 0) W_data;
+       hdltype std_logic_vector((AxiDataWidth_g/8) - 1 downto 0) W_strb
+       ) is {
+       S_AxiLite_WValid = W_valid and
+       S_AxiLite_WData = W_data and
+       S_AxiLite_WStrb = W_strb
+    };
+
+    -- B Channel
+    sequence B_handshake is {
+        S_AxiLite_BValid = '1' and S_AxiLite_BReady = '1'
+    };
+
+    sequence B_interface (
+       hdltype std_logic B_valid;
+       hdltype std_logic_vector(1 downto 0) B_resp
+       ) is {
+       S_AxiLite_BValid = B_valid and
+       S_AxiLite_BResp = B_resp
+   };
+
+    -- R Channel
+    sequence R_handshake is {
+        S_AxiLite_RValid = '1' and S_AxiLite_RReady = '1'
+    };
+
+    sequence R_interface (
+       hdltype std_logic R_valid;
+       hdltype std_logic_vector(AxiDataWidth_g - 1 downto 0) R_data;
+       hdltype std_logic_vector(1 downto 0) R_resp
+       ) is {
+       S_AxiLite_RValid = R_valid and
+       S_AxiLite_RData = R_data and
+       S_AxiLite_RResp = R_resp
+   };
+
+}
