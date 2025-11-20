@@ -202,12 +202,55 @@ the design at all, as it's just a startup delay. Regarding the design, it's
 similar to the Axi slave with many states (``WRITE``, ``READ``, ``REFRESH``...)
 and many interfaces, so using sequences remains essential.
 
+With ``drom2psl`` we can easily ``assert`` a write, with an input transaction
+using the user interface and an output transaction using the SDRAM interface:
+
 .. image:: _static/examples/sdram_write.svg
 
-Note that the ``&`` means concatenation.
+``drom2psl`` generates the following code:
 
-.. image:: _static/examples/sdram_read_2.svg
+.. code-block:: vhdl
 
+   vunit write_seq {
+
+   sequence write_seq_Precond (
+      hdltype unsigned(22 downto 0) addr_value;
+      hdltype std_logic_vector(31 downto 0) data_value
+   ) is {
+      ((addr = addr_value) and (data = data_value) and (we = '1') and (req = '1') and (ack = '0'))[*1];  -- 1 cycle
+      ((addr = addr_value) and (data = data_value) and (we = '1') and (req = '1') and (ack = '1'))[*1]  -- 1 cycle
+   };
+
+   sequence write_seq_Cond (
+      hdltype unsigned(22 downto 0) addr_value;
+      hdltype std_logic_vector(31 downto 0) data_value
+   ) is {
+      ((sdram_a = addr_value(20 downto 8)) and (sdram_ba = addr_value(22 downto 21)) and (sdram_cs_n = '0') and (sdram_ras_n = '0') and (sdram_cas_n = '1') and (sdram_we_n = '1'))[*1];  -- 1 cycle
+      ((sdram_a = "0010" & addr_value(7 downto 0) & '0') and (sdram_ba = addr_value(22 downto 21)) and (sdram_dq = data_value(31 downto 16)) and (sdram_cs_n = '0') and (sdram_ras_n = '1') and (sdram_cas_n = '0') and (sdram_we_n = '0'))[*1];  -- 1 cycle
+      ((sdram_dq = data_value(15 downto 0)) and (sdram_cs_n = '0') and (sdram_ras_n = '1') and (sdram_cas_n = '1') and (sdram_we_n = '1'))[*1]  -- 1 cycle
+   };
+
+   -- Relational operands between sequences may be, among others:
+   --   && : both must happen and last exactly the same number of cycles
+   --   & : both must happen, without any requirement on their durations
+   --   |-> : implication: both must happen, with the first cycle of the second occurring during the last cycle of the first
+   --   |=> : non-overlapping implication: both must happen, with the first cycle of the second occuring the cycle after the last cycle of the first
+   property write_seq (
+      hdltype unsigned(22 downto 0) addr_value;
+      hdltype std_logic_vector(31 downto 0) data_value;
+      hdltype std_ulogic fvm_rst
+   ) is
+      always ( write_seq_Precond(addr_value, data_value) |-> write_seq_Cond(addr_value, data_value) ) abort (fvm_rst = '1');
+
+   }
+
+And with just one line of code we can verify that the writes are working
+properly!
+
+.. code-block:: vhdl
+
+   write_is_correct:
+      assert write_seq(addr_sig, data_sig, reset);
 
 Linear interpolator
 ~~~~~~~~~~~~~~~~~~~~
