@@ -172,31 +172,27 @@ Axi-4 Lite Slave
 This example also belongs to the OpenLogic library.
 This Axi Slave has a state machine that is no longer as linear (it has both
 TX and RX) and also has quite a few interfaces. This makes writing sequences
-for reuse more important, both in terms of speed and clarity. The code snippet
-shows how code can be reused and made more readable for writing:
+for reuse more important, both in terms of speed and clarity.
 
-.. code-block:: vhdl
+A very interesting way to use ``drom2psl`` is to define one of the
+functionalities of our design in wavedrom, in this case READ, and cover it
+to see if it can occur:
 
-   sequence W_handshake is {                                                   
-      S_AxiLite_WValid = '1' and S_AxiLite_WReady = '1'
-   };
+.. image:: _static/examples/axi_s_read.svg
 
-   sequence W_interface (
-      hdltype std_logic Wr;
-      hdltype std_logic_vector(AxiDataWidth_g - 1 downto 0) WrData;
-      hdltype std_logic_vector((AxiDataWidth_g/8) - 1 downto 0) ByteEna
-      ) is {                                                                        
-      Rb_Wr = Wr and 
-      Rb_WrData = WrData and 
-      Rb_ByteEna = ByteEna 
-   };
-
-   assert_W_after_handshake: 
-      assert always ( {W_handshake} |=> 
-                      {W_interface('1', prev(S_AxiLite_WData), prev(S_AxiLite_WStrb))}
-                     ) abort Rst;
-
-- Link: https://gitlab.com/fvmformal/fvm/-/tree/main/examples/axi_lite_slave
+With the wavedrom, we can generate assertions to write (either manually or
+with ``drom2psl``). In this case, it's clear that three things happen:
+**1) The AR channel requests data from an address, 2) The data is read from the
+register bank for the requested address, and 3) the R channel reads the data**.
+Furthermore, we can observe that in **1)** the input transaction could be the
+AR channel (let's call it ``a``) and the output transaction the read portion of
+the register bank (let's call it ``b``); in **2)** the input transaction is the
+read portion of the register bank and the output transaction is the write
+portion of the register bank (let's call it ``c``); and in **3)** the input
+transaction is the write portion of the register bank and the output
+transaction is the R channel (let's call it ``d``). So, conceptually, we want
+assertions that relate ``a -> b``, ``b -> c``, and ``c -> d``, and with those
+we verify all parts of the reading.
 
 Medium examples
 ---------------
