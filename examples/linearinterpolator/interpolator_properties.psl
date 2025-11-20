@@ -34,13 +34,6 @@ vunit interpolator_properties (interpolator(interpolator_arch)) {
     assume_not_activated_when_interpolating:
         assume always {valid} |=> {(not valid)[*12]};
 
-    -- After a valid input, we have one valid output, unless someone asserts
-    -- the reset input
-    -- (this assertion has been commented out because it is superseded by the
-    -- next one, which includes the 12 cycles after assertion of valid)
-    --valid_output_after_valid_input:
-    --    assert always (({valid} |-> next(estim_valid)) abort rst);
-
     -- After a valid input, we have 12 valid outputs, unless someone asserts
     -- the reset input
     valid_outputs_after_valid_input:
@@ -53,6 +46,10 @@ vunit interpolator_properties (interpolator(interpolator_arch)) {
     -- This assertion will fire
     --assert_will_fire:
     --    assert always (({not valid} |=> twelve_estim_valid) abort rst);
+
+    -- We can express something similar with 'never' and it will not fire:
+    assert_will_fire_v2:
+        assert never {not valid; twelve_estim_valid};
 
     -- Input transaction assignation
     signal input_tran : interpolator_input_tran;
