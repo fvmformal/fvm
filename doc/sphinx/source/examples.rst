@@ -88,30 +88,75 @@ UART transmitter
 ~~~~~~~~~~~~~~~~
 
 This example is still simple, but it already includes a state machine,
-albeit one with very linear behavior. In this example, we can see how covers
-can be very useful for several reasons: exploring the different states of
-a state machine, validating functionality with a cover of the transmission,
-or early design learning by making a cover with the final result.
+albeit one with very linear behavior. With ``drom2psl`` we can define the input
+transaction in the `Precond` group and the output transaction in the `Cond`
+group (or `Cond_non_overlap`) if we want to generate a property with an
+implication.
+
+.. image:: _static/examples/uart.svg
+
+The generated PSL is as follows:
 
 .. code-block:: vhdl
 
-   cover_start_of_transmission: 
-      cover {state = b_start};
+   vunit uart_prop {
 
-   sequence transmission is {
-      TX=STARTBIT[*5];
-      TX=databits(0)[*5]; TX=databits(1)[*5];
-      TX=databits(2)[*5]; TX=databits(3)[*5];
-      TX=databits(4)[*5]; TX=databits(5)[*5];
-      TX=databits(6)[*5]; TX=databits(7)[*5];
-      TX=paritybit[*5]; TX=STOPBIT[*5]
+   sequence uart_prop_Precond (
+      hdltype std_logic_vector(7 downto 0) d
+   ) is {
+      ((rd_en = '1'))[*1];  -- 1 cycle
+      ((data = d))[*1]  -- 1 cycle
    };
 
-   cover_one_transmission:
-      cover transmission;
+   sequence uart_prop_Cond_non_overlap (
+      hdltype std_logic_vector(7 downto 0) d;
+      hdltype std_logic parity_value
+   ) is {
+      ((TX = '0'))[*2];  -- 2 cycles
+      ((TX = d(0)))[*2];  -- 2 cycles
+      ((TX = d(1)))[*2];  -- 2 cycles
+      ((TX = d(2)))[*2];  -- 2 cycles
+      ((TX = d(3)))[*2];  -- 2 cycles
+      ((TX = d(4)))[*2];  -- 2 cycles
+      ((TX = d(5)))[*2];  -- 2 cycles
+      ((TX = d(6)))[*2];  -- 2 cycles
+      ((TX = d(7)))[*2];  -- 2 cycles
+      ((TX = parity_value))[*2];  -- 2 cycles
+      ((TX = '1'))[*2]  -- 2 cycles
+   };
 
-   cover_end_of_transmission: 
-      cover {state = b_stop; state = reposo};
+   -- Relational operands between sequences may be, among others:
+   --   && : both must happen and last exactly the same number of cycles
+   --   & : both must happen, without any requirement on their durations
+   --   |-> : implication: both must happen, with the first cycle of the second occurring during the last cycle of the first
+   --   |=> : non-overlapping implication: both must happen, with the first cycle of the second occuring the cycle after the last cycle of the first
+   property uart_prop (
+      hdltype std_logic_vector(7 downto 0) d;
+      hdltype std_logic parity_value;
+      hdltype std_ulogic fvm_rst
+   ) is
+      always ( uart_prop_Precond(d) |=> uart_prop_Cond_non_overlap(d, parity_value) ) abort (fvm_rst = '1');
+
+   }
+
+From our PSL, the property can be used simply with:
+
+.. code-block:: vhdl
+
+  assert_tx:
+    assert uart_prop(data_uart, calc_parity(data_uart), rst);
+
+.. caution::
+   Note that the automatic property reset is active high. If your design uses
+   an active low reset, you can use
+   `assert uart_prop(data_uart, calc_parity(data_uart), not rst);`
+
+This property verifies the entire functionality of the design, but it must be
+noted that in the property's precondition there is an output (``rd_en``) and,
+**when a precondition of a property depends on a design output, you must make
+sure that that specific design output is activated when expected**, to avoid
+verification gaps. So, we need to verify somehow that ``rd_en`` is activated
+when we want it to be; the PSL code shows how we do this in this case.
 
 Axi-4 Lite Slave
 ~~~~~~~~~~~~~~~~~
@@ -150,12 +195,19 @@ SDRAM controller
 ~~~~~~~~~~~~~~~~
 
 This example comes from a popular Github repo: https://github.com/nullobject/sdram-fpga.
-This is the first example where complexity reduction techniques can be applied,
+This is the first example where complexity reduction techniques are applied,
 although it's quite easy. There's a startup delay of over 2000 cycles
 parameterized with a generic, so it can simply be reduced without affecting
 the design at all, as it's just a startup delay. Regarding the design, it's
 similar to the Axi slave with many states (``WRITE``, ``READ``, ``REFRESH``...)
 and many interfaces, so using sequences remains essential.
+
+.. image:: _static/examples/sdram_write.svg
+
+Note that the ``&`` means concatenation.
+
+.. image:: _static/examples/sdram_read_2.svg
+
 
 Linear interpolator
 ~~~~~~~~~~~~~~~~~~~~
