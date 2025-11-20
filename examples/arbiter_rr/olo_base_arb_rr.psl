@@ -10,10 +10,12 @@ vunit olo_base_arb_rr_properties (olo_base_arb_rr) {
    -- Force a reset in the first clock cycle
    assume_initial_reset: assume Rst = '1';
 
-   -- Valid has to be asserted before Ready can be asserted in AXI
+   -- Valid has to be asserted before Ready can be asserted
+   -- Typical handshake protocol for valid/ready interfaces
+   -- with fast writers and slow readers
    assume always (Out_Valid = '0') -> (Out_Ready = '0');
 
-   -- Assert Out_Grant has maximum one bit with value 1
+   -- Assert Out_Grant has maximum one bit asserted
    assert always onehot0(Out_Grant) abort Rst;
 
    -- Assert when the input is 0, the output is 0
