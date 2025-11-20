@@ -65,7 +65,8 @@ forget to check the function documentation:
 Example
 -------
 
-A complete example is provided in `<concepts/cutpoint_example>`
+A complete example is provided in
+https://gitlab.com/fvmformal/fvm/-/tree/main/concepts/cutpoint_example
 
 .. todo::
 
@@ -137,10 +138,10 @@ Example
 -------
 
 An example of blackboxing an entity is provided in
-`<concepts/blackbox_example>`
+https://gitlab.com/fvmformal/fvm/-/tree/main/concepts/blackbox_example
 
 An example of blackboxing instances is provided in
-`<concepts/blackbox_instance>`
+https://gitlab.com/fvmformal/fvm/-/tree/main/concepts/blackbox_instance
 
 Counter abstraction
 ===================
@@ -275,8 +276,10 @@ From the PSL file we can add the `assumes`.
 Example
 -------
 
-There are examples of symbolic constants in `<examples/fifo_sync>`,
-`<examples/fifo_async>`, and `<examples/div32>`.
+There are examples of Structural reduction in 
+https://gitlab.com/fvmformal/fvm/-/tree/main/examples/fifo_sync,
+https://gitlab.com/fvmformal/fvm/-/tree/main/examples/fifo_async, and
+https://gitlab.com/fvmformal/fvm/-/tree/main/examples/div32, among others.
 
 Data independence
 =================
@@ -316,10 +319,9 @@ From `formal.py` we can add different configurations with
 Example
 -------
 
-There are examples of symbolic constants in `<examples/fifo_sync>` and
-`<examples/fifo_async>`.
-
-.. _symbolic-constants:
+There are examples of data independence in 
+https://gitlab.com/fvmformal/fvm/-/tree/main/examples/fifo_sync and
+https://gitlab.com/fvmformal/fvm/-/tree/main/examples/fifo_async.
 
 Symbolic constants
 ==================
@@ -383,8 +385,11 @@ also being used for that purpose.
 Example
 -------
 
-There are examples of symbolic constants in `<examples/arbiter_rr>`,
-`<examples/fifo_sync>`, `<examples/fifo_async>`, and `<examples/ipv6>`.
+There are examples of symbolic constants in 
+https://gitlab.com/fvmformal/fvm/-/tree/main/examples/arbiter_rr,
+https://gitlab.com/fvmformal/fvm/-/tree/main/examples/fifo_sync,
+https://gitlab.com/fvmformal/fvm/-/tree/main/examples/fifo_async, and
+https://gitlab.com/fvmformal/fvm/-/tree/main/examples/ipv6, among others.
 
 Assertion decomposition / property simplification
 =================================================
@@ -427,7 +432,8 @@ separate it.
 Example
 -------
 
-There is an example in `<concepts/assertion_decomposition>`.
+There is an example in
+https://gitlab.com/fvmformal/fvm/-/tree/main/concepts/assertion_decomposition.
 
 Hierarchical verification
 =========================
@@ -461,4 +467,3 @@ we are working on.
 
 Example
 -------
-

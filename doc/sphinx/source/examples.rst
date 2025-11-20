@@ -24,6 +24,8 @@ is equal and shows the result in the output ``equalmsb``. In the
 unreachable, so we know that the output of this dualcounter will always be
 correct.
 
+- Link: https://gitlab.com/fvmformal/fvm/-/tree/main/examples/dualcounter
+
 Priority Arbiter
 ~~~~~~~~~~~~~~~~
 
@@ -35,6 +37,8 @@ is a request, the output is onehot... Additionally, to fully test the
 functionality, we can create a function that checks if the arbiter result is
 correct (this can be done either in the PSL file or in a VHDL package, although
 the latter is more recommended).
+
+- Link: https://gitlab.com/fvmformal/fvm/-/tree/main/examples/arbiter_prior
 
 Round Robin Arbiter
 ~~~~~~~~~~~~~~~~~~~
@@ -80,6 +84,8 @@ values by creating a symbolic constant ``last_grant`` (explained in
 
    assert always ( {last_valid_grant(last_grant)} |->
                    {Out_Grant = round_robin_arbiter(In_Req, last_grant) } ) abort Rst;
+
+- Link: https://gitlab.com/fvmformal/fvm/-/tree/main/examples/arbiter_rr
 
 Easy examples
 --------------
@@ -158,6 +164,8 @@ sure that that specific design output is activated when expected**, to avoid
 verification gaps. So, we need to verify somehow that ``rd_en`` is activated
 when we want it to be; the example code shows how we do this in this case.
 
+- Link: https://gitlab.com/fvmformal/fvm/-/tree/main/examples/uart_tx
+
 Axi-4 Lite Slave
 ~~~~~~~~~~~~~~~~~
 
@@ -187,6 +195,8 @@ shows how code can be reused and made more readable for writing:
       assert always ( {W_handshake} |=> 
                       {W_interface('1', prev(S_AxiLite_WData), prev(S_AxiLite_WStrb))}
                      ) abort Rst;
+
+- Link: https://gitlab.com/fvmformal/fvm/-/tree/main/examples/axi_lite_slave
 
 Medium examples
 ---------------
@@ -252,6 +262,8 @@ properly!
    write_is_correct:
       assert write_seq(addr_sig, data_sig, reset);
 
+- Link: https://gitlab.com/fvmformal/fvm/-/tree/main/examples/sdram
+
 Linear interpolator
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -289,6 +301,8 @@ that we define to predict the interpolated values):
    interpolator_works_correctly:
       assert interpolator_prop(input_tran, interpolator_predict(input_tran), rst);
 
+- Link: https://gitlab.com/fvmformal/fvm/-/tree/main/examples/linearinterpolator
+
 Synchronous FIFO
 ~~~~~~~~~~~~~~~~~
 
@@ -309,6 +323,8 @@ the latter can be simplified by using symbolic constants.
 The section :ref:`complexityreduction` offers several tips for
 dealing with memory. The PSL code for this FIFO also reveals which techniques
 are used.
+
+- Link: https://gitlab.com/fvmformal/fvm/-/tree/main/examples/fifo_sync
 
 Intermediate examples
 ----------------------
@@ -345,6 +361,8 @@ combinations, it takes 10 minutes.
    -- Or we can directly assume ranges
    assume always ( 10000 > signed(divi.y) >= -10000);
    assume always ( 20000 > signed(divi.op1) >= 0);
+
+- Link: https://gitlab.com/fvmformal/fvm/-/tree/main/examples/div32
 
 Asynchronous FIFO
 ~~~~~~~~~~~~~~~~~
@@ -390,6 +408,8 @@ signal to the original:
 
   assume always (Out_Ready = out_ready_reg_in_clk);
 
+- Link: https://gitlab.com/fvmformal/fvm/-/tree/main/examples/fifo_async
+
 Difficult examples
 ------------------
 
@@ -405,36 +425,4 @@ fact that the frames require specific headers. This results in greater
 verification efforts, requiring more and more complex properties. Therefore,
 using sequences and reusing code becomes more necessary.
 
-.. attention::
-   This is an Attention message
-
-.. caution::
-   This is a caution message
-
-.. danger::
-   This is a danger message
-
-.. error::
-   This is an error message
-
-.. hint::
-   This is a hint message
-
-.. important::
-   This is an important message
-
-.. note::
-   This is a note message
-
-.. tip::
-   This is a tip message
-
-.. warning::
-   This is a warning message
-
-.. admonition:: This is a title
-
-   This is the content of the admonition.
-
-.. seealso::
-   This is a seealso message, see also: https://www.sphinx-doc.org/en/master/usage/restructuredtext/directives.html#directive-warning 
+- Link: https://gitlab.com/fvmformal/fvm/-/tree/main/examples/ipv6

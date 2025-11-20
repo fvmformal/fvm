@@ -320,3 +320,4 @@ counter, which testifies to how powerful formal verification is. Formal
 verification can tackle even bigger designs, so continue reading to learn
 more!
 
+- Link: https://gitlab.com/fvmformal/fvm/-/tree/main/examples/counter
