@@ -186,7 +186,7 @@ vunit ipv6 (ipv6_Wrapper (rtl)) {
 
   -- Assert the data is correct. We do a previous reset to know the buffer is empty, otherwise we wouldn't
   -- know where the buffer is pointing to, since there isn't a signal pointing to the buffer's current position.
-  -- Note that we use prev(Reset) to avoid the sequence to be vacuous because of abort Reset.
+  -- Note that we use prev(Reset) to avoid the sequence to be vacuous (never happens) because of abort Reset.
   assert_data_correct_1: assert always ( {prev(Reset): TX_Valid: TX_Ack: TX_Data(0) = data; (not MAC_TX_SOF)[*];
   start_frame: MAC_TX_Ack[=39]; MAC_TX_Ack} |-> {MAC_TX_Data = data} ) abort Reset;
 
@@ -221,7 +221,13 @@ vunit ipv6 (ipv6_Wrapper (rtl)) {
   assert_dest_addres_correct_2: assert always ( {prev(Reset): (TX_Meta_DestIPv6Address_nxt)[*16]: TX_Meta_DestIPv6Address_Data(0) = data;
   start_frame: MAC_TX_Ack[=38]; MAC_TX_Ack} |-> {MAC_TX_Data = data} ) abort Reset;
 
-
+  cover_one_frame: cover {MAC_TX_EOF: not Reset};
+  cover_three_frames: cover {MAC_TX_EOF: not Reset: IPv6_TX_Meta_rst; [*]; MAC_TX_EOF: not Reset: IPv6_TX_Meta_rst; [*]; MAC_TX_EOF: not Reset: IPv6_TX_Meta_rst};
+  -- Toggle some TX outputs to improve simulation coverage.
+  -- This is not ideal, but toggle coverage will be low
+  -- otherwise because all covers will likely use the same value
+  -- or similar values since it's easier for the solver to find
+  -- those values.
   sequence toggle_output_8 (
     hdltype T_SLV_8 data
     ) is {                                                                        
@@ -239,8 +245,6 @@ vunit ipv6 (ipv6_Wrapper (rtl)) {
     ) is {                                                                        
     reset = '0' and countones(data) = 0; [*]; reset = '0' and countones(data) = 24; [*]; reset = '0' and countones(data) = 0
   };
-  cover_one_frame: cover {MAC_TX_EOF: not Reset};
-  cover_three_frames: cover {MAC_TX_EOF: not Reset: IPv6_TX_Meta_rst; [*]; MAC_TX_EOF: not Reset: IPv6_TX_Meta_rst; [*]; MAC_TX_EOF: not Reset: IPv6_TX_Meta_rst};
   cover {toggle_output_8(MAC_TX_Data)};
   cover {toggle_output_8(MAC_TX_Meta_DestMACAddress_Data)};
   cover {toggle_output_8(NDP_NextHop_IPv6Address_Data)};
@@ -299,6 +303,11 @@ vunit ipv6 (ipv6_Wrapper (rtl)) {
   cover_one_rx_frame: cover {RX_EOF: not Reset};
 
   cover_one_rx_frame_data: cover {RX_SOF: not Reset: not RX_EOF; not RX_SOF: not Reset: RX_EOF; not RX_SOF: not Reset: RX_EOF; not RX_SOF: not Reset: RX_EOF: RX_Valid };
+  -- Toggle some RX outputs to improve simulation coverage.
+  -- This is not ideal, but toggle coverage will be low
+  -- otherwise because all covers will likely use the same value
+  -- or similar values since it's easier for the solver to find
+  -- those values.
   cover {toggle_output_8(RX_Data(0))};
   cover {toggle_output_8(RX_Meta_SrcMACAddress_Data(0))};
   cover {toggle_output_8(RX_Meta_DestMACAddress_Data(0))};
