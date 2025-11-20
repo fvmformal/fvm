@@ -339,6 +339,10 @@ def get_group_arguments(groupname, flattened_signal):
                 # Get the data
                 actualdata = data2list(data)
                 ic(actualdata)
+                actualdata = expand_concatenations(actualdata)
+                ic(actualdata)
+                actualdata = remove_psl_operators(actualdata)
+                ic(actualdata)
                 # Remove anything between parentheses: we don't want data(0)
                 # and data(1) to be different arguments
                 non_paren_data = [remove_parentheses(d) for d in actualdata]
@@ -407,6 +411,26 @@ def remove_parentheses(string):
         return string
     return re.sub(r'\([^)]*\)', '', string).strip()
 
+def remove_psl_operators(datalist):
+    """
+    Removes any element from the list that matches:
+       prev(arg)  or  prev(arg, N)
+    """
+    pattern = re.compile(r'^prev\s*\(\s*[a-zA-Z0-9_]+\s*(?:,\s*\d+\s*)?\)$')
+
+    result = []
+    for value in datalist:
+        if isinstance(value, int):
+            result.append(value)
+            continue
+
+        if isinstance(value, str) and pattern.match(value):
+            continue
+
+        result.append(value)
+
+    return result
+
 def data2list(wavelane_data):
     """Converts wavelane data to a list if it is a string, returns it untouched
     if it is already a list"""
@@ -415,6 +439,26 @@ def data2list(wavelane_data):
     else:
         ret = wavelane_data
     return ret
+
+def expand_concatenations(datalist):
+    """Expands any element containing '&' into separate elements.
+       Example:
+         ["a", "b & c & d"] → ["a", "b", "c", "d"]
+    """
+    new_list = []
+
+    for item in datalist:
+        if isinstance(item, int):
+            new_list.append(item)
+            continue
+
+        if isinstance(item, str) and "&" in item:
+            parts = [p.strip() for p in item.split("&") if p.strip()]
+            new_list.extend(parts)
+        else:
+            new_list.append(item)
+
+    return new_list
 
 def get_clock_value(wavelane, cycle):
     """
@@ -541,14 +585,10 @@ def get_signal_value(wave, data, cycle):
         # care
         # Here differentiate between integer, binary, hex, and argument,
         if position < len(data):
-            if isinstance(datalist[position], int):
-                value = (datalist[position], "int")
-            elif datalist[position].startswith("0x"):
-                value = (datalist[position], "hex")
-            elif re.match(r'^[01]+$', datalist[position]):
-                value = (datalist[position], "bin")
+            if isinstance(datalist[position], str) and "&" in datalist[position]:
+                value = (process_concatenation(datalist[position]), "concat")
             else:
-                value = (datalist[position], "arg")
+                value = classify_value(datalist[position])
         else:
             value = '-'
     else:
@@ -580,19 +620,61 @@ def adapt_value_to_hdltype(value):
     # For std_logic, just add a couple of single quotes to the character
     if value in ['0', '1', 'L', 'H', 'W', 'X', 'Z', 'U', '-']:
         ret = "'"+value+"'"
-    # binary
-    elif isinstance(value, tuple) and len(value) > 1 and value[1] == "bin":
-        ret = f'"{value[0]}"'
-    # hexadecimal
-    elif isinstance(value, tuple) and len(value) > 1 and value[1] == "hex":
-        ret = f'x"{value[0][2:]}"'
-    # integer
-    elif isinstance(value, tuple) and len(value) > 1 and value[1] == "int":
-        ret = f'{value[0]}'
-    # Any other values (such as those specified in the 'data' fields) are
-    # returned without modification
-    elif isinstance(value, tuple) and len(value) > 1 and value[1] == "arg":
-        ret = f'{value[0]}'
     else:
-        ret = value
+        ret = process_value(value)
     return ret
+
+def split_concatenation(expr):
+    return [p.strip() for p in re.split(r'\s*&\s*', expr)]
+
+def classify_value(value):
+    """Return (value, type)"""
+    if isinstance(value, int):
+        return (value, "int")
+
+    if value.startswith("0x"):
+        return (value, "hex")
+
+    if len(value) == 1 and value in ['0','1','L','H','W','X','Z','U','-']:
+        return (value, "char")
+
+    if re.match(r'^[01]+$', value):
+        return (value, "bin")
+
+    return (value, "arg")
+
+def process_value(value):
+    # std_logic character
+    if isinstance(value, tuple) and value[1] == "concat":
+        return value[0]
+
+    if isinstance(value, tuple) and value[1] == "char":
+        return f"'{value[0]}'"
+
+    # binary
+    if isinstance(value, tuple) and value[1] == "bin":
+        return f'"{value[0]}"'
+
+    # hexadecimal
+    if isinstance(value, tuple) and value[1] == "hex":
+        return f'x"{value[0][2:]}"'
+
+    # integer
+    if isinstance(value, tuple) and value[1] == "int":
+        return f'{value[0]}'
+
+    # arguments
+    if isinstance(value, tuple) and value[1] == "arg":
+        return f'{value[0]}'
+
+    return value
+
+def process_concatenation(expr):
+    parts = split_concatenation(expr)
+    processed = []
+
+    for p in parts:
+        classified = classify_value(p)
+        processed.append(process_value(classified))
+
+    return " & ".join(processed)
