@@ -1,0 +1,20 @@
+{ "signal": [
+  { "name": "clk",        "wave": "p......", "period": 6},
+  ["Precond",
+    { "name": "addr",  "wave": "3.x....", "data": ["addr_value"], "type": "unsigned(22 downto 0)", "period": 6},
+    { "name": "we",  "wave": "0.x....", "period": 6},
+    { "name": "req",  "wave": "1.x....", "period": 6},
+    { "name": "ack",  "wave": "01x....", "period": 6}
+   ],
+  ["Cond",
+    { "name": "valid",  "wave": "x.0...1", "period": 6},
+    { "name": "q",  "wave": "x.....7", "data": ["prev(sdram_dq,2) & prev(sdram_dq)"], "type": "std_logic_vector(31 downto 0)", "period": 6},
+    { "name": "sdram_a",  "wave": "x33x...", "data": ["addr_value(20 downto 8)", "0010 & addr_value(7 downto 0) & 0"], "type": "unsigned(22 downto 0)", "period": 6},
+    { "name": "sdram_ba",  "wave": "x3.x...", "data": ["addr_value(22 downto 21)"], "type": "unsigned(22 downto 0)", "period": 6},
+    { "name": "sdram_dq",  "wave": "x......", "period": 6},
+    { "name": "sdram_cs_n",  "wave": "x0....x", "period": 6},
+    { "name": "sdram_ras_n",  "wave": "x01...x", "period": 6},
+    { "name": "sdram_cas_n",  "wave": "x101..x", "period": 6},
+    { "name": "sdram_we_n",  "wave": "x1....x", "period": 6}
+   ]
+]}

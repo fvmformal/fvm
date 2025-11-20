@@ -1,0 +1,65 @@
+vunit sdram_sequences {
+
+    -- cs_n, ras_n, cas_n, we_n command sequences
+
+    sequence command_deselect is {
+        sdram_cs_n = '1'
+    }; 
+
+    sequence command_nop is {
+        sdram_cs_n = '0' and
+        sdram_ras_n = '1' and
+        sdram_cas_n = '1' and
+        sdram_we_n = '1'
+    };
+
+    sequence command_precharge is {
+        sdram_cs_n = '0' and
+        sdram_ras_n = '0' and
+        sdram_cas_n = '1' and
+        sdram_we_n = '0'
+    };
+
+    sequence command_load_mode is {
+        sdram_cs_n = '0' and
+        sdram_ras_n = '0' and
+        sdram_cas_n = '0' and
+        sdram_we_n = '0'
+    };
+
+    sequence command_active is {
+        sdram_cs_n = '0' and
+        sdram_ras_n = '0' and
+        sdram_cas_n = '1' and
+        sdram_we_n = '1'
+    };
+
+    sequence command_write is {
+        sdram_cs_n = '0' and
+        sdram_ras_n = '1' and
+        sdram_cas_n = '0' and
+        sdram_we_n = '0'
+    };
+
+    sequence command_read is {
+        sdram_cs_n = '0' and
+        sdram_ras_n = '1' and
+        sdram_cas_n = '0' and
+        sdram_we_n = '1'
+    };
+
+    sequence command_auto_refresh is {
+        sdram_cs_n = '0' and
+        sdram_ras_n = '0' and
+        sdram_cas_n = '0' and
+        sdram_we_n = '1'
+    };
+
+    sequence no_command_auto_refresh is {
+        not (sdram_cs_n = '0' and
+        sdram_ras_n = '0' and
+        sdram_cas_n = '0' and
+        sdram_we_n = '1')
+    };
+
+}

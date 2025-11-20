@@ -1,0 +1,39 @@
+vunit handshake_sequences {
+
+    property active_until_handshake(
+        hdltype std_logic init_transf;
+        hdltype std_logic accept_transf
+        ) is
+        always ((init_transf = '1') -> (init_transf = '1' until_ accept_transf = '1')) abort reset;
+
+    property we_stable_until_handshake(
+        hdltype std_logic init_transf;
+        hdltype std_logic accept_transf;
+        hdltype std_logic we
+        ) is
+        always (
+                    {init_transf = '1' and accept_transf = '0'; true} |->
+                    (stable(we) until_ accept_transf = '1')
+                ) abort reset;
+
+    property addr_stable_until_handshake(
+        hdltype std_logic init_transf;
+        hdltype std_logic accept_transf;
+        hdltype unsigned(ADDR_WIDTH-1 downto 0) addr
+        ) is
+        always (
+                    {init_transf = '1' and accept_transf = '0'; true} |->
+                    (stable(addr) until_ accept_transf = '1')
+                ) abort reset;
+
+    property data_stable_until_handshake(
+        hdltype std_logic init_transf;
+        hdltype std_logic accept_transf;
+        hdltype std_logic_vector(DATA_WIDTH-1 downto 0) data
+        ) is
+        always (
+                    {init_transf = '1' and accept_transf = '0'; true} |->
+                    (stable(data) until_ accept_transf = '1')
+                ) abort reset;
+
+}
