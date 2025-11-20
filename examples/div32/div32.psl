@@ -55,7 +55,7 @@ vunit div32 (div32(rtl)) {
     -- zeros or signed values.
     assert_check_divider: 
         assert always ( ( {divi.start; stable_inputs; result_ready} |-> 
-        { unsigned(divo.result - verify_division(prev(divi.y,3), prev(divi.op1,3), prev(divi.op2,3))) < 2} ) 
+        { divo.result = verify_division(prev(divi.y,2), prev(divi.op1,2), prev(divi.op2,2)) } ) 
         abort (holdn = '0') ) abort (rst = '0');
 
     -- Cover one division
@@ -63,11 +63,11 @@ vunit div32 (div32(rtl)) {
     -- Cover two divisions
     cover_two_divisions: cover{[*]; divo.ready: rst: holdn; [*]; divo.ready: rst: holdn};
 
-    sequence input (                                                           
+    sequence input (
         hdltype std_logic_vector(32 downto 0) y;
         hdltype std_logic_vector(32 downto 0) op1;
         hdltype std_logic_vector(32 downto 0) op2
-        ) is {                                    
+        ) is {
         divi.start = '1' and          
         divi.y = y and   
         divi.op1 = op1 and

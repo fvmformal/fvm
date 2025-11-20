@@ -35,6 +35,7 @@ fvm.add_vhdl_source(f"{extracted_folder}/{extracted_folder}/lib/grlib/stdlib/con
 fvm.add_vhdl_source(f"{extracted_folder}/{extracted_folder}/lib/grlib/stdlib/version.vhd","grlib")
 fvm.add_vhdl_source(f"{extracted_folder}/{extracted_folder}/lib/grlib/stdlib/stdlib.vhd","grlib")
 fvm.add_vhdl_source(f"{extracted_folder}/{extracted_folder}/lib/grlib/modgen/multlib.vhd","grlib")
+fvm.add_vhdl_source(f"{extracted_folder}/{extracted_folder}/lib/techmap/gencomp/gencomp.vhd","techmap")
 fvm.add_vhdl_sources(f"{extracted_folder}/{extracted_folder}/lib/gaisler/arith/*.vhd","gaisler")
 fvm.add_vhdl_source("examples/div32/div32_common.vhd", "gaisler")
 
