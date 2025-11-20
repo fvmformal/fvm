@@ -53,7 +53,7 @@ package body rr_arbiter_common is
 
 
         for offset in 1 to width loop
-            i := (start_idx - offset + width) mod width;  -- MSB->LSB
+            i := (start_idx - offset + width) mod width;
             if req(i) = '1' then
                 next_grant(i) := '1';
                 return next_grant;

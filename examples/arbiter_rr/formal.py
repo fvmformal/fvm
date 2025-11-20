@@ -20,8 +20,4 @@ fvm.add_drom_source("examples/arbiter_rr/last_valid_grant.json", flavor="vhdl")
 fvm.set_toplevel("olo_base_arb_rr")
 fvm.add_config("olo_base_arb_rr", "config_width_64", {"Width_g": 64})
 
-# Rulecheck fails due to symbolic constants are interpreted as
-# declaration undriven.
-fvm.allow_failure("rulecheck")
-
 fvm.run()

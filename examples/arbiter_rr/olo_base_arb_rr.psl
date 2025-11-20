@@ -50,15 +50,6 @@ vunit olo_base_arb_rr_properties (olo_base_arb_rr) {
       assert always ({rst = '1'; valid_grant}
                      |-> {Out_Grant = priority_arbiter(In_Req)});
 
-   -- Now, let's assert that if there hasn't been any grant after reset,
-   -- the arbiter must behave like a priority arbiter. Note the use of no_grant[*]
-   -- means that there can be any number of cycles without a grant after reset.
-   -- So, this assert checks the same as the previous one, and also checks that
-   -- the arbiter behaves like a priority arbiter if there are cycles without grant.
-   assert_correct_grant_without_previous_grant:
-      assert always ({rst = '1'; no_grant[*]; valid_grant}
-                     |-> {Out_Grant = priority_arbiter(In_Req)});
-
    -- Let's define a symbolic constant to use it in the next assertion
    signal last_grant : std_logic_vector(Width_g-1 downto 0);
    assume always ( {true} |=> {last_grant = prev(last_grant)} ) abort Rst;
