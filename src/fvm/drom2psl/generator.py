@@ -64,12 +64,12 @@ def generator(filename, outdir = None, verbose_psl = True, debug = False,
     :rtype: int
     """
 
-    ic("generator")
-    ic(filename, outdir, verbose_psl, debug, do_traverse)
-
     # Disable icecream if we are not debugging
     if debug is False:
         ic.disable()
+
+    ic("generator")
+    ic(filename, outdir, verbose_psl, debug, do_traverse)
 
     # Set custom prefix for icecream
     ic.configureOutput(prefix='generator | ')
