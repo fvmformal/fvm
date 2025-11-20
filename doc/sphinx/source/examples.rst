@@ -232,18 +232,19 @@ re-asserted in the next 12 cycles.
       assume always {valid} |=> {(not valid)[*12]};
 
 In addition to this, this example is the first with some computational
-complexity, due to its 10-bit by 5-bit multipliers. This will cause the
-property we use to check the design's functionality to take more than 15
-minutes (and that's only because the multipliers aren't even that large).
-The property checks that if the input is valid, the output will be correct
-for the next 12 cycles.
+complexity, due to its 10-bit by 5-bit multipliers.
 
-However, we could reduce the complexity using property simplification by
-adding 12 properties where the first property checks that if the input is
-valid, the first output cycle is correct; the second property checks that
-if the input is valid, the second output cycle is correct; and so on. This
-way, these 12 properties simplify the original property without losing any
-functionality. The 12 properties take less than 1.5 minutes to prove.
+Using drom2psl we can generate a property with these transactions:
+
+.. image:: _static/examples/interpolator_prop.svg
+
+And we can use the property this way (``interpolator_predict`` is a function
+that we define to predict the interpolated values):
+
+.. code-block:: vhdl
+
+   interpolator_works_correctly:
+      assert interpolator_prop(input_tran, interpolator_predict(input_tran), rst);
 
 Synchronous FIFO
 ~~~~~~~~~~~~~~~~~
