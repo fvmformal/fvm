@@ -625,6 +625,7 @@ def adapt_value_to_hdltype(value):
     return ret
 
 def split_concatenation(expr):
+    """Splits a concatenation expression into its parts"""
     return [p.strip() for p in re.split(r'\s*&\s*', expr)]
 
 def classify_value(value):
@@ -644,6 +645,7 @@ def classify_value(value):
     return (value, "arg")
 
 def process_value(value):
+    """Process a value according to its type"""
     # std_logic character
     if isinstance(value, tuple) and value[1] == "concat":
         return value[0]
@@ -670,6 +672,7 @@ def process_value(value):
     return value
 
 def process_concatenation(expr):
+    """Process a concatenation expression into PSL format"""
     parts = split_concatenation(expr)
     processed = []
 
