@@ -17,7 +17,7 @@ if os.path.exists(file_name):
     print(f"The file {file_name} is already downloaded.")
 else:
     print(f"Downloading: {download_link}")
-    os.system(f"wget {download_link}")
+    os.system(f"curl -O {download_link}")
 
 # Extract if not already extracted
 extracted_folder = file_name.replace(".tar.gz", "")
