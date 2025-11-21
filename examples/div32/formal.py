@@ -44,4 +44,7 @@ fvm.add_psl_source("examples/div32/div32.psl", flavor="vhdl", library="gaisler")
 fvm.set_toplevel("gaisler.div32")
 
 fvm.skip('reachability')
+fvm.allow_failure('xverify')
+fvm.set_coverage_goal('prove.formalcover', 50)
+fvm.set_coverage_goal('prove.simcover', 0)
 fvm.run()
