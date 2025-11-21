@@ -3,9 +3,53 @@
 Repository of Examples
 ======================================
 
-The repository of examples is really nice. In this section we explain some
-important things about each example, but everything is found in detail and
-with explanatory comments in the code of each example.
+The FVM provides a repository of examples to showcase how a number of designs
+of increasing complexity can be verified with it. While a small number of
+designs have been developed by the methodology authors, the majority of the
+designs come from third-party libraries or developers.
+
+Examples developed by the FVM team are provided in the FVM repository and
+covered by the same :ref:`license` as the rest of the provided code.
+
+Examples developed by third parties have their own Free/Open-Source license and
+are not provided in the FVM repository. Instead, ``git clone`` commands are run
+from the relevant ``formal.py`` scripts in order to download the code. We
+encourage users to check out the respective sources and documentation of the
+libraries since it is always interesting to have FOSS IP libraries to help with
+digital design.
+
++--------------+---------------------+---------------------+---------------------------------------------------------------------------------------------------------+
+| Complexity   | Example             | Library / Developer | Link to source / documentation                                                                          | 
++==============+=====================+=====================+=========================================================================================================+
+| Trivial      | Counter             | FVM team            | `FVM repo <https://gitlab.com/fvmformal/fvm/-/tree/main/examples/counter>`_                             | 
++              +---------------------+---------------------+---------------------------------------------------------------------------------------------------------+
+|              | Priority arbiter    | Open Logic          | `open-logic repo <https://github.com/open-logic/open-logic/blob/main/doc/base/olo_base_arb_prio.md>`_   | 
++              +---------------------+---------------------+---------------------------------------------------------------------------------------------------------+
+|              | Dualcounter         | FVM team            | `FVM repo <https://gitlab.com/fvmformal/fvm/-/tree/main/examples/dualcounter>`_                         | 
++              +---------------------+---------------------+---------------------------------------------------------------------------------------------------------+
+|              | Round robin arbiter | Open Logic          | `open-logic repo <https://github.com/open-logic/open-logic/blob/main/doc/base/olo_base_arb_rr.md>`_     | 
++--------------+---------------------+---------------------+---------------------------------------------------------------------------------------------------------+
+| Easy         | UART transmitter    | FVM team            | `FVM repo <https://gitlab.com/fvmformal/fvm/-/tree/main/examples/uart_tx>`_                             | 
++              +---------------------+---------------------+---------------------------------------------------------------------------------------------------------+
+|              | AXI4-lite slave     | Open Logic          | `open-logic repo <https://github.com/open-logic/open-logic/blob/main/doc/axi/olo_axi_lite_slave.md>`_   | 
++--------------+---------------------+---------------------+---------------------------------------------------------------------------------------------------------+
+| Medium       | SDRAM controller    | Joshua Bassett      | `sdram-fpga repo <https://github.com/nullobject/sdram-fpga>`_                                           |
++              +---------------------+---------------------+---------------------------------------------------------------------------------------------------------+
+|              | Linear interpolator | FVM team            | `FVM repo <https://gitlab.com/fvmformal/fvm/-/tree/main/examples/linearinterpolator>`_                  | 
++              +---------------------+---------------------+---------------------------------------------------------------------------------------------------------+
+|              | Synchronous FIFO    | Open Logic          | `open-logic repo <https://github.com/open-logic/open-logic/blob/main/doc/base/olo_base_fifo_sync.md>`_  |
++--------------+---------------------+---------------------+---------------------------------------------------------------------------------------------------------+
+| Intermediate | 32-bit divider      | GRLIB               | `GRLIB IP Core User's Manual <https://download.gaisler.com/products/GRLIB/doc/grip.pdf>`_               | 
++              +---------------------+---------------------+---------------------------------------------------------------------------------------------------------+
+|              | Asynchronous FIFO   | Open Logic          | `open-logic repo <https://github.com/open-logic/open-logic/blob/main/doc/base/olo_base_fifo_async.md>`_ | 
++--------------+---------------------+---------------------+---------------------------------------------------------------------------------------------------------+
+| Difficult    | IPv6 transceiver    | Pile of Cores       | `PoC repo <https://github.com/VLSI-EDA/PoC/tree/master/src/net/ipv6>`_                                  | 
++--------------+---------------------+---------------------+---------------------------------------------------------------------------------------------------------+
+
+In this section, the most relevant aspects of each example and how to approach
+its verification are explained, but users can find the complete commented
+properties and ``formal.py`` script in the FVM repository.
+
 
 Suggested order
 ---------------
