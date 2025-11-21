@@ -214,11 +214,8 @@ run_examples_questa:
         - sdram
         - uart_tx
 
-# Test for #126
-# TODO : This test should be done a bit differently, so we don't have to update
-# it manually, for example it may get the available steps from the framework
-# and then run each of them alternated with a 'make clean' inside a for loop
-# TODO : this could be implemented more cleanly using parallel:matrix
+# Test that steps do not require any information from previous steps, so users
+# can run them independently if needed.
 run_steps_independently_questa:
   rules:
     - if: $IS_PRIVATE_GITLAB_INSTANCE == "True"
@@ -228,6 +225,20 @@ run_steps_independently_questa:
     - fast
   variables:
     TOOLCHAIN: "questa"
+  parallel:
+    matrix:
+      - DESIGN:
+        - counter
+        - arbiter_prior
+      - STEP:
+        - lint
+        - friendliness
+        - rulecheck
+        - xverify
+        - reachability
+        - resets
+        - clocks
+        - prove
   before_script:
     - unset LM_LICENSE_FILE
     - export SALT_LICENSE_SERVER=29000@popote.us.es
@@ -235,18 +246,7 @@ run_steps_independently_questa:
     - curl -LsSf https://astral.sh/uv/install.sh | sh
     - export PATH="$HOME/.local/bin:$PATH"
   script:
-    - uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.lint -m examples.counter.formal -s lint
-    - make clean
-    - uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.rulecheck --m examples.counter.formal -s friendliness
-    - make clean
-    - uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.reachability --m examples.counter.formal -s reachability
-    - make clean
-    - uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.resets --m examples.counter.formal -s resets
-    - make clean
-#    - coverage run -m examples.counter.formal -s clocks
-#    - make clean
-    - uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.prove --m examples.counter.formal -s prove
-    - make clean
+    - uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.$STEP -m examples.$DESIGN.formal -s $STEP
   artifacts:
     when: always
     paths:
