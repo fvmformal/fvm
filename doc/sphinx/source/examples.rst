@@ -13,56 +13,64 @@ covered by the same :ref:`license` as the rest of the provided code.
 
 Examples developed by third parties have their own Free/Open-Source license and
 are not provided in the FVM repository. Instead, ``git clone`` commands are run
-from the relevant ``formal.py`` scripts in order to download the code. We
-encourage users to check out the respective sources and documentation of the
-libraries since it is always interesting to have FOSS IP libraries to help with
-digital design.
-
-+--------------+---------------------+---------------------+---------------------------------------------------------------------------------------------------------+
-| Complexity   | Example             | Library / Developer | Link to source / documentation                                                                          | 
-+==============+=====================+=====================+=========================================================================================================+
-| Trivial      | Counter             | FVM team            | `FVM repo <https://gitlab.com/fvmformal/fvm/-/tree/main/examples/counter>`_                             | 
-+              +---------------------+---------------------+---------------------------------------------------------------------------------------------------------+
-|              | Priority arbiter    | Open Logic          | `open-logic repo <https://github.com/open-logic/open-logic/blob/main/doc/base/olo_base_arb_prio.md>`_   | 
-+              +---------------------+---------------------+---------------------------------------------------------------------------------------------------------+
-|              | Dualcounter         | FVM team            | `FVM repo <https://gitlab.com/fvmformal/fvm/-/tree/main/examples/dualcounter>`_                         | 
-+              +---------------------+---------------------+---------------------------------------------------------------------------------------------------------+
-|              | Round robin arbiter | Open Logic          | `open-logic repo <https://github.com/open-logic/open-logic/blob/main/doc/base/olo_base_arb_rr.md>`_     | 
-+--------------+---------------------+---------------------+---------------------------------------------------------------------------------------------------------+
-| Easy         | UART transmitter    | FVM team            | `FVM repo <https://gitlab.com/fvmformal/fvm/-/tree/main/examples/uart_tx>`_                             | 
-+              +---------------------+---------------------+---------------------------------------------------------------------------------------------------------+
-|              | AXI4-lite slave     | Open Logic          | `open-logic repo <https://github.com/open-logic/open-logic/blob/main/doc/axi/olo_axi_lite_slave.md>`_   | 
-+--------------+---------------------+---------------------+---------------------------------------------------------------------------------------------------------+
-| Medium       | SDRAM controller    | Joshua Bassett      | `sdram-fpga repo <https://github.com/nullobject/sdram-fpga>`_                                           |
-+              +---------------------+---------------------+---------------------------------------------------------------------------------------------------------+
-|              | Linear interpolator | FVM team            | `FVM repo <https://gitlab.com/fvmformal/fvm/-/tree/main/examples/linearinterpolator>`_                  | 
-+              +---------------------+---------------------+---------------------------------------------------------------------------------------------------------+
-|              | Synchronous FIFO    | Open Logic          | `open-logic repo <https://github.com/open-logic/open-logic/blob/main/doc/base/olo_base_fifo_sync.md>`_  |
-+--------------+---------------------+---------------------+---------------------------------------------------------------------------------------------------------+
-| Intermediate | 32-bit divider      | GRLIB               | `GRLIB IP Core User's Manual <https://download.gaisler.com/products/GRLIB/doc/grip.pdf>`_               | 
-+              +---------------------+---------------------+---------------------------------------------------------------------------------------------------------+
-|              | Asynchronous FIFO   | Open Logic          | `open-logic repo <https://github.com/open-logic/open-logic/blob/main/doc/base/olo_base_fifo_async.md>`_ | 
-+--------------+---------------------+---------------------+---------------------------------------------------------------------------------------------------------+
-| Difficult    | IPv6 transceiver    | Pile of Cores       | `PoC repo <https://github.com/VLSI-EDA/PoC/tree/master/src/net/ipv6>`_                                  | 
-+--------------+---------------------+---------------------+---------------------------------------------------------------------------------------------------------+
+from the relevant ``formal.py`` scripts in order to download the code.
 
 In this section, the most relevant aspects of each example and how to approach
 its verification are explained, but users can find the complete commented
 properties and ``formal.py`` script in the FVM repository.
 
-
 Suggested order
 ---------------
+
+Examples are shown in this section in the suggested order for users, organized
+in difficulty levels:
+
++--------------+---------------------+---------------------+---------------------------------------------------------------------------------------------------------+
+| Complexity   | Example             | Library / Developer | Difficulty                                                                                              | 
++==============+=====================+=====================+=========================================================================================================+
+| Trivial      | Counter             | FVM team            | Simple logic with a single path                                                                         |
++              +---------------------+---------------------+---------------------------------------------------------------------------------------------------------+
+|              | Priority arbiter    | Open Logic          | Static arbitration scheme with low complexity                                                           |
++              +---------------------+---------------------+---------------------------------------------------------------------------------------------------------+
+|              | Dualcounter         | FVM team            | Structure remains simple despite duplication of logic                                                   |
++              +---------------------+---------------------+---------------------------------------------------------------------------------------------------------+
+|              | Round robin arbiter | Open Logic          | Moderate complexity due to round-robin policy                                                           |
++--------------+---------------------+---------------------+---------------------------------------------------------------------------------------------------------+
+| Easy         | UART transmitter    | FVM team            | Finite state machine with sequential behavior                                                           |
++              +---------------------+---------------------+---------------------------------------------------------------------------------------------------------+
+|              | AXI4-lite slave     | Open Logic          | Multiple interfaces must be simultaneously verified                                                     |
++--------------+---------------------+---------------------+---------------------------------------------------------------------------------------------------------+
+| Medium       | SDRAM controller    | Joshua Bassett      | Control and timing behavior is dependent on the issued commands                                         |
++              +---------------------+---------------------+---------------------------------------------------------------------------------------------------------+
+|              | Linear interpolator | FVM team            | Requires data integrity checks over 12 cycles                                                           |
++              +---------------------+---------------------+---------------------------------------------------------------------------------------------------------+
+|              | Synchronous FIFO    | Open Logic          | Unbounded timing relation between read and write complicates proofs                                     |
++--------------+---------------------+---------------------+---------------------------------------------------------------------------------------------------------+
+| Intermediate | 32-bit divider      | GRLIB               | High arithmetic complexity significantly increases the state space                                      |
++              +---------------------+---------------------+---------------------------------------------------------------------------------------------------------+
+|              | Asynchronous FIFO   | Open Logic          | Multi-clock domain interactions                                                                         |
++--------------+---------------------+---------------------+---------------------------------------------------------------------------------------------------------+
+| Difficult    | IPv6 transceiver    | Pile of Cores       | Protocol complexity due to buffering and large headers with variable latency                            |
++--------------+---------------------+---------------------+---------------------------------------------------------------------------------------------------------+
+
 
 Trivial examples
 ----------------
 
-The first trivial example was the counter in :ref:`firstexample`.
+Counter
+~~~~~~~
+
+The first trivial example was the counter, explained in :ref:`firstexample`.
+
+As this design is trivial and a counter is not too suited to be modeled in
+terms of input/output transactions, ``drom2psl`` is not used for this design.
+
+- Link: https://gitlab.com/fvmformal/fvm/-/tree/main/examples/counter
 
 Dualcounter
 ~~~~~~~~~~~
 
-This dualcounter compares whether the most significant bit of two counters
+This *dualcounter* compares whether the most significant bit of two counters
 is equal and shows the result in the output ``equalmsb``. In the
 ``reachability`` step, we can see that the ``equalmsb = '0'`` toggle is
 unreachable, so we know that the output of this dualcounter will always be
@@ -73,14 +81,16 @@ correct.
 Priority Arbiter
 ~~~~~~~~~~~~~~~~
 
-This example shows a simple priority arbiter from the Open Logic library:
+This example verifies a simple priority arbiter from the Open Logic library:
 https://github.com/open-logic/open-logic. In this example, many things can
 be checked simply with assertions, for example, that the output always has 0
 or 1 bit asserted; that if there is no request, the output is 0; that if there
-is a request, the output is onehot... Additionally, to fully test the
-functionality, we can create a function that checks if the arbiter result is
-correct (this can be done either in the PSL file or in a VHDL package, although
-the latter is more recommended).
+is a request, the output is one-hot... Additionally, to fully test the
+functionality, we can create a function that returns the expected value for the
+arbiter result. This can be done either in the PSL file or in a VHDL package,
+although the latter is recommended (by defining the function in a VHDL package,
+the PSL files are simpler and we can easily reuse the function in simulation if
+needed).
 
 - Link: https://gitlab.com/fvmformal/fvm/-/tree/main/examples/arbiter_prior
 
@@ -91,15 +101,24 @@ This example also belongs to the OpenLogic library. Again, it's a simple
 example, and some of the priority arbiter's priorities can be reused. However,
 this case is more complicated due to the round-robin algorithm and the control
 logic, which requires a handshake. We can define a sequence for the handshake
-since it will be reused quite a bit.
+since it will be reused quite a bit. Thus, this will be the first example
+design in which we will use ``drom2psl``.
 
-Again, it's very convenient to define a function with round-robin behavior,
-since it's very simple. Let's try creating a sequence with `drom2psl`.
-We want to ensure that if there has been a valid grant before, the next grant
-(whenever it happens) will be successful. The function that predicts the round
-robin needs the request and the last grant as inputs.
+Again, it is very convenient to define a function that models the round-robin
+behavior, since it's very simple, so we'll define it in a VHDL package.
 
-.. image:: _static/examples/rr_arbiter.svg
+Let's try creating a sequence with
+``drom2psl``.  We want to ensure that if there has been a valid grant before, the
+next grant (whenever it happens) will be successful. The function that predicts
+the round robin needs the request and the last grant as inputs.
+
+.. figure:: _static/examples/rr_arbiter.svg
+
+   Wavedrom diagram for the ``last_valid_grant`` sequence. Cycles where the
+   clock signal has the two wavy lines mean "0 or more cycles". The data type
+   for ``Out_Grant`` is specified in the `JSON file
+   <https://gitlab.com/fvmformal/fvm/-/blob/main/examples/arbiter_rr/last_valid_grant.json>`_
+   as an extra field, ``type``, of the ``Out_Grant`` wavelane.
 
 This is the generated PSL:
 
@@ -118,11 +137,11 @@ This is the generated PSL:
 
    }
 
-With this, we can ensure that if we have a grant and then we have another (it
-can happen in any possible cycle), the grant will be equal to the function
-that predicts it. We can verify that the property holds true for all possible
-values by creating a symbolic constant ``last_grant`` (explained in
-:ref:`symbolic-constants` in :ref:`complexityreduction`).
+With this, we can ensure that if we have a grant and then we have another
+(which can happen in any possible cycle), the actual grant will be equal to the
+output of the function that predicts it. We can verify that the property holds
+true for all possible values by creating a symbolic constant ``last_grant``
+(explained in :ref:`symbolic-constants` in :ref:`complexityreduction`).
 
 .. code-block:: vhdl
 
@@ -208,24 +227,40 @@ sure that that specific design output is activated when expected**, to avoid
 verification gaps. So, we need to verify somehow that ``rd_en`` is activated
 when we want it to be; the example code shows how we do this in this case.
 
+.. note::
+
+   For clarity of the wavedrom diagrams, a sequence where each bit lasts for
+   two clock cycles has been used for the documentation. The actual VHDL has a
+   generic, ``BIT_DURATION``, which is set to a default value of 5. Depending
+   on the actual clock frequency used and the desired baudrate, this
+   ``BIT_DURATION`` generic could be set to different values, for example using
+   a design configuration, as explained in :ref:`designconfigurations`.
+
+   Future versions of ``drom2psl`` may support stretching parts of the sequences
+   to accomodate sequences where some durations are set by generics, but in the
+   meantime engineers can always manually call ``drom2psl``, modify the generated
+   PSL file by changing all the ``[*5]`` to ``[*BIT_DURATION]``, and add the
+   modified PSL source instead of the JSON source to the fvm framework
+   instance.
+
 - Link: https://gitlab.com/fvmformal/fvm/-/tree/main/examples/uart_tx
 
-Axi-4 Lite Slave
+AXI-4 Lite Slave
 ~~~~~~~~~~~~~~~~~
 
 This example also belongs to the OpenLogic library.
-This Axi Slave has a state machine that is no longer as linear (it has both
+This AXI Slave has a state machine that is no longer as linear (it has both
 TX and RX) and also has quite a few interfaces. This makes writing sequences
 for reuse more important, both in terms of speed and clarity.
 
 A very interesting way to use ``drom2psl`` is to define one of the
-functionalities of our design in wavedrom, in this case READ, and cover it
+functionalities of our design in wavedrom, in this case READ, and ``cover`` it
 to see if it can occur:
 
 .. image:: _static/examples/axi_s_read_3.svg
 
-With the wavedrom, we can generate assertions to write (either manually or
-with ``drom2psl``). In this case, it's clear that three things happen:
+With the wavedrom, we can generate assertions to write, either manually or
+with ``drom2psl``. In this case, it's clear that three things happen:
 **1) The AR channel requests data from an address, 2) The data is read from the
 register bank for the requested address, and 3) the R channel reads the data**.
 Furthermore, we can observe that in **1)** the input transaction could be the
@@ -236,7 +271,7 @@ portion of the register bank (let's call it ``c``); and in **3)** the input
 transaction is the write portion of the register bank and the output
 transaction is the R channel (let's call it ``d``). So, conceptually, we want
 assertions that relate ``a -> b``, ``b -> c``, and ``c -> d``, and with those
-we verify all parts of the reading.
+we verify all parts of the READ functionality.
 
 Medium examples
 ---------------
@@ -249,7 +284,7 @@ This is the first example where complexity reduction techniques are applied,
 although it's quite easy. There's a startup delay of over 2000 cycles
 parameterized with a generic, so it can simply be reduced without affecting
 the design at all, as it's just a startup delay. Regarding the design, it's
-similar to the Axi slave with many states (``WRITE``, ``READ``, ``REFRESH``...)
+similar to the AXI slave with many states (``WRITE``, ``READ``, ``REFRESH``...)
 and many interfaces, so using sequences remains essential.
 
 With ``drom2psl`` we can easily ``assert`` a write, with an input transaction
@@ -307,12 +342,22 @@ properly!
 Linear interpolator
 ~~~~~~~~~~~~~~~~~~~~
 
-This example will be the first where assumptions are crucial.
-If the input ``valid`` is asserted, the ``inferior`` and ``superior`` inputs
-are interpolated for 12 cycles. We must ensure that if ``valid`` is asserted,
-the ``superior`` and ``inferior`` inputs remain stable during the 12
-interpolation cycles. Similarly, if ``valid`` is asserted, it will not be
-re-asserted in the next 12 cycles.
+This designs makes a linear interpolation betwen two inputs, which are
+fixed-point complex numbers defined as a VHDL ``record`` type that has two
+fields: ``re`` (for the real part) and ``im`` (for the imaginary part). If the
+input ``valid`` is asserted, the ``inferior`` and ``superior`` inputs are
+interpolated for 12 cycles.
+
+This example will be the first where assumptions are crucial. Due to how the
+design works, while it is interpolating:
+
+* its ``inferior`` and ``superior`` inputs must not change, and
+* its ``valid`` input cannot be asserted
+
+Thus, we use assumptions to ensure that if ``valid`` is asserted, the
+``superior`` and ``inferior`` inputs remain stable during the 12 interpolation
+cycles. Similarly, if ``valid`` is asserted, it will not be re-asserted in the
+next 12 cycles.
 
 .. code-block:: vhdl
 
@@ -329,12 +374,12 @@ re-asserted in the next 12 cycles.
 In addition to this, this example is the first with some computational
 complexity, due to its 10-bit by 5-bit multipliers.
 
-Using drom2psl we can generate a property with these transactions:
+Using ``drom2psl`` we can generate a property with these transactions:
 
 .. image:: _static/examples/interpolator_prop.svg
 
-And we can use the property this way (``interpolator_predict`` is a function
-that we define to predict the interpolated values):
+And we can use the property this way (note that ``interpolator_predict`` is a
+function that we define to predict the interpolated values):
 
 .. code-block:: vhdl
 
@@ -372,7 +417,7 @@ Intermediate examples
 32-bit divider
 ~~~~~~~~~~~~~~~
 
-This examples belongs to the GRLIB IP library from Gaisler: 
+This example belongs to the GRLIB IP library from Gaisler:
 https://www.gaisler.com/grlib-ip-library. This is the first example in which
 several libraries are used; the sources must be added in the order the
 libraries are compiled, as explained in
@@ -412,7 +457,7 @@ If we specify the clock and reset domains in ``formal.py``, the steps
 ``resets`` and ``clocks`` are very useful for checking clock and reset
 domain crossing.
 
-Regarding FIFO handling, it's the same as synchronous FIFO. The difference
+Regarding FIFO handling, it's the same as the synchronous FIFO. The difference
 lies in the clocks. Until now, we defined the default clock at the top of the
 PSL file, and all properties used that clock. Now we'll have to define the
 clock in each property (although PSL allows for more than one clock in a
@@ -456,10 +501,10 @@ Difficult examples
 IPv6 transceiver
 ~~~~~~~~~~~~~~~~~
 
-This example belongs to the PoC (Pile of Cores) library: 
+This example belongs to the PoC (Pile of Cores) library:
 https://github.com/VLSI-EDA/PoC.
 This is the most complicated of all, both because of its size and because it
-has some of the complexity elements: bigger state space, a number of
+has some of the complexity elements at the same time: bigger state space, a number of
 memories inside, and a latency which cannot be arbitrarily reduced due to the
 fact that the frames require specific headers. This results in greater
 verification efforts, requiring more and more complex properties. Therefore,

@@ -108,3 +108,13 @@ the technique.
 
 - Link: https://gitlab.com/fvmformal/fvm/-/tree/main/concepts/assert_to_assume
 
+.. _designconfigurations:
+
+design_configurations
+---------------------
+
+.. todo::
+
+   actually write this
+
+
