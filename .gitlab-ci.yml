@@ -10,7 +10,7 @@ stages:
 
 version_badge:
   stage: lint_and_test
-  image: registry.woden.us.es/containers/debian:12
+  image: debian:12
   script:
     - apt update
     - apt install -y python3 python3-pip python3-venv bc curl
@@ -32,7 +32,7 @@ test_ci_vars:
 
 count_todos_in_code:
   stage: lint_and_test
-  image: registry.woden.us.es/containers/debian:12
+  image: debian:12
   variables:
     GOAL: "60"
   script:
@@ -57,7 +57,7 @@ count_todos_in_code:
 
 lint_python:
   stage: lint_and_test
-  image: registry.woden.us.es/containers/debian:12
+  image: debian:12
   variables:
     GOAL: "92"
   script:
@@ -80,7 +80,7 @@ lint_python:
 
 test_all:
   stage: lint_and_test
-  image: registry.woden.us.es/containers/debian:12
+  image: debian:12
   script:
     - apt update
     - apt install -y python3 python3-pip python3-venv curl
@@ -98,16 +98,9 @@ test_all:
       junit:
         - results.xml
 
-#generate_matrixes:
-#  stage: lint_and_test
-#  image: registry.woden.us.es/containers/debian:12
-#  script:
-#    - export CONCEPTS=$(make list-concepts | tr '\n' ',')
-#    - export EXAMPLES=$(make list-concepts | tr '\n' ',')
-
-# TODO : Add artifacts, when we have a clearer idea of what those would be
-# TODO : Add results.xml, when our framework generates it
 run_concepts_questa: &run_concepts_questa
+  rules:
+    - if: $IS_PRIVATE_GITLAB_INSTANCE == "True"
   stage: concepts
   image: registry.woden.us.es/containers/questa:2025.1_2
   variables:
@@ -142,15 +135,6 @@ run_concepts_questa: &run_concepts_questa
     - yum install -y git python39 java-1.8.0-openjdk
     - curl -LsSf https://astral.sh/uv/install.sh | sh
     - export PATH="$HOME/.local/bin:$PATH"
-    # TODO : the following 6 lines don't work, we should create the file from
-    # inside the python code (see issue #165)
-    #- echo '{"name":"GitLab CI with runner ${CI_RUNNER_ID}","type":"gitlab","reportName":"Allure Report (without history for now)",' > executor.json
-    #- echo "\"reportUrl\":\"${CI_PAGES_URL}/${CI_COMMIT_REF_NAME}/${CI_JOB_ID}/\"," >> executor.json
-    #- echo "\"buildUrl\":\"${CI_PIPELINE_URL}\"," >> executor.json
-    #- echo "\"buildName\":\"GitLab Job Run ${CI_JOB_ID}\",\"buildOrder\":\"${CI_JOB_ID}\"}" >> executor.json
-    #- mkdir -p fvm_out/fvm_results
-    #- mv executor.json fvm_out/fvm_results
-    #- mkdir -p fvm_out/dashboard/allure-results
   script:
     - make UVFLAGS=--dev PYTHON="coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN" $DESIGN
   after_script:
@@ -222,7 +206,9 @@ run_examples_questa:
 # it manually, for example it may get the available steps from the framework
 # and then run each of them alternated with a 'make clean' inside a for loop
 # TODO : this could be implemented more cleanly using parallel:matrix
-.run_steps_independently_questa:
+run_steps_independently_questa:
+  rules:
+    - if: $IS_PRIVATE_GITLAB_INSTANCE == "True"
   stage: examples
   image: registry.woden.us.es/containers/questa:2025.1_2
   tags:
@@ -254,6 +240,8 @@ run_examples_questa:
       - .coverage.*
 
 run_options_questa:
+  rules:
+    - if: $IS_PRIVATE_GITLAB_INSTANCE == "True"
   stage: concepts
   image: registry.woden.us.es/containers/questa:2025.1_2
   tags:
@@ -288,25 +276,9 @@ run_options_questa:
       - .coverage.$TOOLCHAIN.hooks.prove_list
       - .coverage.$TOOLCHAIN.vunits.continue
 
-full_dashboard:
-  stage: doc
-  image: registry.woden.us.es/containers/debian:12
-  script:
-    - apt update
-    - apt install -y python3 python3-pip python3-venv default-jdk curl
-    - curl -LsSf https://astral.sh/uv/install.sh | sh
-    - export PATH="$HOME/.local/bin:$PATH"
-    - mv results.xml fvm_out/fvm_results
-    - make report
-    - make updated_report
-  artifacts:
-    when: always
-    paths:
-      - fvm_out/dashboard/allure-report
-
 apidoc:
   stage: doc
-  image: registry.woden.us.es/containers/debian:12
+  image: debian:12
   variables:
     GOAL: 98
   script:
@@ -330,24 +302,10 @@ apidoc:
       - badges/undocumented.svg
   coverage: /Total undocumented members= ([\d]+)/
 
-# The history is much smaller than the full dashboard, so we can afford to save
-# it with a long expiry date
-#save_history:
-#  stage: history
-#  image: registry.woden.us.es/containers/debian:12
-#  script:
-#    - mv fvm_out/fvm_report/history history
-#  artifacts:
-#    when: always
-#    paths:
-#      - history
-#    expire_in: 1 month
-
-
-# Merge coverage files from previous stages
+# Merge python coverage files from previous stages
 pycoverage:
   stage: coverage
-  image: registry.woden.us.es/containers/debian:12
+  image: debian:12
   before_script:
     - |
       # When not running the examples and concepts, python coverage is lower
@@ -386,20 +344,20 @@ pycoverage:
 # this), and we are in the private instance, which has the API tokens as CI/CD
 # variables
 deploy_to_testpypi: &deploy_to_testpypi
+  variables:
+    PUBLISH_URL: "https://test.pypi.org/legacy/"
   stage: deploy_testpypi
   rules:
     - if: $CI_COMMIT_TAG && $IS_PRIVATE_GITLAB_INSTANCE == "True"
-  image: registry.woden.us.es/containers/debian:12
+  image: debian:12
   before_script:
-    - export UV_PUBLISH_TOKEN="${TESTPYPI_API_TOKEN}"
-    - export PUBLISH_URL=https://test.pypi.org/legacy/
-  script:
     - apt update
     - apt install -y python3 python3-pip python3-venv curl
     - curl -LsSf https://astral.sh/uv/install.sh | sh
     - export PATH="$HOME/.local/bin:$PATH"
     - uv build
-    - uv publish --publish-url $PUBLISH_URL
+  script:
+    - uv publish --publish-url $PUBLISH_URL --token $TESTPYPI_API_TOKEN
 
 # Get the recently published fvm from testpypi and try to run the tests
 # Of couse we only do this if we have deployed to testpypi, so the 'rules' are
@@ -439,7 +397,7 @@ test_from_testpypi:
         *alpine*)
           echo "Setting up Alpine Linux (apk)"
           apk update
-          apk add --no-cache python3 py3-pip python3-venv curl
+          apk add --no-cache python3 py3-pip curl
           ;;
 
         # Match images containing 'debian' or 'ubuntu'
@@ -451,19 +409,11 @@ test_from_testpypi:
 
         # Match images containing 'rocky', 'fedora', or 'centos'
         *rocky* | *fedora* | *centos*)
-          # We check for 'dnf' or 'yum' to be robust across RHEL-based systems
-          if [ -x "$(command -v dnf)" ]; then
-            PACKAGE_MANAGER="dnf"
-          elif [ -x "$(command -v yum)" ]; then
-            PACKAGE_MANAGER="yum"
-          else
-            echo "Error: RHEL-based system detected but neither dnf nor yum found."
-            exit 1
-          fi
-
           echo "Setting up Rocky/Fedora/Centos/RHEL Linux ($PACKAGE_MANAGER)"
           # No need to $PACKAGE_MANAGER update (that would update installed packages)
-          $PACKAGE_MANAGER install -y python3 python3-pip python3-venv curl
+          # Fedora and rocky, as alpine, provide python3-venv with python3.
+          # They also come with curl so we don't need to install it
+          dnf install -y python3 python3-pip
           ;;
 
         *)
@@ -477,14 +427,16 @@ test_from_testpypi:
     - source testvenv/bin/activate
     - pip3 install --extra-index-url https://test.pypi.org/simple/ fvm-formal==`uv version --short`
     - pip3 install pytest
-    - echo "[pytest]\npythonpath = ." > pytest.ini
+    - echo "[pytest]" > pytest.ini
+    - echo "pythonpath = ." >> pytest.ini
     - rm -rf src/
     - pytest -v
 
 deploy_to_pypi:
   <<: *deploy_to_testpypi
   stage: deploy_pypi
-  before_script:
-    - export UV_PUBLISH_TOKEN="${PYPI_API_TOKEN}"
-    - export PUBLISH_URL=https://upload.pypi.org/legacy/
+  variables:
+    PUBLISH_URL: "https://upload.pypi.org/legacy/"
+  script:
+    - uv publish --publish-url $PUBLISH_URL --token $PYPI_API_TOKEN
 

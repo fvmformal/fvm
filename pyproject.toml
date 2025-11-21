@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fvm-formal"
-version = "0.1.7"
+version = "0.1.16"
 description = "A Formal Verification Methodology for ASIC and FPGA designs"
 authors = [
   {name = "Hipolito Guzmán-Miranda", email = "hguzman@us.es"},
@@ -47,7 +47,7 @@ dev = [
 packages = ["src"]
 
 [tool.setuptools.package-data]
-"fvm" = ["*.png", "*.ico"]
+"fvm" = ["assets/*.png", "assets/*.ico"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
