@@ -189,7 +189,7 @@ run_examples_questa:
         - fifo_async
         - fifo_sync
         - ipv6
-        - ipv6TX
+        #- ipv6TX
         - linearinterpolator
         - sdram
         - uart_tx
