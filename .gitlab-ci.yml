@@ -136,7 +136,6 @@ run_concepts_questa: &run_concepts_questa
         - user_defined_hdltypes
         - user_defined_hdltypes_in_external_package
         - user_defined_hdltypes_in_package
-        - wishbone_sequence
   before_script:
     - unset LM_LICENSE_FILE
     - export SALT_LICENSE_SERVER=29000@popote.us.es
@@ -181,6 +180,15 @@ run_concepts_questa: &run_concepts_questa
     - export FVM_TOOLCHAIN=sby
     - curl -LsSf https://astral.sh/uv/install.sh | sh
     - export PATH="$HOME/.local/bin:$PATH"
+
+run_test_examples_questa:
+  <<: *run_concepts_questa
+  stage: examples
+  parallel:
+    matrix:
+      - DESIGN:
+        - counter_psl_in_vhdl
+        - wishbone_sequence
 
 run_examples_questa:
   <<: *run_concepts_questa
