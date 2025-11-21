@@ -230,7 +230,7 @@ run_steps_independently_questa:
       - DESIGN:
         - counter
         - arbiter_prior
-      - STEP:
+        STEP:
         - lint
         - friendliness
         - rulecheck
