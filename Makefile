@@ -107,6 +107,9 @@ list-concepts:
 %: concepts/%
 	$(UV_RUN) $(PYTHON) concepts/$@/formal.py
 
+%: test/examples/%
+	$(UV_RUN) $(PYTHON) test/examples/$@/formal.py
+
 # Calculate python code coverage
 pycoverage:
 	$(UV_RUN) coverage combine
