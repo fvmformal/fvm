@@ -39,9 +39,9 @@ begin
     comb: process(count)
     begin
       if (count = MAX_COUNT) then
-	      n_count <= (others => '0');
+        n_count <= (others => '0');
       else
-	      n_count <= count + 1;
+        n_count <= count + 1;
       end if;
     end process;
 

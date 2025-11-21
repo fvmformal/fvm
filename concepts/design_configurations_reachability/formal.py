@@ -1,8 +1,7 @@
 from fvm import FvmFramework
 
 fvm = FvmFramework()
-fvm.add_vhdl_source("concepts/reachability_example/counter.vhd")
-fvm.add_psl_sources("concepts/reachability_example/*.psl", flavor="vhdl")
+fvm.add_vhdl_source("examples/counter/counter.vhd")
 fvm.set_toplevel("counter")
 fvm.add_config("counter", "max_count_4", dict(MAX_COUNT=4))
 fvm.add_config("counter", "max_count_8", dict(MAX_COUNT=8))
