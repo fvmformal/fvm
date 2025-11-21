@@ -118,13 +118,13 @@ run_concepts_questa: &run_concepts_questa
         - cutpoint_example
         - defining_clocks_and_resets
         - design_configurations
+        - design_configurations_reachability
         - hooks
         - inheriting_multiple_vunits
         - inheriting_vunits
         - multiple_designs
         - parameterized_properties
         - parameterized_sequences
-        - reachability_example
         - symbolic_constants
         - user_defined_hdltypes
         - user_defined_hdltypes_in_external_package
@@ -179,7 +179,20 @@ run_examples_questa:
   stage: examples
   parallel:
     matrix:
-      - DESIGN: [counter, linearinterpolator, dualcounter, uart_tx, arbiter_prior, arbiter_rr, fifo_sync, fifo_async, axi_lite_slave, sdram, ipv6]
+      - DESIGN:
+        - arbiter_prior
+        - arbiter_rr
+        - axi_lite_slave
+        - counter
+        - div32
+        - dualcounter
+        - fifo_async
+        - fifo_sync
+        - ipv6
+        - ipv6TX
+        - linearinterpolator
+        - sdram
+        - uart_tx
 
 .run_examples_sby:
   <<: *run_concepts_sby
@@ -276,6 +289,7 @@ run_options_questa:
       - .coverage.$TOOLCHAIN.hooks.prove_list
       - .coverage.$TOOLCHAIN.vunits.continue
 
+# Generate sphinx documentation
 apidoc:
   stage: doc
   image: debian:12
@@ -360,8 +374,8 @@ deploy_to_testpypi: &deploy_to_testpypi
     - uv publish --publish-url $PUBLISH_URL --token $TESTPYPI_API_TOKEN
 
 # Get the recently published fvm from testpypi and try to run the tests
-# Of couse we only do this if we have deployed to testpypi, so the 'rules' are
-# the same as for the previous job
+# Of couse we only do this if we have deployed to testpypi, but we can also run
+# this on the public instance
 # Here we don't want to use uv to run the tests, we only use uv to get the
 # version number
 # Then we install, using pip, the specific version from testpypi in a clean
@@ -376,7 +390,7 @@ deploy_to_testpypi: &deploy_to_testpypi
 test_from_testpypi:
   stage: test_testpypi
   rules:
-    - if: $CI_COMMIT_TAG && $IS_PRIVATE_GITLAB_INSTANCE == "True"
+    - if: $CI_COMMIT_TAG
   image: $DOCKERIMAGE
   parallel:
     matrix:
