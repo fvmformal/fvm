@@ -63,7 +63,6 @@ keyword property, and how to use it in verification directives like assert.
 
 - Link: https://gitlab.com/fvmformal/fvm/-/tree/main/concepts/parameterized_properties
 
-
 multiple_designs
 ----------------
 
@@ -71,6 +70,18 @@ This is an example of passing a list of toplevels to the FVM framework, which
 tells it to run all the tests on each of the designs specified in the list.
 
 - Link: https://gitlab.com/fvmformal/fvm/-/tree/main/concepts/multiple_designs
+
+.. _designconfigurations:
+design_configurations
+---------------------
+
+An example of how to define *design configurations*, which are sets of generics
+to apply to a design, so we can formally verify it in specific configurations.
+In the example, a simple counter is configured for different values of its
+``MAX_COUNT`` generic and the formal tools are run over those diferent design
+configurations.
+
+- Link: https://gitlab.com/fvmformal/fvm/-/tree/main/concepts/design_configurations
 
 user_defined_hdltypes
 ---------------------
@@ -82,7 +93,7 @@ PSL sequences can receive many datatypes as parameters. In particular, for the F
 user_defined_hdltypes_in_package
 --------------------------------
 
-The same as user_defined_hdltypes, but the specific user-defined datatypes have
+The same as `user_defined_hdltypes`, but the specific user-defined datatypes have
 been defined in a VHDL package. This is very interesting when considering formal verification as a `complement` to simulation, because it allows us to define our transactions in a VHDL package that can be used both from a TLM testbench made in a modern simulation verification methodology and the properties for formal verification with FVM.
 
 - Link: https://gitlab.com/fvmformal/fvm/-/tree/main/concepts/user_defined_hdltypes
@@ -90,31 +101,64 @@ been defined in a VHDL package. This is very interesting when considering formal
 user_defined_hdltypes_in_external_package
 -----------------------------------------
 
-The same as user_defined_hdltypes, but one of the user-defined datatypes has
+The same as `user_defined_hdltypes`, but one of the user-defined datatypes has
 been defined in a VHDL package that is loaded from the PSL vunit and not from
 inside the VHDL entity.
 
 - Link: https://gitlab.com/fvmformal/fvm/-/tree/main/concepts/user_defined_hdltypes_in_external_package
+
+defining_clocks_and_resets
+--------------------------
+
+Clock and reset domains can be specified in the ``formal.py`` script, in order
+to provide more information to the Clock Domain Crossing and Reset Domain
+Crossing tools, and also to avoid warnings about 'inferred clocks', which are
+clocks that are auto-detected by the formal tools but not specified by the
+user.
+
+This example shows how to define in the FVM framework clock signals, clock
+domains, reset signals and reset domains.
+
+- Link: https://gitlab.com/fvmformal/fvm/-/tree/main/concepts/defining_clocks_and_resets
+
+adding_drom_sources
+-------------------
+
+This example shows how to directly add wavedrom sources to the FVM Framework. A
+flavor must be specified so ``drom2psl`` knows which flavor of PSL to generate.
+Currently only the ``vhdl`` flavor is supported.
+
+- Link: https://gitlab.com/fvmformal/fvm/-/tree/main/concepts/adding_drom_sources
 
 assert_to_assume
 ----------------
 
 An example of how we can define properties for a submodule and afterwards
 assume that they hold when proving properties for the top-level. We just change
-a `.psl` file that has properties of the form assert named_property for a file
-that has assume named_property. In this case, assuming proven properties does
-not improvethe proof times for the top-level module, is a working example of
+a `.psl` file that has properties of the form ``assert named_property`` for a file
+that has ``assume named_property``. In this case, assuming proven properties does
+not improve the proof times for the top-level module, it is just a working example of
 the technique.
 
 - Link: https://gitlab.com/fvmformal/fvm/-/tree/main/concepts/assert_to_assume
 
-.. _designconfigurations:
+hooks
+-----
 
-design_configurations
----------------------
+Sometimes a user may find that they would like to have some extra functionality
+during formal verification, but integrated within the FVM framework for
+convenience. The FVM framework provides the user with the capability of
+defining `hooks`, which are user-defined functions that are called before or
+after a specific step:
 
-.. todo::
+- A `pre_hook` is a hook that is called just *before* running a specific step.
+  Use :py:func:`fvm.FvmFramework.set_pre_hook` to add one.
+- A `post_hook` is a hook that is called just *after* running a specific step
+  Use :py:func:`fvm.FvmFramework.set_post_hook` to add one.
 
-   actually write this
+These hooks can be specified for a single design or for all designs (for
+example, in the case of having multiple designs or using design
+configurations), depending on the arguments passed to the relevant functions.
 
+- Link: https://gitlab.com/fvmformal/fvm/-/tree/main/concepts/hooks
 
