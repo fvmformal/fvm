@@ -83,6 +83,17 @@ configurations.
 
 - Link: https://gitlab.com/fvmformal/fvm/-/tree/main/concepts/design_configurations
 
+design_configurations_reachability
+----------------------------------
+
+An example that shows how reachability may change in different design
+configurations. In this specific case, the ``MAX_COUNT`` generic of the counter
+is changed but the counter still has 8 bits for the internal count, so the
+number of bits that can be actually toggled depends on the specific design
+configuration.
+
+- Link: https://gitlab.com/fvmformal/fvm/-/tree/main/concepts/design_configurations_reachability
+
 user_defined_hdltypes
 ---------------------
 
