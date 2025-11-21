@@ -42,7 +42,7 @@ inputs_and_expected_outputs = [
     ("drom_sequences/spi_cpol_1_cpha_0.json", "test/drom2psl/expected/spi_cpol_1_cpha_0.psl"),
     ("drom_sequences/spi_cpol_1_cpha_1.json", "test/drom2psl/expected/spi_cpol_1_cpha_1.psl"),
     ("drom_sequences/uart_tx.json", "test/drom2psl/expected/uart_tx.psl"),
-    ("drom_sequences/wishbone_classic_read.json", "concepts/wishbone_sequence/wishbone_classic_read.psl"),
+    ("drom_sequences/wishbone_classic_read.json", "test/examples/wishbone_sequence/wishbone_classic_read.psl"),
     ("drom_sequences/wishbone_classic_read.json", "test/drom2psl/expected/wishbone_classic_read.psl"),
     ("drom_sequences/wishbone_classic_write.json", "test/drom2psl/expected/wishbone_classic_write.psl"),
     ("drom_sequences/wishbone_pipelined_read.json", "test/drom2psl/expected/wishbone_pipelined_read.psl"),
