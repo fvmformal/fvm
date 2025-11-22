@@ -72,6 +72,7 @@ tells it to run all the tests on each of the designs specified in the list.
 - Link: https://gitlab.com/fvmformal/fvm/-/tree/main/concepts/multiple_designs
 
 .. _designconfigurations:
+
 design_configurations
 ---------------------
 
@@ -142,6 +143,7 @@ Currently only the ``vhdl`` flavor is supported.
 - Link: https://gitlab.com/fvmformal/fvm/-/tree/main/concepts/adding_drom_sources
 
 .. _assert_to_assume:
+
 assert_to_assume
 ----------------
 

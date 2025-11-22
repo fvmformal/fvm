@@ -95,6 +95,7 @@ needed).
 - Link: https://gitlab.com/fvmformal/fvm/-/tree/main/examples/arbiter_prior
 
 .. _round_robin_arbiter:
+
 Round Robin Arbiter
 ~~~~~~~~~~~~~~~~~~~
 
