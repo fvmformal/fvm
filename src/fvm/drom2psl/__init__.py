@@ -9,7 +9,7 @@ input .json files:
 3. That the user has defined the datatype of any 'data' in a 'type' field in
    the wavelane, for example:
 
-   .. code-block:: json
+   .. code-block::
 
       {name: 'dat', wave: 'x.3x', data: 'data', type: 'std_ulogic_vector(31 downto 0)'},
 

@@ -442,6 +442,7 @@ def data2list(wavelane_data):
 
 def expand_concatenations(datalist):
     """Expands any element containing '&' into separate elements.
+
        Example:
          ["a", "b & c & d"] → ["a", "b", "c", "d"]
     """

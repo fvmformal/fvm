@@ -159,7 +159,7 @@ For example, from the following `.json` file:
 Which corresponds to the following waveform diagram:
 
 .. image:: _static/wishbone_classic_read.svg
-   :alt: A graphical summary of the FVM
+   :alt: Wavedrom waveform for a read transaction in Wishbone, classic mode
    :width: 50%
    :align: center
 
