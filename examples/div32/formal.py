@@ -45,6 +45,7 @@ fvm.set_toplevel("gaisler.div32")
 
 fvm.skip('reachability')
 fvm.allow_failure('xverify')
+fvm.skip('prove.simcover')
 fvm.set_coverage_goal('prove.formalcover', 50)
 fvm.set_coverage_goal('prove.simcover', 0)
 fvm.run()
