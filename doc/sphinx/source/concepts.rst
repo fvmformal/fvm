@@ -141,6 +141,7 @@ Currently only the ``vhdl`` flavor is supported.
 
 - Link: https://gitlab.com/fvmformal/fvm/-/tree/main/concepts/adding_drom_sources
 
+.. _assert_to_assume:
 assert_to_assume
 ----------------
 

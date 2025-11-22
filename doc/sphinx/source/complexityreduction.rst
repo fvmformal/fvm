@@ -8,14 +8,6 @@ After verifying your first trivial examples, you will encounter designs which
 are not very tractable using formal verification. Fortunately, there are number
 of techniques than can be used to reduce the complexity of the formal proofs.
 
-.. todo::
-
-   Describe the techniques here, and link to the examples in the repository.
-   Maybe we can even make a table, as we did in the FVM paper. But we cannot
-   make exactly the same table now, because the paper can't have been
-   previously published. So maybe we make a subsection for each technique and
-   add the table after the paper is published
-
 Cutpoint
 ========
 
@@ -65,12 +57,13 @@ forget to check the function documentation:
 Example
 -------
 
-A complete example is provided in
-https://gitlab.com/fvmformal/fvm/-/tree/main/concepts/cutpoint_example
-
-.. todo::
-
-   Add link to public repo
+An example of how to use :py:func:`fvm.FvmFramework.cutpoint` is provided at
+https://gitlab.com/fvmformal/fvm/-/tree/main/concepts/cutpoint_example. Please
+note that this is an academic example, in which we are cutpointing the main
+output of the design, which makes the assertions on the main output fail, since
+the solver can freely choose values that fire those. This is the reason why the
+`prove` step is allowed to fail in the ``formal.py`` script. Typically we don't
+cutpoint the primary outputs of a design, we cutpoint internal signals instead.
 
 Blackbox
 ========
@@ -104,10 +97,6 @@ a good way of making the proof more tractable.
 How to do it
 ------------
 
-.. todo::
-
-   Add links to public repo
-
 If you want to blackbox all instances of a specific entity, use the function
 :py:func:`fvm.FvmFramework.blackbox` and pass to it the entity name.
 
@@ -137,10 +126,10 @@ name as argument.
 Example
 -------
 
-An example of blackboxing an entity is provided in
+An example of blackboxing an entity is provided at
 https://gitlab.com/fvmformal/fvm/-/tree/main/concepts/blackbox_example
 
-An example of blackboxing instances is provided in
+An example of blackboxing instances is provided at
 https://gitlab.com/fvmformal/fvm/-/tree/main/concepts/blackbox_instance
 
 Counter abstraction
@@ -156,7 +145,12 @@ represent interesting behavior.
 When to use it
 --------------
 
+In the same situations where you would need to cutpoint a counter's output, but
+you need that output to follow some sort of sequence intead of running freely.
 
+For example, if a counter is counting wait states until a very high number, you
+can abstract it so it reaches that high number in a small number of clock
+cycles, reducing the proof complexity.
 
 How to do it
 ------------
@@ -190,13 +184,21 @@ In your PSL properties:
    assume_Q_max_minus_one: assume always   ( {cnt=2} |-> {Q = MAX_COUNT-1} );
    assume_Q_max_minus: assume always       ( {cnt=3} |-> {Q = MAX_COUNT} );
 
-.. todo::
+This way, the abstracted counter has just four states, represented by ``cnt``,
+that imply some restrictions on the actual output of counter, ``Q``:
 
-   Hay que separar el example de cutpoint del de counter abstraction!
+- ``cnt=0``: reset state or just after an overflow: ``Q`` equals zero
+- ``cnt=1``: normal operation, far from edge values: ``Q`` is bigger than zero but less than ``MAX_COUNT-1``
+- ``cnt=2``: almost saturated, ``Q`` is ``MAX_COUNT-1``
+- ``cnt=3``: saturation: ``Q`` is ``MAX_COUNT``
+
+Since we let the solver choose the value for ``Q``, in the range corresponding
+to ``cnt=1``, we are letting the solver consider any values in the range.
 
 Example
 -------
 
+A counter abstraction example is provided at https://gitlab.com/fvmformal/fvm/-/tree/main/concepts/counter_abstraction
 
 Memory abstraction
 ==================
@@ -215,8 +217,8 @@ When memory is very large and cannot be reduced, memory abstraction is a good
 option. There are several use cases:
 
 - Sometimes, we don't care about the data itself and only need to focus on
-  the control logic. In this case, **blackboxing memory** is recommended to
-  reduce state space.
+  the control logic. In this case, **blackboxing the memory** is recommended to
+  reduce the state space.
 
 - If we want to verify data integrity but this is impractical due to memory
   size, we can check only a randomly selected memory location and **cutpoint
@@ -233,6 +235,9 @@ We can use cutpoint and blackboxes as seen in the previous sections.
 Example
 -------
 
+No example is provided yet, since the Questa formal tools automatically
+blackbox memories when they are too big, but FVM users can also use cutpoints,
+blackboxes and abstractions to abstract memories as they see fit.
 
 Structural reduction
 ====================
@@ -249,14 +254,14 @@ When to use it
 
 There are many use cases for this: the design is very large and can be **reduced
 without affecting functionality** (for example, a FIFO of depth 1024 vs. a FIFO
-of depth 16), **reducing waiting times** in designs that cause cycles where nothing
-happens, **reducing the values that signals can take** with assumes to reduce the
-state space... It is a basic, but fundamental technique.
+of depth 16), **reducing waiting times** in designs that have cycles where nothing
+happens, using assumes to **reduce the range values that signals can take** to
+reduce state space... It is a basic, but fundamental technique.
 
 How to do it
 ------------
 
-From `formal.py` we can add different configurations with
+In our ``formal.py`` script we can add different design configurations with
 :py:func:`fvm.FvmFramework.add_config`:
 
 .. code-block:: python
@@ -271,15 +276,17 @@ From `formal.py` we can add different configurations with
    fvm.set_toplevel("olo_base_fifo_sync")
    fvm.add_config("olo_base_fifo_sync", "config_width_8_depth_8", {"Width_g": 8, "Depth_g": 8})
 
-From the PSL file we can add the `assumes`.
+From the PSL file we can add any required `assumes`.
 
 Example
 -------
 
-There are examples of Structural reduction in 
-https://gitlab.com/fvmformal/fvm/-/tree/main/examples/fifo_sync,
-https://gitlab.com/fvmformal/fvm/-/tree/main/examples/fifo_async, and
-https://gitlab.com/fvmformal/fvm/-/tree/main/examples/div32, among others.
+FVM provides examples of Structural reduction at:
+
+- https://gitlab.com/fvmformal/fvm/-/tree/main/examples/fifo_sync,
+- https://gitlab.com/fvmformal/fvm/-/tree/main/examples/fifo_async, and
+- https://gitlab.com/fvmformal/fvm/-/tree/main/examples/div32, among others
+  inside the FVM repository.
 
 Data independence
 =================
@@ -287,8 +294,9 @@ Data independence
 Definition
 ----------
 
-The correctness of a design does not depend on the actual data values. So it
-doesn't matter to us whether the data bus is 128-bit, 32-bit, or 8-bit.
+Data independence happens when the correctness of a design does not depend on
+the actual data values. So it doesn't matter to us whether the data bus is
+128-bit, 32-bit, or 8-bit.
 
 When to use it
 --------------
@@ -301,7 +309,7 @@ operation of the FIFO will not change at all if the data is 64 bits or 3 bits.
 How to do it
 ------------
 
-From `formal.py` we can add different configurations with
+In our `formal.py` we can add different configurations with
 :py:func:`fvm.FvmFramework.add_config`:
 
 .. code-block:: python
@@ -319,9 +327,10 @@ From `formal.py` we can add different configurations with
 Example
 -------
 
-There are examples of data independence in 
-https://gitlab.com/fvmformal/fvm/-/tree/main/examples/fifo_sync and
-https://gitlab.com/fvmformal/fvm/-/tree/main/examples/fifo_async.
+FVM provides examples of data independence at:
+
+- https://gitlab.com/fvmformal/fvm/-/tree/main/examples/fifo_sync, and
+- https://gitlab.com/fvmformal/fvm/-/tree/main/examples/fifo_async.
 
 Symbolic constants
 ==================
@@ -358,7 +367,7 @@ Symbolic constants in PSL are defined with an assumption, where it starts with
 which would cause problems in some formal solvers. With this, we have a
 constant that can take any possible value.
 
-As seen in the example, the sequence ``last_valid_grant`` has an indefinite
+As seen in the :ref:`round_robin_arbiter` example, the sequence ``last_valid_grant`` has an indefinite
 duration; it can last 2 cycles, 100 cycles, or infinitely many cycles. If we
 knew it lasted 2 cycles, instead of using the symbolic constant ``last_grant``,
 we could write ``Out_Grant = round_robin_arbiter(In_Req, prev(Out_Grant))``, but
@@ -385,11 +394,12 @@ also being used for that purpose.
 Example
 -------
 
-There are examples of symbolic constants in 
-https://gitlab.com/fvmformal/fvm/-/tree/main/examples/arbiter_rr,
-https://gitlab.com/fvmformal/fvm/-/tree/main/examples/fifo_sync,
-https://gitlab.com/fvmformal/fvm/-/tree/main/examples/fifo_async, and
-https://gitlab.com/fvmformal/fvm/-/tree/main/examples/ipv6, among others.
+FVM provides examples of symbolic constants at:
+
+- https://gitlab.com/fvmformal/fvm/-/tree/main/examples/arbiter_rr,
+- https://gitlab.com/fvmformal/fvm/-/tree/main/examples/fifo_sync,
+- https://gitlab.com/fvmformal/fvm/-/tree/main/examples/fifo_async, and
+- https://gitlab.com/fvmformal/fvm/-/tree/main/examples/ipv6, among others.
 
 Assertion decomposition / property simplification
 =================================================
@@ -424,15 +434,15 @@ We can write:
    assert always ( {a; b} |-> {c} );
    assert always ( {a; b} |-> {d} );
 
-That doesn't mean that the properties are always separated, since it can be
+That doesn't mean that the properties always must be separated, since they could also be
 more readable when compacted into one property; it means that if the first
 property is intractable for formal tools, one of the possible solutions is to
-separate it.
+separate it in two.
 
 Example
 -------
 
-There is an example in
+An example is provided at
 https://gitlab.com/fvmformal/fvm/-/tree/main/concepts/assertion_decomposition.
 
 Hierarchical verification
@@ -467,3 +477,10 @@ we are working on.
 
 Example
 -------
+
+While no example is explicitly provided here, the use of
+:py:func:`fvm.FvmFramework.set_toplevel` to apply all the FVM steps to
+different submodules of a bigger design can also be combined with other
+techniques such as blackboxing already-verified submodules, or asumming
+already-proven properties as explained in :ref:`assert_to_assume`.
+

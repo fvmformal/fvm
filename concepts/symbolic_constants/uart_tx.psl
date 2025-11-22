@@ -16,7 +16,7 @@ vunit uart_tx(uart_tx(Behavioral)) {
     assert always (({rd_en} |=> {transmission(data)}) abort rst);
 
   -- Symbolic constant: Force the solver to make data constant in time, but it can
-  -- choose any value it wants. This works because the solver may chose any
+  -- choose any value it wants. This works because the solver may chose any value
   -- for data at clock cycle zero, and then this assumption forces data to
   -- remain constant for the rest of time
   data_symbolic_constant:
@@ -29,7 +29,7 @@ vunit uart_tx(uart_tx(Behavioral)) {
 
   cover_two_transmisions_any_cycles_between_them:
     cover {transmission(data); true[*]; transmission(data)};
-  
+
   cover_one_transmission:
     cover transmission(data);
 

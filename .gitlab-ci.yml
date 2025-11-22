@@ -115,6 +115,7 @@ run_concepts_questa: &run_concepts_questa
         - assert_to_assume
         - blackbox_example
         - blackbox_instance
+        - counter_abstraction
         - cutpoint_example
         - defining_clocks_and_resets
         - design_configurations

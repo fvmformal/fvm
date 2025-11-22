@@ -3,6 +3,18 @@ vunit counter (counter(behavioral)) {
     -- Default clock for PSL assertions
     default clock is rising_edge(clk);
 
+    signal cnt: integer range 0 to 3;
+
+    assume_initial_cnt: assume cnt = 0;
+    assume_cnt_rst: assume always (         {rst = '1'} |=> {cnt = 0} );
+    assume_cnt_increasing: assume always (  {cnt /= 3 and rst = '0'} |=> {cnt-prev(cnt) = 1} );
+    assume_cnt_overflow: assume always (    {cnt=3}     |=> {cnt=0} ) abort rst;
+
+    assume_Q_zero: assume always            ( {cnt=0} |-> {Q = 0} );
+    assume_Q_inbetween: assume always       ( {cnt=1} |-> {Q > 0 and Q < MAX_COUNT-1} );
+    assume_Q_max_minus_one: assume always   ( {cnt=2} |-> {Q = MAX_COUNT-1} );
+    assume_Q_max_minus: assume always       ( {cnt=3} |-> {Q = MAX_COUNT} );
+
     -- Assert we do not go over the maximum
     never_go_over_the_maximum: assert always (Q <= MAX_COUNT);
 
@@ -10,7 +22,7 @@ vunit counter (counter(behavioral)) {
     -- 1) If it's not the first clock cycle
     -- 2) If it hasn't just been reset
     -- 3) If last value wasn't MAX_COUNT
-    always_count_up: assert always (not (rst = '1') and (not prev(rst) = '1') and (prev(Q) /= MAX_COUNT)) -> (Q-prev(Q) = 1);
+    always_count_up: assert always (not (rst = '1') and (not prev(rst) = '1') and (prev(Q) /= MAX_COUNT)) -> (cnt-prev(cnt) = 1); -- Just change Q-prev(Q) = 1
 
     -- Cover the overflow -> zero case
     -- What we write here has to be a sequence inside curly braces {}, even if
