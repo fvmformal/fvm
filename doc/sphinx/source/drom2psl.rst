@@ -46,8 +46,8 @@ number of things in the input .json files:
      at the same time and last exactly the same number of cycles" operator,
      ``&&``.
 
-The following waveform is compliant with the aforementioned assumptions, and
-defines two signal groups, *Master* and *Slave*:
+For example, the following waveform is compliant with the aforementioned
+assumptions, and defines two signal groups, *Master* and *Slave*:
 
 .. image:: _static/wishbone_classic_read.svg
    :alt: Wavedrom waveform for a read transaction in Wishbone, classic mode
