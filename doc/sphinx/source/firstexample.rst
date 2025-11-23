@@ -369,10 +369,9 @@ summaries that are shown during command-line execution.
 
      An interesting idea is to create a latex template with your
      company/institution colors and logo and a cover page, and use pandoc to
-     create a beautiful PDF from the text report. You could even use a hook
-     (explained in section :ref:`hooks`) to automatically run, from within the
-     FVM framework, a custom command that does this after the last FVM
-     step.
+     create a beautiful PDF from the text report. You could even automate this
+     inside the ``formal.py`` script, after the call to
+     :py:func:`fvm.FvmFramework.run`.
 
 - **HTML summary:** to see the FVM summary in HTML format, just go to the output
   directory (by default, ``fvm_out``) and open the ``summary.html`` file with
