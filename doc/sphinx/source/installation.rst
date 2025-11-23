@@ -65,3 +65,35 @@ commit, branch or tag.
    cloned ``fvm`` directory. If you intend to remove that directory, you should
    remove the ``-e`` flag, but of course in that case the installation will not
    be editable.
+
+Non-python dependencies
+-----------------------
+
+All python dependencies should be correctly managed by ``pip`` when you install
+the FVM. Nevertheless, there are two non-python dependencies which you should
+make sure you have in your system:
+
+- **The actual formal tools:** The FVM currently only supports the Questa
+  formal tools (and the Questa OneSim simulator to compute simulation code
+  coverage). You should have the tools installed in the system and the
+  executables (``qverify``, ``vlib``, ``vcom``, ``vsim``, etc) in your
+  ``PATH``, and of course a valid license.
+
+- **Java:** The FVM uses `Allure Report <https://allurereport.org/>`_ to create
+  beautiful HTML reports with the formal verification results. The FVM
+  framework will download and use a specific release of Allure Report when
+  needed. This framework is based on Java, so if you want to be able to create
+  and view the reports you will need to install it, for example you can install
+  the Open Java Development Kit (OpenJDK):
+
+  - On Debian 13:
+
+    .. code:: zsh
+
+       sudo apt install openjdk-11-jre
+
+  - On Rocky Linux 8:
+
+    .. code:: zsh
+
+       sudo yum install java-1.8.0-openjdk

@@ -88,8 +88,8 @@ them.
 With FVM, it is less difficult that it sounds
 ---------------------------------------------
 
-Well, historically Formal Verification has been a topic for experts (further
-support this statement), but not anymore, with the FVM.
+Historically, Formal Verification has been a topic for experts, but not anymore
+with the FVM.
 
 Keep reading to see how the FVM can help you make the confidence in your
 designs, without a huge amount of effort, and with a smooth learning curve.

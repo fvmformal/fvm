@@ -13,7 +13,7 @@ FVM has been designed and developed by:
 
 with the awesome guidance and support of the project's Technical Officer:
 
-- Alberto Urbón Aguado (Telespazio for ESA)
+- Alberto Urbón Aguado (European Space Agency)
 
 Funding
 -------

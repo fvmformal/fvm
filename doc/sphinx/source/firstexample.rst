@@ -320,4 +320,64 @@ counter, which testifies to how powerful formal verification is. Formal
 verification can tackle even bigger designs, so continue reading to learn
 more!
 
-- Link: https://gitlab.com/fvmformal/fvm/-/tree/main/examples/counter
+- Link to example in the FVM repository: https://gitlab.com/fvmformal/fvm/-/tree/main/examples/counter
+
+Viewing reports
+---------------
+
+The FVM provides reports in different formats, apart from the step results and
+summaries that are shown during command-line execution.
+
+- **HTML report:** FVM generates beautiful HTML reports by leveraging the
+  Allure Report tool. To see the HTML report, pass the ``--show`` or
+  ``--shownorun`` option to the ``formal.py`` script. The first one runs the
+  formal tools and opens the HTML report, and the second one opens the HTML
+  report without running the formal tools, which is useful if you have already
+  run them. Since we have already run the tools for the counter, we can execute
+  the following command to open the HTML report without re-running the FVM
+  steps:
+
+  .. code-block:: zsh
+
+     python3 formal.py --shownorun
+
+  Also, when working with multiple designs, the ``--showall`` option can be
+  used to generate a single HTML report for all designs in the output
+  directory.
+
+  .. seealso::
+
+     See section :ref:`commandlineoptions` for more information about
+     command-line options and report generation.
+
+- **XML report:** FVM also can generate `JUnit XML
+  <https://github.com/testmoapp/junitxml>`_ files for continuous integration
+  systems such as gitlab CI or Jenkins. Go to the output directory (by default,
+  ``fvm_out``), and the ``fvm_results`` directory inside it. An XML file will
+  be generated in this directory for each design. In this example, if you open
+  ``fvm_out/fvm_results/counter_results.xml`` with your favorite text editor,
+  you will see the full execution results and logs in JUnit XML format.
+
+- **Text report:** a plain text report, ``text_report.md``, is generated in the
+  output directory (by default, ``fvm_out``). This is a plain text file in
+  Markdown language, which means that it can be read as a normal plain text
+  file, rendered by any Markdown renderers (such as gitlab/github issue
+  trackers or VSCodium/VSCode Markdown preview), or even converted into PDF by
+  using document conversion tools such as `pandoc <https://pandoc.org>`_.
+
+  .. tip::
+
+     An interesting idea is to create a latex template with your
+     company/institution colors and logo and a cover page, and use pandoc to
+     create a beautiful PDF from the text report. You could even use a hook
+     (explained in section :ref:`hooks`) to automatically run, from within the
+     FVM framework, a custom command that does this after the last FVM
+     step.
+
+- **HTML summary:** to see the FVM summary in HTML format, just go to the output
+  directory (by default, ``fvm_out``) and open the ``summary.html`` file with
+  your favorite browser.
+
+- **Text summary:** a ``summary.txt`` file, which contains the FVM summary in
+  plain text, is also generated in the output directory.
+
