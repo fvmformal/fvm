@@ -719,7 +719,7 @@ class FvmFramework:
 
         This method allows specifying the VHDL standard version to be used
         during compilation, default is "2008". Supported versions are "87", "93",
-        "2002", and "2008".
+        "02", and "08".
 
         :param vhdlstd: VHDL standard version as a string.
         :type vhdlstd: str
