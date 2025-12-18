@@ -1,0 +1,34 @@
+FVM: A Formal Verification Methodology for ASIC and FPGA designs
+Copyright 2024-2025 Universidad de Sevilla
+
+This product includes software developed at Universidad de Sevilla
+(http://www.us.es/).
+
+=========================================================================
+Third-Party Acknowledgments
+=========================================================================
+
+This software makes use of third-party libraries and tools installed via
+package managers (e.g., pip) or downloaded at runtime. These dependencies are
+NOT bundled with this repository source code. 
+
+* Managed dependencies (installed via pip):
+  - icecream   (MIT License)
+  - junit-xml  (MIT License)
+  - loguru     (MIT License)
+  - packaging  (Apache Software License, BSD License)
+  - pyyaml     (MIT license)
+  - rich       (MIT license)
+  - termcolor  (MIT license)
+  - wavedrom   (MIT license)
+  
+  Note: The canonical source of truth for managed dependencies is the
+  'dependencies' key within the [project] section of the pyproject.toml file.
+
+* Externally acquired tools (downloaded by the FVM framework):
+  - Allure Report (https://allurereport.org/) (Apache License 2.0)
+
+These dependencies are acquired separately during the software's installation
+process or during execution. The licenses and notice files for these projects
+are maintained by their respective authors and can be found in their individual
+distributions.
