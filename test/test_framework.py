@@ -1,3 +1,6 @@
+# Copyright 2024-2025 Universidad de Sevilla
+# SPDX-License-Identifier: Apache-2.0
+
 """Unit tests for FvmFramework class"""
 from pathlib import Path
 import shutil

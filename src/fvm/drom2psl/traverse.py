@@ -1,3 +1,6 @@
+# Copyright 2024-2025 Universidad de Sevilla
+# SPDX-License-Identifier: Apache-2.0
+
 """
 Functions to traverse the dictionary and just print what they see.
 Useful for debug, but they do not generate anything.

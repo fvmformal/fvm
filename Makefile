@@ -1,3 +1,6 @@
+# Copyright 2024-2025 Universidad de Sevilla
+# SPDX-License-Identifier: Apache-2.0
+
 .PHONY: all install fvm lint list-tests test test-verbose concepts examples pycoverage venv clean realclean
 
 # Everything is managed by uv. "uv run" automatically creates a venv and

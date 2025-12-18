@@ -1,3 +1,6 @@
+# Copyright 2024-2025 Universidad de Sevilla
+# SPDX-License-Identifier: Apache-2.0
+
 """Log counter for tracking log levels in FVM"""
 class LogCounter:
     """Class to count the number of log messages at each level."""
