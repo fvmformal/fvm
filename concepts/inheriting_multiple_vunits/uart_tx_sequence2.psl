@@ -1,3 +1,6 @@
+-- Copyright 2024-2025 Universidad de Sevilla
+-- SPDX-License-Identifier: Apache-2.0
+
 vunit uart_tx_sequence2 {
 
   -- Transmission sequence, which is like a transaction

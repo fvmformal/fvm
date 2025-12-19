@@ -1,3 +1,6 @@
+# Copyright 2024-2025 Universidad de Sevilla
+# SPDX-License-Identifier: Apache-2.0
+
 def change_vhdl_line(file_path, line_number, new_content):
     """
     Changes the content of a specific line in a VHDL file.

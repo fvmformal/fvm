@@ -1,3 +1,6 @@
+-- Copyright 2024-2025 Universidad de Sevilla
+-- SPDX-License-Identifier: Apache-2.0
+
 vunit olo_base_arb_rr_properties (olo_base_arb_rr) {
 
    inherit last_valid_grant;

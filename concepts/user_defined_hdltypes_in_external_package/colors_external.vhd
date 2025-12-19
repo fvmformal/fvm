@@ -1,3 +1,6 @@
+-- Copyright 2024-2025 Universidad de Sevilla
+-- SPDX-License-Identifier: Apache-2.0
+
 -- This package will not be included from the synthesizable design, just from
 -- the PSL properties
 library ieee;

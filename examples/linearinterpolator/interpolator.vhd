@@ -1,3 +1,6 @@
+-- Copyright 2024-2025 Universidad de Sevilla
+-- SPDX-License-Identifier: Apache-2.0
+
 -- Linearly interpolates between inferior and superior, outputting 12 intermediate values
 library ieee;
 use ieee.std_logic_1164.all;

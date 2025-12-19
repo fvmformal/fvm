@@ -1,3 +1,6 @@
+-- Copyright 2024-2025 Universidad de Sevilla
+-- SPDX-License-Identifier: Apache-2.0
+
 vunit ipv6 (ipv6_Wrapper (rtl)) {
 
   -- Default clock for PSL assertions

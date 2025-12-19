@@ -1,3 +1,6 @@
+-- Copyright 2024-2025 Universidad de Sevilla
+-- SPDX-License-Identifier: Apache-2.0
+
 vunit olo_base_fifo_async (olo_base_fifo_async(rtl)) {
 
   -- Force a reset in the first clock cycle

@@ -1,3 +1,6 @@
+-- Copyright 2024-2025 Universidad de Sevilla
+-- SPDX-License-Identifier: Apache-2.0
+
 vunit fifo_sync (olo_base_fifo_sync(rtl)) {
 
   --inherit fifo_sync_common;
