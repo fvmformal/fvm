@@ -1,4 +1,4 @@
-# Copyright 2024-2025 Universidad de Sevilla
+# Copyright 2024-2026 Universidad de Sevilla
 # SPDX-License-Identifier: Apache-2.0
 
 .PHONY: all install fvm lint list-tests test test-verbose concepts examples pycoverage venv clean realclean
