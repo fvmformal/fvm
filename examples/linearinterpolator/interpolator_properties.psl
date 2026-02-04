@@ -1,3 +1,6 @@
+-- Copyright 2024-2026 Universidad de Sevilla
+-- SPDX-License-Identifier: Apache-2.0
+
 -- If we want to be able to define processes in this file, we need to associate
 -- the vunit to a specific entity/architecture pair
 vunit interpolator_properties (interpolator(interpolator_arch)) {

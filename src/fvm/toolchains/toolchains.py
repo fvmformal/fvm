@@ -1,3 +1,6 @@
+# Copyright 2024-2026 Universidad de Sevilla
+# SPDX-License-Identifier: Apache-2.0
+
 """Toolchain interface for FVM"""
 # Generic toolchain interface presented to the rest of the FVM framework. It
 # imports different toolchain modules present in this same directory, which

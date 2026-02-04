@@ -1,3 +1,6 @@
+-- Copyright 2024-2026 Universidad de Sevilla
+-- SPDX-License-Identifier: Apache-2.0
+
 vunit olo_axi_lite_slave_properties (olo_axi_lite_slave(rtl)) {
 
     -- In axi_slave_sequences.psl we have the sequences for AXI Lite Slave,

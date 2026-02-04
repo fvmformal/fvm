@@ -1,4 +1,6 @@
--- @author Hipólito Guzmán-Miranda
+-- Copyright 2024-2026 Universidad de Sevilla
+-- SPDX-License-Identifier: Apache-2.0
+
 -- Define fixed-point complex datatypes of different widths
 library ieee;
 use ieee.std_logic_1164.all;
