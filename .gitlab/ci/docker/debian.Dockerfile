@@ -4,7 +4,7 @@
 FROM debian:12-slim
 
 RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
-    apt-get install -y --no-install-recommends python3 python3-pip python3-venv bc curl ca-certificates && \
+    apt-get install -y --no-install-recommends make python3 python3-pip python3-venv bc curl ca-certificates && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
