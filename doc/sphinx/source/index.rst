@@ -86,3 +86,4 @@ To learn more, go to the next section: :ref:`fv_intro`
    license
    acknowledgement
    publications
+   changelog
