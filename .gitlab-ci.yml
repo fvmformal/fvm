@@ -357,9 +357,16 @@ pycoverage:
 # only been pushed to the main branch (the bump_version.sh script enforces
 # this), and we are in the private instance, which has the API tokens as CI/CD
 # variables
+#
+# Sometimes testpypi seems to randomly fail, giving a not available error even
+# if the upload was successful. If we stop there, since we only publish on
+# tagged commits, this forces us to create a new, different tag. Instead, the
+# check-url should allow us to re-run this job and not get errors if the files
+# are already uploaded
 deploy_to_testpypi: &deploy_to_testpypi
   variables:
     PUBLISH_URL: "https://test.pypi.org/legacy/"
+    CHECK_URL:   "https://test.pypi.org/simple/"
   stage: deploy_testpypi
   rules:
     - if: $CI_COMMIT_TAG && $IS_PRIVATE_GITLAB_INSTANCE == "True"
@@ -371,7 +378,7 @@ deploy_to_testpypi: &deploy_to_testpypi
     - export PATH="$HOME/.local/bin:$PATH"
     - uv build
   script:
-    - uv publish --publish-url $PUBLISH_URL --token $TESTPYPI_API_TOKEN
+    - uv publish --publish-url $PUBLISH_URL --check-url $CHECK_URL --token $TESTPYPI_API_TOKEN
 
 # Get the recently published fvm from testpypi and try to run the tests
 # Of couse we only do this if we have deployed to testpypi, but we can also run
@@ -451,6 +458,7 @@ deploy_to_pypi:
   stage: deploy_pypi
   variables:
     PUBLISH_URL: "https://upload.pypi.org/legacy/"
+    CHECK_URL:   "https://pypi.org/simple/"
   script:
-    - uv publish --publish-url $PUBLISH_URL --token $PYPI_API_TOKEN
+    - uv publish --publish-url $PUBLISH_URL --check-url $CHECK_URL --token $PYPI_API_TOKEN
 
