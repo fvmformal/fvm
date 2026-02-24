@@ -362,11 +362,12 @@ pycoverage:
 # if the upload was successful. If we stop there, since we only publish on
 # tagged commits, this forces us to create a new, different tag. Instead, the
 # check-url should allow us to re-run this job and not get errors if the files
-# are already uploaded
+# are already uploaded, or at least allow the pipeline to continue.
 deploy_to_testpypi: &deploy_to_testpypi
   variables:
     PUBLISH_URL: "https://test.pypi.org/legacy/"
     CHECK_URL:   "https://test.pypi.org/simple/"
+  allow_failure: true
   stage: deploy_testpypi
   rules:
     - if: $CI_COMMIT_TAG && $IS_PRIVATE_GITLAB_INSTANCE == "True"
