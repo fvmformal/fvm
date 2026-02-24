@@ -1,3 +1,6 @@
+-- Copyright 2024-2026 Universidad de Sevilla
+-- SPDX-License-Identifier: Apache-2.0
+
 -- This design is just a dummy, it has some wishbone ports but the only logic
 -- it contains is that of a simple counter
 

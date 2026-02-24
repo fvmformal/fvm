@@ -1,3 +1,6 @@
+-- Copyright 2024-2026 Universidad de Sevilla
+-- SPDX-License-Identifier: Apache-2.0
+
 -- Compare this file with examples/05-uart_tx/uart_tx.psl : by parameterizing
 -- the transmision sequence, we don't have to write all that HDL code that
 -- is trying to predict the evolution of the circuit. This is great news,
