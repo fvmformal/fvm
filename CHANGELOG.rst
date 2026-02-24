@@ -23,6 +23,9 @@ Versioning <https://semver.org/spec/v2.0.0.html>`_.
 Development branch - Unreleased
 -------------------------------
 
+1.0.0rc2 - 24-02-2026
+---------------------
+
 :Added:    Add ``CHANGELOG.rst`` (this file)
 :Added:    Add minimalist copyright header to sources
 :Added:    Add ``NOTICE`` file
