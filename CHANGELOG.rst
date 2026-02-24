@@ -20,9 +20,6 @@ Versioning <https://semver.org/spec/v2.0.0.html>`_.
   - Documentation for all releases: https://fvm.us.es/doc/ (Use the 'Other
     Versions' selector at the bottom left and click on the version you want)
 
-Development branch - Unreleased
--------------------------------
-
 1.0.0rc2 - 24-02-2026
 ---------------------
 
