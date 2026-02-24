@@ -23,6 +23,8 @@ Versioning <https://semver.org/spec/v2.0.0.html>`_.
 Development branch - Unreleased
 -------------------------------
 
+*(Changes to be added here)*
+
 1.0.0rc2 - 24-02-2026
 ---------------------
 
