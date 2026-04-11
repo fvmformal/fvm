@@ -25,6 +25,8 @@ Development branch - Unreleased
 
 *(Changes to be added here)*
 
+:Fixed:    Fix build of internal API doc
+
 1.0.0rc2 - 24-02-2026
 ---------------------
 
