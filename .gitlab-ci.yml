@@ -404,14 +404,14 @@ test_from_testpypi:
         *alpine*)
           echo "Setting up Alpine Linux (apk)"
           apk update
-          apk add --no-cache python3 py3-pip curl
+          apk add --no-cache python3 py3-pip curl git
           ;;
 
         # Match images containing 'debian' or 'ubuntu'
         *debian* | *ubuntu*)
           echo "Setting up Debian/Ubuntu Linux (apt)"
           apt-get update
-          apt-get install -y python3 python3-pip python3-venv curl
+          apt-get install -y python3 python3-pip python3-venv curl git
           ;;
 
         # Match images containing 'rocky', 'fedora', or 'centos'
@@ -420,7 +420,7 @@ test_from_testpypi:
           # No need to $PACKAGE_MANAGER update (that would update installed packages)
           # Fedora and rocky, as alpine, provide python3-venv with python3.
           # They also come with curl so we don't need to install it
-          dnf install -y python3 python3-pip
+          dnf install -y python3 python3-pip git
           ;;
 
         *)
