@@ -96,6 +96,8 @@ lint_python:
 test_all:
   stage: lint_and_test
   image: $DEBIAN_IMAGE_NAME
+  variables:
+    GIT_DEPTH: 0
   script:
     - make test
     - mv .coverage .coverage.pytest
@@ -381,6 +383,8 @@ test_from_testpypi:
   rules:
     - if: $CI_COMMIT_TAG
   image: $DOCKERIMAGE
+  variables:
+    GIT_DEPTH: 0
   parallel:
     matrix:
       - DOCKERIMAGE:
