@@ -24,15 +24,20 @@ def test_api_stable():
     print(f'{  version_string=}')
     print(f'{  major_version=}')
 
+    git_executable = shutil.which('git')
+
     if not is_stable(version_string):
         pytest.skip(f'Version {version_string} not stable, not need to check the API for changes (changes are allowed)')
 
-    git_executable = shutil.which('git')
-    if git_executable is None :
-        pytest.skip(f'git not found in PATH, cannot check API against previous versions')
-
-    if not is_git_repo():
-        pytest.skip("Not a git repository. Skipping API check.")
+    # If we are not in a git repo or git isn't in our path, we can skip the
+    # test, unless we are in a CI: in a CI we always want to run the test (if
+    # git is not installed or somehow we don't have a git repo, then that is a
+    # problem we want to see in the logs
+    if not is_ci_env():
+        if git_executable is None:
+            pytest.skip(f'git not found in PATH, cannot check API against previous versions')
+        if not is_git_repo():
+            pytest.skip("Not a git repository. Skipping API check.")
 
     # Get search path for griffe:
     # - If src/ exists (local dev), we must use it as a search path.
@@ -78,6 +83,10 @@ def test_api_stable():
 
         # Fail the test with the full report
         pytest.fail(f"Breaking API changes detected in current version {git_describe} against {reference}:\n{full_report}")
+
+def is_ci_env():
+    """Returns True if running inside a CI environment"""
+    return os.environ.get('CI', '').lower() in ['true', '1', 'yes']
 
 def is_git_repo():
     """Returns True if we are inside a git repo, False if not. To be run after
