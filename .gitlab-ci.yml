@@ -93,6 +93,12 @@ lint_python:
       fi
   coverage: /lint score is ([\d]+\.[\d]+)/
 
+check_dependencies:
+  stage: lint_and_test
+  image: $DEBIAN_IMAGE_NAME
+  script:
+    - uv run deptry src/
+
 test_all:
   stage: lint_and_test
   image: $DEBIAN_IMAGE_NAME
