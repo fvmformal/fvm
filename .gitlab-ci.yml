@@ -14,6 +14,8 @@ variables:
   DEBIAN_IMAGE_NAME: $CI_REGISTRY_IMAGE/debian_ci:$CI_PIPELINE_IID
 
 build_questa_ci_image:
+  rules:
+    - if: $IS_PRIVATE_GITLAB_INSTANCE == "True"
   stage: setup_ci
   image: docker:24.0.5
   services:
