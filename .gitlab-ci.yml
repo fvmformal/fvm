@@ -99,7 +99,7 @@ check_dependencies:
   script:
     - uv run deptry src/
 
-test_all:
+test_all_debian:
   stage: lint_and_test
   image: $DEBIAN_IMAGE_NAME
   variables:
@@ -107,6 +107,26 @@ test_all:
   script:
     - make test
     - mv .coverage .coverage.pytest
+  artifacts:
+    when: always
+    paths:
+      - test/drom2psl/*.psl
+      - .coverage.pytest
+      - results.xml
+    reports:
+      junit:
+        - results.xml
+
+test_all_questa:
+  rules:
+    - if: $IS_PRIVATE_GITLAB_INSTANCE == "True"
+  stage: lint_and_test
+  image: $QUESTA_IMAGE_NAME
+  variables:
+    GIT_DEPTH: 0
+  script:
+    - make test
+    - mv .coverage .coverage.pytest_questa
   artifacts:
     when: always
     paths:
