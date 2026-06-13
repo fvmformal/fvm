@@ -292,7 +292,8 @@ def test_check_if_tools_exist() :
     exists = fvm.check_tool("notfoundtool")
     assert exists == False
 
-def test_qverify_not_in_path(monkeypatch):
+def test_remove_qverify_from_path(monkeypatch):
+def test_remove_qverify_from_path_raises_system_exit(monkeypatch):
     """Test simulating that 'qverify' is not in PATH"""
 
     # Save the original function before patching
@@ -313,7 +314,7 @@ def test_qverify_not_in_path(monkeypatch):
     assert pytest_wrapped_e.type == SystemExit
     assert pytest_wrapped_e.value.code == ERROR_IN_TOOL["value"]
 
-def test_remove_csh_from_path(monkeypatch):
+def test_remove_csh_from_path_raises_system_exit(monkeypatch):
     """Simulate that csh is not available, regardless of PATH"""
 
     # Save the original function before patching
@@ -337,7 +338,7 @@ def test_remove_csh_from_path(monkeypatch):
     assert pytest_wrapped_e.type == SystemExit
     assert pytest_wrapped_e.value.code == ERROR_IN_TOOL["value"]
 
-def test_remove_vcover_from_path(monkeypatch):
+def test_remove_vcover_from_path_raises_system_exit(monkeypatch):
     """
     Simulate that vcover is not available, regardless of PATH.
     Also test that shownorun mode works.
