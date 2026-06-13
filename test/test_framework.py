@@ -284,9 +284,26 @@ def test_list_added_sources() :
     fvm.list_psl_sources()
     fvm.list_sources()
 
-def test_check_if_tools_exist() :
+def test_check_tool(monkeypatch) :
     """Test checking if tools exist in PATH"""
     fvm = FvmFramework()
+
+    exists = fvm.check_tool("ls")
+    assert exists == True
+    exists = fvm.check_tool("notfoundtool")
+    assert exists == False
+
+    # Remove 'ls' from PATH and see what happens
+    real_which = shutil.which
+    monkeypatch.setattr(shutil, "which", lambda x: None if x == "ls" else real_which(x))
+    assert shutil.which("ls") is None
+    exists = fvm.check_tool("ls")
+    assert exists == False
+    exists = fvm.check_tool("notfoundtool")
+    assert exists == False
+
+    # Add 'ls' again to PATH, it should be found
+    monkeypatch.undo()
     exists = fvm.check_tool("ls")
     assert exists == True
     exists = fvm.check_tool("notfoundtool")
