@@ -152,10 +152,10 @@ show:
 # variable and be able to read its value later we need to use GNU Make's $eval
 # We substract 5 lines that are in the Makefile but are part of this target
 # and not actually things that need to be done
-TODOs := $(shell echo `grep -r TODO * | wc -l` - 5 | bc)
 todo:
 	mkdir -p badges
 	rm -f badges/todo.svg
+	$(eval TODOs=$(shell echo `grep -r --exclude-dir=badges TODO * | wc -l` - 5 | bc))
 	@echo "TODOs=$(TODOs)"
 	@$(UV_RUN) anybadge --value=$(TODOs) --label=TODOs --file=badges/todo.svg 1=green 10=yellow 20=orange 30=tomato 999=red
 
