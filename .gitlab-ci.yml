@@ -120,11 +120,11 @@ check_dependencies:
     when: always
     paths:
       - test/drom2psl/*.psl
-      - .coverage.pytest_${CI_ENV}
-      - results_${CI_ENV}.xml
+      - .coverage.pytest_*
+      - results_*.xml
     reports:
       junit:
-        - results_${CI_ENV}.xml
+        - results_*.xml
 
 .test_multiple_python_versions_template: &test_multiple_python_versions_template
   <<: *test_all_template
