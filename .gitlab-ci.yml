@@ -146,6 +146,8 @@ test_all_questa:
   variables:
     CI_IMAGE: $QUESTA_IMAGE_NAME
     GIT_DEPTH: 0
+  tags:
+    - fast
 
 test_multiple_python_versions_debian:
   <<: *test_multiple_python_versions_template
@@ -162,6 +164,8 @@ test_multiple_python_versions_questa:
   variables:
     CI_IMAGE: $QUESTA_IMAGE_NAME
     GIT_DEPTH: 0
+  tags:
+    - fast
 
 run_concepts_questa: &run_concepts_questa
   rules:
