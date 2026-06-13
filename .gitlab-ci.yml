@@ -105,30 +105,31 @@ check_dependencies:
   stage: lint_and_test
   variables:
     GIT_DEPTH: 0
+  before_script:
+    - |
+      if [[ "$CI_IMAGE" =~ "questa" ]]; then
+        export CI_ENV="questa_ci"
+      else
+        export CI_ENV="debian_ci"
+      fi
   script:
     - make test
-    - mv .coverage .coverage.pytest_$(CI_IMAGE)
-    - mv results.xml results_$(CI_IMAGE).xml
+    - mv .coverage .coverage.pytest_${CI_ENV}
+    - mv results.xml results_${CI_ENV}.xml
   artifacts:
     when: always
     paths:
       - test/drom2psl/*.psl
-      - .coverage.pytest_$(CI_IMAGE)
-      - results_$(CI_IMAGE).xml
+      - .coverage.pytest_${CI_ENV}
+      - results_${CI_ENV}.xml
     reports:
       junit:
-        - results.xml
+        - results_${CI_ENV}.xml
 
 .test_multiple_python_versions_template: &test_multiple_python_versions_template
   <<: *test_all_template
   script:
     - uv tool install nox
-    - |
-      if [[ "$CI_IMAGE" =~ "questa" ]]; then
-        CI_ENV="questa_ci"
-      else
-        CI_ENV="debian_ci"
-      fi
     - make test-python-versions
   artifacts:
     when: always
@@ -144,6 +145,7 @@ test_all_debian:
   image: $DEBIAN_IMAGE_NAME
   variables:
     CI_IMAGE: $DEBIAN_IMAGE_NAME
+    GIT_DEPTH: 0
 
 test_all_questa:
   <<: *test_all_template
@@ -152,12 +154,14 @@ test_all_questa:
   image: $QUESTA_IMAGE_NAME
   variables:
     CI_IMAGE: $QUESTA_IMAGE_NAME
+    GIT_DEPTH: 0
 
 test_multiple_python_versions_debian:
   <<: *test_multiple_python_versions_template
   image: $DEBIAN_IMAGE_NAME
   variables:
     CI_IMAGE: $DEBIAN_IMAGE_NAME
+    GIT_DEPTH: 0
 
 test_multiple_python_versions_questa:
   <<: *test_multiple_python_versions_template
@@ -166,6 +170,7 @@ test_multiple_python_versions_questa:
   image: $QUESTA_IMAGE_NAME
   variables:
     CI_IMAGE: $QUESTA_IMAGE_NAME
+    GIT_DEPTH: 0
 
 run_concepts_questa: &run_concepts_questa
   rules:
