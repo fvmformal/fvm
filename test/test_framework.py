@@ -309,66 +309,25 @@ def test_check_tool(monkeypatch) :
     exists = fvm.check_tool("notfoundtool")
     assert exists == False
 
-def test_remove_qverify_from_path_raises_system_exit(monkeypatch):
-    """Test simulating that 'qverify' is not in PATH"""
+@pytest.mark.parametrize(
+    "toolchain, missing_tool",
+    [
+        ("questa", "qverify"),
+        ("questa", "csh"),
+        ("questa", "vcover"),
+    ]
+)
+def test_remove_tool_from_path_raises_system_exit(monkeypatch, toolchain, missing_tool):
+    """Verify framework gracefully exits if a required tool is not available."""
 
     # Save the original function before patching
     real_which = shutil.which
 
-    # Simulate that 'qverify' is not found
-    monkeypatch.setattr(shutil, "which", lambda x: None if x == "qverify" else real_which(x))
-
-    # Quick check (optional)
-    assert shutil.which("qverify") is None
-
-    fvm = FvmFramework()
-    fvm.add_vhdl_source("examples/counter/counter.vhd")
-    fvm.set_toplevel("counter")
-
-    with pytest.raises(SystemExit) as pytest_wrapped_e:
-        fvm.run()
-    assert pytest_wrapped_e.type == SystemExit
-    assert pytest_wrapped_e.value.code == ERROR_IN_TOOL["value"]
-
-def test_remove_csh_from_path_raises_system_exit(monkeypatch):
-    """Simulate that csh is not available, regardless of PATH"""
-
-    # Save the original function before patching
-    real_which = shutil.which
-
-    # Simulate that 'csh' is not found
-    monkeypatch.setattr(shutil, "which", lambda x: None if x == "csh" else real_which(x))
+    # Simulate that missing_tool is not found
+    monkeypatch.setattr(shutil, "which", lambda x: None if x == missing_tool else real_which(x))
 
     # Now any call to which("csh") returns None
-    assert shutil.which("csh") is None
-
-    fvm = FvmFramework()
-    fvm.add_vhdl_source("examples/counter/counter.vhd")
-    fvm.add_psl_source("examples/counter/counter_properties.psl", flavor="vhdl")
-    fvm.set_toplevel("counter")
-    fvm.step = "prove"
-    fvm.skip("prove.formalcover")
-
-    with pytest.raises(SystemExit) as pytest_wrapped_e:
-        fvm.run()
-
-    assert pytest_wrapped_e.type == SystemExit
-    assert pytest_wrapped_e.value.code == ERROR_IN_TOOL["value"]
-
-def test_remove_vcover_from_path_raises_system_exit(monkeypatch):
-    """
-    Simulate that vcover is not available, regardless of PATH.
-    Also test that shownorun mode works.
-    """
-
-    # Save the original function before patching
-    real_which = shutil.which
-
-    # Simulate that 'vcover' is not found
-    monkeypatch.setattr(shutil, "which", lambda x: None if x == "vcover" else real_which(x))
-
-    # Now any call to which("vcover") returns None
-    assert shutil.which("vcover") is None
+    assert shutil.which(missing_tool) is None
 
     fvm = FvmFramework()
     fvm.add_vhdl_source("examples/counter/counter.vhd")
