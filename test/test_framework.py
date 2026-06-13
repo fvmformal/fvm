@@ -292,7 +292,6 @@ def test_check_if_tools_exist() :
     exists = fvm.check_tool("notfoundtool")
     assert exists == False
 
-def test_remove_qverify_from_path(monkeypatch):
 def test_remove_qverify_from_path_raises_system_exit(monkeypatch):
     """Test simulating that 'qverify' is not in PATH"""
 
