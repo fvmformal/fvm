@@ -174,7 +174,7 @@ run_concepts_questa: &run_concepts_questa
     - fast
   parallel:
     matrix:
-      - design:
+      - DESIGN:
         - adding_drom_sources
         - assertion_decomposition
         - assert_to_assume
