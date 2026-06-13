@@ -114,31 +114,23 @@ check_dependencies:
       fi
   script:
     - make test
-    - mv .coverage .coverage.pytest_${CI_ENV}
-    - mv results.xml results_${CI_ENV}.xml
+    - mv .coverage .coverage.pytest-${CI_ENV}
+    - mv results.xml results-${CI_ENV}.xml
   artifacts:
     when: always
     paths:
       - test/drom2psl/*.psl
-      - .coverage.pytest_*
-      - results_*.xml
+      - .coverage.*
+      - results-*.xml
     reports:
       junit:
-        - results_*.xml
+        - results-*.xml
 
 .test_multiple_python_versions_template: &test_multiple_python_versions_template
   <<: *test_all_template
   script:
     - uv tool install nox
     - make test-python-versions
-  artifacts:
-    when: always
-    paths:
-      - .coverage-*
-      - results-*.xml
-    reports:
-      junit:
-        - results-*.xml
 
 test_all_debian:
   <<: *test_all_template
