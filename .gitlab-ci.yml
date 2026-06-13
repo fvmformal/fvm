@@ -101,43 +101,71 @@ check_dependencies:
   script:
     - uv run deptry src/
 
-test_all_debian:
+.test_all_template: &test_all_template
   stage: lint_and_test
-  image: $DEBIAN_IMAGE_NAME
   variables:
     GIT_DEPTH: 0
   script:
     - make test
-    - mv .coverage .coverage.pytest
+    - mv .coverage .coverage.pytest_$(CI_IMAGE)
+    - mv results.xml results_$(CI_IMAGE).xml
   artifacts:
     when: always
     paths:
       - test/drom2psl/*.psl
-      - .coverage.pytest
-      - results.xml
+      - .coverage.pytest_$(CI_IMAGE)
+      - results_$(CI_IMAGE).xml
     reports:
       junit:
         - results.xml
 
-test_all_questa:
-  rules:
-    - if: $IS_PRIVATE_GITLAB_INSTANCE == "True"
-  stage: lint_and_test
-  image: $QUESTA_IMAGE_NAME
-  variables:
-    GIT_DEPTH: 0
+.test_multiple_python_versions_template:
+  <<: *test_all_template
   script:
-    - make test
-    - mv .coverage .coverage.pytest_questa
+    - uv tool install nox
+    - |
+      if [[ "$CI_IMAGE" =~ "questa" ]]; then
+        CI_ENV="questa_ci"
+      else
+        CI_ENV="debian_ci"
+      fi
+    - make test-python-versions
   artifacts:
     when: always
     paths:
-      - test/drom2psl/*.psl
-      - .coverage.pytest
-      - results.xml
+      - .coverage-*
+      - results-*.xml
     reports:
       junit:
-        - results.xml
+        - results-*.xml
+
+test_all_debian:
+  <<: *test_all_template
+  image: $DEBIAN_IMAGE_NAME
+  variables:
+    CI_IMAGE: $DEBIAN_IMAGE_NAME
+
+test_all_questa:
+  <<: *test_all_template
+  rules:
+    - if: $IS_PRIVATE_GITLAB_INSTANCE == "True"
+  image: $QUESTA_IMAGE_NAME
+  variables:
+    CI_IMAGE: $QUESTA_IMAGE_NAME
+
+test_multiple_python_versions_debian:
+  <<: *test_multiple_python_versions_template
+  image: $DEBIAN_IMAGE_NAME
+  variables:
+    CI_IMAGE: $DEBIAN_IMAGE_NAME
+
+test_multiple_python_versions_questa:
+  <<: *test_multiple_python_versions_template
+  rules:
+    - if: $IS_PRIVATE_GITLAB_INSTANCE == "True"
+  image: $QUESTA_IMAGE_NAME
+  variables:
+    CI_IMAGE: $QUESTA_IMAGE_NAME
 
 run_concepts_questa: &run_concepts_questa
   rules:
@@ -150,7 +178,7 @@ run_concepts_questa: &run_concepts_questa
     - fast
   parallel:
     matrix:
-      - DESIGN:
+      - design:
         - adding_drom_sources
         - assertion_decomposition
         - assert_to_assume

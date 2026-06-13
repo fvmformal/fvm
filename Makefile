@@ -17,20 +17,21 @@ ALLURE_INSTALL_DIR ?= ~/.cache/fvm
 
 all:
 	@echo usage:
-	@echo   "make lint         -> pass pylint over the python code"
-	@echo   "make list-tests   -> list all the tests"
-	@echo   "make test         -> run the tests"
-	@echo   "make test-verbose -> run the tests with full stdout/stderr output"
-	@echo   "make concepts     -> run the concepts"
-	@echo   "make examples     -> run the examples"
-	@echo   "make pycoverage   -> generate code coverage report for the python code"
-	@echo   "make testall      -> run the tests, concepts and examples"
-	@echo   "make report       -> create a dashboard with reports after execution"
-	@echo   "make show         -> open dashboard"
-	@echo   "make todo         -> count TODOs in code and generate badge for gitlab"
-	@echo   "make docs         -> generate documentation using sphinx"
-	@echo   "make clean        -> remove temporary files"
-	@echo   "make realclean    -> remove temporary files and python venv"
+	@echo   "make lint                 -> pass pylint over the python code"
+	@echo   "make list-tests           -> list all the tests"
+	@echo   "make test                 -> run the tests"
+	@echo   "make test-verbose         -> run the tests with full stdout/stderr output"
+	@echo   "make test-python-versions -> run the tests for all supported python versions"
+	@echo   "make concepts             -> run the concepts"
+	@echo   "make examples             -> run the examples"
+	@echo   "make pycoverage           -> generate code coverage report for the python code"
+	@echo   "make testall              -> run the tests, concepts and examples"
+	@echo   "make report               -> create a dashboard with reports after execution"
+	@echo   "make show                 -> open dashboard"
+	@echo   "make todo                 -> count TODOs in code and generate badge for gitlab"
+	@echo   "make docs                 -> generate documentation using sphinx"
+	@echo   "make clean                -> remove temporary files"
+	@echo   "make realclean            -> remove temporary files and python venv"
 
 # Lint the python code
 lint:
@@ -47,6 +48,11 @@ test:
 # Run the tests in verbose mode
 test-verbose:
 	$(UV_RUN) coverage run -m pytest -v -s --junit-xml="results.xml"
+
+# Test against multiple python versions (requires nox, do "uv tool install nox"
+# before trying this for the first time)
+test-python-versions:
+	nox
 
 # List with all the examples
 examplelist += counter
