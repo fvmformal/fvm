@@ -129,7 +129,6 @@ check_dependencies:
 .test_multiple_python_versions_template: &test_multiple_python_versions_template
   <<: *test_all_template
   script:
-    - uv tool install nox
     - make test-python-versions
 
 test_all_debian:

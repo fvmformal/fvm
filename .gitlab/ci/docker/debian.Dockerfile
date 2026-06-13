@@ -11,3 +11,4 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 # uv requires ~/.local/bin to be in your path
 ENV PATH="/root/.local/bin:$PATH"
+RUN uv tool install nox

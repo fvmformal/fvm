@@ -6,3 +6,4 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 # uv requires ~/.local/bin to be in your path
 ENV PATH="/root/.local/bin:$PATH"
 ENV SALT_LICENSE_SERVER=29000@popote.us.es
+RUN uv tool install nox
