@@ -344,6 +344,7 @@ def test_remove_csh_from_path_raises_system_exit(monkeypatch):
 
     fvm = FvmFramework()
     fvm.add_vhdl_source("examples/counter/counter.vhd")
+    fvm.add_psl_source("examples/counter/counter_properties.psl", flavor="vhdl")
     fvm.set_toplevel("counter")
     fvm.step = "prove"
     fvm.skip("prove.formalcover")
@@ -371,6 +372,7 @@ def test_remove_vcover_from_path_raises_system_exit(monkeypatch):
 
     fvm = FvmFramework()
     fvm.add_vhdl_source("examples/counter/counter.vhd")
+    fvm.add_psl_source("examples/counter/counter_properties.psl", flavor="vhdl")
     fvm.set_toplevel("counter")
     fvm.step = "prove"
     fvm.skip("prove.formalcover")
