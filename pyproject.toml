@@ -33,6 +33,8 @@ drom2psl = "fvm.drom2psl.generator:main"
 dev = [
     "anybadge>=1.16.0",
     "coverage>=7.10.7",
+    "deptry>=0.23.1",
+    "griffe>=1.14.0",
     "pylint>=3.3.8",
     "pylint-exit>=1.2.0",
     "pytest>=8.4.2",
@@ -40,6 +42,7 @@ dev = [
     "sphinx-argparse>=0.4.0",
     "sphinx-multiversion>=0.2.4",
     "sphinx-rtd-theme==2.0.0",
+    "sphinxcontrib-apidoc>=0.6.0",
     "sphinxcontrib-bibtex>=2.6.5",
     "sphinxcontrib-mermaid>=1.0.0",
 ]
@@ -53,14 +56,10 @@ packages = ["src"]
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 
-## For testing, use TestPyPI
-## For actual releases, use PyPI
-#[[tool.uv.index]]
-#name = "testpypi"
-#url = "https://test.pypi.org/legacy/"
-#publish-url = "https://test.pypi.org/legacy/"
-#explicit = true
-#name = "pypi"
-#url = "https://pypi.org/simple"
-#publish-url = "https://upload.pypi.org/legacy/"
-
+# sphinx-contrib-apidoc requires a minimum pbr version but doesn't indicate a
+# minimum version in its requirements, so our nox tests fail when using
+# resolution="lowest"
+[tool.uv]
+override-dependencies = [
+    "pbr>=5.0.0",
+]

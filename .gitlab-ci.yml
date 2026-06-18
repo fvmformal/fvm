@@ -1,4 +1,5 @@
 stages:
+  - setup_ci
   - lint_and_test
   - concepts
   - examples
@@ -8,14 +9,38 @@ stages:
   - test_testpypi
   - deploy_pypi
 
+variables:
+  QUESTA_IMAGE_NAME: $CI_REGISTRY_IMAGE/questa_ci:$CI_PIPELINE_IID
+  DEBIAN_IMAGE_NAME: $CI_REGISTRY_IMAGE/debian_ci:$CI_PIPELINE_IID
+
+build_questa_ci_image:
+  rules:
+    - if: $IS_PRIVATE_GITLAB_INSTANCE == "True"
+  stage: setup_ci
+  image: docker:24.0.5
+  services:
+    - docker:24.0.5-dind
+  script:
+    - cd .gitlab/ci/docker
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $QUESTA_IMAGE_NAME -f questa.Dockerfile .
+    - docker push $QUESTA_IMAGE_NAME
+
+build_debian_ci_image:
+  stage: setup_ci
+  image: docker:24.0.5
+  services:
+    - docker:24.0.5-dind
+  script:
+    - cd .gitlab/ci/docker
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $DEBIAN_IMAGE_NAME -f debian.Dockerfile .
+    - docker push $DEBIAN_IMAGE_NAME
+
 version_badge:
   stage: lint_and_test
-  image: debian:12
+  image: $DEBIAN_IMAGE_NAME
   script:
-    - apt update
-    - apt install -y python3 python3-pip python3-venv bc curl
-    - curl -LsSf https://astral.sh/uv/install.sh | sh
-    - export PATH="$HOME/.local/bin:$PATH"
     - mkdir -p badges
     - uv run anybadge --label=version --value=`uv version --short` --file=badges/version.svg
   artifacts:
@@ -32,14 +57,10 @@ test_ci_vars:
 
 count_todos_in_code:
   stage: lint_and_test
-  image: debian:12
+  image: $DEBIAN_IMAGE_NAME
   variables:
     GOAL: "60"
   script:
-    - apt update
-    - apt install -y python3 python3-pip python3-venv bc curl
-    - curl -LsSf https://astral.sh/uv/install.sh | sh
-    - export PATH="$HOME/.local/bin:$PATH"
     - make todo | tee todo.log
     - TODOS=$(grep -oP 'TODOs=\K[\d]+' todo.log)
     - |
@@ -57,14 +78,10 @@ count_todos_in_code:
 
 lint_python:
   stage: lint_and_test
-  image: debian:12
+  image: $DEBIAN_IMAGE_NAME
   variables:
     GOAL: "92"
   script:
-    - apt update
-    - apt install -y python3 python3-pip python3-venv bc curl
-    - curl -LsSf https://astral.sh/uv/install.sh | sh
-    - export PATH="$HOME/.local/bin:$PATH"
     - make lint | tee pylint.log
     - RATING=$(grep -oP 'Your code has been rated at \K[\d.]+' pylint.log)
     - PERCENTAGE=$(echo "$RATING * 10" | bc)
@@ -78,31 +95,83 @@ lint_python:
       fi
   coverage: /lint score is ([\d]+\.[\d]+)/
 
-test_all:
+check_dependencies:
   stage: lint_and_test
-  image: debian:12
+  image: $DEBIAN_IMAGE_NAME
   script:
-    - apt update
-    - apt install -y python3 python3-pip python3-venv curl
-    - curl -LsSf https://astral.sh/uv/install.sh | sh
-    - export PATH="$HOME/.local/bin:$PATH"
+    - uv run deptry src/
+
+.test_all_template: &test_all_template
+  stage: lint_and_test
+  variables:
+    GIT_DEPTH: 0
+  before_script:
+    - |
+      if [[ "$CI_IMAGE" =~ "questa" ]]; then
+        export CI_ENV="questa_ci"
+      else
+        export CI_ENV="debian_ci"
+      fi
+  script:
     - make test
-    - mv .coverage .coverage.pytest
+    - mv .coverage .coverage.pytest-${CI_ENV}
+    - mv results.xml results-${CI_ENV}.xml
   artifacts:
     when: always
     paths:
       - test/drom2psl/*.psl
-      - .coverage.pytest
-      - results.xml
+      - .coverage.*
+      - results-*.xml
     reports:
       junit:
-        - results.xml
+        - results-*.xml
+
+.test_multiple_python_versions_template: &test_multiple_python_versions_template
+  <<: *test_all_template
+  script:
+    - make test-python-versions
+
+test_all_debian:
+  <<: *test_all_template
+  image: $DEBIAN_IMAGE_NAME
+  variables:
+    CI_IMAGE: $DEBIAN_IMAGE_NAME
+    GIT_DEPTH: 0
+
+test_all_questa:
+  <<: *test_all_template
+  rules:
+    - if: $IS_PRIVATE_GITLAB_INSTANCE == "True"
+  image: $QUESTA_IMAGE_NAME
+  variables:
+    CI_IMAGE: $QUESTA_IMAGE_NAME
+    GIT_DEPTH: 0
+  tags:
+    - fast
+
+test_multiple_python_versions_debian:
+  <<: *test_multiple_python_versions_template
+  image: $DEBIAN_IMAGE_NAME
+  variables:
+    CI_IMAGE: $DEBIAN_IMAGE_NAME
+    GIT_DEPTH: 0
+
+test_multiple_python_versions_questa:
+  <<: *test_multiple_python_versions_template
+  rules:
+    - if: $IS_PRIVATE_GITLAB_INSTANCE == "True"
+  image: $QUESTA_IMAGE_NAME
+  variables:
+    CI_IMAGE: $QUESTA_IMAGE_NAME
+    GIT_DEPTH: 0
+  tags:
+    - fast
 
 run_concepts_questa: &run_concepts_questa
   rules:
     - if: $IS_PRIVATE_GITLAB_INSTANCE == "True"
   stage: concepts
-  image: registry.woden.us.es/containers/questa:2025.1_2
+  image: $QUESTA_IMAGE_NAME
   variables:
     TOOLCHAIN: "questa"
   tags:
@@ -130,12 +199,6 @@ run_concepts_questa: &run_concepts_questa
         - user_defined_hdltypes
         - user_defined_hdltypes_in_external_package
         - user_defined_hdltypes_in_package
-  before_script:
-    - unset LM_LICENSE_FILE
-    - export SALT_LICENSE_SERVER=29000@popote.us.es
-    - yum install -y git python39 java-1.8.0-openjdk
-    - curl -LsSf https://astral.sh/uv/install.sh | sh
-    - export PATH="$HOME/.local/bin:$PATH"
   script:
     - make UVFLAGS=--dev PYTHON="coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN" $DESIGN
   after_script:
@@ -220,7 +283,7 @@ run_steps_independently_questa:
   rules:
     - if: $IS_PRIVATE_GITLAB_INSTANCE == "True"
   stage: examples
-  image: registry.woden.us.es/containers/questa:2025.1_2
+  image: $QUESTA_IMAGE_NAME
   tags:
     - fast
   variables:
@@ -239,12 +302,6 @@ run_steps_independently_questa:
         - resets
         - clocks
         - prove
-  before_script:
-    - unset LM_LICENSE_FILE
-    - export SALT_LICENSE_SERVER=29000@popote.us.es
-    - yum install -y python39 java-1.8.0-openjdk git
-    - curl -LsSf https://astral.sh/uv/install.sh | sh
-    - export PATH="$HOME/.local/bin:$PATH"
   script:
     - uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.$DESIGN.$STEP -m examples.$DESIGN.formal -s $STEP
   artifacts:
@@ -256,17 +313,11 @@ run_options_questa:
   rules:
     - if: $IS_PRIVATE_GITLAB_INSTANCE == "True"
   stage: concepts
-  image: registry.woden.us.es/containers/questa:2025.1_2
+  image: $QUESTA_IMAGE_NAME
   tags:
     - fast
   variables:
     TOOLCHAIN: "questa"
-  before_script:
-    - unset LM_LICENSE_FILE
-    - export SALT_LICENSE_SERVER=29000@popote.us.es
-    - yum install -y python39 java-1.8.0-openjdk
-    - curl -LsSf https://astral.sh/uv/install.sh | sh
-    - export PATH="$HOME/.local/bin:$PATH"
   script:
     - uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.hooks.verbose concepts/hooks/formal.py -v
     - uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.hooks.list concepts/hooks/formal.py -l
@@ -276,7 +327,6 @@ run_options_questa:
     - uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.hooks.prove concepts/hooks/formal.py -s prove
     - uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.hooks.prove_list concepts/hooks/formal.py -s prove -l
     - uv run --dev coverage run --data-file=.coverage.$TOOLCHAIN.vunits.continue test/examples/inheriting_vunits_fail/formal.py -c
-    - make clean
   artifacts:
     when: always
     paths:
@@ -292,14 +342,10 @@ run_options_questa:
 # Generate sphinx documentation
 apidoc:
   stage: doc
-  image: debian:12
+  image: $DEBIAN_IMAGE_NAME
   variables:
     GOAL: 98
   script:
-    - apt update
-    - apt install -y python3 python3-pip python3-venv bc curl
-    - curl -LsSf https://astral.sh/uv/install.sh | sh
-    - export PATH="$HOME/.local/bin:$PATH"
     - make docs 2>&1 | tee docs.log
     - UNDOCUMENTED=$(grep -oP 'Total undocumented members= \K[\d]+' docs.log)
     - |
@@ -319,7 +365,7 @@ apidoc:
 # Merge python coverage files from previous stages
 pycoverage:
   stage: coverage
-  image: debian:12
+  image: $DEBIAN_IMAGE_NAME
   before_script:
     - |
       # When not running the examples and concepts, python coverage is lower
@@ -329,10 +375,6 @@ pycoverage:
         export GOAL="45"
       fi
   script:
-    - apt update
-    - apt install -y python3 python3-pip python3-venv bc curl
-    - curl -LsSf https://astral.sh/uv/install.sh | sh
-    - export PATH="$HOME/.local/bin:$PATH"
     - make pycoverage | tee pycoverage.log
     - LASTFIELD=$(grep 'TOTAL' pycoverage.log | awk '{print $NF}')
     - PERCENTAGE=${LASTFIELD%\%}
@@ -371,12 +413,8 @@ deploy_to_testpypi: &deploy_to_testpypi
   stage: deploy_testpypi
   rules:
     - if: $CI_COMMIT_TAG && $IS_PRIVATE_GITLAB_INSTANCE == "True"
-  image: debian:12
+  image: $DEBIAN_IMAGE_NAME
   before_script:
-    - apt update
-    - apt install -y python3 python3-pip python3-venv curl
-    - curl -LsSf https://astral.sh/uv/install.sh | sh
-    - export PATH="$HOME/.local/bin:$PATH"
     - uv build
   script:
     - uv publish --publish-url $PUBLISH_URL --check-url $CHECK_URL --token $TESTPYPI_API_TOKEN
@@ -400,6 +438,8 @@ test_from_testpypi:
   rules:
     - if: $CI_COMMIT_TAG
   image: $DOCKERIMAGE
+  variables:
+    GIT_DEPTH: 0
   parallel:
     matrix:
       - DOCKERIMAGE:
@@ -419,14 +459,14 @@ test_from_testpypi:
         *alpine*)
           echo "Setting up Alpine Linux (apk)"
           apk update
-          apk add --no-cache python3 py3-pip curl
+          apk add --no-cache python3 py3-pip curl git
           ;;
 
         # Match images containing 'debian' or 'ubuntu'
         *debian* | *ubuntu*)
           echo "Setting up Debian/Ubuntu Linux (apt)"
           apt-get update
-          apt-get install -y python3 python3-pip python3-venv curl
+          apt-get install -y python3 python3-pip python3-venv curl git
           ;;
 
         # Match images containing 'rocky', 'fedora', or 'centos'
@@ -435,7 +475,7 @@ test_from_testpypi:
           # No need to $PACKAGE_MANAGER update (that would update installed packages)
           # Fedora and rocky, as alpine, provide python3-venv with python3.
           # They also come with curl so we don't need to install it
-          dnf install -y python3 python3-pip
+          dnf install -y python3 python3-pip git
           ;;
 
         *)
