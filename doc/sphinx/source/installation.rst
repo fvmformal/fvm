@@ -13,11 +13,7 @@ Package Index (`PyPI <https://pypi.org/>`_), using pip:
 
 .. code-block:: zsh
 
-   pip3 install --pre fvm-formal
-
-Here, we use the ``--pre`` flag to tell pip to include development and release
-candidate versions in its search. After ``1.0.0`` becomes stable, we can stop
-using the ``--pre`` flag.
+   pip3 install fvm-formal
 
 .. note::
 

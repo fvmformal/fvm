@@ -20,10 +20,8 @@ Versioning <https://semver.org/spec/v2.0.0.html>`_.
   - Documentation for all releases: https://fvm.us.es/doc/ (Use the 'Other
     Versions' selector at the bottom left and click on the version you want)
 
-Development branch - Unreleased
--------------------------------
-
-*(Changes to be added here)*
+1.0.0rc3 - 18-06-2026
+---------------------
 
 :Changed:     Improve CI pipeline times by reusing docker images
 :Changed:     Improved 'remove_from_path' tests in test suite
