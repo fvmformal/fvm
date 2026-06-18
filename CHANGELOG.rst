@@ -25,7 +25,15 @@ Development branch - Unreleased
 
 *(Changes to be added here)*
 
-:Fixed:    Fix build of internal API doc
+:Changed:     Improve CI pipeline times by reusing docker images
+:Changed:     Improved 'remove_from_path' tests in test suite
+:Added:       Use `nox <https://nox.thea.codes/en/stable/index.html>`_ inside CI
+              to run the test suite for all python versions between 3.9 and 3.15
+:Added:       Use `deptry <https://deptry.com/>`_  inside CI to detect unused and
+              undeclared dependencies
+:Added:       Added test to detect API-breaking changes, using `griffe
+              <https://mkdocstrings.github.io/griffe/>`_
+:Fixed:       Fix build of internal API doc
 
 1.0.0rc2 - 24-02-2026
 ---------------------
