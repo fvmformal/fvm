@@ -488,7 +488,7 @@ test_from_testpypi:
     - python3 -m venv testvenv
     - source testvenv/bin/activate
     - pip3 install --extra-index-url https://test.pypi.org/simple/ fvm-formal==`uv version --short`
-    - pip3 install pytest
+    - pip3 install pytest griffe
     - echo "[pytest]" > pytest.ini
     - echo "pythonpath = ." >> pytest.ini
     - rm -rf src/
