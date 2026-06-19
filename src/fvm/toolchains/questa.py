@@ -1039,6 +1039,11 @@ def setup_prove_simcover(framework, path):
     :param path: the path where to create the script
     :type path: str
     """
+
+    # If we are re-running, everything was setup in the previous run
+    if framework.guinorun is True:
+        return
+
     replay_files = glob.glob(os.path.join(path, 'prove', 'qsim_tb', '*', 'replay.vsim.do'))
     for file in replay_files:
         # Modify the replay.vsim.do so:
@@ -1099,6 +1104,9 @@ def run_prove_simcover(framework, path):
     elapsed_time = 0
     timestamp = None
     design = framework.current_toplevel
+
+    if (framework.gui == True) or (framework.guinorun == True):
+        framework.logger.info("GUI mode for prove.simcover not implemented")
 
     # Function to run a command in prove.simcover, updating
     # the relevant variables. Used to avoid code duplication
