@@ -951,15 +951,15 @@ def setup_prove(framework, path):
             if cutpoint["design"] in (framework.current_toplevel, '*'):
                 string = f'netlist cutpoint {cutpoint["signal"]}'
                 if cutpoint["module"] is not None:
-                    string += f' -module {cutpoint["module"]}'
+                    string += f' -module {cutpoint["module"]} '
                 if cutpoint["resetval"] is True:
-                    string += ' -reset_value'
+                    string += ' -reset_value '
                 if cutpoint["condition"] is not None:
-                    string += f'-cond {cutpoint["condition"]}'
+                    string += f' -cond {cutpoint["condition"]} '
                 if cutpoint["driver"] is not None:
-                    string += f'-driver {cutpoint["driver"]}'
+                    string += f' -driver {cutpoint["driver"]} '
                 if cutpoint["wildcards_dont_match_hierarchy_separators"] is True:
-                    string += '-match_local_scope'
+                    string += ' -match_local_scope '
                 print(string, file=f)
 
         print('formal compile ', end='', file=f)
