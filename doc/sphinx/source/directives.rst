@@ -33,10 +33,10 @@ In formal verification, there are three main directives:
 
 - **Cover**: The formal tool looks for a trace that satisfies the specified
   sequence.
-  
+
   While an assert asks "Can this fail?", a cover asks "Can this happen? How
   does it happen?". If no way of satisfying the specified sequence exists, the
-  tool will prove mathematically prove that it is uncoverable. Example:
+  tool will mathematically prove that it is uncoverable. Example:
 
   .. code-block:: vhdl
 

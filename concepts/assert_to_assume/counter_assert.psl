@@ -1,7 +1,11 @@
 -- Copyright 2024-2026 Universidad de Sevilla
 -- SPDX-License-Identifier: Apache-2.0
 
+-- Assert the counter properties. To be used when verifying the counter
+
 vunit counter_assert (counter) {
+
+    -- Inherit the properties for the counter so we can assert them
     inherit counter_properties;
 
     -- Default clock for PSL assertions

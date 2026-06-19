@@ -105,7 +105,7 @@ If you want to blackbox all instances of a specific entity, use the function
    from fvm import FvmFramework
 
    fvm = FvmFramework()
-   fvm.add_vhdl_sources("concepts/blackbox_instance/*.vhd")
+   fvm.add_vhdl_sources("concepts/blackbox_example/*.vhd")
    fvm.set_toplevel('dualcounter')
    fvm.blackbox('counter')
 
@@ -276,7 +276,7 @@ In our ``formal.py`` script we can add different design configurations with
    fvm.set_toplevel("olo_base_fifo_sync")
    fvm.add_config("olo_base_fifo_sync", "config_width_8_depth_8", {"Width_g": 8, "Depth_g": 8})
 
-From the PSL file we can add any required `assumes`.
+We can add any required `assumes` to the PSL files.
 
 Example
 -------
@@ -332,6 +332,8 @@ FVM provides examples of data independence at:
 - https://gitlab.com/fvmformal/fvm/-/tree/main/examples/fifo_sync, and
 - https://gitlab.com/fvmformal/fvm/-/tree/main/examples/fifo_async.
 
+.. _symbolic-constants:
+
 Symbolic constants
 ==================
 
@@ -345,7 +347,7 @@ values without taking a lot of time.
 When to use it
 --------------
 
-There are two main use cases: 
+There are two main use cases:
 
 - It allows us to check **all possible data values**. For example, in the case of a
   buffer, instead of saying that if the data input equals 1, the data output will
@@ -421,7 +423,7 @@ How to do it
 ------------
 
 The usual approach is to divide it into several properties. An academic but
-clear example is instead of writing:
+clear example is that, instead of writing:
 
 .. code-block:: vhdl
 

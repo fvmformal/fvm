@@ -1,11 +1,9 @@
 -- Copyright 2024-2026 Universidad de Sevilla
 -- SPDX-License-Identifier: Apache-2.0
 
--- Compare this file with examples/05-uart_tx/uart_tx.psl : by parameterizing
--- the transmision sequence, we don't have to write all that HDL code that
--- is trying to predict the evolution of the circuit. This is great news,
--- because parameterizing sequences is more powerful, less error prone, and
--- less code to write
+-- Multiple PSL vunits can be inherited, so we can easily reuse sequences from
+-- different sources. For example, we may define sequences for input and output
+-- transactions in different PSL vunits.
 
 vunit uart_tx(uart_tx(Behavioral)) {
   inherit uart_tx_sequence;

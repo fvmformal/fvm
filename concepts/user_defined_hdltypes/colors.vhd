@@ -26,9 +26,9 @@ architecture behavioral of colors is
 
     -- Helper function to check if a color vector is onehot
     -- We aren't using it here, but somehow formal compile throws errors if we
-    -- define it inside a vunit
+    -- define it inside a vunit.
     -- Synthesizable helper functions could be defined in a different VHDL file
-    -- neccessary
+    -- if neccessary.
     function onehot(constant vect : std_ulogic_vector(6 downto 0)) return boolean is
       variable ret : boolean := true;
     begin

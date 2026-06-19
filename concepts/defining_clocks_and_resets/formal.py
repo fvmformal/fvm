@@ -9,4 +9,3 @@ fvm.add_clock_domain(["Q", "rst"], "clk")
 fvm.add_reset("rst", asynchronous=True, active_high=True)
 fvm.add_reset_domain(["Q"], "rst")
 fvm.run()
-

@@ -13,7 +13,7 @@ Its development is funded by the European Space Agency, through its Open Space
 Innovation Program, specifically the activity *"Lowering the adoption barriers
 for Formal Verification of ASIC and FPGA designs in the space sector"*. The
 activity is being implemented by Universidad de Sevilla (Spain), through its
-affiliated Technology Centre AICIA (Asociación de Investicación y Cooperación
+affiliated Technology Centre AICIA (Asociación de Investigación y Cooperación
 Industrial de Andalucía).
 
 The FVM is available under the permissive free/open-source license `Apache License 2.0

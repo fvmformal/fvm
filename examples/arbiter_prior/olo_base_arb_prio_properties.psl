@@ -3,7 +3,11 @@
 
 vunit olo_base_arb_prio (olo_base_arb_prio) {
 
-    --inherit prior_arb;
+    -- Get helper function from VHDL package. When we define the helper
+    -- function in a VHDL package instead of inside the PSL vunit, two
+    -- convenient things happen:
+    --   1. The PSL file is simpler
+    --   2. We can easily reuse the helper function in simulation
     use work.arbiter_prior_common.all;
 
     -- Default clock for PSL assertions

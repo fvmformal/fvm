@@ -3,6 +3,7 @@
 
 vunit colors (colors(behavioral)) {
 
+    -- We can load a VHDL package from inside a PSL vunit
     use work.colors_external.all;
 
     -- Default clock for PSL assertions

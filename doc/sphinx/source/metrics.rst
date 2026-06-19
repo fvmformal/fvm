@@ -50,7 +50,7 @@ Supported by FVM
   provides a metric for evaluating the completeness of the cover directives, as
   the previous metrics only consider the assertions. It also servers to bridge
   the gap between simulation and formal verification, by providing a metric
-  which is widely known to verification engineers, which is simulation code coverage.
+  which is widely known to verification engineers: simulation code coverage.
 
 Not supported by FVM yet
 ------------------------

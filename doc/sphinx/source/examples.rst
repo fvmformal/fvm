@@ -17,7 +17,7 @@ from the relevant ``formal.py`` scripts in order to download the code.
 
 In this section, the most relevant aspects of each example and how to approach
 its verification are explained, but users can find the complete commented
-properties and ``formal.py`` script in the FVM repository.
+properties and ``formal.py`` script for each design in the FVM repository.
 
 Suggested order
 ---------------
@@ -100,7 +100,7 @@ Round Robin Arbiter
 ~~~~~~~~~~~~~~~~~~~
 
 This example also belongs to the OpenLogic library. Again, it's a simple
-example, and some of the priority arbiter's priorities can be reused. However,
+example, and some of the priority arbiter's properties can be reused. However,
 this case is more complicated due to the round-robin algorithm and the control
 logic, which requires a handshake. We can define a sequence for the handshake
 since it will be reused quite a bit. Thus, this will be the first example
@@ -143,7 +143,7 @@ With this, we can ensure that if we have a grant and then we have another
 (which can happen in any possible cycle), the actual grant will be equal to the
 output of the function that predicts it. We can verify that the property holds
 true for all possible values by creating a symbolic constant ``last_grant``
-(explained in :ref:`symbolic-constants` in :ref:`complexityreduction`).
+(explained in the :ref:`symbolic-constants` section of :ref:`complexityreduction`).
 
 .. code-block:: vhdl
 
@@ -275,6 +275,8 @@ transaction is the R channel (let's call it ``d``). So, conceptually, we want
 assertions that relate ``a -> b``, ``b -> c``, and ``c -> d``, and with those
 we verify all parts of the READ functionality.
 
+- Link: https://gitlab.com/fvmformal/fvm/-/tree/main/examples/axi_lite_slave
+
 Medium examples
 ---------------
 
@@ -344,7 +346,7 @@ properly!
 Linear interpolator
 ~~~~~~~~~~~~~~~~~~~~
 
-This designs makes a linear interpolation betwen two inputs, which are
+This design makes a linear interpolation betwen two inputs, which are
 fixed-point complex numbers defined as a VHDL ``record`` type that has two
 fields: ``re`` (for the real part) and ``im`` (for the imaginary part). If the
 input ``valid`` is asserted, the ``inferior`` and ``superior`` inputs are
@@ -381,7 +383,7 @@ Using ``drom2psl`` we can generate a property with these transactions:
 .. image:: _static/examples/interpolator_prop.svg
 
 And we can use the property this way (note that ``interpolator_predict`` is a
-function that we define to predict the interpolated values):
+helper function that we define to predict the interpolated values):
 
 .. code-block:: vhdl
 

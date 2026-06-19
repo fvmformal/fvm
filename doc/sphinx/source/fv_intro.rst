@@ -75,7 +75,7 @@ between *automated* formal tools and *non-automated* formal tools.
 
 The first kind of tools don't require the user to do a lot of work. Many
 automated formal tools work without any user input, although some of them may
-require specifying reset and/o clock domains.
+require specifying reset and/or clock domains.
 
 The second set of tools require the user to specify the *properties* of their
 design.
@@ -91,5 +91,5 @@ With FVM, it is less difficult that it sounds
 Historically, Formal Verification has been a topic for experts, but not anymore
 with the FVM.
 
-Keep reading to see how the FVM can help you make the confidence in your
+Keep reading to see how the FVM can help you increase the confidence in your
 designs, without a huge amount of effort, and with a smooth learning curve.

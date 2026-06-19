@@ -31,7 +31,7 @@ Where `<conceptname>` is the name of the proof of concept you want to run.
 parameterized_sequences
 -----------------------
 
-An example of how we can define a sequence with parameters, and afterwards when
+An example of how we can define a sequence with parameters, and afterwards we
 can assign values to those parameters in the properties we define reusing the
 sequence. This is a better way of increasing the abstraction level for defining
 properties.
@@ -43,7 +43,7 @@ inheriting_vunits
 
 An example on how we can define a sequence in a .psl file and include it (with
 the inherit keyword) inside other PSL code. This is important to better
-leverage our wavedrom-to-psl converter.
+leverage our wavedrom-to-psl converter, :ref:`drom2psl`.
 
 - Link: https://gitlab.com/fvmformal/fvm/-/tree/main/concepts/inheriting_vunits
 
@@ -67,7 +67,7 @@ multiple_designs
 ----------------
 
 This is an example of passing a list of toplevels to the FVM framework, which
-tells it to run all the tests on each of the designs specified in the list.
+tells it to run all the steps on each of the designs specified in the list.
 
 - Link: https://gitlab.com/fvmformal/fvm/-/tree/main/concepts/multiple_designs
 
@@ -98,7 +98,7 @@ configuration.
 user_defined_hdltypes
 ---------------------
 
-PSL sequences can receive many datatypes as parameters. In particular, for the FVM, it is very interesting to be able to specify user-defined hdltypes, because that allows to implement the formal analogue to Transaction-Level Modeling (TLM).
+PSL sequences can receive many datatypes as parameters. In particular, for the FVM, it is very interesting to be able to specify user-defined hdltypes, because that is how FVM implements the formal analogue to Transaction-Level Modeling (TLM).
 
 - Link: https://gitlab.com/fvmformal/fvm/-/tree/main/concepts/user_defined_hdltypes
 
@@ -151,7 +151,7 @@ An example of how we can define properties for a submodule and afterwards
 assume that they hold when proving properties for the top-level. We just change
 a `.psl` file that has properties of the form ``assert named_property`` for a file
 that has ``assume named_property``. In this case, assuming proven properties does
-not improve the proof times for the top-level module, it is just a working example of
+not improve the proof times for the top-level module: it is just a working example of
 the technique.
 
 - Link: https://gitlab.com/fvmformal/fvm/-/tree/main/concepts/assert_to_assume

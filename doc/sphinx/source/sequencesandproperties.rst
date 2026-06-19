@@ -179,5 +179,5 @@ Some examples follow:
       cover wishbone_classic_read_Master(x"90000000");
 
 The *abort rst* in the assertion indicated that the property doesn't need to
-hold true if the *rst* signal is asserted
+hold true if the *rst* signal is asserted.
 

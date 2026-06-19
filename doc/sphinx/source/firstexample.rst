@@ -128,7 +128,7 @@ Let's explain the results:
 
   * ``prove.simcover``: This post-step doesn't run any simulation since there
     are neither falling assertions nor reached cover directives. Its result is
-    also ``N/A``
+    also ``N/A``.
 
 So, everything seems to work fine but, as expected, we need some properties to
 correctly run the ``prove`` steps and its sub-steps.
@@ -149,8 +149,8 @@ We will write the following to a file named ``counter_properties.psl``
 
 In PSL, we write Verification Units, and we do that using the ``vunit`` keyword
 (*not to be confused with the VUnit test framework*). These `vunits` are binded
-to either an VHDL entity (if we only need to work with the ports of the entity)
-or to an VHDL entity and architecture pair (when we also need to work with the
+to either a VHDL entity (if we only need to work with the ports of the entity)
+or to a VHDL entity and architecture pair (when we also need to work with the
 internal signals of the entity). In this case, we can just bind the ``vunit``
 with the properties, named ``counter_properties``, to the entity ``counter``:
 
@@ -198,9 +198,11 @@ finding counterexamples when there is an error in the design:
 Now we'll write 3 properties that do actually check the functionality of the
 design. The first one will ``assert`` that a reset clears the count, the
 second one will ``assert`` that if the count has not reached the maximum, it
-increases by 1 (provided there has not been a reset, due to ``abort rst``) and
+increases by 1 (provided there has not been a reset) and
 the third one will ``assert`` that if it has reached the maximum, it returns to
-0 (provided there has not been a reset).
+0 (provided there has not been a reset). Instead of explicitly considering the
+value of the reset input in the precondition and/or postcondition, it is much
+more elegant to `abort` the property if `rst` has been asserted.
 
 .. code-block:: vhdl
 
@@ -279,7 +281,7 @@ The full ``counter_properties.psl`` should look like this:
 Adding the properties to `formal.py`
 ------------------------------------
 
-By just adding a line to `formal.py`, we can add the properties and start using the steps
+By adding a single line to `formal.py`, we can add the properties and start using the steps
 with non-automated formal tools.
 
 .. code-block:: python
@@ -302,7 +304,7 @@ Finally, let's run our `formal.py` script again!
 
    python3 formal.py
 
-Now, our results are better:
+Now, our results are much better:
 
 .. raw:: html
    :file: _static/counter_properties.html
@@ -312,7 +314,7 @@ assumption, 4 assertions which have been proven, and 2 covers that have been
 covered.
 
 Also, our formal code coverage (code observed by our properties) and our
-simulation code coverage (code executing by simulating the covered ``cover``
+simulation code coverage (code executed by simulating the covered ``cover``
 statements) are both 100%
 
 With a small number of lines of code we have fully formally verified an 8-bit
@@ -353,10 +355,11 @@ summaries that are shown during command-line execution.
 - **XML report:** FVM also can generate `JUnit XML
   <https://github.com/testmoapp/junitxml>`_ files for continuous integration
   systems such as gitlab CI or Jenkins. Go to the output directory (by default,
-  ``fvm_out``), and the ``fvm_results`` directory inside it. An XML file will
-  be generated in this directory for each design. In this example, if you open
-  ``fvm_out/fvm_results/counter_results.xml`` with your favorite text editor,
-  you will see the full execution results and logs in JUnit XML format.
+  ``fvm_out``), and the ``fvm_results`` directory inside it.
+  If you open the XML file inside ``fvm_results`` with your favorite
+  text editor, you will see the full execution results and logs in JUnit XML
+  format. When FVM is run multiple times, previously existing results are
+  moved to ``fvm_history`` inside the output directory.
 
 - **Text report:** a plain text report, ``text_report.md``, is generated in the
   output directory (by default, ``fvm_out``). This is a plain text file in

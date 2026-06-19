@@ -1,16 +1,21 @@
 -- Copyright 2024-2026 Universidad de Sevilla
 -- SPDX-License-Identifier: Apache-2.0
 
+-- Assert the counter properties. To be used when verifying the dualcounter,
+-- which instances the counter
+
 vunit counter_assert_to_assume (counter) {
+
+    -- Inherit the properties for the counter so we can assume them
     inherit counter_properties;
 
     -- Default clock for PSL assertions
     default clock is rising_edge(clk);
 
-    -- Assert we do not go over the maximum
+    -- Assume we do not go over the maximum
     never_go_over_the_maximum: assume upper_bound;
 
-    -- Assert the counter is always counting up, but only:
+    -- Assume the counter is always counting up, but only:
     -- 1) If it's not the first clock cycle
     -- 2) If it hasn't just been reset
     -- 3) If last value wasn't MAX_COUNT

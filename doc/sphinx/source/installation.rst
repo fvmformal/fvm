@@ -79,7 +79,7 @@ make sure you have in your system:
 
 - **The actual formal tools:** The FVM currently only supports the Questa
   formal tools (and the Questa OneSim simulator to compute simulation code
-  coverage). You should have the tools installed in the system and the
+  coverage). You should have the tools installed in the system, the
   executables (``qverify``, ``vlib``, ``vcom``, ``vsim``, etc) in your
   ``PATH``, and of course a valid license.
 
