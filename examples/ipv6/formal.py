@@ -4,8 +4,12 @@ import os
 
 fvm = FvmFramework()
 
-subprocess.run(['git', 'clone', '--recurse-submodules=:src', 
-'https://github.com/VLSI-EDA/PoC'])
+subprocess.run(['git', 'clone', '--recurse-submodules=:src',
+                'https://github.com/VLSI-EDA/PoC'])
+
+subprocess.run(['git', 'checkout', '8c39b2407a97ec81b8601c4b64e4d2e2141ab9cf',
+                '--recurse-submodules'], cwd='PoC'
+              )
 
 # We change the VHDL files using the vhdl_changes.py script
 # from the same directory. We had to change a few lines in 
