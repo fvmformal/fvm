@@ -1,7 +1,7 @@
 -- Copyright 2024-2026 Universidad de Sevilla
 -- SPDX-License-Identifier: Apache-2.0
 
--- Assert the counter properties. To be used when verifying the dualcounter,
+-- Assume the counter properties. To be used when verifying the dualcounter,
 -- which instances the counter
 
 vunit counter_assert_to_assume (counter) {
