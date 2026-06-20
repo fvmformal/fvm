@@ -5,6 +5,7 @@
 from pathlib import Path
 import shutil
 import subprocess
+from contextlib import nullcontext as does_not_raise
 
 # Third party imports
 import pytest
@@ -452,13 +453,26 @@ def test_set_toplevels_duplicated() :
     assert pytest_wrapped_e.type == SystemExit
     assert pytest_wrapped_e.value.code == BAD_VALUE["value"]
 
-def test_set_toplevels_reserved() :
+@pytest.mark.parametrize(
+        "toplevels, exception_type, exit_code",
+    [
+        (["test", "libraries"], pytest.raises(SystemExit), BAD_VALUE["value"]),
+        (["test", "test2", "fvm_dashboard"], pytest.raises(SystemExit), BAD_VALUE["value"]),
+        (["fvm_results", "test", "test2"], pytest.raises(SystemExit), BAD_VALUE["value"]),
+        (["fvm_history", "test", "test2"], pytest.raises(SystemExit), BAD_VALUE["value"]),
+        (["test", "test2", "test3"], does_not_raise(), None),
+    ]
+)
+def test_set_toplevels_reserved(toplevels, exception_type, exit_code) :
     """Test setting multiple toplevels with a reserved name"""
     fvm = FvmFramework()
-    with pytest.raises(SystemExit) as pytest_wrapped_e:
-        fvm.set_toplevel(["test", "test2", "fvm_dashboard"])
-    assert pytest_wrapped_e.type == SystemExit
-    assert pytest_wrapped_e.value.code == BAD_VALUE["value"]
+
+    with exception_type as actual_exception:
+        fvm.set_toplevel(toplevels)
+
+    if exit_code is not None:
+        assert actual_exception.type == SystemExit
+        assert actual_exception.value.code == exit_code
 
 def test_set_toplevels_if_a_design_exists() :
     """Test setting multiple toplevels when a design is already set"""
