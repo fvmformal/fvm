@@ -20,6 +20,16 @@ Versioning <https://semver.org/spec/v2.0.0.html>`_.
   - Documentation for all releases: https://fvm.us.es/doc/ (Use the 'Other
     Versions' selector at the bottom left and click on the version you want)
 
+Development version - Unreleased
+--------------------------------
+
+:Changed:     Dashboards are now generated in `fvm_dashboard` output subdirectory
+:Changed:     Pin examples/ipv6 version of cloned code
+:Changed:     Small typo/expression changes throughout the documentation
+:Changed:     Improved comments in the examples in ``examples/`` and ``concepts/``
+:Fixed:       Add missing spaces in generated parameters when defining cutpoints
+:Fixed:       Fixed error in ``prove.simcover`` when using ``--guinorun``
+
 1.0.0rc3 - 18-06-2026
 ---------------------
 
