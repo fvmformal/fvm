@@ -751,8 +751,9 @@ class FvmFramework:
         single-element list. If a list is provided, duplicates are checked and 
         an error is logged if any are found.
 
-        Certain reserved names are prohibited (``fvm_dashboard`` and 
-        ``fvm_reports``) to avoid conflicts with framework directories.
+        Certain reserved names are prohibited (``libraries``,
+        ``fvm_dashboard``, ``fvm_results`` and ``fvm_history``) to avoid
+        conflicts with framework directories.
 
         If a specific design has already been set with framework
         argument ``-d``, ``--design``, only that design will be 
@@ -776,9 +777,14 @@ class FvmFramework:
                 self.toplevel = toplevel
 
         # Disallow clashes with fvm_* directories
-        if 'fvm_dashboard' in toplevel or 'fvm_reports' in toplevel:
+        reserved_directories = ['libraries', 'fvm_dashboard', 'fvm_results', 'fvm_history']
+
+        clashes = set(toplevel).intersection(reserved_directories)
+
+        if clashes:
             self.logger.error("toplevels can not have the following reserved names: "
-                            "fvm_dashboard, fvm_reports")
+                            f'{reserved_directories}, but {toplevel=} contains '
+                            f'{clashes=}')
             self.exit_if_required(BAD_VALUE)
 
         # If a design was specified, just run that design

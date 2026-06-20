@@ -474,7 +474,7 @@ def generate_html_report(framework, logger):
     :type logger: loguru._logger.Logger
     """
 
-    dashboard_dir = os.path.join(f'{framework.outdir}', "dashboard")
+    dashboard_dir = os.path.join(f'{framework.outdir}', "fvm_dashboard")
     results_dir = os.path.join(dashboard_dir, framework.prefix, "results")
     report_dir = os.path.join(dashboard_dir, framework.prefix, "report")
     os.makedirs(dashboard_dir, exist_ok=True)
