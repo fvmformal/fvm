@@ -5,6 +5,7 @@
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 from contextlib import nullcontext as does_not_raise
 
 # Third party imports
@@ -780,3 +781,19 @@ def test_logger_twice() :
     retval = fvm.check_errors()
     print(f'{retval=}')
     assert retval == True
+
+@pytest.mark.parametrize("is_interactive", [True, False])
+@pytest.mark.parametrize("loglevel", ["TRACE", "ERROR", "INFO"])
+def test_empty_framework_flow(monkeypatch, is_interactive, loglevel):
+    """Test the framework without adding any sources and executing any tools"""
+
+    if is_interactive:
+        monkeypatch.delattr(sys.modules['__main__'], '__file__', raising=False)
+
+    fvm = FvmFramework()
+
+    fvm.set_loglevel(loglevel)
+
+    assert fvm.is_interactive == is_interactive
+
+    fvm.run()
