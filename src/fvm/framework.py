@@ -68,25 +68,17 @@ console = Console(force_terminal=True, force_interactive=False)
 class FvmFramework:
     """This class defines the FVM framework"""
 
-    def __init__(self):
+    def __init__(self, cli_args=None):
         """Class constructor"""
 
         parser = argument_parser.create_parser()
 
         # Get command-line arguments
         #
-        # Since pytest also has command-line arguments, we may have a conflict
-        # here, so get different arguments depending on whether the called
-        # program is pytest or not
-        #
-        # If we are called by pytest, pass an empty list to argparse, because
-        # the arguments received by pytest will not be recognized by our code
-        # and thus all tests would fail. If we are not called by pytest, pass
-        # the rest of sys.argv to argparse
-        if re.search('pytest', sys.argv[0]):
-            args = parser.parse_args([])
-        else:
-            args = parser.parse_args(sys.argv[1:])
+        # parse_args defaults to parsing sys.argv[1:] if we pass None as an
+        # argument, so we don't need any logic to discriminate between the
+        # cases in which cli_args is None and the one in which it is not
+        args = parser.parse_args(cli_args)
 
         self.logger = logger
         self.logger.trace(f'{args=}')
