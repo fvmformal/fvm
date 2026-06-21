@@ -27,6 +27,8 @@ Development version - Unreleased
 :Changed:     Pin examples/ipv6 version of cloned code
 :Changed:     Small typo/expression changes throughout the documentation
 :Changed:     Improved comments in the examples in ``examples/`` and ``concepts/``
+:Changed:     Improved test suite (added one test and parameterized another)
+:Fixed:       Better support for command-line arguments for testing
 :Fixed:       Add missing spaces in generated parameters when defining cutpoints
 :Fixed:       Fixed error in ``prove.simcover`` when using ``--guinorun``
 
