@@ -20,8 +20,8 @@ Versioning <https://semver.org/spec/v2.0.0.html>`_.
   - Documentation for all releases: https://fvm.us.es/doc/ (Use the 'Other
     Versions' selector at the bottom left and click on the version you want)
 
-Development version - Unreleased
---------------------------------
+1.0.0rc4 - 21-06-2026
+---------------------
 
 :Changed:     Dashboards are now generated in `fvm_dashboard` output subdirectory
 :Changed:     Pin examples/ipv6 version of cloned code
