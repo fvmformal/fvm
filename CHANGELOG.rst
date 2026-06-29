@@ -20,6 +20,14 @@ Versioning <https://semver.org/spec/v2.0.0.html>`_.
   - Documentation for all releases: https://fvm.us.es/doc/ (Use the 'Other
     Versions' selector at the bottom left and click on the version you want)
 
+1.0.0 - 29-06-2026
+------------------
+
+- First stable release
+
+:Changed:     Documentation updated to reflect that ``--pre`` is no longer
+              needed when installing from ``pip``
+
 1.0.0rc4 - 21-06-2026
 ---------------------
 
